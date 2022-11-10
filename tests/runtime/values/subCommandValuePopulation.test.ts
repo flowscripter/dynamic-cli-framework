@@ -1,0 +1,2492 @@
+import { assertEquals, assertFalse, describe, it } from "../../test_deps.ts";
+import {
+  ArgumentValueTypeName,
+  ComplexValueTypeName,
+  SubCommand,
+} from "../../../mod.ts";
+import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
+import { PopulatedArgumentValues } from "../../../src/api/argument/ArgumentValueTypes.ts";
+import { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
+import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
+
+function expectExtractResult(
+  result: SubCommandValuePopulationResult,
+  values: PopulatedArgumentValues,
+  unusedTrailingArgs: ReadonlyArray<string>,
+) {
+  assertEquals(result.populatedArgumentValues, values);
+  assertEquals(result.unusedTrailingArgs, unusedTrailingArgs);
+}
+
+describe("subCommandValueValidation", () => {
+  it("Option argument", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-f", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-f=bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "goo=1 and goo=2"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "goo=1 and goo=2" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=goo=1 and goo=2"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "goo=1 and goo=2" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option types", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "1"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["-f", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["-f"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "bar", "--foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=bar", "--foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=bar", "-f", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=bar", "-f=bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option argument configured value is overridden by arg", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar"],
+      { foo: "nope" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "1"],
+      { foo: 2 },
+    );
+    expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "true"],
+      { foo: false },
+    );
+    expectExtractResult(result, { foo: "true" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option argument default value is overridden by configured value", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        defaultValue: "nope",
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [],
+      { foo: "bar" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        defaultValue: 2,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: 1 },
+    );
+    expectExtractResult(result, { foo: 1 }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        defaultValue: false,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: true },
+    );
+    expectExtractResult(result, { foo: true }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option argument default value is overridden by arg", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        defaultValue: "nope",
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        defaultValue: 2,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "1"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        defaultValue: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "false"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "false" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option argument configured value is used if no arg provided", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [],
+      { foo: "bar" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: 1 },
+    );
+    expectExtractResult(result, { foo: 1 }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: false },
+    );
+    expectExtractResult(result, { foo: false }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Two options", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: false,
+      }, {
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar", "--goo=gar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar", goo: "gar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isArray: false,
+      }, {
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "--goo=gar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true", goo: "gar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isArray: true,
+      }, {
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "--foo",
+        "false",
+        "--goo=gar",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["true", "false"], goo: "gar" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Interleaved option arrays", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }, {
+        name: "goo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isArray: true,
+        shortAlias: "g",
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "bar1",
+        "--goo=true",
+        "--foo",
+        "bar2",
+        "--goo=false",
+      ],
+      undefined,
+    );
+    expectExtractResult(
+      result,
+      { foo: ["bar1", "bar2"], goo: ["true", "false"] },
+      [],
+    );
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "bar1",
+        "--goo=true",
+        "--goo=false",
+        "--foo",
+        "bar2",
+      ],
+      undefined,
+    );
+    expectExtractResult(
+      result,
+      { foo: ["bar1", "bar2"], goo: ["true", "false"] },
+      [],
+    );
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "bar1",
+        "-g",
+        "--foo",
+        "bar2",
+        "-g=false",
+      ],
+      undefined,
+    );
+    expectExtractResult(
+      result,
+      { foo: ["bar1", "bar2"], goo: ["true", "false"] },
+      [],
+    );
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unknown option name", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--goo=moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["--goo=moo"]);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--goo", "moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["--goo", "moo"]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Illegal option syntax", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["-foo=moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["-foo=moo"]);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--f", "moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["--f", "moo"]);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=", "moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["moo"]);
+    assertEquals(result.invalidArgument, {
+      name: "foo",
+      reason: InvalidArgumentReason.MISSING_VALUE,
+    });
+
+    result = populateSubCommandValues(
+      command,
+      ["-f=", "moo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["moo"]);
+    assertEquals(result.invalidArgument, {
+      name: "f",
+      reason: InvalidArgumentReason.MISSING_VALUE,
+    });
+  });
+
+  it("Positional argument", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "bar",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "foo", bar: "bar" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional types", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["1"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      ["bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      ["true"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Multiple positionals", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["f1", "f2"],
+      undefined,
+    );
+    expectExtractResult(result, { foo1: "f1", foo2: "f2" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional varargs", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["bar", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(command, [], undefined);
+    expectExtractResult(result, {}, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Multiple positional and varargs", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "bar",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["foo"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "foo" }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["foo", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "foo", bar: ["bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["foo", "bar", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "foo", bar: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["foo"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "foo" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("String options either side of positionals", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "g1",
+      }, {
+        name: "goo2",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "g2",
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--goo1=g1",
+        "f1",
+        "f2",
+        "--goo2=g2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--goo1",
+        "g1",
+        "f1",
+        "f2",
+        "--goo2",
+        "g2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "-g1",
+        "g1",
+        "f1",
+        "f2",
+        "-g2",
+        "g2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Boolean options either side of positionals", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        shortAlias: "g1",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }, {
+        name: "goo2",
+        shortAlias: "g2",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--goo1",
+        "f1",
+        "f2",
+        "--goo2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "true",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--goo1",
+        "true",
+        "f1",
+        "f2",
+        "--goo2",
+        "false",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "false",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "-g1",
+        "true",
+        "f1",
+        "f2",
+        "-g2",
+        "false",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "false",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array either side of positional", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        isArray: true,
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "f1",
+        "goo1",
+        "--foo",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["f1", "f2"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        isArray: true,
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "true",
+        "goo1",
+        "--foo",
+        "false",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["true", "false"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "goo1", "--foo"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["true", "true"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unused option after option", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "bar",
+        "--goo",
+        "gar",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["--goo", "gar"]);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo=bar", "--goo=gar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["--goo=gar"]);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["-f", "--goo", "gar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true" }, ["--goo", "gar"]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unused option after positional", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo1",
+        shortAlias: "f1",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      [
+        "--foo1",
+        "bar",
+        "foo2",
+        "--goo",
+        "gar",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, { foo1: "bar", foo2: "foo2" }, [
+      "--goo",
+      "gar",
+    ]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unused positional after positional", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["bar", "goo"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["goo"]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unused positional after optional", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo", "bar", "goo"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["goo"]);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "goo"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true" }, ["goo"]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positionals either side of options", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "goo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "f1",
+        "--goo1",
+        "g1",
+        "--goo2",
+        "g2",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }, {
+        name: "goo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "true",
+        "--goo1",
+        "--goo2",
+        "g2",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "g2",
+      foo1: "true",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positionals and non-boolean options interleaved", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "goo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "f1",
+        "--goo1",
+        "g1",
+        "f2",
+        "--goo2",
+        "g2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "--goo1",
+        "g1",
+        "f1",
+        "--goo2",
+        "g2",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "g1",
+      goo2: "g2",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positionals and boolean options interleaved", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "goo1",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }, {
+        name: "goo2",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [{
+        name: "foo1",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "f1",
+        "--goo1",
+        "true",
+        "f2",
+        "--goo2",
+        "true",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "true",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["f1", "--goo1", "f2", "--goo2"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      goo1: "true",
+      goo2: "true",
+      foo1: "f1",
+      foo2: "f2",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Array option before vararg positional", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      [
+        "--foo",
+        "f1",
+        "--foo",
+        "f2",
+        "g1",
+        "g2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["f1", "f2"],
+      goo: ["g1", "g2"],
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Vararg positional before array option", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "g1",
+        "g2",
+        "--foo",
+        "f1",
+        "--foo",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["f1", "f2"],
+      goo: ["g1", "g2"],
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "f1", "--foo", "f2"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["f1", "f2"],
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional types configured value is overridden by arg", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["1"],
+      { foo: 2 },
+    );
+    expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      ["bar"],
+      { foo: "nope" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      ["true"],
+      { foo: false },
+    );
+    expectExtractResult(result, { foo: "true" }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional types configured value is used for optional vararg with no arg provided", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [],
+      { foo: 1 },
+    );
+    expectExtractResult(result, { foo: 1 }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: "bar" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isVarargOptional: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: true },
+    );
+    expectExtractResult(result, { foo: true }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional types configured value is used for mandatory vararg with no arg provided", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        isVarargOptional: false,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [],
+      { foo: 1 },
+    );
+    expectExtractResult(result, { foo: 1 }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargOptional: false,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: "bar" },
+    );
+    expectExtractResult(result, { foo: "bar" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isVarargOptional: false,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [],
+      { foo: true },
+    );
+    expectExtractResult(result, { foo: true }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array configured single values completely overridden by multiple args", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["--foo", "bar1", "--foo", "bar2"],
+      { foo: ["bar"] },
+    );
+    expectExtractResult(result, { foo: ["bar1", "bar2"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array configured multiple values partially overridden by arg", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["--foo", "bar"],
+      { foo: ["bar1", "bar2"] },
+    );
+    expectExtractResult(result, { foo: ["bar", "bar2"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional argument configured single value completely overridden by multiple args", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(command, ["bar", "bar"], {
+      foo: "bar1",
+    });
+    expectExtractResult(result, { foo: ["bar", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional argument configured multiple values partially overridden by single arg", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(command, ["bar"], {
+      foo: ["bar1", "bar2"],
+    });
+    expectExtractResult(result, { foo: ["bar", "bar2"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array using indices", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo[0]", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[1]", "bar1", "--foo[0]", "bar0"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar0", "bar1"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[0]=bar0", "--foo[1]", "bar1"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar0", "bar1"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[1]=bar1", "-f[0]", "bar0"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar0", "bar1"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array invalid indices", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo[1]", "bar"],
+      undefined,
+    );
+    let expected = {
+      foo: [] as Array<string>,
+    };
+    expected.foo[1] = "bar";
+    expectExtractResult(result, expected, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[2]", "bar2", "--foo[0]", "bar0"],
+      undefined,
+    );
+    expected = {
+      foo: [] as Array<string>,
+    };
+    expected.foo[0] = "bar0";
+    expected.foo[2] = "bar2";
+    expectExtractResult(result, expected, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array missing indices populated by configured defaults", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo[1]", "bar"],
+      { foo: ["car"] },
+    );
+    expectExtractResult(result, { foo: ["car", "bar"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[2]", "bar1", "--foo[0]", "bar0"],
+      { foo: ["bar", "car"] },
+    );
+    expectExtractResult(result, { foo: ["bar0", "car", "bar1"] }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array using indices either side of positional", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        isArray: true,
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--foo[0]",
+        "f1",
+        "goo1",
+        "--foo[1]",
+        "f2",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["f1", "f2"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        isArray: true,
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [{
+        name: "goo",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+    result = populateSubCommandValues(
+      command,
+      [
+        "--foo[1]",
+        "true",
+        "goo1",
+        "--foo[0]",
+        "false",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["false", "true"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[1]", "goo1", "--foo[0]"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      foo: ["true", "true"],
+      goo: "goo1",
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option complex values", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }, {
+            name: "delta",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "d",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--alpha.beta.gamma", "foo", "--alpha.beta.delta", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { gamma: "foo", delta: "bar" } },
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-a.b.g", "foo", "-a.b.d", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { gamma: "foo", delta: "bar" } },
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option arrays of complex values and vice versa", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        isArray: true,
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }, {
+            name: "delta",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "d",
+            isArray: true,
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--alpha.beta.gamma", "foo", "--alpha.beta.delta", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: [{ beta: { gamma: "foo", delta: ["bar"] } }],
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-a[0].b.d[0]", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: [{ beta: { delta: ["bar"] } }],
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-a[0].b.g", "foo", "-a[0].b.d[0]", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: [{ beta: { gamma: "foo", delta: ["bar"] } }],
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      [
+        "-a[0].b.g",
+        "foo",
+        "-a[0].b.d[0]",
+        "bar",
+        "-a[0].b.d[1]",
+        "car",
+        "-a[1].b.g",
+        "foo",
+        "-a[1].b.d[1]",
+        "bar",
+        "-a[1].b.d[0]",
+        "car",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: [{ beta: { gamma: "foo", delta: ["bar", "car"] } }, {
+        beta: { gamma: "foo", delta: ["car", "bar"] },
+      }],
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option complex values with invalid properties", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }, {
+            name: "delta",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "d",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--alpha.beta.delta", "bar", "--alpha.beta.gamma"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { delta: "bar" } },
+    }, []);
+    assertEquals(result.invalidArgument, {
+      name: "--alpha.beta.gamma",
+      reason: InvalidArgumentReason.MISSING_VALUE,
+    });
+
+    result = populateSubCommandValues(
+      command,
+      ["-a.b.g", "foo", "--alpha.beta.delta"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { gamma: "foo" } },
+    }, []);
+    assertEquals(result.invalidArgument, {
+      name: "--alpha.beta.delta",
+      reason: InvalidArgumentReason.MISSING_VALUE,
+    });
+  });
+
+  it("Option complex values with missing properties supplied by configured defaults", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }, {
+            name: "delta",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "d",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--alpha.beta.delta", "bar"],
+      { alpha: { beta: { gamma: "foo" } } },
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { gamma: "foo", delta: "bar" } },
+    }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["-a.b.g", "foo"],
+      { alpha: { beta: { delta: "bar" } } },
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { gamma: "foo", delta: "bar" } },
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option array check for maximum array size", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const potentialArgs: Array<string> = [];
+    for (let i = 0; i < 257; i++) {
+      potentialArgs.push(`--foo=bar${i}`);
+    }
+    const values = { foo: [] as Array<string> };
+    for (let i = 0; i < 255; i++) {
+      values.foo.push(`bar${i}`);
+    }
+
+    let result = populateSubCommandValues(
+      command,
+      potentialArgs,
+      undefined,
+    );
+    expectExtractResult(result, values, ["--foo=bar256"]);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
+      name: "foo",
+    });
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[256]=bar"],
+      undefined,
+    );
+    expectExtractResult(result, {}, []);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
+      name: "foo",
+    });
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[256]", "bar"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["bar"]);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
+      name: "foo",
+    });
+  });
+
+  it("Option array using mix of explicit and implicit indices", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        shortAlias: "f",
+        isArray: true,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      ["--foo[0]", "bar0", "-f=bar1", "-f[2]=bar2"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar0", "bar1", "bar2"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo", "bar0", "--foo", "bar1", "--foo[2]=bar2"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: ["bar0", "bar1", "bar2"] }, []);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--foo[2]", "bar2", "--foo", "bar3"],
+      undefined,
+    );
+
+    const values = { foo: [] as Array<string | undefined> };
+    values.foo[2] = "bar2";
+    values.foo[3] = "bar3";
+
+    expectExtractResult(result, values, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Positional varargs check for maximum array size", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [],
+      positionals: [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        isVarargMultiple: true,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const potentialArgs: Array<string> = [];
+    for (let i = 0; i < 257; i++) {
+      potentialArgs.push(`bar${i}`);
+    }
+    const values = { foo: [] as Array<string> };
+    for (let i = 0; i < 255; i++) {
+      values.foo.push(`bar${i}`);
+    }
+
+    const result = populateSubCommandValues(
+      command,
+      potentialArgs,
+      undefined,
+    );
+    expectExtractResult(result, values, ["bar256"]);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
+      name: "foo",
+    });
+  });
+
+  it("Option path invalid reference to complex option", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }, {
+            name: "delta",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "d",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["--alpha.beta", "foo"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: {} },
+    }, ["foo"]);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.OPTION_IS_COMPLEX,
+      name: "beta",
+    });
+  });
+
+  it("Complex options with duplicated names and aliases ok if not siblings", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "alpha",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "a",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["-a.b.a", "foo"],
+      undefined,
+    );
+    expectExtractResult(result, {
+      alpha: { beta: { alpha: "foo" } },
+    }, []);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Option path check for maximum nesting", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "alpha",
+        type: ComplexValueTypeName.COMPLEX,
+        shortAlias: "a",
+        properties: [{
+          name: "beta",
+          type: ComplexValueTypeName.COMPLEX,
+          shortAlias: "b",
+          properties: [{
+            name: "gamma",
+            type: ArgumentValueTypeName.STRING,
+            shortAlias: "g",
+          }],
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["-a.b.g.d.e.f.g.h.i.j.k", "foo"],
+      undefined,
+    );
+    expectExtractResult(result, {}, ["foo"]);
+    assertEquals(result.invalidArgument, {
+      reason: InvalidArgumentReason.NESTING_DEPTH_EXCEEDED,
+      name: "-a.b.g.d.e.f.g.h.i.j.k",
+    });
+  });
+});
