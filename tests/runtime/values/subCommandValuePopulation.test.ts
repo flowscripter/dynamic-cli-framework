@@ -1,6 +1,7 @@
 import { assertEquals, assertFalse, describe, it } from "../../test_deps.ts";
 import {
   ArgumentValueTypeName,
+  ComplexOption,
   ComplexValueTypeName,
   SubCommand,
 } from "../../../mod.ts";
@@ -12,10 +13,10 @@ import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
 function expectExtractResult(
   result: SubCommandValuePopulationResult,
   values: PopulatedArgumentValues,
-  unusedTrailingArgs: ReadonlyArray<string>,
+  unusedArgs: ReadonlyArray<string>,
 ) {
   assertEquals(result.populatedArgumentValues, values);
-  assertEquals(result.unusedTrailingArgs, unusedTrailingArgs);
+  assertEquals(result.unusedArgs, unusedArgs);
 }
 
 describe("subCommandValueValidation", () => {
@@ -888,11 +889,11 @@ describe("subCommandValueValidation", () => {
       options: [{
         name: "goo1",
         type: ArgumentValueTypeName.STRING,
-        shortAlias: "g1",
+        shortAlias: "1",
       }, {
         name: "goo2",
         type: ArgumentValueTypeName.STRING,
-        shortAlias: "g2",
+        shortAlias: "2",
       }],
       positionals: [{
         name: "foo1",
@@ -946,11 +947,11 @@ describe("subCommandValueValidation", () => {
     result = populateSubCommandValues(
       command,
       [
-        "-g1",
+        "-1",
         "g1",
         "f1",
         "f2",
-        "-g2",
+        "-2",
         "g2",
       ],
       undefined,
@@ -969,11 +970,11 @@ describe("subCommandValueValidation", () => {
       name: "command",
       options: [{
         name: "goo1",
-        shortAlias: "g1",
+        shortAlias: "1",
         type: ArgumentValueTypeName.BOOLEAN,
       }, {
         name: "goo2",
-        shortAlias: "g2",
+        shortAlias: "2",
         type: ArgumentValueTypeName.BOOLEAN,
       }],
       positionals: [{
@@ -1028,11 +1029,11 @@ describe("subCommandValueValidation", () => {
     result = populateSubCommandValues(
       command,
       [
-        "-g1",
+        "-1",
         "true",
         "f1",
         "f2",
-        "-g2",
+        "-2",
         "false",
       ],
       undefined,
@@ -1122,7 +1123,7 @@ describe("subCommandValueValidation", () => {
     assertFalse(result.invalidArgument);
   });
 
-  it("Unused option after option", () => {
+  it("Unused option after used option", () => {
     let command: SubCommand = {
       name: "command",
       options: [{
@@ -1177,12 +1178,67 @@ describe("subCommandValueValidation", () => {
     assertFalse(result.invalidArgument);
   });
 
+  it("Unused option before used option", () => {
+    let command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    let result = populateSubCommandValues(
+      command,
+      [
+        "--goo",
+        "gar",
+        "--foo",
+        "bar",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["--goo", "gar"]);
+    assertFalse(result.invalidArgument);
+
+    result = populateSubCommandValues(
+      command,
+      ["--goo=gar", "--foo=bar"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "bar" }, ["--goo=gar"]);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.BOOLEAN,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["--goo", "gar", "-f"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "true" }, ["--goo", "gar"]);
+    assertFalse(result.invalidArgument);
+  });
+
   it("Unused option after positional", () => {
     const command: SubCommand = {
       name: "command",
       options: [{
         name: "foo1",
-        shortAlias: "f1",
+        shortAlias: "1",
         type: ArgumentValueTypeName.STRING,
       }],
       positionals: [{
@@ -1207,6 +1263,40 @@ describe("subCommandValueValidation", () => {
     expectExtractResult(result, { foo1: "bar", foo2: "foo2" }, [
       "--goo",
       "gar",
+    ]);
+    assertFalse(result.invalidArgument);
+  });
+
+  it("Unused option before positional", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [{
+        name: "foo1",
+        shortAlias: "1",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      positionals: [{
+        name: "foo2",
+        type: ArgumentValueTypeName.STRING,
+      }],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      [
+        "--goo", // as this is unrecognised as an option for the command it will be used as a positional value
+        "gar",
+        "foo2",
+        "--foo1",
+        "bar",
+      ],
+      undefined,
+    );
+    expectExtractResult(result, { foo1: "bar", foo2: "--goo" }, [
+      "gar",
+      "foo2",
     ]);
     assertFalse(result.invalidArgument);
   });
@@ -2180,6 +2270,9 @@ describe("subCommandValueValidation", () => {
       alpha: { beta: { delta: "bar" } },
     }, []);
     assertEquals(result.invalidArgument, {
+      argument:
+        ((command.options[0] as ComplexOption).properties[0] as ComplexOption)
+          .properties[0],
       name: "--alpha.beta.gamma",
       reason: InvalidArgumentReason.MISSING_VALUE,
     });
@@ -2193,6 +2286,9 @@ describe("subCommandValueValidation", () => {
       alpha: { beta: { gamma: "foo" } },
     }, []);
     assertEquals(result.invalidArgument, {
+      argument:
+        ((command.options[0] as ComplexOption).properties[0] as ComplexOption)
+          .properties[1],
       name: "--alpha.beta.delta",
       reason: InvalidArgumentReason.MISSING_VALUE,
     });
@@ -2275,6 +2371,7 @@ describe("subCommandValueValidation", () => {
     );
     expectExtractResult(result, values, ["--foo=bar256"]);
     assertEquals(result.invalidArgument, {
+      argument: command.options[0],
       reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
       name: "foo",
     });
@@ -2286,6 +2383,7 @@ describe("subCommandValueValidation", () => {
     );
     expectExtractResult(result, {}, []);
     assertEquals(result.invalidArgument, {
+      argument: command.options[0],
       reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
       name: "foo",
     });
@@ -2297,6 +2395,7 @@ describe("subCommandValueValidation", () => {
     );
     expectExtractResult(result, {}, ["bar"]);
     assertEquals(result.invalidArgument, {
+      argument: command.options[0],
       reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
       name: "foo",
     });
@@ -2375,6 +2474,7 @@ describe("subCommandValueValidation", () => {
     );
     expectExtractResult(result, values, ["bar256"]);
     assertEquals(result.invalidArgument, {
+      argument: command.positionals[0],
       reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
       name: "foo",
     });
@@ -2416,6 +2516,7 @@ describe("subCommandValueValidation", () => {
       alpha: { beta: {} },
     }, ["foo"]);
     assertEquals(result.invalidArgument, {
+      argument: (command.options[0] as ComplexOption).properties[0],
       reason: InvalidArgumentReason.OPTION_IS_COMPLEX,
       name: "beta",
     });

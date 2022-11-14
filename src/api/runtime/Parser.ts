@@ -10,6 +10,8 @@ import GroupCommand from "../command/GroupCommand.ts";
 import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
 import GlobalCommand from "../command/GlobalCommand.ts";
 import SubCommand from "../command/SubCommand.ts";
+import Argument from "../argument/Argument.ts";
+import ComplexOption from "../argument/ComplexOption.ts";
 
 export const MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH = 10;
 export const MAXIMUM_ARGUMENT_ARRAY_SIZE = 255;
@@ -79,6 +81,11 @@ export interface InvalidArgument {
   readonly name?: string;
 
   /**
+   * The {@link Argument} (if it was able to be populated)
+   */
+  readonly argument?: Argument | ComplexOption;
+
+  /**
    * The argument value (if it was able to be populated). Note that this value is unlikely to be valid
    * as it is the cause of the invalid argument error.
    */
@@ -103,9 +110,10 @@ export interface ParseResult {
   readonly groupCommand?: GroupCommand;
 
   /**
-   * The argument values to use when executing the {@link command}.
+   * The argument values populated from the command line args. If the parse result is valid, these
+   * can be used to execute the specified {@link command}.
    */
-  readonly argumentValues: ArgumentValues;
+  readonly populatedArgumentValues: PopulatedArgumentValues;
 
   /**
    * Any arguments which were invalid
@@ -113,9 +121,9 @@ export interface ParseResult {
   readonly invalidArguments: ReadonlyArray<InvalidArgument>;
 
   /**
-   * Any remaining arguments which were unused in the parsing operation.
+   * Any arguments which were unused in the parsing operation.
    */
-  readonly unusedTrailingArgs: ReadonlyArray<string>;
+  readonly unusedArgs: ReadonlyArray<string>;
 }
 
 /**

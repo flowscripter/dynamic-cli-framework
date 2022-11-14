@@ -1,12 +1,12 @@
 import { assertEquals, describe, it } from "../../test_deps.ts";
 import {
-  ArgumentValues,
   ArgumentValueTypeName,
   ComplexOption,
   ComplexValueTypeName,
   GlobalCommandArgument,
   InvalidArgument,
   Option,
+  PopulatedArgumentValues,
   Positional,
 } from "../../../mod.ts";
 import {
@@ -56,6 +56,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -71,6 +72,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -124,6 +126,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       value: ["true", "false"],
       reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
@@ -164,6 +167,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -179,6 +183,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -204,6 +209,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       value: "goo",
       reason: InvalidArgumentReason.ILLEGAL_VALUE,
@@ -239,6 +245,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[0],
       name: "foo.a",
       value: "bar",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -251,6 +258,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[0],
       name: "foo.a",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -262,6 +270,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[0],
       name: "foo.a",
       value: [1, 2],
       reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
@@ -274,6 +283,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo",
       value: "bar",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -286,6 +296,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[1],
       name: "foo.b",
       value: { c: 3 },
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -336,6 +347,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[0],
       name: "foo[1].a",
       value: "bar",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -348,6 +360,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option.properties[0],
       name: "foo[1].a",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -363,6 +376,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: option,
       name: "foo[0]",
       reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
     }]);
@@ -459,7 +473,7 @@ describe("argumentValueValidation", () => {
       }],
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    const value: Array<ArgumentValues> = [{
+    const value: Array<PopulatedArgumentValues> = [{
       beta: [
         {},
         {
@@ -474,6 +488,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: (option.properties[0] as ComplexOption).properties[0],
       name: "alpha[0].beta[0].gamma",
       reason: 0,
     }]);
@@ -527,6 +542,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: positional,
       name: "foo",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -542,6 +558,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: positional,
       name: "foo",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -593,6 +610,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: positional,
       name: "foo",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -632,6 +650,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: positional,
       name: "foo",
       value: ["foo", "bar"],
       reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
@@ -674,6 +693,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: positional,
       name: "foo",
       value: "goo",
       reason: InvalidArgumentReason.ILLEGAL_VALUE,
@@ -751,6 +771,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: globalCommandArgument,
       name: "value",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -770,6 +791,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: globalCommandArgument,
       name: "value",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -806,6 +828,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: globalCommandArgument,
       name: "value",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
@@ -842,6 +865,7 @@ describe("argumentValueValidation", () => {
       undefined,
     );
     assertEquals(invalidArguments, [{
+      argument: globalCommandArgument,
       name: "value",
       value: "goo",
       reason: InvalidArgumentReason.ILLEGAL_VALUE,

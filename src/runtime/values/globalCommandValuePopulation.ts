@@ -40,12 +40,12 @@ export default function populateGlobalCommandValue(
   if (configuredValue !== undefined) {
     populatedArgumentValue = configuredValue;
   }
-  let unusedTrailingArgs: Array<string> = [];
+  let unusedArgs: Array<string> = [];
 
   if (potentialArgs.length > 0) {
     // override with parsed argument value
     populatedArgumentValue = potentialArgs[0];
-    unusedTrailingArgs = potentialArgs.slice(1);
+    unusedArgs = potentialArgs.slice(1);
   }
 
   // check if there is no value
@@ -54,7 +54,7 @@ export default function populateGlobalCommandValue(
     if (argument.type === ArgumentValueTypeName.BOOLEAN) {
       return {
         populatedArgumentValue: "true",
-        unusedTrailingArgs,
+        unusedArgs,
       };
     }
 
@@ -62,7 +62,7 @@ export default function populateGlobalCommandValue(
     if (!argument.isOptional) {
       return {
         populatedArgumentValue,
-        unusedTrailingArgs,
+        unusedArgs,
         invalidArgument: {
           name: argument.name,
           reason: InvalidArgumentReason.MISSING_VALUE,
@@ -72,6 +72,6 @@ export default function populateGlobalCommandValue(
   }
   return {
     populatedArgumentValue,
-    unusedTrailingArgs,
+    unusedArgs,
   };
 }

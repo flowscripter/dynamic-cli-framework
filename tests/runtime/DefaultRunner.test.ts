@@ -1,5 +1,7 @@
 import {
   ArgumentValueTypeName,
+  ComplexOption,
+  ComplexValueTypeName,
   GlobalCommand,
   GlobalCommandArgument,
   GlobalModifierCommand,
@@ -16,15 +18,13 @@ import DefaultCommandRegistry from "../../src/registry/DefaultCommandRegistry.ts
 import DefaultPrinter from "../../src/service/core/DefaultPrinter.ts";
 import DefaultCLIConfig from "../../src/DefaultCLIConfig.ts";
 
-// TODO: add tests for running with array args
-// TODO: add tests for running with complex args
 // TODO: test output
 // TODO: test logging and printer output never include password values
 
 function getSubCommand(
   name: string,
-  options: Option[],
-  positionals: Positional[],
+  options: Array<Option | ComplexOption>,
+  positionals: Array<Positional>,
 ): SubCommand {
   return {
     name,
@@ -64,7 +64,7 @@ function getGlobalModifierCommand(
 
 function getGroupCommand(
   name: string,
-  memberSubCommands: SubCommand[],
+  memberSubCommands: Array<SubCommand>,
 ): GroupCommand {
   return {
     name,
@@ -940,5 +940,74 @@ describe("DefaultRunner", () => {
     // expect(mockStderr).toHaveBeenCalledWith(
     //   expect.stringContaining("Unused arg: blah"),
     // );
+  });
+
+  it("Sub-Command run scenario with complex options and explicit arrays", async () => {
+    const printer = new DefaultPrinter(Deno.stderr);
+    let hasRun = false;
+
+    const options = [{
+      name: "alpha",
+      shortAlias: "a",
+      type: ComplexValueTypeName.COMPLEX,
+      isArray: true,
+      properties: [{
+        name: "beta",
+        shortAlias: "b",
+        type: ComplexValueTypeName.COMPLEX,
+        isArray: true,
+        properties: [{
+          name: "gamma",
+          shortAlias: "g",
+          type: ArgumentValueTypeName.STRING,
+        }, {
+          name: "delta",
+          shortAlias: "d",
+          type: ArgumentValueTypeName.NUMBER,
+          isArray: true,
+        }],
+      }],
+    }, {
+      name: "epsilon",
+      shortAlias: "e",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [{
+        name: "gamma",
+        shortAlias: "g",
+        type: ArgumentValueTypeName.STRING,
+      }, {
+        name: "delta",
+        shortAlias: "d",
+        type: ArgumentValueTypeName.NUMBER,
+      }],
+    }];
+    const command = getSubCommand("command", options, []);
+
+    command.execute = (): Promise<void> => {
+      hasRun = true;
+
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([command]);
+    const runner = new DefaultRunner(new DefaultParser(), printer);
+    const runResult = await runner.run(
+      [
+        "command",
+        "-e.g=bar",
+        "-e.d=1",
+        "-a.b[1].g=foo2",
+        "--alpha.beta[0].gamma=foo1",
+        "-a.b[1].d[1]=2",
+        "-a.b[0].d=1",
+        "-a.b[1].d[0]=3",
+      ],
+      commandRegistry,
+      new DefaultCLIConfig("foo", "bar", "1"),
+      {},
+    );
+
+    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(hasRun, true);
   });
 });

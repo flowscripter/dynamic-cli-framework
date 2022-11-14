@@ -5,13 +5,14 @@ import {
   ScanResult,
 } from "../../src/api/runtime/Parser.ts";
 import {
-  ArgumentValues,
   ArgumentValueType,
   ArgumentValueTypeName,
+  ComplexOption,
   ComplexValueTypeName,
   GlobalCommand,
   GlobalModifierCommand,
   GroupCommand,
+  PopulatedArgumentValues,
   SubCommand,
 } from "../../mod.ts";
 import DefaultParser from "../../src/runtime/DefaultParser.ts";
@@ -28,8 +29,11 @@ function expectScanResult(result: ScanResult, expected: ScanResult) {
 }
 
 function expectParseResult(result: ParseResult, expected: ParseResult) {
-  assertEquals(result.argumentValues, expected.argumentValues);
-  assertEquals(result.unusedTrailingArgs, expected.unusedTrailingArgs);
+  assertEquals(
+    result.populatedArgumentValues,
+    expected.populatedArgumentValues,
+  );
+  assertEquals(result.unusedArgs, expected.unusedArgs);
   assertEquals(result.invalidArguments, expected.invalidArguments);
 }
 
@@ -967,11 +971,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
 
@@ -981,11 +985,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1000,10 +1004,10 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: globalCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         globalCommand: "foo",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1021,10 +1025,10 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: globalModifierCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         modifierCommand: "foo",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1039,11 +1043,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: ["hello", "--world"],
+      unusedArgs: ["hello", "--world"],
       invalidArguments: [],
     });
   });
@@ -1061,11 +1065,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1082,11 +1086,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
 
@@ -1098,11 +1102,11 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1120,12 +1124,12 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         goo: "g",
         foo: "bar",
         yee: "ha",
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1233,7 +1237,7 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         alpha: [
           {
             beta: [
@@ -1258,7 +1262,7 @@ describe("DefaultParser", () => {
           delta: 1,
         },
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [],
     });
   });
@@ -1281,7 +1285,7 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         alpha: [
           {
             beta: {
@@ -1293,16 +1297,19 @@ describe("DefaultParser", () => {
           },
         ],
       },
-      unusedTrailingArgs: [
+      unusedArgs: [
         "-a.b.d=2",
         "-a.b.d=3",
         "-e.g=bar",
         "-e.d=1",
       ],
       invalidArguments: [{
+        argument: ((subCommand.options[0] as ComplexOption)
+          .properties[0] as ComplexOption).properties[0],
         reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
         name: "gamma",
       }, {
+        argument: subCommand.options[1],
         reason: InvalidArgumentReason.MISSING_VALUE,
         name: "epsilon",
       }],
@@ -1322,7 +1329,7 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         alpha: [
           {
             beta: {
@@ -1340,10 +1347,11 @@ describe("DefaultParser", () => {
           delta: 1,
         },
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [
         {
           name: "delta",
+          argument: (subCommand.options[1] as ComplexOption).properties[1],
           reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
         },
       ],
@@ -1365,7 +1373,7 @@ describe("DefaultParser", () => {
       ],
     });
 
-    let argumentValues: ArgumentValues = {
+    let argumentValues: PopulatedArgumentValues = {
       alpha: [
         {
           beta: [],
@@ -1377,8 +1385,8 @@ describe("DefaultParser", () => {
       },
     };
 
-    ((argumentValues.alpha as Array<ArgumentValues>)[0].beta as Array<
-      ArgumentValues
+    ((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
+      PopulatedArgumentValues
     >)[1] = {
       gamma: "foo2",
       delta: ["3", "2"], // these are still stored as strings as the validation (and type conversion) failed fast
@@ -1386,10 +1394,11 @@ describe("DefaultParser", () => {
 
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues,
-      unusedTrailingArgs: [],
+      populatedArgumentValues: argumentValues,
+      unusedArgs: [],
       invalidArguments: [
         {
+          argument: (subCommand.options[0] as ComplexOption).properties[0],
           name: "alpha[0].beta[0]",
           reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
         },
@@ -1429,19 +1438,21 @@ describe("DefaultParser", () => {
     };
 
     // these are still stored as strings as the validation (and type conversion) failed fast
-    (((argumentValues.alpha as Array<ArgumentValues>)[0].beta as Array<
-      ArgumentValues
+    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
+      PopulatedArgumentValues
     >)[1].delta as Array<ArgumentValueType>)[0] = "0";
-    (((argumentValues.alpha as Array<ArgumentValues>)[0].beta as Array<
-      ArgumentValues
+    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
+      PopulatedArgumentValues
     >)[1].delta as Array<ArgumentValueType>)[2] = "2";
 
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues,
-      unusedTrailingArgs: [],
+      populatedArgumentValues: argumentValues,
+      unusedArgs: [],
       invalidArguments: [
         {
+          argument: ((subCommand.options[0] as ComplexOption)
+            .properties[0] as ComplexOption).properties[1],
           name: "alpha[0].beta[1].delta[1]",
           reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
         },
@@ -1465,7 +1476,7 @@ describe("DefaultParser", () => {
     });
     expectParseResult(parseResult, {
       command: subCommand,
-      argumentValues: {
+      populatedArgumentValues: {
         alpha: [{
           beta: {
             gamma: "foo1",
@@ -1476,9 +1487,10 @@ describe("DefaultParser", () => {
           delta: "1",
         },
       },
-      unusedTrailingArgs: [],
+      unusedArgs: [],
       invalidArguments: [
         {
+          argument: (subCommand.options[1] as ComplexOption).properties[0],
           name: "epsilon.gamma",
           reason: InvalidArgumentReason.MISSING_VALUE,
         },

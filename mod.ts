@@ -1,7 +1,7 @@
 export type {
   ArgumentSingleValueType,
-  ArgumentValues,
   ArgumentValueType,
+  PopulatedArgumentValues,
 } from "./src/api/argument/ArgumentValueTypes.ts";
 export type { default as Argument } from "./src/api/argument/Argument.ts";
 export type { default as ComplexOption } from "./src/api/argument/ComplexOption.ts";

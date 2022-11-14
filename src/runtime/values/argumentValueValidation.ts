@@ -61,6 +61,7 @@ function validatePrimitiveValue(
       if (value !== "true" && value !== "false") {
         return {
           invalidArgument: {
+            argument,
             value,
             reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
           },
@@ -72,6 +73,7 @@ function validatePrimitiveValue(
       if (!Number.isInteger(Number(value))) {
         return {
           invalidArgument: {
+            argument,
             value,
             reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
           },
@@ -83,6 +85,7 @@ function validatePrimitiveValue(
       if (!Number.isFinite(Number(value))) {
         return {
           invalidArgument: {
+            argument,
             value,
             reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
           },
@@ -100,6 +103,7 @@ function validatePrimitiveValue(
   if (argument.validValues && !argument.validValues.includes(value)) {
     return {
       invalidArgument: {
+        argument,
         value,
         reason: InvalidArgumentReason.ILLEGAL_VALUE,
       },
@@ -124,6 +128,7 @@ function validateArrayValue(
       return {
         validValue: convertedArrayValue,
         invalidArgument: {
+          argument,
           name: `[${i}]`,
           reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
         },
@@ -136,13 +141,14 @@ function validateArrayValue(
 
     if (Array.isArray(singleValue)) {
       throw new Error(
-        `Unexpected array value as array member, arrays of arrays are not supported. Arg name: ${argument.name}[${i}]`,
+        `Unexpected array value as array member, arrays of arrays are not supported. Argument: ${argument.name}[${i}]`,
       );
     } else if (typeof singleValue === "object") {
       if (argument.type !== ComplexValueTypeName.COMPLEX) {
         return {
           validValue: convertedArrayValue,
           invalidArgument: {
+            argument,
             name: `[${i}]`,
             value: arrayValue,
             reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -170,6 +176,7 @@ function validateArrayValue(
         return {
           validValue: convertedArrayValue,
           invalidArgument: {
+            argument: validationResult.invalidArgument.argument,
             name: `[${i}]${
               validationResult.invalidArgument.name
                 ? validationResult.invalidArgument.name
@@ -183,6 +190,7 @@ function validateArrayValue(
         return {
           validValue: convertedArrayValue,
           invalidArgument: {
+            argument: validationResult.invalidArgument.argument,
             name: `[${i}]${
               validationResult.invalidArgument.name
                 ? validationResult.invalidArgument.name
@@ -213,6 +221,7 @@ function validateObjectValue(
       return {
         validValue: convertedObjectValue,
         invalidArgument: {
+          argument: propertyArg,
           name: `.${propertyArg.name}`,
           reason: InvalidArgumentReason.MISSING_VALUE,
         },
@@ -229,6 +238,7 @@ function validateObjectValue(
         return {
           validValue: convertedObjectValue,
           invalidArgument: {
+            argument: propertyArg,
             name: `.${propertyArg.name}`,
             value: propertyValue,
             reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
@@ -241,6 +251,7 @@ function validateObjectValue(
         return {
           validValue: convertedObjectValue,
           invalidArgument: {
+            argument: propertyArg,
             name: `.${propertyArg.name}`,
             value: propertyValue,
             reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -270,6 +281,7 @@ function validateObjectValue(
         return {
           validValue: convertedObjectValue,
           invalidArgument: {
+            argument: validationResult.invalidArgument.argument,
             name: `.${propertyArg.name}${
               validationResult.invalidArgument.name
                 ? validationResult.invalidArgument.name
@@ -283,6 +295,7 @@ function validateObjectValue(
         return {
           validValue: convertedObjectValue,
           invalidArgument: {
+            argument: validationResult.invalidArgument.argument,
             name: `.${propertyArg.name}${
               validationResult.invalidArgument.name
                 ? validationResult.invalidArgument.name
@@ -307,8 +320,11 @@ function doValidation(
     | Array<PopulatedArgumentValues | undefined>,
   isArray: boolean,
   isOptional: boolean,
-  invalidArguments: InvalidArgument[],
-): ArgumentValueType | ArgumentValues | Array<ArgumentValues> | undefined {
+  invalidArguments: Array<InvalidArgument>,
+):
+  | PopulatedArgumentValueType
+  | PopulatedArgumentValues
+  | Array<PopulatedArgumentValues> {
   // if there is a value, check if it is valid
   if (value !== undefined) {
     let validationResult;
@@ -316,6 +332,7 @@ function doValidation(
     if (Array.isArray(value)) {
       if (!isArray) {
         invalidArguments.push({
+          argument,
           name: argument.name,
           value,
           reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
@@ -326,6 +343,7 @@ function doValidation(
     } else if (typeof value === "object") {
       if (!isComplexOption(argument)) {
         invalidArguments.push({
+          argument,
           name: argument.name,
           value,
           reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -336,6 +354,7 @@ function doValidation(
     } else {
       if (isComplexOption(argument)) {
         invalidArguments.push({
+          argument,
           name: argument.name,
           value,
           reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
@@ -348,6 +367,7 @@ function doValidation(
     if (validationResult.invalidArgument !== undefined) {
       if (validationResult.invalidArgument.value !== undefined) {
         validationResult.invalidArgument = {
+          argument: validationResult.invalidArgument.argument,
           name: `${argument.name}${
             validationResult.invalidArgument.name
               ? validationResult.invalidArgument.name
@@ -358,6 +378,7 @@ function doValidation(
         };
       } else {
         validationResult.invalidArgument = {
+          argument: validationResult.invalidArgument.argument,
           name: `${argument.name}${
             validationResult.invalidArgument.name
               ? validationResult.invalidArgument.name
@@ -373,14 +394,15 @@ function doValidation(
       return undefined;
     }
     return validationResult.validValue as
-      | ArgumentValueType
-      | ArgumentValues
+      | PopulatedArgumentValueType
+      | PopulatedArgumentValues
       | undefined;
   }
 
   // if there is no value, check if it was optional
   if (!isOptional) {
     invalidArguments.push({
+      argument: argument,
       name: argument.name,
       reason: InvalidArgumentReason.MISSING_VALUE,
     });
@@ -402,7 +424,10 @@ export function validateOptionValue(
     | PopulatedArgumentValues
     | Array<PopulatedArgumentValues | undefined>,
   invalidArguments: Array<InvalidArgument>,
-): ArgumentValueType | ArgumentValues | Array<ArgumentValues> | undefined {
+):
+  | PopulatedArgumentValueType
+  | PopulatedArgumentValues
+  | Array<PopulatedArgumentValues> {
   return doValidation(
     option,
     value,
@@ -423,14 +448,14 @@ export function validatePositionalValue(
   positional: Positional,
   value: PopulatedArgumentValueType,
   invalidArguments: Array<InvalidArgument>,
-): ArgumentValueType | undefined {
+): PopulatedArgumentValueType {
   return doValidation(
     positional,
     value,
     positional.isVarargMultiple || false,
     positional.isVarargOptional || false,
     invalidArguments,
-  ) as ArgumentValueType | undefined;
+  ) as PopulatedArgumentValueType;
 }
 
 /**
@@ -445,12 +470,12 @@ export function validateGlobalCommandArgumentValue(
   globalCommandArgument: GlobalCommandArgument,
   value: PopulatedArgumentValueType,
   invalidArguments: Array<InvalidArgument>,
-): ArgumentValueType | undefined {
+): PopulatedArgumentValueType {
   return doValidation(
     globalCommandArgument,
     value,
     false,
     globalCommandArgument.isOptional || false,
     invalidArguments,
-  ) as ArgumentValueType | undefined;
+  ) as PopulatedArgumentValueType;
 }

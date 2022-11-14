@@ -2,7 +2,6 @@
  * The type of single {@link Argument} values which are supported.
  *
  * NOTE: JavaScript does not have a special runtime value for INTEGER so this is covered by `number`.
- * NOTE: `string` is also used for PASSWORD values.
  */
 export type ArgumentSingleValueType = number | string | boolean;
 
@@ -33,7 +32,10 @@ export type ArgumentValueType =
  * * `{ foo: [ [ 1, 2 ], [3, 4 ] ] }`
  */
 export type ArgumentValues = {
-  [argName: string]: ArgumentValueType | ArgumentValues | Array<ArgumentValues>;
+  [argName: string]:
+    | ArgumentValueType
+    | ArgumentValues
+    | Array<ArgumentValues>;
 };
 
 /**
@@ -44,7 +46,6 @@ export enum ArgumentValueTypeName {
   NUMBER = 1,
   INTEGER = 2,
   BOOLEAN = 3,
-  PASSWORD = 4,
 }
 
 /**

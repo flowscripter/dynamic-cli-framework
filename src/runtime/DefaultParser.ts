@@ -22,6 +22,7 @@ import {
   ArgumentSingleValueType,
   ArgumentValues,
   ArgumentValueType,
+  PopulatedArgumentValues,
 } from "../api/argument/ArgumentValueTypes.ts";
 import populateSubCommandValues from "./values/subCommandValuePopulation.ts";
 import getLogger from "./util/logger.ts";
@@ -200,7 +201,7 @@ export default class DefaultParser implements Parser {
     );
 
     let pendingArgs = [...potentialArgs];
-    const unusedLeadingArgs: string[] = [];
+    const unusedLeadingArgs: Array<string> = [];
 
     while (pendingArgs.length > 0) {
       pendingArgs = this.normaliseFirstArgumentIfRequired(
@@ -498,13 +499,13 @@ export default class DefaultParser implements Parser {
       return {
         command,
         groupCommand,
-        argumentValues: {},
+        populatedArgumentValues: {},
         invalidArguments,
-        unusedTrailingArgs: potentialArgs,
+        unusedArgs: potentialArgs,
       };
     }
 
-    const { populatedArgumentValues, unusedTrailingArgs, invalidArgument } =
+    const { populatedArgumentValues, unusedArgs, invalidArgument } =
       populateSubCommandValues(
         command,
         potentialArgs,
@@ -554,17 +555,17 @@ export default class DefaultParser implements Parser {
     if (groupCommand) {
       return {
         command,
-        argumentValues: populatedArgumentValues as ArgumentValues,
+        populatedArgumentValues,
         groupCommand,
         invalidArguments,
-        unusedTrailingArgs,
+        unusedArgs: unusedArgs,
       };
     }
     return {
       command,
-      argumentValues: populatedArgumentValues as ArgumentValues,
+      populatedArgumentValues,
       invalidArguments,
-      unusedTrailingArgs,
+      unusedArgs: unusedArgs,
     };
   }
 
@@ -573,20 +574,20 @@ export default class DefaultParser implements Parser {
     configuredValue?: ArgumentSingleValueType,
   ): ParseResult {
     const { command, potentialArgs } = globalCommandClause;
-    const argumentValues: ArgumentValues = {};
+    const populatedArgumentValues: PopulatedArgumentValues = {};
     const invalidArguments: Array<InvalidArgument> = [];
 
     // check if we need to process an argument at all
     if (!command.argument) {
       return {
         command,
-        argumentValues,
+        populatedArgumentValues,
         invalidArguments,
-        unusedTrailingArgs: potentialArgs,
+        unusedArgs: potentialArgs,
       };
     }
 
-    const { populatedArgumentValue, unusedTrailingArgs, invalidArgument } =
+    const { populatedArgumentValue, unusedArgs, invalidArgument } =
       populateGlobalCommandValue(
         command,
         potentialArgs,
@@ -606,21 +607,21 @@ export default class DefaultParser implements Parser {
         invalidArguments,
       );
       if (validatedValue !== undefined) {
-        argumentValues[command.name] = validatedValue;
+        populatedArgumentValues[command.name] = validatedValue;
       }
     }
 
     logger.debug(() =>
       `Command arguments for command ${command.name} after value validated: ${
-        JSON.stringify(argumentValues)
+        JSON.stringify(populatedArgumentValues)
       } with invalid args: ${JSON.stringify(invalidArguments)}`
     );
 
     return {
       command,
-      argumentValues,
+      populatedArgumentValues,
       invalidArguments,
-      unusedTrailingArgs,
+      unusedArgs: unusedArgs,
     };
   }
 }

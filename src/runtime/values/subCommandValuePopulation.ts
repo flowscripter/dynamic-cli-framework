@@ -88,8 +88,19 @@ class ParseContext {
    */
   currentPositionalIndex;
 
+  /**
+   * Use to store lazily created map of option paths e.g. --alpha.b.g and -a.b.gamma for {@link ComplexOption} or {@link Option} instances.
+   */
+  optionLookupMapsByPath: Map<string, Map<string, Option | ComplexOption>>;
+
+  /**
+   * Use to store map of root {@link ComplexOption} or {@link Option} instances by name.
+   */
   rootOptionsByName: Map<string, Option | ComplexOption>;
 
+  /**
+   * Use to store map of root {@link ComplexOption} or {@link Option} instances by short alias.
+   */
   rootOptionsByAlias: Map<string, Option | ComplexOption>;
 
   /**
@@ -102,6 +113,7 @@ class ParseContext {
     this.state = ParseState.EMPTY;
     this.populatedArgumentValues = {};
     this.currentPositionalIndex = 0;
+    this.optionLookupMapsByPath = new Map();
     this.rootOptionsByName = new Map();
     this.rootOptionsByAlias = new Map();
     subCommand.options.forEach((option) => {
@@ -169,6 +181,8 @@ class ParseContext {
         ).split("[");
       }
 
+      let lookupPath = this.subCommand.name;
+
       // root option navigation
       if (i === 0) {
         if (complexPathElement.startsWith("--")) {
@@ -176,36 +190,42 @@ class ParseContext {
           option = this.rootOptionsByName.get(complexPathElement);
         } else {
           complexPathElement = complexPathElement.slice(1);
-          option = this.rootOptionsByAlias.get(complexPathElement);
-          // convert to option name
-          if (option !== undefined) {
-            complexPathElement = option.name;
+          // ignore if illegal syntax of `-more_than_one_letter`
+          if (complexPathElement.length > 1) {
+            this.state = ParseState.UNUSED;
+            return false;
           }
+          option = this.rootOptionsByAlias.get(complexPathElement);
         }
 
         // if path doesn't refer to an option don't use it
         if (option === undefined) {
           return true;
         }
+
+        // if we did find an option make sure we using the name and not the alias
+        complexPathElement = option.name;
       } // complex option property navigation
       else {
-        // TODO: convert to map lookup
-        let propertyOption: Option | ComplexOption | undefined =
-          (option! as ComplexOption).properties.find(
-            (currentOption) => currentOption.name === complexPathElement,
-          );
-        if (propertyOption === undefined) {
-          // TODO: convert to map lookup
-          propertyOption = (option! as ComplexOption).properties.find(
-            (currentOption) => currentOption.shortAlias === complexPathElement,
-          );
-          // convert to option name
-          if (propertyOption !== undefined) {
-            complexPathElement = propertyOption.name;
-          }
+        lookupPath = `${lookupPath}${option!.name}`;
+
+        // lazy creation of nested option paths to options
+        if (!this.optionLookupMapsByPath.has(lookupPath)) {
+          const lookupMap = new Map();
+          (option! as ComplexOption).properties.forEach((option) => {
+            lookupMap.set(option.name, option);
+            if (option.shortAlias) {
+              lookupMap.set(option.shortAlias, option);
+            }
+          });
+          this.optionLookupMapsByPath.set(lookupPath, lookupMap);
         }
+        option = this.optionLookupMapsByPath.get(lookupPath)!.get(
+          complexPathElement,
+        );
+
         // now we are parsing properties of complex options it is an error if we cannot match an option name or alias
-        if (propertyOption === undefined) {
+        if (option === undefined) {
           this.invalidArgument = {
             name: optionPath,
             reason: InvalidArgumentReason.UNKNOWN_PROPERTY,
@@ -214,7 +234,8 @@ class ParseContext {
           return false;
         }
 
-        option = propertyOption;
+        // ensure we convert to option name if lookup was via option alias
+        complexPathElement = option.name;
       }
 
       // check index size
@@ -224,6 +245,7 @@ class ParseContext {
         if (isFinite(parsedArrayIndex)) {
           if (parsedArrayIndex > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
             this.invalidArgument = {
+              argument: option,
               name: option!.name,
               reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
             };
@@ -237,6 +259,7 @@ class ParseContext {
       // check for indexing when not allowed
       if (!option.isArray && (arrayIndex !== undefined)) {
         this.invalidArgument = {
+          argument: option,
           name: optionPath,
           reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
         };
@@ -304,6 +327,7 @@ class ParseContext {
     // check if path ends up referring to a non-primitive
     if (isComplexOption(option)) {
       this.invalidArgument = {
+        argument: option,
         name: option.name,
         reason: InvalidArgumentReason.OPTION_IS_COMPLEX,
       };
@@ -346,20 +370,13 @@ class ParseContext {
 
           // if we haven't populated the argument value before...
           if (currentValue === undefined) {
-            // TODO: add unexepected? test
-            if (this.currentOption!.isArray) {
-              // TODO: add unexepected? test
-              (optionValue as PopulatedArgumentValues)[pathElement as string] =
-                [value];
-            } else {
-              // TODO: add unexepected? test
-              (optionValue as PopulatedArgumentValues)[pathElement as string] =
-                value;
-            }
+            (optionValue as PopulatedArgumentValues)[pathElement as string] =
+              value;
           } // if we have already populated the argument value as an array...
           else if (Array.isArray(currentValue)) {
             if (currentValue.length === MAXIMUM_ARGUMENT_ARRAY_SIZE) {
               this.invalidArgument = {
+                argument: this.currentOption,
                 name: this.currentOption!.name,
                 reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
               };
@@ -373,6 +390,7 @@ class ParseContext {
           } // else the value to add would make an array where it is not allowed
           else {
             this.invalidArgument = {
+              argument: this.currentOption,
               name: this.currentOption!.name,
               reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
             };
@@ -403,12 +421,6 @@ class ParseContext {
                 | PopulatedArgumentValueType;
           }
         } else {
-          // TODO: remove?
-          if (!Array.isArray(optionValue)) {
-            throw new Error(
-              "Unexpected parse state: optionValue is not an array",
-            );
-          }
           optionValue = (optionValue as Array<
             PopulatedArgumentSingleValueType | PopulatedArgumentValues
           >)[pathElement as number];
@@ -446,6 +458,7 @@ class ParseContext {
     else if (Array.isArray(currentValue)) {
       if (currentValue.length === MAXIMUM_ARGUMENT_ARRAY_SIZE) {
         this.invalidArgument = {
+          argument: positional,
           name: positional.name,
           reason: InvalidArgumentReason.ARRAY_SIZE_EXCEEDED,
         };
@@ -457,10 +470,6 @@ class ParseContext {
         ...currentValue as Array<PopulatedArgumentSingleValueType>,
         value,
       ] as Array<PopulatedArgumentSingleValueType>;
-    } // else the value we are adding now makes an array
-    else {
-      // TODO: remove
-      throw new Error("unexpected");
     }
 
     // Update the state
@@ -571,9 +580,9 @@ class ParseContext {
 }
 
 /**
- * Populate {@link ArgumentValues} for the provided {@link SubCommand} using the provided potential args.
+ * Populate {@link PopulatedArgumentValues} for the provided {@link SubCommand} using the provided potential args.
  *
- * @param subCommand the {@link SubCommand} for which {@link ArgumentValues} values should be populated.
+ * @param subCommand the {@link SubCommand} for which {@link PopulatedArgumentValues} values should be populated.
  * @param potentialArgs the potential args to use for population.
  * @param configuredValues optional configured {@link ArgumentValues} to use for population before parsing the provided arguments.
  */
@@ -611,10 +620,10 @@ export default function populateSubCommandValues(
       }
       break;
     }
-    // check if the arg was unused, flush the remaining args and stop parsing
+    // check if the arg was unused, save it and reset state for the next arg
     if (parseContext.state === ParseState.UNUSED) {
-      unusedArgs.push(...potentialArgs.slice(i));
-      break;
+      unusedArgs.push(potentialArg);
+      parseContext.state = ParseState.EMPTY;
     }
   }
 
@@ -625,6 +634,7 @@ export default function populateSubCommandValues(
       parseContext.setOptionValue("true");
     } else {
       parseContext.invalidArgument = {
+        argument: parseContext.currentOption,
         reason: InvalidArgumentReason.MISSING_VALUE,
         name: potentialArgs[potentialArgs.length - 1],
       };
@@ -634,7 +644,7 @@ export default function populateSubCommandValues(
   if (parseContext.invalidArgument) {
     return {
       populatedArgumentValues: parseContext.populatedArgumentValues,
-      unusedTrailingArgs: unusedArgs,
+      unusedArgs: unusedArgs,
       invalidArgument: parseContext.invalidArgument,
     };
   }
@@ -650,6 +660,6 @@ export default function populateSubCommandValues(
 
   return {
     populatedArgumentValues,
-    unusedTrailingArgs: unusedArgs,
+    unusedArgs: unusedArgs,
   };
 }

@@ -11,10 +11,10 @@ import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
 function expectExtractResult(
   result: GlobalCommandValuePopulationResult,
   value: ArgumentSingleValueType | undefined,
-  unusedTrailingArgs: ReadonlyArray<string>,
+  unusedArgs: ReadonlyArray<string>,
 ) {
   assertEquals(result.populatedArgumentValue, value);
-  assertEquals(result.unusedTrailingArgs, unusedTrailingArgs);
+  assertEquals(result.unusedArgs, unusedArgs);
 }
 
 describe("argumentValueValidation", () => {

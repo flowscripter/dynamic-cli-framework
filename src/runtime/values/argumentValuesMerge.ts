@@ -45,7 +45,7 @@ function arrayMerge(
   override.forEach((argValue, index) => {
     if (Array.isArray(argValue)) {
       throw new Error(
-        `Arrays of array values discovered, this is not supported: ${
+        `Array of array values discovered, this is not supported: ${
           JSON.stringify(argValue)
         }`,
       );

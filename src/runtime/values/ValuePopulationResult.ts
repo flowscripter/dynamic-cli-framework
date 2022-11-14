@@ -11,7 +11,7 @@ export interface ValuePopulationResult {
   /**
    * Any args which were unused during argument value population.
    */
-  readonly unusedTrailingArgs: ReadonlyArray<string>;
+  readonly unusedArgs: ReadonlyArray<string>;
 
   /**
    * Any invalid argument discovered while populating values.

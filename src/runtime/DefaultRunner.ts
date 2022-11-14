@@ -15,12 +15,12 @@ import { NonModifierCommand } from "../api/command/NonModifierCommand.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
-  isGroupCommand,
 } from "../api/command/CommandTypeGuards.ts";
 import SubCommand from "../api/command/SubCommand.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValues,
+  ComplexValueTypeName,
 } from "../api/argument/ArgumentValueTypes.ts";
 import getLogger from "./util/logger.ts";
 
@@ -51,41 +51,58 @@ export default class DefaultRunner implements Runner {
     invalidArgument: InvalidArgument,
     skipArgName: boolean,
   ): string {
-    let argString = "";
+    let nameString = "";
     if (!skipArgName && (invalidArgument.name !== undefined)) {
-      argString = invalidArgument.name;
-      if (invalidArgument.value !== undefined) {
-        if (typeof invalidArgument.value === "object") {
-          argString = `${argString}=${JSON.stringify(invalidArgument.value)} `;
-        } else {
-          argString = `${argString}=${invalidArgument.value} `;
-        }
+      nameString = invalidArgument.name;
+    }
+    let valueString = "";
+    if (invalidArgument.value !== undefined) {
+      if (invalidArgument.argument!.type !== ComplexValueTypeName.COMPLEX) {
+        valueString = JSON.stringify(invalidArgument.value);
       } else {
-        argString = `${argString} `;
+        valueString = `${invalidArgument.value}`;
       }
-    } else if (invalidArgument.value !== undefined) {
-      argString = `${invalidArgument.value} `;
+    }
+    let argString = "";
+    if (nameString !== "") {
+      if (valueString !== "") {
+        argString = `${nameString}=${valueString} `;
+      } else {
+        argString = `${nameString} `;
+      }
+    } else if (valueString !== "") {
+      argString = `${valueString} `;
     }
 
     let invalidString;
+
     switch (invalidArgument.reason) {
+      case InvalidArgumentReason.MISSING_VALUE:
+        invalidString = "(missing value)";
+        break;
+      case InvalidArgumentReason.INCORRECT_VALUE_TYPE:
+        invalidString = "(incorrect type)";
+        break;
       case InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES:
         invalidString = "(illegal multiple values)";
         break;
       case InvalidArgumentReason.ILLEGAL_VALUE:
         invalidString = "(illegal value)";
         break;
-      case InvalidArgumentReason.INCORRECT_VALUE_TYPE:
-        invalidString = "(incorrect type)";
-        break;
-      case InvalidArgumentReason.MISSING_VALUE:
-        invalidString = "(missing value)";
-        break;
       case InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY:
         invalidString = "(sparse array values)";
         break;
       case InvalidArgumentReason.UNKNOWN_PROPERTY:
         invalidString = "(unknown property)";
+        break;
+      case InvalidArgumentReason.NESTING_DEPTH_EXCEEDED:
+        invalidString = "(nesting depth exceeded)";
+        break;
+      case InvalidArgumentReason.ARRAY_SIZE_EXCEEDED:
+        invalidString = "(array size exceeded)";
+        break;
+      case InvalidArgumentReason.OPTION_IS_COMPLEX:
+        invalidString = "(specified option is complex)";
         break;
       default:
         invalidString = "";
@@ -94,98 +111,75 @@ export default class DefaultRunner implements Runner {
     return `${argString}${invalidString}`;
   }
 
-  private printParseResultError(parseResult: ParseResult): void {
-    const { command, groupCommand, invalidArguments } = parseResult;
-
-    let errorString = "Parse error for";
-    if (isGlobalCommand(command)) {
-      errorString = `${errorString} global command `;
-    } else if (isGlobalModifierCommand(command)) {
-      errorString = `${errorString} global modifier command `;
-    } else {
-      errorString = `${errorString} command `;
-    }
-    if (groupCommand) {
-      errorString = `${errorString}${
-        this.printer.yellow(`${groupCommand.name}:`)
-      }`;
-    }
-    errorString = `${errorString}${this.printer.yellow(command.name)}`;
-    if (invalidArguments.length > 0) {
-      errorString = `${errorString} with`;
-      if (invalidArguments.length === 1) {
-        errorString = `${errorString} arg `;
-      } else {
-        errorString = `${errorString} args `;
-      }
-      const skipArgName = isGlobalModifierCommand(command) ||
-        isGlobalCommand(command);
-      const argsString = invalidArguments.map(
-        (arg) =>
-          this.printer.yellow(this.getInvalidArgumentString(arg, skipArgName)),
-      ).join(", ");
-      errorString = `${errorString}${argsString}`;
-    }
-    this.printer.error(`${errorString}\n`, Icon.FAILURE);
-  }
-
-  private printCommandExecutionError(parseResult: ParseResult, err: Error) {
-    const { command, groupCommand, argumentValues } = parseResult;
+  private getCommandString(parseResult: ParseResult): string {
+    const { command, groupCommand } = parseResult;
 
     let commandString;
     if (isGlobalCommand(command)) {
       commandString = "global command ";
     } else if (isGlobalModifierCommand(command)) {
       commandString = "global modifier command ";
-    } else if (isGroupCommand(command)) {
-      commandString = "group command ";
     } else {
       commandString = "command ";
     }
     if (groupCommand) {
-      commandString = `${commandString}${
-        this.printer.yellow(`${groupCommand.name}:`)
-      }`;
+      commandString = `${commandString}${groupCommand.name}:`;
     }
-    commandString = `${commandString}${this.printer.yellow(command.name)}`;
-    const keys = Object.keys(argumentValues);
-    if (keys.length > 0) {
-      commandString = `${commandString} with`;
-      if (keys.length === 1) {
-        commandString = `${commandString} arg `;
-      } else {
-        commandString = `${commandString} args `;
-      }
+    return this.printer.yellow(`${commandString}${command.name}`);
+  }
 
-      const skipArgName = isGlobalModifierCommand(command) ||
-        isGlobalCommand(command);
-      commandString += Object.keys(argumentValues).map((arg) => {
-        if (skipArgName) {
-          return this.printer.yellow(`${argumentValues[arg]}`);
-        }
-        return this.printer.yellow(`${arg}=${argumentValues[arg]}`);
-      }).join(", ");
+  private async printParseResultError(parseResult: ParseResult) {
+    const commandString = this.getCommandString(parseResult);
+    const { command, invalidArguments } = parseResult;
+
+    let errorString = "Invalid ";
+    if (invalidArguments.length === 1) {
+      errorString = `${errorString} arg: `;
+    } else {
+      errorString = `${errorString} args: `;
     }
 
-    this.printer.error(
-      `Error running: ${commandString}\n  ${this.printer.red(err.message)}\n`,
+    const skipArgName = isGlobalModifierCommand(command) ||
+      isGlobalCommand(command);
+    const argsString = invalidArguments.map(
+      (arg) =>
+        this.printer.yellow(this.getInvalidArgumentString(arg, skipArgName)),
+    ).join(", ");
+    errorString = `${errorString}${argsString}`;
+
+    await this.printer.error(
+      `Parse error: ${commandString}\n  ${errorString}\n`,
       Icon.FAILURE,
     );
   }
 
-  private printNoCommandSpecifiedError() {
-    this.printer.error("No command specified");
+  private async printCommandExecutionError(
+    parseResult: ParseResult,
+    err: Error,
+  ) {
+    const commandString = this.getCommandString(parseResult);
+
+    await this.printer.error(
+      `Execution error: ${commandString}\n  ${err.message}\n`,
+      Icon.FAILURE,
+    );
   }
 
-  private printUnusedArgsWarning(overallUnusedArgs: ReadonlyArray<string>) {
+  private async printNoCommandSpecifiedError() {
+    await this.printer.error("No command specified");
+  }
+
+  private async printUnusedArgsWarning(
+    overallUnusedArgs: ReadonlyArray<string>,
+  ) {
     if (overallUnusedArgs.length === 1) {
-      this.printer.warn(
-        `Unused arg: ${this.printer.yellow(overallUnusedArgs[0])}\n`,
+      await this.printer.warn(
+        `Unused arg: ${overallUnusedArgs[0]}\n`,
         Icon.ALERT,
       );
     } else {
-      this.printer.warn(
-        `Unused args: ${this.printer.yellow(overallUnusedArgs.join(" "))}\n`,
+      await this.printer.warn(
+        `Unused args: ${overallUnusedArgs.join(" ")}\n`,
         Icon.ALERT,
       );
     }
@@ -252,7 +246,7 @@ export default class DefaultRunner implements Runner {
 
       // fast fail on a parse error
       if (parseResult.invalidArguments.length > 0) {
-        this.printParseResultError(parseResult);
+        await this.printParseResultError(parseResult);
         return RunResult.PARSE_ERROR;
       }
 
@@ -271,13 +265,18 @@ export default class DefaultRunner implements Runner {
       logger.debug(
         () =>
           `Executing command with name: '${parseResult.command.name}' and args: ${
-            JSON.stringify(parseResult.argumentValues)
+            JSON.stringify(
+              parseResult.populatedArgumentValues as ArgumentValues,
+            )
           }`,
       );
       try {
-        await parseResult.command.execute(parseResult.argumentValues, context);
+        await parseResult.command.execute(
+          parseResult.populatedArgumentValues as ArgumentValues,
+          context,
+        );
       } catch (err) {
-        this.printCommandExecutionError(parseResult, err);
+        await this.printCommandExecutionError(parseResult, err);
         return RunResult.COMMAND_ERROR;
       }
     }
@@ -314,7 +313,7 @@ export default class DefaultRunner implements Runner {
       );
 
       // otherwise, we successfully parsed a specified non-modifier
-      overallUnusedArgs.push(...parseResult.unusedTrailingArgs);
+      overallUnusedArgs.push(...parseResult.unusedArgs);
     }
 
     // if we haven't parsed a non-modifier clause, we should try any potential default command clauses
@@ -345,11 +344,11 @@ export default class DefaultRunner implements Runner {
           if (potentialDefaultParseResult.invalidArguments.length > 0) {
             overallUnusedArgs.push(...potentialDefaultClause.potentialArgs);
           } else {
-            // save the fact we have a result but don't break the loop
+            // save the fact we have a result but don't break the loop as
             // we need all other potential default command clauses to be processed to
             // collate their potential args into unused args.
             parseResult = potentialDefaultParseResult;
-            overallUnusedArgs.push(...parseResult.unusedTrailingArgs);
+            overallUnusedArgs.push(...parseResult.unusedArgs);
           }
         }
       });
@@ -385,13 +384,13 @@ export default class DefaultRunner implements Runner {
 
     // give up if we haven't successfully parsed a non-modifier command by now
     if (parseResult === undefined) {
-      this.printNoCommandSpecifiedError();
+      await this.printNoCommandSpecifiedError();
       return RunResult.PARSE_ERROR;
     }
 
     // warn on unused args
     if (overallUnusedArgs.length > 0) {
-      this.printUnusedArgsWarning(overallUnusedArgs);
+      await this.printUnusedArgsWarning(overallUnusedArgs);
     }
 
     // run the non-modifier command
@@ -407,11 +406,16 @@ export default class DefaultRunner implements Runner {
       logger.debug(() =>
         `Executing command with name: '${
           parseResult!.command.name
-        }' and args: ${JSON.stringify(parseResult!.argumentValues)}`
+        }' and args: ${
+          JSON.stringify(parseResult!.populatedArgumentValues as ArgumentValues)
+        }`
       );
-      await parseResult.command.execute(parseResult.argumentValues, context);
+      await parseResult.command.execute(
+        parseResult.populatedArgumentValues as ArgumentValues,
+        context,
+      );
     } catch (err) {
-      this.printCommandExecutionError(parseResult, err);
+      await this.printCommandExecutionError(parseResult, err);
       return RunResult.COMMAND_ERROR;
     }
 

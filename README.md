@@ -357,8 +357,7 @@ arguments itself (apart from the member `SubCommand` name and its arguments).
 `GlobalCommand` and `GlobalModifierCommand` instances support the definition of
 a single `GlobalCommandArgument` consisting of:
 
-- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING` or `PASSWORD` (a
-  `STRING` value which is never printed).
+- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING`.
 - an optional set of valid value choices.
 - an optional default value.
 - whether the value is mandatory.
@@ -397,8 +396,7 @@ Common to both are the following features:
 
 - a name which must consist of alphanumeric non-whitespace ASCII characters or
   `_` and `-` characters. It cannot start with `-`.
-- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING` or `PASSWORD` (a
-  `STRING` value which is never printed).
+- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN` or `STRING`.
 - an optional set of valid value choices.
 
 ##### Options
@@ -461,13 +459,34 @@ For complex options, the path to the desired property is specified using a `.`
 separator:
 
     executable <sub_command> --<parent_option_name>.<property_name>=<value> --<parent_option_name>.<property_name>.<sub-property-name>=<value>
+    executable <sub_command> --<parent_option_name>.<property_short_alias>=<value> --<parent_option_short_alias>.<property_name>.<sub-property-name>=<value>
+
+Mixed use of option names and short aliases is supported when specifying nested
+complex option properties. As an example these would all be equivalent:
+
+    --alpha.beta.gamma=1
+    --alpha.b.gamma=1
+    --alpha.b.g=1
+    -a.beta.gamma=1
+    -a.beta.g=1
+    -a.b.g=1
+
+Implicit and explicit array indexing is supported when specifying nested complex
+option properties. However the implicit indexing is only applied to the last
+nested property reference. As an example these would be equivalent:
+
+    --foo.bar=1 --foo.bar=2
+    --foo.bar[0]=1 --foo.bar[1]=2
+
+If arrays of complex options need to be referenced then explicit indexing is
+required. As an example:
+
+    --foo[0].bar=1 --foo[1].bar=2
 
 Some concrete examples:
 
     myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080
     myNetworkApp --poll --address[0].host=127.0.0.1 --address[0].port=8080 --address[1].host=10.0.10.1 --address[1].port=443
-
-[//]: # (TODO: document mix of name and alias e.g. --alpha.b and -a.beta)
 
 ##### Positionals
 
@@ -575,8 +594,16 @@ The following scenarios produce validation errors:
   indices and this resulted in empty entries in the array of values.
 - **Unknown Property**: If the value provided is for a property which is not
   defined on a complex object argument.
+- **Array Size Exceeded**: If there is an attempt set more than the maximum
+  (255) number of values for an array option.
+- **Nesting Depth Exceeded**: If there is an attempt specify a complex option
+  property at a nesting depth more than the maximum (10).
+- **Option Is Complex**: If the argument attempts to set a value on a complex
+  option rather than on an option or a property of a complex option
 
-[//]: # (TODO: document MAXIMUM_ARGUMENT_ARRAY_SIZE, MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH, OPTION_IS_COMPLEX)
+## Command Execution
+
+[//]: # (TODO: document Argument Values provided as valid and matching structure of defined options then positionals)
 
 ## Usage Examples
 

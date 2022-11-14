@@ -9,7 +9,7 @@ import ComplexOption from "../argument/ComplexOption.ts";
  */
 export default interface SubCommand extends Command {
   /**
-   * {@link Option} argument definitions for the sub-command.
+   * {@link Option} or {@link ComplexOption} argument definitions for the sub-command.
    */
   readonly options: ReadonlyArray<Option | ComplexOption>;
 

@@ -2,8 +2,6 @@ import Printer, { Icon, Level } from "../../api/service/core/Printer.ts";
 import { default as Spinner } from "./util/Spinner.ts";
 import { colors, conversions } from "../../../deps.ts";
 
-// TODO: test output
-
 enum Color {
   PRIMARY = 0,
   SECONDARY = 1,
