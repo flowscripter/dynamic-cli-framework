@@ -4,6 +4,7 @@
  * NOTE: JavaScript does not have a special runtime value for INTEGER so this is covered by `number`.
  */
 export type ArgumentSingleValueType = number | string | boolean;
+// TODO: add secret type -> used to ensure not output in logging, not output in config and used secret input when implementing prompt service
 
 /**
  * The type of the value to be parsed as an argument can be: `boolean`, `number` or `string` or an array of these.

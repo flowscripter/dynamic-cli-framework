@@ -8,6 +8,26 @@ import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
  */
 export default interface CommandRegistry {
   /**
+   * Get all registered {@link SubCommand} instances.
+   */
+  getSubCommands(): ReadonlyArray<SubCommand>;
+
+  /**
+   * Get all registered {@link GroupCommand} instances.
+   */
+  getGroupCommands(): ReadonlyArray<GroupCommand>;
+
+  /**
+   * Get all registered {@link GlobalCommand} instances.
+   */
+  getGlobalCommands(): ReadonlyArray<GlobalCommand>;
+
+  /**
+   * Get all registered {@link GlobalModifierCommand} instances.
+   */
+  getGlobalModifierCommands(): ReadonlyArray<GlobalModifierCommand>;
+
+  /**
    * Get a registered {@link SubCommand} by name.
    */
   getSubCommandByName(name: string): SubCommand | undefined;
@@ -18,11 +38,11 @@ export default interface CommandRegistry {
   getGroupCommandByName(name: string): GroupCommand | undefined;
 
   /**
-   * Get a registered {@link GroupCommand} and member {@link SubCommand} by name.
+   * Get a registered {@link GroupCommand} and member {@link SubCommand} by
+   * combined name e.g. `<group-command-name>:<member-sub-command-name>`.
    */
-  getGroupCommandAndMemberSubCommandByNames(
-    groupCommandName: string,
-    memberSubCommandName: string,
+  getGroupCommandAndMemberSubCommandByName(
+    getGroupCommandAndMemberSubCommandByName: string,
   ): { groupCommand: GroupCommand; memberSubCommand: SubCommand } | undefined;
 
   /**

@@ -8,7 +8,7 @@ import {
   GroupCommand,
   Option,
   Positional,
-  RunResult,
+  RunState,
   SubCommand,
 } from "../../mod.ts";
 import { assertEquals, Buffer, describe, it } from "../test_deps.ts";
@@ -16,10 +16,9 @@ import DefaultRunner from "../../src/runtime/DefaultRunner.ts";
 import DefaultParser from "../../src/runtime/DefaultParser.ts";
 import DefaultCommandRegistry from "../../src/registry/DefaultCommandRegistry.ts";
 import DefaultPrinter from "../../src/service/core/DefaultPrinter.ts";
-import DefaultCLIConfig from "../../src/DefaultCLIConfig.ts";
-
-// TODO: test output
-// TODO: test logging and printer output never include password values
+import DefaultContext from "../../src/runtime/DefaultContext.ts";
+import { expectBufferStringIncludes } from "../fixtures/util.ts";
+import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 
 function getSubCommand(
   name: string,
@@ -75,7 +74,8 @@ function getGroupCommand(
 
 describe("DefaultRunner", () => {
   it("Sub-Command run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let hasRun = false;
 
     const option = {
@@ -96,16 +96,17 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command", "--foo", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(hasRun, true);
   });
 
   it("Global Modifier run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifierHasRun = false;
     let subHasRun = false;
 
@@ -137,11 +138,11 @@ describe("DefaultRunner", () => {
     let runResult = await runner.run(
       ["--modifierCommand=bar", "subCommand"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(subHasRun, true);
 
@@ -151,17 +152,18 @@ describe("DefaultRunner", () => {
     runResult = await runner.run(
       ["-c", "bar", "subCommand"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(subHasRun, true);
   });
 
   it("Global Command run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let hasRun = false;
 
     const command = getGlobalCommand("command", "c", {
@@ -179,11 +181,11 @@ describe("DefaultRunner", () => {
     let runResult = await runner.run(
       ["--command=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(hasRun, true);
 
     hasRun = false;
@@ -191,16 +193,17 @@ describe("DefaultRunner", () => {
     runResult = await runner.run(
       ["-c", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(hasRun, true);
   });
 
   it("Group Command run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let subHasRun = false;
     let groupHasRun = false;
 
@@ -221,28 +224,29 @@ describe("DefaultRunner", () => {
     let runResult = await runner.run(
       ["group", "command"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(groupHasRun, true);
     assertEquals(subHasRun, true);
 
     runResult = await runner.run(
       ["group:command"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(groupHasRun, true);
     assertEquals(subHasRun, true);
   });
 
   it("Global modifier and non-global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifierHasRun = false;
     let subHasRun = false;
 
@@ -274,17 +278,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier=bar", "command", "--foo", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(subHasRun, true);
   });
 
   it("Global modifier and global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifierHasRun = false;
     let globalHasRun = false;
 
@@ -314,17 +319,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier=bar", "-g", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(globalHasRun, true);
   });
 
   it("Two global modifier and global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifier1HasRun = false;
     let modifier2HasRun = false;
     let globalHasRun = false;
@@ -364,18 +370,19 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier1=bar", "-g", "bar", "--modifier2=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifier1HasRun, true);
     assertEquals(modifier2HasRun, true);
     assertEquals(globalHasRun, true);
   });
 
   it("Global modifier and default run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifierHasRun = false;
     let defaultHasRun = false;
 
@@ -402,18 +409,20 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       globalCommand,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(defaultHasRun, true);
   });
 
   it("Global modifier parse error", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let modifierHasRun = false;
     let defaultHasRun = false;
 
@@ -440,18 +449,21 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       globalCommand,
     );
 
-    assertEquals(runResult, RunResult.PARSE_ERROR);
+    assertEquals(runResult.runState, RunState.PARSE_ERROR);
+    expectBufferStringIncludes(buffer, "(missing value)");
     assertEquals(modifierHasRun, false);
     assertEquals(defaultHasRun, false);
   });
 
   it("Default run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let subHasRun = false;
 
     const option = {
@@ -471,17 +483,19 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--foo=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       subCommand,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(subHasRun, true);
   });
 
   it("Error thrown in non-global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -490,7 +504,7 @@ describe("DefaultRunner", () => {
     const subCommand = getSubCommand("command", [option], []);
 
     subCommand.execute = (): Promise<void> => {
-      throw new Error();
+      throw new Error("d34db33f");
     };
 
     const commandRegistry = new DefaultCommandRegistry([subCommand]);
@@ -498,16 +512,16 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command", "--foo", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.COMMAND_ERROR);
+    assertEquals(runResult.runState, RunState.EXECUTION_ERROR);
   });
 
   it("Error thrown in global run scenario", async () => {
     const buffer = new Buffer();
-    const printer = new DefaultPrinter(buffer);
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     const globalCommand = getGlobalCommand("global", "g", {
       name: "value",
@@ -523,18 +537,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--global=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.COMMAND_ERROR);
-    console.error(buffer);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Error running'));
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('d34db33f'));
+    assertEquals(runResult.runState, RunState.EXECUTION_ERROR);
+    expectBufferStringIncludes(buffer, "Execution error");
+    expectBufferStringIncludes(buffer, "d34db33f");
   });
 
   it("Error thrown in global modifier run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let globalHasRun = false;
 
     const globalModifierCommand = getGlobalModifierCommand("modifier", "m", 1);
@@ -556,18 +570,19 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--global", "--modifier"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.COMMAND_ERROR);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Error running'));
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('d34db33f'));
+    assertEquals(runResult.runState, RunState.EXECUTION_ERROR);
+    expectBufferStringIncludes(buffer, "Execution error");
+    expectBufferStringIncludes(buffer, "d34db33f");
     assertEquals(globalHasRun, false);
   });
 
   it("Parse error warning in non-global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     let hasRun = false;
     const option = {
@@ -587,16 +602,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command", "-f"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.PARSE_ERROR);
+    assertEquals(runResult.runState, RunState.PARSE_ERROR);
+    expectBufferStringIncludes(buffer, "-f (missing value)");
     assertEquals(hasRun, false);
   });
 
   it("No command specified scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     let hasRun = false;
     const option = {
@@ -616,16 +633,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       [],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.PARSE_ERROR);
+    assertEquals(runResult.runState, RunState.NO_COMMAND);
+    expectBufferStringIncludes(buffer, "No command specified");
     assertEquals(hasRun, false);
   });
 
   it("Unknown arg warning in non-global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     let hasRun = false;
 
@@ -641,17 +660,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command", "-bad"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused arg: -bad'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: -bad");
     assertEquals(hasRun, true);
   });
 
   it("Unknown arg warning in global run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     let hasRun = false;
 
@@ -667,18 +687,20 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--bad"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       globalCommand,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused arg: --bad'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: --bad");
     assertEquals(hasRun, true);
   });
 
   it("Error thrown default run scenario", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const globalCommand = getGlobalCommand("global", "g");
 
     globalCommand.execute = (): Promise<void> => {
@@ -690,18 +712,20 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       [],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       globalCommand,
     );
 
-    assertEquals(runResult, RunResult.COMMAND_ERROR);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Error running'));
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('d34db33f'));
+    assertEquals(runResult.runState, RunState.EXECUTION_ERROR);
+    expectBufferStringIncludes(buffer, "Execution error:");
+    expectBufferStringIncludes(buffer, "d34db33f");
   });
 
   it("Run default command based on all args", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const command = getSubCommand("command", [{
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -714,17 +738,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--foo=f", "--goo=g"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       command,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).not.toHaveBeenCalledWith(expect.stringContaining('Unused'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
   });
 
   it("Run default command based on config only and treating all args as unused", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const command = getSubCommand("command", [{
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -737,27 +762,24 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--bip=b", "--bop=b"],
       commandRegistry,
-      new DefaultCLIConfig(
-        "foo",
-        "bar",
-        "1",
-        new Map([
-          ["command", {
-            foo: "f",
-            goo: "g",
-          }],
-        ]),
-      ),
-      {},
+      new Map([
+        ["command", {
+          foo: "f",
+          goo: "g",
+        }],
+      ]),
+      new DefaultContext(getCLIConfig()),
+      [],
       command,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused args: --bip=b --bop=b");
   });
 
   it("Run default command based on some args and treating some args as unused", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const command = getSubCommand("command", [{
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -771,26 +793,23 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--bip=b", "--goo=g"],
       commandRegistry,
-      new DefaultCLIConfig(
-        "foo",
-        "bar",
-        "1",
-        new Map([
-          ["command", {
-            foo: "f",
-          }],
-        ]),
-      ),
-      {},
+      new Map([
+        ["command", {
+          foo: "f",
+        }],
+      ]),
+      new DefaultContext(getCLIConfig()),
+      [],
       command,
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: --bip=b");
   });
 
   it("Fail to parse default command with some unused args", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const command = getSubCommand("command", [{
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -804,16 +823,19 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--bip=b", "--goo=g"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [],
       command,
     );
 
-    assertEquals(runResult, RunResult.PARSE_ERROR);
+    assertEquals(runResult.runState, RunState.NO_COMMAND);
+    expectBufferStringIncludes(buffer, "No command specified");
   });
 
   it("Illegal second command treated as unknown arg", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     let hasRun = false;
 
@@ -838,17 +860,18 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command1", "--foo", "bar", "command2"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused arg: command2'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: command2");
     assertEquals(hasRun, true);
   });
 
   it("Ensure global modifier and global run priority order", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     const hasRun: string[] = [];
 
     const modifier1Command = getGlobalModifierCommand("modifier1", "1", 2, {
@@ -886,18 +909,90 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["--modifier2=foo", "-g", "bar", "--modifier1=bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(hasRun[0], "modifier1");
     assertEquals(hasRun[1], "modifier2");
     assertEquals(hasRun[2], "global");
   });
 
+  it("Ensure default global modifier and global run priority order", async () => {
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
+    const hasRun: string[] = [];
+
+    const modifier1Command = getGlobalModifierCommand("modifier1", "1", 3, {
+      name: "value",
+      type: ArgumentValueTypeName.STRING,
+    });
+    const modifier2Command = getGlobalModifierCommand("modifier2", "2", 1, {
+      name: "value",
+      type: ArgumentValueTypeName.STRING,
+    });
+    const defaultModifier1Command = getGlobalModifierCommand(
+      "defaultmodifier1",
+      "3",
+      2,
+    );
+    const defaultModifier2Command = getGlobalModifierCommand(
+      "defaultmodifier2",
+      "4",
+      4,
+    );
+    const globalCommand = getGlobalCommand("global", "g", {
+      name: "value",
+      type: ArgumentValueTypeName.STRING,
+    });
+
+    modifier1Command.execute = (): Promise<void> => {
+      hasRun.push(modifier1Command.name);
+      return Promise.resolve();
+    };
+    modifier2Command.execute = (): Promise<void> => {
+      hasRun.push(modifier2Command.name);
+      return Promise.resolve();
+    };
+    defaultModifier1Command.execute = (): Promise<void> => {
+      hasRun.push(defaultModifier1Command.name);
+      return Promise.resolve();
+    };
+    defaultModifier2Command.execute = (): Promise<void> => {
+      hasRun.push(defaultModifier2Command.name);
+      return Promise.resolve();
+    };
+    globalCommand.execute = (): Promise<void> => {
+      hasRun.push(globalCommand.name);
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([
+      globalCommand,
+      modifier1Command,
+      modifier2Command,
+    ]);
+    const runner = new DefaultRunner(new DefaultParser(), printer);
+    const runResult = await runner.run(
+      ["--modifier2=foo", "-g", "bar", "--modifier1=bar"],
+      commandRegistry,
+      new Map(),
+      new DefaultContext(getCLIConfig()),
+      [defaultModifier1Command, defaultModifier2Command],
+    );
+
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    assertEquals(hasRun[0], "defaultmodifier2");
+    assertEquals(hasRun[1], "modifier1");
+    assertEquals(hasRun[2], "defaultmodifier1");
+    assertEquals(hasRun[3], "modifier2");
+    assertEquals(hasRun[4], "global");
+  });
+
   it("Warning for unused leading args", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     const option = {
       name: "foo",
@@ -910,16 +1005,17 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["blah", "command", "--foo", "bar"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(expect.stringContaining('Unused arg: blah'));
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: blah");
   });
 
   it("Warning for unused trailing args", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     printer.colorEnabled = false;
     const option = {
       name: "foo",
@@ -932,18 +1028,17 @@ describe("DefaultRunner", () => {
     const runResult = await runner.run(
       ["command", "--foo", "bar", "blah"],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
-    // expect(mockStderr).toHaveBeenCalledWith(
-    //   expect.stringContaining("Unused arg: blah"),
-    // );
+    assertEquals(runResult.runState, RunState.SUCCESS);
+    expectBufferStringIncludes(buffer, "Unused arg: blah");
   });
 
   it("Sub-Command run scenario with complex options and explicit arrays", async () => {
-    const printer = new DefaultPrinter(Deno.stderr);
+    const buffer = new Buffer();
+    const printer = new DefaultPrinter(buffer, buffer);
     let hasRun = false;
 
     const options = [{
@@ -1003,11 +1098,11 @@ describe("DefaultRunner", () => {
         "-a.b[1].d[0]=3",
       ],
       commandRegistry,
-      new DefaultCLIConfig("foo", "bar", "1"),
-      {},
+      new Map(),
+      new DefaultContext(getCLIConfig()),
     );
 
-    assertEquals(runResult, RunResult.SUCCESS);
+    assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(hasRun, true);
   });
 });

@@ -2,14 +2,12 @@ import Runner from "../api/runtime/Runner.ts";
 import Context from "../api/runtime/Context.ts";
 import Parser, {
   GlobalCommandClause,
-  InvalidArgument,
-  InvalidArgumentReason,
+  GlobalModifierCommandClause,
   ParseResult,
   SubCommandClause,
 } from "../api/runtime/Parser.ts";
-import { RunResult } from "../api/RunResult.ts";
-import CLIConfig from "../api/CLIConfig.ts";
-import Printer, { Icon } from "../api/service/core/Printer.ts";
+import RunResult, { RunState } from "../api/RunResult.ts";
+import Printer, {Icon, PRINTER_SERVICE_ID} from "../api/service/core/Printer.ts";
 import CommandRegistry from "../api/registry/CommandRegistry.ts";
 import { NonModifierCommand } from "../api/command/NonModifierCommand.ts";
 import {
@@ -20,11 +18,95 @@ import SubCommand from "../api/command/SubCommand.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValues,
-  ComplexValueTypeName,
 } from "../api/argument/ArgumentValueTypes.ts";
-import getLogger from "./util/logger.ts";
+import getLogger from "../util/logger.ts";
+import { getInvalidArgumentString } from "./values/argumentValueValidation.ts";
+import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 
 const logger = getLogger("DefaultRunner");
+
+function getCommandString(printer: Printer, parseResult: ParseResult): string {
+  const { command, groupCommand } = parseResult;
+
+  let commandString;
+  if (isGlobalCommand(command)) {
+    commandString = "global command ";
+  } else if (isGlobalModifierCommand(command)) {
+    commandString = "global modifier command ";
+  } else {
+    commandString = "command ";
+  }
+  if (groupCommand) {
+    return printer.yellow(
+        `${commandString}'${groupCommand.name}:${command.name}'`,
+    );
+  }
+  return printer.yellow(`${commandString}'${command.name}'`);
+}
+
+async function printParseResultError(
+    context: Context,
+    parseResult: ParseResult) {
+  const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
+  const commandString = getCommandString(printer, parseResult);
+  const { command, invalidArguments } = parseResult;
+
+  let errorString = "=> ";
+
+  const skipArgName = isGlobalModifierCommand(command) ||
+      isGlobalCommand(command);
+  const argsString = invalidArguments.map(
+      (arg) => printer.yellow(getInvalidArgumentString(arg, skipArgName)),
+  ).join(", ");
+  errorString = `${errorString}${argsString}`;
+
+  await printer.error(
+      `Parse error: ${commandString}\n  ${errorString}\n\n`,
+      Icon.FAILURE,
+  );
+}
+
+async function printCommandExecutionError(
+    context: Context,
+    parseResult: ParseResult,
+    err: Error,
+) {
+  const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
+  const commandString = getCommandString(printer, parseResult);
+  if (err !== undefined) {
+    await printer.error(
+        `Execution error: ${commandString}\n  => '${err.message}'\n\n`,
+        Icon.FAILURE,
+    );
+  } else {
+    await printer.error(
+        `Execution error: ${commandString}\n  => error is undefined\n\n`,
+        Icon.FAILURE,
+    );
+  }
+}
+
+async function printNoCommandSpecifiedError(context: Context) {
+  const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
+  await printer.error("No command specified\n\n");
+}
+
+async function printUnusedArgsWarning(context: Context,
+    overallUnusedArgs: ReadonlyArray<string>,
+) {
+  const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
+  if (overallUnusedArgs.length === 1) {
+    await printer.warn(
+        `Unused arg: ${overallUnusedArgs[0]}\n\n`,
+        Icon.ALERT,
+    );
+  } else {
+    await printer.warn(
+        `Unused args: ${overallUnusedArgs.join(" ")}\n\n`,
+        Icon.ALERT,
+    );
+  }
+}
 
 /**
  * Default implementation of a {@link Runner}.
@@ -34,168 +116,45 @@ const logger = getLogger("DefaultRunner");
  */
 export default class DefaultRunner implements Runner {
   private readonly parser: Parser;
-  private readonly printer: Printer;
 
   /**
-   * Constructor configures the instance with the specified {@link Parser}, {@link Printer} and {@CliConfiguration} instances.
+   * Constructor configures the instance with the specified {@link Parser}.
    *
    * @param parser the {@link Parser} implementation to use.
-   * @param printer the {@link Printer} implementation to use.
    */
-  public constructor(parser: Parser, printer: Printer) {
+  public constructor(parser: Parser) {
     this.parser = parser;
-    this.printer = printer;
-  }
-
-  private getInvalidArgumentString(
-    invalidArgument: InvalidArgument,
-    skipArgName: boolean,
-  ): string {
-    let nameString = "";
-    if (!skipArgName && (invalidArgument.name !== undefined)) {
-      nameString = invalidArgument.name;
-    }
-    let valueString = "";
-    if (invalidArgument.value !== undefined) {
-      if (invalidArgument.argument!.type !== ComplexValueTypeName.COMPLEX) {
-        valueString = JSON.stringify(invalidArgument.value);
-      } else {
-        valueString = `${invalidArgument.value}`;
-      }
-    }
-    let argString = "";
-    if (nameString !== "") {
-      if (valueString !== "") {
-        argString = `${nameString}=${valueString} `;
-      } else {
-        argString = `${nameString} `;
-      }
-    } else if (valueString !== "") {
-      argString = `${valueString} `;
-    }
-
-    let invalidString;
-
-    switch (invalidArgument.reason) {
-      case InvalidArgumentReason.MISSING_VALUE:
-        invalidString = "(missing value)";
-        break;
-      case InvalidArgumentReason.INCORRECT_VALUE_TYPE:
-        invalidString = "(incorrect type)";
-        break;
-      case InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES:
-        invalidString = "(illegal multiple values)";
-        break;
-      case InvalidArgumentReason.ILLEGAL_VALUE:
-        invalidString = "(illegal value)";
-        break;
-      case InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY:
-        invalidString = "(sparse array values)";
-        break;
-      case InvalidArgumentReason.UNKNOWN_PROPERTY:
-        invalidString = "(unknown property)";
-        break;
-      case InvalidArgumentReason.NESTING_DEPTH_EXCEEDED:
-        invalidString = "(nesting depth exceeded)";
-        break;
-      case InvalidArgumentReason.ARRAY_SIZE_EXCEEDED:
-        invalidString = "(array size exceeded)";
-        break;
-      case InvalidArgumentReason.OPTION_IS_COMPLEX:
-        invalidString = "(specified option is complex)";
-        break;
-      default:
-        invalidString = "";
-        break;
-    }
-    return `${argString}${invalidString}`;
-  }
-
-  private getCommandString(parseResult: ParseResult): string {
-    const { command, groupCommand } = parseResult;
-
-    let commandString;
-    if (isGlobalCommand(command)) {
-      commandString = "global command ";
-    } else if (isGlobalModifierCommand(command)) {
-      commandString = "global modifier command ";
-    } else {
-      commandString = "command ";
-    }
-    if (groupCommand) {
-      commandString = `${commandString}${groupCommand.name}:`;
-    }
-    return this.printer.yellow(`${commandString}${command.name}`);
-  }
-
-  private async printParseResultError(parseResult: ParseResult) {
-    const commandString = this.getCommandString(parseResult);
-    const { command, invalidArguments } = parseResult;
-
-    let errorString = "Invalid ";
-    if (invalidArguments.length === 1) {
-      errorString = `${errorString} arg: `;
-    } else {
-      errorString = `${errorString} args: `;
-    }
-
-    const skipArgName = isGlobalModifierCommand(command) ||
-      isGlobalCommand(command);
-    const argsString = invalidArguments.map(
-      (arg) =>
-        this.printer.yellow(this.getInvalidArgumentString(arg, skipArgName)),
-    ).join(", ");
-    errorString = `${errorString}${argsString}`;
-
-    await this.printer.error(
-      `Parse error: ${commandString}\n  ${errorString}\n`,
-      Icon.FAILURE,
-    );
-  }
-
-  private async printCommandExecutionError(
-    parseResult: ParseResult,
-    err: Error,
-  ) {
-    const commandString = this.getCommandString(parseResult);
-
-    await this.printer.error(
-      `Execution error: ${commandString}\n  ${err.message}\n`,
-      Icon.FAILURE,
-    );
-  }
-
-  private async printNoCommandSpecifiedError() {
-    await this.printer.error("No command specified");
-  }
-
-  private async printUnusedArgsWarning(
-    overallUnusedArgs: ReadonlyArray<string>,
-  ) {
-    if (overallUnusedArgs.length === 1) {
-      await this.printer.warn(
-        `Unused arg: ${overallUnusedArgs[0]}\n`,
-        Icon.ALERT,
-      );
-    } else {
-      await this.printer.warn(
-        `Unused args: ${overallUnusedArgs.join(" ")}\n`,
-        Icon.ALERT,
-      );
-    }
   }
 
   public async run(
     args: ReadonlyArray<string>,
     commandRegistry: CommandRegistry,
-    cliConfig: CLIConfig,
+    defaultArgumentValuesByCommandName: ReadonlyMap<
+      string,
+      ArgumentValues | ArgumentSingleValueType
+    >,
     context: Context,
+    defaultGlobalModifierCommands?: ReadonlyArray<GlobalModifierCommand>,
     defaultCommand?: NonModifierCommand,
   ): Promise<RunResult> {
     const scanResult = this.parser.scanForCommandClauses(args, commandRegistry);
 
+    const globalModifierCommandClauses = [
+      ...scanResult.globalModifierCommandClauses,
+    ];
+    if (defaultGlobalModifierCommands) {
+      globalModifierCommandClauses.push(
+        ...defaultGlobalModifierCommands.map((command) => {
+          return {
+            command,
+            potentialArgs: [],
+          } as GlobalModifierCommandClause;
+        }),
+      );
+    }
+
     // sort the global modifier clauses in order of execute priority
-    const modifierCommandClauses = scanResult.globalModifierCommandClauses
+    const modifierCommandClauses = globalModifierCommandClauses
       .slice()
       .sort((a, b): number => {
         return (a.command.executePriority < b.command.executePriority) ? 1 : -1;
@@ -217,11 +176,15 @@ export default class DefaultRunner implements Runner {
     if (defaultCommand) {
       defaultCommandIsGlobal = isGlobalCommand(defaultCommand);
       if (defaultCommandIsGlobal) {
-        defaultGlobalCommandDefaultArgumentValue = cliConfig
-          .getDefaultArgumentValueForGlobalCommand(defaultCommand.name);
+        defaultGlobalCommandDefaultArgumentValue =
+          defaultArgumentValuesByCommandName.get(defaultCommand.name) as
+            | ArgumentSingleValueType
+            | undefined;
       } else {
-        defaultSubCommandDefaultArgumentValues = cliConfig
-          .getDefaultArgumentValuesForSubCommand(defaultCommand.name);
+        defaultSubCommandDefaultArgumentValues =
+          defaultArgumentValuesByCommandName.get(defaultCommand.name) as
+            | ArgumentValues
+            | undefined;
       }
     }
 
@@ -236,18 +199,23 @@ export default class DefaultRunner implements Runner {
       overallUnusedArgs.push(...scanResult.unusedLeadingArgs);
     }
 
-    for (const globalModifierCommandClause of modifierCommandClauses) {
+    for (let i = 0; i < modifierCommandClauses.length; i++) {
+      const globalModifierCommandClause = modifierCommandClauses[i];
       const parseResult = this.parser.parseGlobalCommandClause(
         globalModifierCommandClause,
-        cliConfig.getDefaultArgumentValueForGlobalCommand(
+        defaultArgumentValuesByCommandName.get(
           globalModifierCommandClause.command.name,
-        ),
+        ) as ArgumentSingleValueType | undefined,
       );
 
       // fast fail on a parse error
       if (parseResult.invalidArguments.length > 0) {
-        await this.printParseResultError(parseResult);
-        return RunResult.PARSE_ERROR;
+        await printParseResultError(context, parseResult);
+        return {
+          runState: RunState.PARSE_ERROR,
+          command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
+        };
       }
 
       // if a default command is specified create a potential default clause using the trailing args
@@ -267,6 +235,8 @@ export default class DefaultRunner implements Runner {
           `Executing command with name: '${parseResult.command.name}' and args: ${
             JSON.stringify(
               parseResult.populatedArgumentValues as ArgumentValues,
+              null,
+              2,
             )
           }`,
       );
@@ -276,8 +246,12 @@ export default class DefaultRunner implements Runner {
           context,
         );
       } catch (err) {
-        await this.printCommandExecutionError(parseResult, err);
-        return RunResult.COMMAND_ERROR;
+        await printCommandExecutionError(context, parseResult, err);
+        return {
+          runState: RunState.EXECUTION_ERROR,
+          command: parseResult.command,
+          error: err,
+        };
       }
     }
 
@@ -287,23 +261,28 @@ export default class DefaultRunner implements Runner {
     if (scanResult.subCommandClause) {
       parseResult = this.parser.parseSubCommandClause(
         scanResult.subCommandClause,
-        cliConfig.getDefaultArgumentValuesForSubCommand(
+        defaultArgumentValuesByCommandName.get(
           scanResult.subCommandClause.command.name,
-        ),
+        ) as ArgumentValues | undefined,
       );
     } else if (scanResult.globalCommandClause) {
       parseResult = this.parser.parseGlobalCommandClause(
         scanResult.globalCommandClause,
-        cliConfig.getDefaultArgumentValueForGlobalCommand(
+        defaultArgumentValuesByCommandName.get(
           scanResult.globalCommandClause.command.name,
-        ),
+        ) as ArgumentSingleValueType | undefined,
       );
     }
 
     if (parseResult) {
       // fail on a parse error
       if (parseResult.invalidArguments.length > 0) {
-        return RunResult.PARSE_ERROR;
+        await printParseResultError(context, parseResult);
+        return {
+          runState: RunState.PARSE_ERROR,
+          command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
+        };
       }
 
       // any default command clauses are no longer relevant, therefore shift all potential default clause args to unused args.
@@ -384,13 +363,15 @@ export default class DefaultRunner implements Runner {
 
     // give up if we haven't successfully parsed a non-modifier command by now
     if (parseResult === undefined) {
-      await this.printNoCommandSpecifiedError();
-      return RunResult.PARSE_ERROR;
+      await printNoCommandSpecifiedError(context);
+      return {
+        runState: RunState.NO_COMMAND,
+      };
     }
 
     // warn on unused args
     if (overallUnusedArgs.length > 0) {
-      await this.printUnusedArgsWarning(overallUnusedArgs);
+      await printUnusedArgsWarning(context, overallUnusedArgs);
     }
 
     // run the non-modifier command
@@ -407,7 +388,11 @@ export default class DefaultRunner implements Runner {
         `Executing command with name: '${
           parseResult!.command.name
         }' and args: ${
-          JSON.stringify(parseResult!.populatedArgumentValues as ArgumentValues)
+          JSON.stringify(
+            parseResult!.populatedArgumentValues as ArgumentValues,
+            null,
+            2,
+          )
         }`
       );
       await parseResult.command.execute(
@@ -415,10 +400,16 @@ export default class DefaultRunner implements Runner {
         context,
       );
     } catch (err) {
-      await this.printCommandExecutionError(parseResult, err);
-      return RunResult.COMMAND_ERROR;
+      await printCommandExecutionError(context, parseResult, err);
+      return {
+        runState: RunState.EXECUTION_ERROR,
+        command: parseResult.command,
+        error: err,
+      };
     }
 
-    return RunResult.SUCCESS;
+    return {
+      runState: RunState.SUCCESS,
+    };
   }
 }

@@ -1,0 +1,177 @@
+import GlobalCommand from "../../api/command/GlobalCommand.ts";
+import SubCommand from "../../api/command/SubCommand.ts";
+import Option from "../../api/argument/Option.ts";
+import Positional from "../../api/argument/Positional.ts";
+import { ArgumentValues } from "../../api/argument/ArgumentValueTypes.ts";
+import Context from "../../api/runtime/Context.ts";
+import Printer, { PRINTER_SERVICE_ID } from "../../api/service/core/Printer.ts";
+import {
+  getCommandArgsHelpSections,
+  getCommandExamplesHelpSections,
+  getGlobalArgumentHelpEntry,
+  getSubCommandArgumentsSyntax,
+  HelpEntry,
+  HelpSection,
+  printHelpSections,
+} from "./helpHelper.ts";
+import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
+import GroupCommand from "../../api/command/GroupCommand.ts";
+import CommandRegistry from "../../api/registry/CommandRegistry.ts";
+import CLIConfig from "../../api/CLIConfig.ts";
+
+/**
+ * Provides common implementation for both {@link SingleCommandCliHelpGlobalCommand} and {@link SingleCommandCliHelpSubCommand}.
+ */
+abstract class SingleCommandCliAbstractHelpCommand {
+  readonly cliConfig: CLIConfig;
+  readonly defaultCommand: SubCommand;
+  readonly commandRegistry: CommandRegistry;
+
+  constructor(
+    cliConfig: CLIConfig,
+    defaultCommand: SubCommand,
+    commandRegistry: CommandRegistry,
+  ) {
+    this.cliConfig = cliConfig;
+    this.defaultCommand = defaultCommand;
+    this.commandRegistry = commandRegistry;
+  }
+
+  readonly name = "help";
+
+  readonly description = "Display application help";
+
+  private getAmalgamatedGenericHelpSection(
+    globalModifierCommands: ReadonlyArray<GlobalModifierCommand>,
+    globalCommands: ReadonlyArray<GlobalCommand>,
+    groupCommands: ReadonlyArray<GroupCommand>,
+    subCommands: ReadonlyArray<SubCommand>,
+  ): HelpSection {
+    const helpSection: HelpSection = {
+      title: "Other Arguments",
+      helpEntries: [],
+    };
+    if (globalModifierCommands.length > 0) {
+      globalModifierCommands.forEach((globalModifierCommand) => {
+        const { syntax, description } = getGlobalArgumentHelpEntry(
+          this.cliConfig,
+          globalModifierCommand,
+        );
+        helpSection.helpEntries.push({
+          syntax: `--${globalModifierCommand.name} ${syntax}`,
+          description,
+        });
+        if (globalModifierCommand.shortAlias !== undefined) {
+          helpSection.helpEntries.push({
+            syntax: `-${globalModifierCommand.shortAlias} ${syntax}`,
+            description,
+          });
+        }
+      });
+    }
+    if (globalCommands.length > 0) {
+      globalCommands.forEach((globalCommand) => {
+        const { syntax, description } = getGlobalArgumentHelpEntry(
+          this.cliConfig,
+          globalCommand,
+        );
+        helpSection.helpEntries.push({
+          syntax: `--${globalCommand.name} ${syntax}`,
+          description,
+        });
+        if (globalCommand.shortAlias !== undefined) {
+          helpSection.helpEntries.push({
+            syntax: `-${globalCommand.shortAlias} ${syntax}`,
+            description,
+          });
+        }
+      });
+    }
+    groupCommands.forEach((groupCommand) => {
+      groupCommand.memberSubCommands.forEach((memberCommand: SubCommand) => {
+        helpSection.helpEntries.push({
+          syntax: `${groupCommand.name}:${memberCommand.name}`,
+          description: memberCommand.description,
+        });
+      });
+    });
+    if (subCommands.length > 0) {
+      subCommands.forEach((subCommand) => {
+        helpSection.helpEntries.push({
+          syntax: subCommand.name,
+          description: subCommand.description,
+        });
+      });
+    }
+    helpSection.helpEntries.sort((a: HelpEntry, b: HelpEntry) =>
+      a.syntax.localeCompare(b.syntax)
+    );
+    return helpSection;
+  }
+
+  public async execute(
+    _argumentValues: ArgumentValues,
+    context: Context,
+  ): Promise<void> {
+    const helpSections: Array<HelpSection> = [];
+    helpSections.push({
+      title: "Usage",
+      helpEntries: [{
+        syntax: `${context.cliConfig.name || ""}${
+          getSubCommandArgumentsSyntax(this.defaultCommand)
+        }`,
+      }],
+    });
+
+    helpSections.push(
+      ...getCommandArgsHelpSections(
+        this.cliConfig,
+        this.defaultCommand,
+        true,
+      ),
+    );
+
+    const globalModifierCommands = this.commandRegistry
+      .getGlobalModifierCommands();
+    const globalCommands = this.commandRegistry.getGlobalCommands();
+    helpSections.push(
+      this.getAmalgamatedGenericHelpSection(
+        globalModifierCommands,
+        globalCommands,
+        [],
+        [],
+      ),
+    );
+
+    const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
+
+    helpSections.push(
+      ...getCommandExamplesHelpSections(printer,
+        context,
+        this.defaultCommand,
+      ),
+    );
+
+    await printHelpSections(printer, helpSections);
+  }
+}
+
+/**
+ * Implementation of default command CLI help available via `myCli --help` or `myCli -h`.
+ */
+export class SingleCommandCliHelpGlobalCommand
+  extends SingleCommandCliAbstractHelpCommand
+  implements GlobalCommand {
+  readonly shortAlias = "h";
+}
+
+/**
+ * Implementation of default-command CLI help available via `myCli help`.
+ */
+export class SingleCommandCliHelpSubCommand
+  extends SingleCommandCliAbstractHelpCommand
+  implements SubCommand {
+  public readonly options: ReadonlyArray<Option> = [];
+
+  public readonly positionals: ReadonlyArray<Positional> = [];
+}

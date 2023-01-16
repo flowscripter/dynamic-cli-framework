@@ -1,7 +1,10 @@
 /**
- * Possible return values for a {@link CLI} invocation.
+ * State of a {@link CLI} after invocation.
  */
-export enum RunResult {
+import Command from "./command/Command.ts";
+import { InvalidArgument } from "./runtime/Parser.ts";
+
+export enum RunState {
   /**
    * Arguments were successfully parsed and the specified command(s) were successfully executed.
    */
@@ -13,12 +16,42 @@ export enum RunResult {
   PARSE_ERROR = 1,
 
   /**
-   * Arguments were successfully parsed but the specified command(s) failed.
+   * Arguments were successfully parsed but no command was discovered.
    */
-  COMMAND_ERROR = 2,
+  NO_COMMAND = 2,
 
   /**
-   * An error unrelated to argument parsing or command execution occurred.
+   * Arguments were successfully parsed and command(s) discovered but command execution failed.
    */
-  GENERAL_ERROR = 3,
+  EXECUTION_ERROR = 3,
+
+  /**
+   * General runtime error related to the framework.
+   */
+  RUNTIME_ERROR = 4,
+}
+
+/**
+ * Result of a {@link CLI} invocation.
+ */
+export default interface RunResult {
+  /**
+   * The state after processing the invocation.
+   */
+  readonly runState: RunState;
+
+  /**
+   * Populated if {@link runState} is {@link RunState.SUCCESS}, {@link RunState.PARSE_ERROR} or {@link RunState.EXECUTION_ERROR}.
+   */
+  readonly command?: Command;
+
+  /**
+   * Populated if {@link runState} is {@link RunState.PARSE_ERROR}
+   */
+  readonly invalidArguments?: ReadonlyArray<InvalidArgument>;
+
+  /**
+   * Populated if {@link runState} is {@link RunState.EXECUTION_ERROR} or {@link RunState.RUNTIME_ERROR}.
+   */
+  readonly error?: Error;
 }

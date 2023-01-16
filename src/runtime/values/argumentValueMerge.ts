@@ -46,7 +46,7 @@ function arrayMerge(
     if (Array.isArray(argValue)) {
       throw new Error(
         `Array of array values discovered, this is not supported: ${
-          JSON.stringify(argValue)
+          JSON.stringify(argValue, null, 2)
         }`,
       );
     }
@@ -107,7 +107,7 @@ function doMerge(
   if (defaults === undefined) {
     throw new Error(
       `Undefined value provided in merge: override = ${
-        JSON.stringify(override)
+        JSON.stringify(override, null, 2)
       }, defaults = undefined`,
     );
   }
@@ -136,8 +136,8 @@ function doMerge(
   if (override !== undefined && (typeof override !== typeof defaults)) {
     throw new Error(
       `Incompatible value types provided in merge: override = ${
-        JSON.stringify(override)
-      }, defaults = ${JSON.stringify(defaults)}`,
+        JSON.stringify(override, null, 2)
+      }, defaults = ${JSON.stringify(defaults, null, 2)}`,
     );
   }
 
@@ -172,7 +172,7 @@ function doMerge(
  * @param override the values which should be used in place of any defined in `defaults`.
  * @param defaults the values to use unless they are overridden in `override`.
  */
-export default function argumentValuesMerge(
+export default function argumentValueMerge(
   override: PopulatedArgumentValues,
   defaults: ArgumentValues,
 ): PopulatedArgumentValues {

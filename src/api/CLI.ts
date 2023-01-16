@@ -1,7 +1,7 @@
 /**
  * Interface to be implemented by a CLI application.
  */
-import { RunResult } from "./RunResult.ts";
+import RunResult from "./RunResult.ts";
 
 export default interface CLI {
   /**

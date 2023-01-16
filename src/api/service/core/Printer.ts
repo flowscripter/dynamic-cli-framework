@@ -1,3 +1,5 @@
+export const PRINTER_SERVICE_ID = "@flowscripter/dynamic-cli-framework/printer";
+
 /**
  * Enum of message importance level.
  */
@@ -22,8 +24,21 @@ export enum Icon {
   INFORMATION = 3,
 }
 
+export enum AsciiBannerFont {
+  BANNER = "banner",
+  BIG = "big",
+  SLANT = "slant",
+  SMALL = "small",
+  SMALL_SLANT = "smslant",
+  STANDARD = "standard",
+  THIN = "thin",
+}
+
 /**
- * Interface allowing a {@link Command} to output user messages.
+ * Interface allowing a {@link Command} to output user messages to `stdout` and/or `stderr`.
+ *
+ * Output to `stdout` is via {@link print} whilst output to `stderr` is via a filtered logging mechanism
+ * using {@link debug}, {@link info}, {@link warn} and {@link error}.
  */
 export default interface Printer {
   /**
@@ -32,14 +47,19 @@ export default interface Printer {
   colorEnabled: boolean;
 
   /**
-   * Enable or disable dark mode. Default is enabled i.e. `true`.
+   * Enable or disable dark mode. Default is disabled i.e. `false`.
    */
   darkMode: boolean;
 
   /**
-   * The WritableStream used for output. Can be accessed directly for output of binary data etc.
+   * The WritableStream used for `stdout`. Can be accessed directly for output of binary data etc.
    */
-  writable: WritableStream;
+  stdout: WritableStream;
+
+  /**
+   * The WritableStream used for `stderr`. Can be accessed directly for output of binary data etc.
+   */
+  stderr: WritableStream;
 
   /**
    * Return the provided message so that the foreground is colored as primary content. This is the default
@@ -68,6 +88,11 @@ export default interface Printer {
    * Has no effect if {@link colorEnabled} is `false`.
    */
   selected(message: string): string;
+
+  /**
+   * Return the provided message so that the text is displayed in italic.
+   */
+  italic(message: string): string;
 
   /**
    * Return the provided message so that the foreground is yellow.
@@ -118,7 +143,24 @@ export default interface Printer {
   green(message: string): string;
 
   /**
-   * Print a {@link DEBUG} level message.
+   * Return the provided message as an ASCII art text string which can be output.
+   *
+   * @param message the message to output
+   * @param font the {@link AsciiBannerFont} to use, if not specified the {@link AsciiBannerFont.STANDARD} font will be used.
+   */
+  asciiBanner(message: string, font?: AsciiBannerFont): Promise<string>;
+
+  /**
+   * Print a message on `stdout`.
+   * Will be displayed as primary content if {@link colorEnabled} is `true`.
+   *
+   * @param message the message to output.
+   * @param icon optional icon to display with the message.
+   */
+  print(message: string, icon?: Icon): Promise<void>;
+
+  /**
+   * Print a {@link DEBUG} level message on `stderr`.
    * Will be displayed as secondary content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -127,7 +169,7 @@ export default interface Printer {
   debug(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print an {@link INFO} level message.
+   * Print an {@link INFO} level message on `stderr`.
    * Will be displayed as primary content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -136,7 +178,7 @@ export default interface Printer {
   info(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print a {@link WARN} level message.
+   * Print a {@link WARN} level message on `stderr`.
    * Will be displayed as yellow content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -145,7 +187,7 @@ export default interface Printer {
   warn(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print an {@link ERROR} level message.
+   * Print an {@link ERROR} level message on `stderr`.
    * Will be displayed as red content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -154,14 +196,30 @@ export default interface Printer {
   error(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Display the spinner.
+   * Set the output threshold {@link Level} for `stderr`.
+   *
+   * Default level is {@link INFO}.
+   *
+   * @param level any message below this level will be filtered from output,
+   */
+  setLevel(level: Level): void;
+
+  /**
+   * Get the output threshold {@link Level} for `stderr`.
+   */
+  getLevel(): Level;
+
+  /**
+   * Display the spinner on `stderr`.
    *
    * The spinner will be displayed as emphasised content and the message will
    * be displayed as primary content if {@link colorEnabled} is `true`.
    *
-   *  NOTE: The spinner and message will be displayed at {@link INFO} level.
+   * NOTE: The spinner and message will be displayed at {@link INFO} level.
    *
    * NOTE: If the spinner is already displayed the message will be updated to that specified.
+   *
+   * NOTE: If any progress bars are currently displayed they will be hidden.
    *
    * @param message the message to output after the spinner.
    */
@@ -170,16 +228,48 @@ export default interface Printer {
   /**
    * Hide the spinner.
    *
-   * NOTE: Any other log method will also clear the spinner.
+   * NOTE: Showing a progress bar will hide the spinner.
    */
   hideSpinner(): Promise<void>;
 
   /**
-   * Set the output level for the printer.
+   * Display a progress bar on `stderr`.
    *
-   * Default level is {@link INFO}.
+   * The progress will be displayed in green if {@link colorEnabled} is `true`.
    *
-   * @param level any message below this level will be filtered from output,
+   * NOTE: The progress bar and message will be displayed at {@link INFO} level.
+   *
+   * NOTE: If the spinner is currently displayed it will be hidden.
+   *
+   * @param units the units to display for progress indication e.g. 'MB' or 'Kb'.
+   * @param message an optional message for the progress bar.
+   * @param total the total value which equates to 100% complete, defaults to `100`.
+   * @param current the current value which is a portion of the total value, defaults to `0`.
+   *
+   * @return a handle to use when invoking {@link updateProgressBar}.
    */
-  setLevel(level: Level): void;
+  showProgressBar(
+    units: string,
+    message?: string,
+    total?: number,
+    current?: number,
+  ): Promise<number>;
+
+  /**
+   * Hides a specified progress bar.
+   *
+   * NOTE: Showing the spinner will hide ALL progress bars.
+   *
+   * @param handle the handle referring to the progress bar to be hidden.
+   */
+  hideProgressBar(handle: number): void;
+
+  /**
+   * Update a specific progress bar.
+   *
+   * @param handle the handle referring to the progress bar to be updated.
+   * @param current the current value to set on the progress bar.
+   * @param message an optional message to set on the progress bar, if not specified the initially specified message will be displayed.
+   */
+  updateProgressBar(handle: number, current: number, message?: string): void;
 }

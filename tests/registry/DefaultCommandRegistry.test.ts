@@ -40,7 +40,7 @@ function getGroupCommand(name: string): GroupCommand {
     execute: async (): Promise<void> => {},
   };
 }
-describe("DefaultParser", () => {
+describe("DefaultCommandRegistry", () => {
   it("Check for duplicate non-global command name", () => {
     const command1 = getSubCommand("c1", [], []);
     const command2 = getSubCommand("c1", [], []);

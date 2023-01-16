@@ -1290,7 +1290,7 @@ describe("DefaultParser", () => {
           {
             beta: {
               delta: [
-                1,
+                "1",
               ],
               gamma: "foo1",
             },
@@ -1308,10 +1308,6 @@ describe("DefaultParser", () => {
           .properties[0] as ComplexOption).properties[0],
         reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
         name: "gamma",
-      }, {
-        argument: subCommand.options[1],
-        reason: InvalidArgumentReason.MISSING_VALUE,
-        name: "epsilon",
       }],
     });
 
@@ -1334,9 +1330,9 @@ describe("DefaultParser", () => {
           {
             beta: {
               delta: [
-                1,
-                2,
-                3,
+                "1",
+                "2",
+                "3",
               ],
               gamma: "foo1",
             },
@@ -1344,7 +1340,7 @@ describe("DefaultParser", () => {
         ],
         epsilon: {
           gamma: "bar",
-          delta: 1,
+          delta: "1",
         },
       },
       unusedArgs: [],
@@ -1495,6 +1491,276 @@ describe("DefaultParser", () => {
           reason: InvalidArgumentReason.MISSING_VALUE,
         },
       ],
+    });
+  });
+
+  it("Arguments parsed for sub-command with complex options and some values provided by config", () => {
+    const defaultParser: DefaultParser = new DefaultParser();
+    const subCommand = getSubCommandWithComplexOptions(true);
+
+    const parseResult = defaultParser.parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: [
+        "-a.b[1].g=foo2",
+        "--alpha.beta[0].gamma=foo1",
+        "-a.b[1].d[1]=2",
+        "-a.b[0].d=1",
+        "-a.b[1].d[0]=3",
+      ],
+    }, {
+      epsilon: {
+        gamma: "bar",
+        delta: 1,
+      },
+    });
+    expectParseResult(parseResult, {
+      command: subCommand,
+      populatedArgumentValues: {
+        alpha: [
+          {
+            beta: [
+              {
+                delta: [
+                  1,
+                ],
+                gamma: "foo1",
+              },
+              {
+                delta: [
+                  3,
+                  2,
+                ],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+      unusedArgs: [],
+      invalidArguments: [],
+    });
+  });
+
+  it("Arguments parsed for sub-command with complex options and some values provided by config but overridden", () => {
+    const defaultParser: DefaultParser = new DefaultParser();
+    const subCommand = getSubCommandWithComplexOptions(true);
+
+    const parseResult = defaultParser.parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: [
+        "-e.g=bar2",
+        "-e.d=2",
+        "-a.b[1].g=foo2",
+        "--alpha.beta[0].gamma=foo1",
+        "-a.b[1].d[1]=2",
+        "-a.b[0].d=1",
+        "-a.b[1].d[0]=3",
+      ],
+    }, {
+      epsilon: {
+        gamma: "bar",
+        delta: 1,
+      },
+    });
+    expectParseResult(parseResult, {
+      command: subCommand,
+      populatedArgumentValues: {
+        alpha: [
+          {
+            beta: [
+              {
+                delta: [
+                  1,
+                ],
+                gamma: "foo1",
+              },
+              {
+                delta: [
+                  3,
+                  2,
+                ],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        epsilon: {
+          gamma: "bar2",
+          delta: 2,
+        },
+      },
+      unusedArgs: [],
+      invalidArguments: [],
+    });
+  });
+
+  it("Arguments parsed for sub-command with complex options and all values provided by config", () => {
+    const defaultParser: DefaultParser = new DefaultParser();
+    const subCommand = getSubCommandWithComplexOptions(true);
+
+    const parseResult = defaultParser.parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: [],
+    }, {
+      alpha: [
+        {
+          beta: [
+            {
+              delta: [
+                1,
+              ],
+              gamma: "foo1",
+            },
+            {
+              delta: [
+                3,
+                2,
+              ],
+              gamma: "foo2",
+            },
+          ],
+        },
+      ],
+      epsilon: {
+        gamma: "bar",
+        delta: 1,
+      },
+    });
+    expectParseResult(parseResult, {
+      command: subCommand,
+      populatedArgumentValues: {
+        alpha: [
+          {
+            beta: [
+              {
+                delta: [
+                  1,
+                ],
+                gamma: "foo1",
+              },
+              {
+                delta: [
+                  3,
+                  2,
+                ],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+      unusedArgs: [],
+      invalidArguments: [],
+    });
+  });
+
+  it("Arguments parsed for sub-command with complex options and all values provided by default value", () => {
+    const defaultParser: DefaultParser = new DefaultParser();
+    const subCommand: SubCommand = {
+      name: "subCommand",
+      options: [{
+        name: "alpha",
+        shortAlias: "a",
+        type: ComplexValueTypeName.COMPLEX,
+        isArray: true,
+        defaultValue: [
+          {
+            beta: [
+              {
+                delta: [
+                  1,
+                ],
+                gamma: "foo1",
+              },
+              {
+                delta: [
+                  3,
+                  2,
+                ],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        properties: [{
+          name: "beta",
+          shortAlias: "b",
+          type: ComplexValueTypeName.COMPLEX,
+          isArray: true,
+          properties: [{
+            name: "gamma",
+            shortAlias: "g",
+            type: ArgumentValueTypeName.STRING,
+          }, {
+            name: "delta",
+            shortAlias: "d",
+            type: ArgumentValueTypeName.NUMBER,
+            isArray: true,
+          }],
+        }],
+      }, {
+        name: "epsilon",
+        shortAlias: "e",
+        type: ComplexValueTypeName.COMPLEX,
+        defaultValue: {
+          gamma: "bar",
+          delta: 1,
+        },
+        properties: [{
+          name: "gamma",
+          shortAlias: "g",
+          type: ArgumentValueTypeName.STRING,
+        }, {
+          name: "delta",
+          shortAlias: "d",
+          type: ArgumentValueTypeName.NUMBER,
+        }],
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    };
+
+    const parseResult = defaultParser.parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: [],
+    });
+    expectParseResult(parseResult, {
+      command: subCommand,
+      populatedArgumentValues: {
+        alpha: [
+          {
+            beta: [
+              {
+                delta: [
+                  1,
+                ],
+                gamma: "foo1",
+              },
+              {
+                delta: [
+                  3,
+                  2,
+                ],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+      unusedArgs: [],
+      invalidArguments: [],
     });
   });
 });

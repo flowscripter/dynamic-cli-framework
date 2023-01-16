@@ -1,0 +1,31 @@
+import Context from "../api/runtime/Context.ts";
+import CLIConfig from "../api/CLIConfig.ts";
+
+/**
+ * Default implementation of a {@link Context}.
+ */
+export default class DefaultContext implements Context {
+  private readonly serviceInstancesById: Map<string, unknown> = new Map();
+
+  readonly cliConfig: CLIConfig;
+
+  public constructor(cliConfig: CLIConfig) {
+    this.cliConfig = cliConfig;
+  }
+
+  public addServiceInstance(id: string, serviceInstance: unknown) {
+    if (this.serviceInstancesById.has(id)) {
+      throw new Error(
+        `Service ID: ${id} duplicates the ID of an existing service`,
+      );
+    }
+    this.serviceInstancesById.set(id, serviceInstance);
+  }
+
+  public getServiceById(id: string): unknown {
+    if (!this.serviceInstancesById.has(id)) {
+      throw new Error(`Service with ID: ${id} is unknown`);
+    }
+    return this.serviceInstancesById.get(id);
+  }
+}

@@ -10,11 +10,16 @@ import {
   isGroupCommand,
   isSubCommand,
 } from "../api/command/CommandTypeGuards.ts";
+import getLogger from "../util/logger.ts";
+import CommandValidator from "../runtime/command/CommandValidator.ts";
+
+const logger = getLogger("DefaultCommandRegistry");
 
 /**
  * Default implementation of a {@link CommandRegistry}.
  */
 export default class DefaultCommandRegistry implements CommandRegistry {
+  private readonly commandValidator: CommandValidator | undefined;
   private readonly subCommandsByName: Map<string, SubCommand> = new Map();
   private readonly groupCommandsByName: Map<string, GroupCommand> = new Map();
   private readonly groupCommandsAndMemberSubCommandsByName: Map<
@@ -33,7 +38,14 @@ export default class DefaultCommandRegistry implements CommandRegistry {
     GlobalModifierCommand
   > = new Map();
 
-  public constructor(commands?: ReadonlyArray<Command>) {
+  /**
+   * Constructor taking an optional initial list of {@link Command} instances to register.
+   *
+   * @param commands optional list of {@link Command} instances.
+   * @param commandValidator optional {@link CommandValidator} to use for all registered {@link Command} instances.
+   */
+  public constructor(commands?: ReadonlyArray<Command>, commandValidator?: CommandValidator) {
+    this.commandValidator = commandValidator;
     commands?.forEach((command) => this.addCommand(command));
   }
 
@@ -77,7 +89,29 @@ export default class DefaultCommandRegistry implements CommandRegistry {
     }
   }
 
+  public getSubCommands(): ReadonlyArray<SubCommand> {
+    return Array.from(this.subCommandsByName.values());
+  }
+
+  public getGroupCommands(): ReadonlyArray<GroupCommand> {
+    return Array.from(this.groupCommandsByName.values());
+  }
+
+  public getGlobalCommands(): ReadonlyArray<GlobalCommand> {
+    return Array.from(this.globalCommandsByName.values());
+  }
+
+  public getGlobalModifierCommands(): ReadonlyArray<GlobalModifierCommand> {
+    return Array.from(this.globalModifierCommandsByName.values());
+  }
+
   public addCommand(command: Command): void {
+    logger.debug(() => `Adding command: ${command.name}`);
+
+    if (this.commandValidator !== undefined) {
+      this.commandValidator.validate(command);
+    }
+
     if (isSubCommand(command)) {
       this.validateNonGlobalCommandWithOtherNonGlobalCommands(command);
       this.subCommandsByName.set(command.name, command);
@@ -90,7 +124,7 @@ export default class DefaultCommandRegistry implements CommandRegistry {
       const groupCommand = command as GroupCommand;
       groupCommand.memberSubCommands.forEach((memberSubCommand) => {
         this.groupCommandsAndMemberSubCommandsByName.set(
-          `${groupCommand.name}-${memberSubCommand.name}`,
+          `${groupCommand.name}:${memberSubCommand.name}`,
           {
             groupCommand,
             memberSubCommand,
@@ -130,12 +164,11 @@ export default class DefaultCommandRegistry implements CommandRegistry {
     return this.groupCommandsByName.get(name);
   }
 
-  public getGroupCommandAndMemberSubCommandByNames(
-    groupCommandName: string,
-    memberSubCommandName: string,
+  public getGroupCommandAndMemberSubCommandByName(
+    groupAndMemberSubCommandName: string,
   ): { groupCommand: GroupCommand; memberSubCommand: SubCommand } | undefined {
     return this.groupCommandsAndMemberSubCommandsByName.get(
-      `${groupCommandName}-${memberSubCommandName}`,
+      groupAndMemberSubCommandName,
     );
   }
 

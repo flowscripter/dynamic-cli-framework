@@ -1,4 +1,4 @@
-import { log } from "../../../deps.ts";
+import { log } from "../../deps.ts";
 
 let defaultLogger: log.Logger | undefined;
 
@@ -9,10 +9,12 @@ if (defaultLogger === undefined) {
 async function setupLogger() {
   await log.setup({
     handlers: {
-      // TODO: config based on env var
-      console: new log.handlers.ConsoleHandler("DEBUG", {
-        formatter: "{levelName} [{loggerName}] {msg}",
-      }),
+      console: new log.handlers.ConsoleHandler(
+        (Deno.env.get("CLI_DEBUG") !== undefined) ? "DEBUG" : "ERROR",
+        {
+          formatter: "{levelName} [{loggerName}] {msg}",
+        },
+      ),
     },
 
     loggers: {

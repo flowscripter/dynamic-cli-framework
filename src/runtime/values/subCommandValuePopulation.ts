@@ -14,8 +14,8 @@ import {
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import getLogger from "../util/logger.ts";
-import argumentValuesMerge from "./argumentValuesMerge.ts";
+import getLogger from "../../util/logger.ts";
+import argumentValueMerge from "./argumentValueMerge.ts";
 import { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import ComplexOption from "../../api/argument/ComplexOption.ts";
 import { isComplexOption } from "../../api/argument/ArgumentTypeGuards.ts";
@@ -242,7 +242,7 @@ class ParseContext {
       let arrayIndex: number | undefined;
       if (arrayIndexString !== undefined) {
         const parsedArrayIndex = parseInt(arrayIndexString);
-        if (isFinite(parsedArrayIndex)) {
+        if (Number.isInteger(parsedArrayIndex)) {
           if (parsedArrayIndex > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
             this.invalidArgument = {
               argument: option,
@@ -594,11 +594,11 @@ export default function populateSubCommandValues(
   logger.debug(() => {
     const message =
       `Populating values for sub-command: '${subCommand.name}' using potential args: ${
-        JSON.stringify(potentialArgs)
+        JSON.stringify(potentialArgs, null, 2)
       }`;
     if (configuredValues !== undefined) {
       return `${message} and configured values: ${
-        JSON.stringify(configuredValues)
+        JSON.stringify(configuredValues, null, 2)
       }`;
     }
     return message;
@@ -652,7 +652,7 @@ export default function populateSubCommandValues(
   // merge the configured values with the parsed values
   let populatedArgumentValues = parseContext.populatedArgumentValues;
   if (configuredValues) {
-    populatedArgumentValues = argumentValuesMerge(
+    populatedArgumentValues = argumentValueMerge(
       populatedArgumentValues,
       configuredValues,
     );

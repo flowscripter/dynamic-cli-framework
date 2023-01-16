@@ -5,7 +5,7 @@ import {
   ArgumentSingleValueType,
   ArgumentValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import getLogger from "../util/logger.ts";
+import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("globalCommandValuePopulation");
 
@@ -24,7 +24,7 @@ export default function populateGlobalCommandValue(
   logger.debug(() => {
     const message =
       `Populating value for global command: '${globalCommand.name}' using potential args: ${
-        JSON.stringify(potentialArgs)
+        JSON.stringify(potentialArgs, null, 2)
       }`;
     if (configuredValue !== undefined) {
       return `${message} and configured value: '${configuredValue}'`;

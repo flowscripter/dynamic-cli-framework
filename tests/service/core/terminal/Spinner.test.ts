@@ -1,21 +1,7 @@
-import {
-  assertEquals,
-  Buffer,
-  colors,
-  describe,
-  it,
-} from "../../../test_deps.ts";
+import { Buffer, describe, it } from "../../../test_deps.ts";
 
-import Spinner from "../../../../src/service/core/util/Spinner.ts";
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function expectBufferString(actual: Buffer, expected: string) {
-  const decoder = new TextDecoder();
-  assertEquals(colors.stripColor(decoder.decode(actual.bytes())), expected);
-}
+import Spinner from "../../../../src/service/core/terminal/Spinner.ts";
+import { expectBufferStringEquals, sleep } from "../../../fixtures/util.ts";
 
 describe("Spinner", () => {
   it("Spinner works", async () => {
@@ -26,11 +12,12 @@ describe("Spinner", () => {
     await sleep(250);
     await spinner.hide();
 
-    expectBufferString(buffer, "\r⠋\r⠙\r");
+    expectBufferStringEquals(buffer, "⠋⠙");
   });
 
   it("Calling show and hide multiple times works", async () => {
-    const spinner = new Spinner(Deno.stderr);
+    const buffer = new Buffer();
+    const spinner = new Spinner(buffer);
 
     await spinner.show();
     await sleep(50);
@@ -55,6 +42,6 @@ describe("Spinner", () => {
     await sleep(150);
     await spinner.hide();
 
-    expectBufferString(buffer, "\r⠋\r⠙ foo\r⠹ bar\r⠸ bar\r⠼\r");
+    expectBufferStringEquals(buffer, "⠋⠙ foo⠹ bar⠸ bar⠼");
   });
 });

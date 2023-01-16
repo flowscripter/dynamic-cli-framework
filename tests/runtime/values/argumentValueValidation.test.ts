@@ -42,6 +42,20 @@ describe("argumentValueValidation", () => {
 
     option = {
       name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, true, invalidArguments), true);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, false, invalidArguments), false);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
       type: ArgumentValueTypeName.STRING,
     };
     assertEquals(validateOptionValue(option, "1", invalidArguments), "1");
@@ -193,7 +207,7 @@ describe("argumentValueValidation", () => {
     let option: Option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
     assertEquals(validateOptionValue(option, "bar", invalidArguments), "bar");
@@ -202,7 +216,7 @@ describe("argumentValueValidation", () => {
     option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     assertEquals(
       validateOptionValue(option, "goo", invalidArguments),
@@ -405,7 +419,7 @@ describe("argumentValueValidation", () => {
         }],
       }],
     };
-    const invalidArguments: Array<InvalidArgument> = [];
+    let invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
       validateOptionValue(option, [
         {
@@ -447,6 +461,27 @@ describe("argumentValueValidation", () => {
       ],
     );
     assertEquals(invalidArguments, []);
+
+    invalidArguments = [];
+
+    assertEquals(
+      validateOptionValue(
+        option,
+        [
+          {
+            beta: 1,
+          },
+        ],
+        invalidArguments,
+      ),
+      undefined,
+    );
+    assertEquals(invalidArguments, [{
+      argument: option.properties[0],
+      name: "alpha[0].beta",
+      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      value: 1,
+    }]);
   });
 
   it("Complex sparse array options", () => {
@@ -674,7 +709,7 @@ describe("argumentValueValidation", () => {
     let positional: Option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
@@ -686,7 +721,7 @@ describe("argumentValueValidation", () => {
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     assertEquals(
       validatePositionalValue(positional, "goo", invalidArguments),
@@ -838,7 +873,7 @@ describe("argumentValueValidation", () => {
     let globalCommandArgument: GlobalCommandArgument = {
       name: "value",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
@@ -854,7 +889,7 @@ describe("argumentValueValidation", () => {
     globalCommandArgument = {
       name: "value",
       type: ArgumentValueTypeName.STRING,
-      validValues: ["bar", "two"],
+      allowableValues: ["bar", "two"],
     };
     assertEquals(
       validateGlobalCommandArgumentValue(

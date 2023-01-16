@@ -35,8 +35,8 @@
   `executable --<option_name>.<property_1_name>=<property_1_value> --<option_name>.<property_1>.<property_1_a>=<property_1_a_value>`
 - Core (but optional) commands for help, logging level, version management and
   plugin management.
-- Core (but optional) services for colour output to stdout and stderr, user
-  prompting and configuration management.
+- Core (but optional) services for colour output to stdout and stderr and
+  configuration management.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
@@ -177,7 +177,7 @@ classDiagram
         <<interface>>
         name
         type
-        validValues
+        allowableValues
     }
 
     class SubCommandArgument {
@@ -358,7 +358,7 @@ arguments itself (apart from the member `SubCommand` name and its arguments).
 a single `GlobalCommandArgument` consisting of:
 
 - a type of either: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING`.
-- an optional set of valid value choices.
+- an optional set of allowable values.
 - an optional default value.
 - whether the value is mandatory.
 
@@ -528,9 +528,15 @@ If "varargs" optional AND multiple is set for `positional_1`, these are valid:
     executable <sub_command> <positional_1_value_1>
     executable <sub_command> <positional_1_value_1> <positional_1_value_2> <positional_1_value_3>
 
-### Configured Values
+### Command Configuration
 
-[//]: # (TODO: document configuration via env vars and config file)
+[//]: # (TODO: 8A - document configuration support for env vars and config file for services and commands)
+
+#### Environment Variables
+
+#### Configuration File
+
+#### Configured Value Merging
 
 The configured values are merged with parsed values before being validated based
 on their associated argument definitions.
@@ -588,8 +594,8 @@ The following scenarios produce validation errors:
   complex object argument.
 - **Illegal Multiple Values**: The argument does not support multiple values but
   multiple values have been provided.
-- **Illegal Value**: If the argument defines possible valid values and the value
-  provided is not one of these.
+- **Illegal Value**: If the argument defines possible allowable values and the
+  value provided is not one of these.
 - **Illegal Sparse Array**: If multiple values were specified using array
   indices and this resulted in empty entries in the array of values.
 - **Unknown Property**: If the value provided is for a property which is not
@@ -603,7 +609,7 @@ The following scenarios produce validation errors:
 
 ## Command Execution
 
-[//]: # (TODO: document Argument Values provided as valid and matching structure of defined options then positionals)
+[//]: # (TODO: 8B - document Argument Values provided as valid and matching structure of defined options then positionals)
 
 ## Usage Examples
 
@@ -618,8 +624,7 @@ The following example projects are available:
 
 ### CLI
 
-[//]: # (TODO: document AbstractBaseCLI)
-[//]: # (TODO: document command validation: no duplicate names, no duplicate args at same complex nesting level)
+[//]: # (TODO: 8C - document AbstractBaseCLI logic flow and RunResult handling)
 
 ### Runner
 
@@ -632,6 +637,8 @@ specification of a default command which should be executed if no command names
 are parsed on the command line. In this scenario, any arguments provided will be
 parsed as possible arguments for the default command as well as potential
 `GlobalModifierCommand` names.
+
+[//]: # (TODO: 8D - document default GlobalModifierCommands and add to flowchart)
 
 The following activity diagram illustrates the `DefaultRunner` logic:
 
@@ -826,6 +833,15 @@ the following are all equivalent:
     executable --<modifier_command_1_name> <modifier_command_1_argument> <default_command_argument> \
                --<modifier_command_2_name> <modifier_command_2_argument>
 
+### Core Services
+
+[//]: # (TODO: 8E - document Lifecycle, Configuration, DefaultConfiguration and ConfigurationService)
+[//]: # (TODO: 8F - document Printer, DefaultPrinter and PrinterService)
+
+### Core Commands
+
+[//]: # (TODO: 8G - document Core Commands: ...)
+
 ## API
 
 API docs for the library:
@@ -964,6 +980,22 @@ BEFORE they are installed.
 
 Runtime validation of all commands and services can be enabled by setting the
 `CLI_VALIDATE_ALL` environment variable.
+
+Command validation includes:
+
+- ensuring multiple commands in the CLI do not have duplicate names or short
+  aliases.
+- command options for each command do not include duplicate names or short
+  aliases.
+- default values for options have the type specified by the option.
+- default values for options match an allowable value if specified by the
+  option.
+- default array values for options are specified only for array options.
+- command options for each command do not include duplicate names or short
+  aliases.
+- only the last positional for a command is defined as a vararg.
+- default values for complex options matched the nested property hierarchy.
+- paths to nested properties of complex options are unique.
 
 ## License
 

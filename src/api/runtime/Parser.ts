@@ -36,7 +36,7 @@ export enum InvalidArgumentReason {
   ILLEGAL_MULTIPLE_VALUES = 2,
 
   /**
-   * The value specified was not one of the valid values for the argument.
+   * The value specified was not one of the defined allowable values for the argument.
    */
   ILLEGAL_VALUE = 3,
 

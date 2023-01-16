@@ -8,7 +8,7 @@ export default interface Command {
   /**
    * Name of the command.
    *
-   * Must consist of alphanumeric non-whitespace ASCII characters or `_` and `-` characters. Cannot start with `-`.
+   * Must consist of alphanumeric non-whitespace ASCII or `_` and `-` characters. Cannot start with `-`.
    */
   readonly name: string;
 
@@ -16,6 +16,11 @@ export default interface Command {
    * Optional description of the command.
    */
   readonly description?: string;
+
+  /**
+   * Optionally enable support for populating {@link ArgumentValues} via configuration.
+   */
+  readonly enableConfiguration?: boolean;
 
   /**
    * Execute the command.

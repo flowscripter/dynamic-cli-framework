@@ -50,6 +50,7 @@ function validatePrimitiveValue(
   if (value === undefined) {
     return {
       invalidArgument: {
+        argument,
         reason: InvalidArgumentReason.MISSING_VALUE,
       },
     };
@@ -58,6 +59,10 @@ function validatePrimitiveValue(
   // type check and conversion
   switch (argument.type) {
     case ArgumentValueTypeName.BOOLEAN:
+      if ((value === true) || (value === false)) {
+        convertedValue = value;
+        break;
+      }
       if (value !== "true" && value !== "false") {
         return {
           invalidArgument: {
@@ -100,7 +105,7 @@ function validatePrimitiveValue(
   }
 
   // check if the value is valid
-  if (argument.validValues && !argument.validValues.includes(value)) {
+  if (argument.allowableValues && !argument.allowableValues.includes(value)) {
     return {
       invalidArgument: {
         argument,
@@ -161,6 +166,17 @@ function validateArrayValue(
       );
     } // if not array and not object, then must be primitive
     else {
+      if (isComplexOption(argument)) {
+        return {
+          validValue: convertedArrayValue,
+          invalidArgument: {
+            argument,
+            name: `[${i}]`,
+            value: arrayValue,
+            reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+          },
+        };
+      }
       validationResult = validatePrimitiveValue(
         argument as Argument,
         singleValue,
@@ -264,6 +280,17 @@ function validateObjectValue(
       );
     } // if not array and not object, then must be primitive
     else {
+      if (isComplexOption(propertyArg)) {
+        return {
+          validValue: convertedObjectValue,
+          invalidArgument: {
+            argument: propertyArg,
+            name: `.${propertyArg.name}`,
+            value: propertyValue,
+            reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+          },
+        };
+      }
       validationResult = validatePrimitiveValue(
         propertyArg as Argument,
         propertyValue,
@@ -478,4 +505,68 @@ export function validateGlobalCommandArgumentValue(
     globalCommandArgument.isOptional || false,
     invalidArguments,
   ) as PopulatedArgumentValueType;
+}
+
+export function getInvalidArgumentString(
+  invalidArgument: InvalidArgument,
+  skipArgName: boolean,
+): string {
+  let nameString = "";
+  if (!skipArgName && (invalidArgument.name !== undefined)) {
+    nameString = invalidArgument.name;
+  }
+  let valueString = "";
+  if (invalidArgument.value !== undefined) {
+    if (invalidArgument.argument!.type !== ComplexValueTypeName.COMPLEX) {
+      valueString = JSON.stringify(invalidArgument.value, null, 2);
+    } else {
+      valueString = `${invalidArgument.value}`;
+    }
+  }
+  let argString = "";
+  if (nameString !== "") {
+    if (valueString !== "") {
+      argString = `${nameString}=${valueString} `;
+    } else {
+      argString = `${nameString} `;
+    }
+  } else if (valueString !== "") {
+    argString = `${valueString} `;
+  }
+
+  let invalidString;
+
+  switch (invalidArgument.reason) {
+    case InvalidArgumentReason.MISSING_VALUE:
+      invalidString = "(missing value)";
+      break;
+    case InvalidArgumentReason.INCORRECT_VALUE_TYPE:
+      invalidString = "(incorrect type)";
+      break;
+    case InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES:
+      invalidString = "(illegal multiple values)";
+      break;
+    case InvalidArgumentReason.ILLEGAL_VALUE:
+      invalidString = "(illegal value)";
+      break;
+    case InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY:
+      invalidString = "(sparse array values)";
+      break;
+    case InvalidArgumentReason.UNKNOWN_PROPERTY:
+      invalidString = "(unknown property)";
+      break;
+    case InvalidArgumentReason.NESTING_DEPTH_EXCEEDED:
+      invalidString = "(nesting depth exceeded)";
+      break;
+    case InvalidArgumentReason.ARRAY_SIZE_EXCEEDED:
+      invalidString = "(array size exceeded)";
+      break;
+    case InvalidArgumentReason.OPTION_IS_COMPLEX:
+      invalidString = "(specified option is complex)";
+      break;
+    default:
+      invalidString = "";
+      break;
+  }
+  return `${argString}${invalidString}`;
 }

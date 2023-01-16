@@ -25,7 +25,7 @@ import {
   PopulatedArgumentValues,
 } from "../api/argument/ArgumentValueTypes.ts";
 import populateSubCommandValues from "./values/subCommandValuePopulation.ts";
-import getLogger from "./util/logger.ts";
+import getLogger from "../util/logger.ts";
 
 const logger = getLogger("DefaultParser");
 
@@ -281,9 +281,8 @@ export default class DefaultParser implements Parser {
 
         if (potentialMemberSubCommandName !== undefined) {
           const found = commandRegistry
-            .getGroupCommandAndMemberSubCommandByNames(
-              potentialGroupCommandName,
-              potentialMemberSubCommandName,
+            .getGroupCommandAndMemberSubCommandByName(
+              `${potentialGroupCommandName}:${potentialMemberSubCommandName}`,
             );
           if (found) {
             const { groupCommand, memberSubCommand } = found;
@@ -316,7 +315,6 @@ export default class DefaultParser implements Parser {
         const command = commandRegistry.getSubCommandByName(currentArg);
         if (command) {
           logger.debug(() => `Found sub-command name: '${currentArg}'`);
-
           return {
             command,
             isGlobalCommand: false,
@@ -364,12 +362,12 @@ export default class DefaultParser implements Parser {
 
       // args that weren't used in the current scan are...
       if (lastLocalScanResult) {
-        // ... allocated back to the previous scan result or...
+        // ... allocated back to the previous scan result if defined
         lastLocalScanResult.potentialArgs =
           currentLocalScanResult.unusedLeadingArgs;
         currentLocalScanResult.unusedLeadingArgs = [];
       } else {
-        // ...to the unused args in no previous scan result
+        // ... or to the unused args
         unusedLeadingArgs.push(...currentLocalScanResult.unusedLeadingArgs);
         currentLocalScanResult.unusedLeadingArgs = [];
       }
@@ -451,7 +449,7 @@ export default class DefaultParser implements Parser {
       if (scanResult.subCommandClause) {
         let subCommandClauseMessage =
           `{command: '${scanResult.subCommandClause.command.name}', args: ${
-            JSON.stringify(scanResult.subCommandClause.potentialArgs)
+            JSON.stringify(scanResult.subCommandClause.potentialArgs, null, 2)
           }}`;
         if (scanResult.subCommandClause.groupCommand) {
           subCommandClauseMessage =
@@ -462,7 +460,11 @@ export default class DefaultParser implements Parser {
       if (scanResult.globalCommandClause) {
         const globalClauseMessage =
           `global clause: {command: '${scanResult.globalCommandClause.command.name}', args: ${
-            JSON.stringify(scanResult.globalCommandClause.potentialArgs)
+            JSON.stringify(
+              scanResult.globalCommandClause.potentialArgs,
+              null,
+              2,
+            )
           }}`;
         messages.push(globalClauseMessage);
       }
@@ -470,7 +472,7 @@ export default class DefaultParser implements Parser {
         .globalModifierCommandClauses.map(
           (clause) => {
             return `command: '${clause.command.name}', args: ${
-              JSON.stringify(clause.potentialArgs)
+              JSON.stringify(clause.potentialArgs, null, 2)
             }`;
           },
         ).join(", ");
@@ -478,7 +480,7 @@ export default class DefaultParser implements Parser {
         `global modifier clauses: [${globalModifierClausesMessage}]`;
       messages.push(globalModifierClausesMessage);
       const unusedLeadingArgsMessage = `unused args: ${
-        JSON.stringify(scanResult.unusedLeadingArgs)
+        JSON.stringify(scanResult.unusedLeadingArgs, null, 2)
       }`;
       messages.push(unusedLeadingArgsMessage);
       return `scanResult: ${messages.join(", ")}`;
@@ -516,42 +518,45 @@ export default class DefaultParser implements Parser {
       invalidArguments.push(invalidArgument);
     }
 
-    // validate the option values
-    command.options.forEach((option) => {
-      const validatedValue = validateOptionValue(
-        option,
-        populatedArgumentValues[option.name] || option.defaultValue,
-        invalidArguments,
+    if (invalidArguments.length === 0) {
+      // validate the option values
+      command.options.forEach((option) => {
+        const validatedValue = validateOptionValue(
+          option,
+          populatedArgumentValues[option.name] || option.defaultValue,
+          invalidArguments,
+        );
+        if (validatedValue !== undefined) {
+          populatedArgumentValues[option.name] = validatedValue;
+        }
+      });
+
+      logger.debug(() =>
+        `Command arguments after options validated: ${
+          JSON.stringify(populatedArgumentValues, null, 2)
+        } with invalid args: ${JSON.stringify(invalidArguments, null, 2)}`
       );
-      if (validatedValue !== undefined) {
-        populatedArgumentValues[option.name] = validatedValue;
+
+      if (invalidArguments.length === 0) {
+        // validate the positional values
+        command.positionals.forEach((positional) => {
+          const validatedValue = validatePositionalValue(
+            positional,
+            populatedArgumentValues[positional.name] as ArgumentValueType,
+            invalidArguments,
+          );
+          if (validatedValue !== undefined) {
+            populatedArgumentValues[positional.name] = validatedValue;
+          }
+        });
+
+        logger.debug(() =>
+          `Command arguments after positionals validated: ${
+            JSON.stringify(populatedArgumentValues, null, 2)
+          } with invalid args: ${JSON.stringify(invalidArguments, null, 2)}`
+        );
       }
-    });
-
-    logger.debug(() =>
-      `Command arguments after options validated: ${
-        JSON.stringify(populatedArgumentValues)
-      } with invalid args: ${JSON.stringify(invalidArguments)}`
-    );
-
-    // validate the positional values
-    command.positionals.forEach((positional) => {
-      const validatedValue = validatePositionalValue(
-        positional,
-        populatedArgumentValues[positional.name] as ArgumentValueType,
-        invalidArguments,
-      );
-      if (validatedValue !== undefined) {
-        populatedArgumentValues[positional.name] = validatedValue;
-      }
-    });
-
-    logger.debug(() =>
-      `Command arguments after positionals validated: ${
-        JSON.stringify(populatedArgumentValues)
-      } with invalid args: ${JSON.stringify(invalidArguments)}`
-    );
-
+    }
     if (groupCommand) {
       return {
         command,
@@ -598,6 +603,12 @@ export default class DefaultParser implements Parser {
       invalidArguments.push(invalidArgument);
     }
 
+    logger.debug(() =>
+      `Command arguments for command ${command.name} after value population: ${
+        JSON.stringify(populatedArgumentValues, null, 2)
+      } with invalid args: ${JSON.stringify(invalidArguments, null, 2)}`
+    );
+
     // check if argument is already invalid
     if (invalidArguments.length === 0) {
       // validate the value
@@ -613,8 +624,8 @@ export default class DefaultParser implements Parser {
 
     logger.debug(() =>
       `Command arguments for command ${command.name} after value validated: ${
-        JSON.stringify(populatedArgumentValues)
-      } with invalid args: ${JSON.stringify(invalidArguments)}`
+        JSON.stringify(populatedArgumentValues, null, 2)
+      } with invalid args: ${JSON.stringify(invalidArguments, null, 2)}`
     );
 
     return {

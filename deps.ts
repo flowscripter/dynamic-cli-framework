@@ -1,3 +1,15 @@
 export * as log from "https://deno.land/std@0.163.0/log/mod.ts";
 export * as colors from "https://deno.land/std@0.161.0/fmt/colors.ts";
 export * as conversions from "https://deno.land/std@0.161.0/streams/conversion.ts";
+export { default as levenshtein } from "https://deno.land/x/levenshtein@v1.0.1/mod.ts";
+export { stderr, stdout } from "https://deno.land/std@0.166.0/node/process.ts";
+export * as path from "https://deno.land/std@0.167.0/path/mod.ts";
+export { default as figlet_factory } from "https://x.nest.land/deno-figlet@0.0.5/deps/factory.js";
+export { default as figlet_serializer } from "https://x.nest.land/deno-figlet@0.0.5/deps/serializer.js";
+export { default as banner_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_banner.js";
+export { default as big_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_big.js";
+export { default as slant_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_slant.js";
+export { default as small_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_small.js";
+export { default as smslant_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_smslant.js";
+export { default as standard_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_standard.js";
+export { default as thin_font } from "https://x.nest.land/deno-figlet@0.0.5/dist/fonts/_thin.js";
