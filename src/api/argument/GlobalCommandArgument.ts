@@ -2,7 +2,7 @@ import Argument from "./Argument.ts";
 import { ArgumentSingleValueType } from "./ArgumentValueTypes.ts";
 
 /**
- * Interface to be implemented by a single {@link Argument} defined by a {@link GlobalCommand}
+ * Interface to be implemented by a single {@link Argument} defined by a {@link GlobalCommand}.
  */
 export default interface GlobalCommandArgument extends Argument {
   /**

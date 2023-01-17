@@ -1,4 +1,4 @@
-import Context from "../runtime/Context.ts";
+import Context from "../Context.ts";
 import { ArgumentValues } from "../argument/ArgumentValueTypes.ts";
 
 /**

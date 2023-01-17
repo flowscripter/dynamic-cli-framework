@@ -8,9 +8,9 @@ export default interface Positional extends SubCommandArgument {
    * If this is `true` the argument can be specified one or multiple times and all values will be returned in
    * an array matching the order provided.
    *
-   * Note that if {@link isVarargOptional} is `true`, the argument can specified zero, one or multiple times.
+   * NOTE: If {@link isVarargOptional} is `true`, the argument can specified zero, one or multiple times.
    *
-   * **NOTE**: There can be only one positional with this set and it must be the last the last item if there
+   * NOTE: There can be only one positional with this set and it must be the last the last item if there
    * are multiple positionals defined.
    */
   readonly isVarargMultiple?: boolean;
@@ -18,9 +18,9 @@ export default interface Positional extends SubCommandArgument {
   /**
    * If this is `true` the argument can be specified zero or once i.e. it does not need to be specified.
    *
-   * Note that if {@link isVarargMultiple} is `true`, the argument can specified zero, one or multiple times.
+   * NOTE: If {@link isVarargMultiple} is `true`, the argument can specified zero, one or multiple times.
    *
-   * **NOTE**: There can be only one positional with this set and it must be the last the last item if there
+   * NOTE: There can be only one positional with this set and it must be the last the last item if there
    * are multiple positionals defined.
    */
   readonly isVarargOptional?: boolean;

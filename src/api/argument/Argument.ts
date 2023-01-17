@@ -32,7 +32,7 @@ export default interface Argument {
    * If not specified the configuration key is determined as follows:
    *
    * A prefix of the {@link CLIConfig.name} and the {@link Command.name} followed by the path to the value, with all characters
-   * capitalised and spaces, array braces and `.` path separators replaced by `_`.
+   * capitalised and spaces, array braces and `.` path separators replaced by `_`. Some examples:
    *
    * ```
    * MYCLI_COMMAND1_ARG1
@@ -42,7 +42,7 @@ export default interface Argument {
    * MYCLI_COMMAND2_FOO_1
    * ```
    *
-   * Note that regardless of whether a {@link configurationKey} is specified, or the default is relied upon,
+   * NOTE: Regardless of whether a {@link configurationKey} is specified, or the default is relied upon,
    * it will only be used if the parent {@link Command} has specified {@link Command.enableConfiguration} as `true`.
    */
   readonly configurationKey?: string;

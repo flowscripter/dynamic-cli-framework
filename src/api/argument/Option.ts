@@ -26,7 +26,7 @@ export default interface Option extends SubCommandArgument {
    * If this is `true` the option can be specified multiple times and all values will be returned in an array
    * matching the order provided.
    *
-   * Note that if {@link isOptional} is `false`, at least one instance of the option must be specified.
+   * NOTE: If {@link isOptional} is `false`, at least one instance of the option must be specified.
    */
   readonly isArray?: boolean;
 }

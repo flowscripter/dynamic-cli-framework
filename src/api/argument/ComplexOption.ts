@@ -1,6 +1,8 @@
 import Option from "./Option.ts";
 import { ArgumentValues, ComplexValueTypeName } from "./ArgumentValueTypes.ts";
 
+export const MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH = 10;
+
 /**
  * A container option argument for defining {@link SubCommand} nested argument hierarchies.
  */
