@@ -1,7 +1,7 @@
 # dynamic-cli-framework
 
 [![version](https://img.shields.io/github/v/release/flowscripter/dynamic-cli-framework?sort=semver)](https://github.com/flowscripter/dynamic-cli-framework/releases)
-[![build](https://img.shields.io/github/workflow/status/flowscripter/dynamic-cli-framework/release-deno-library)](https://github.com/flowscripter/dynamic-cli-framework/actions/workflows/release-deno-library.yml)
+[![build](https://img.shields.io/github/actions/workflow/status/flowscripter/dynamic-cli-framework/release-deno-library.yml)](https://github.com/flowscripter/dynamic-cli-framework/actions/workflows/release-deno-library.yml)
 [![coverage](https://codecov.io/gh/flowscripter/dynamic-cli-framework/branch/main/graph/badge.svg?token=EMFT2938ZF)](https://codecov.io/gh/flowscripter/dynamic-cli-framework)
 [![dependencies](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeno-visualizer.danopia.net%2Fshields%2Fupdates%2Fhttps%2Fraw.githubusercontent.com%2Fflowscripter%2Fdynamic-cli-framework%2Fmain%2Fmod.ts)](https://github.com/flowscripter/dynamic-cli-framework/blob/main/deps.ts)
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/flowscripter_dynamic_cli_framework/mod.ts)
@@ -9,6 +9,11 @@
 
 > A framework for developing CLI applications which support dynamic discovery
 > and installation of new commands.
+
+[//]: # (TODO: split out API for plugin developers)
+[//]: # (TODO: update docs to ServiceProvider)
+[//]: # (TODO: update docs to servicePriority from initPriority)
+
 
 ## Key Features
 
