@@ -1,8 +1,9 @@
-import GroupCommand from "../command/GroupCommand.ts";
-import SubCommand from "../command/SubCommand.ts";
-import GlobalCommand from "../command/GlobalCommand.ts";
-import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
+import GroupCommand from "../../api/command/GroupCommand.ts";
+import SubCommand from "../../api/command/SubCommand.ts";
+import GlobalCommand from "../../api/command/GlobalCommand.ts";
+import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
 
+// TODO: 10: move out of API
 /**
  * Interface used by a {@link CLI} to register {@link Command} instances.
  */

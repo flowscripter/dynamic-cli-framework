@@ -5,7 +5,7 @@ import {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import { InvalidArgument } from "../../api/runtime/Parser.ts";
+import { InvalidArgument } from "../Parser.ts";
 
 export interface ValuePopulationResult {
   /**

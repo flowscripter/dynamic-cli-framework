@@ -3,7 +3,7 @@ import {
   ArgumentValues,
   ArgumentValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import Printer, {
   AsciiBannerFont,
   PRINTER_SERVICE_ID,

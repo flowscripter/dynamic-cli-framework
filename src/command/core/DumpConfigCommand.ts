@@ -1,5 +1,5 @@
 import ConfigurationService from "../../service/core/ConfigurationService.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import GlobalCommand from "../../api/command/GlobalCommand.ts";
 import { ArgumentValues } from "../../api/argument/ArgumentValueTypes.ts";
 import Printer, { PRINTER_SERVICE_ID } from "../../api/service/core/Printer.ts";

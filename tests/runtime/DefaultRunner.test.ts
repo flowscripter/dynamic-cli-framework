@@ -14,7 +14,7 @@ import {
 import { assertEquals, Buffer, describe, it } from "../test_deps.ts";
 import DefaultRunner from "../../src/runtime/DefaultRunner.ts";
 import DefaultParser from "../../src/runtime/DefaultParser.ts";
-import DefaultCommandRegistry from "../../src/registry/DefaultCommandRegistry.ts";
+import DefaultCommandRegistry from "../../src/runtime/registry/DefaultCommandRegistry.ts";
 import DefaultPrinter from "../../src/service/core/DefaultPrinter.ts";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import { expectBufferStringIncludes } from "../fixtures/util.ts";

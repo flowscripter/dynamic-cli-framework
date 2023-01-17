@@ -1,17 +1,17 @@
-import CommandRegistry from "../api/registry/CommandRegistry.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import Command from "../api/command/Command.ts";
+import CommandRegistry from "./CommandRegistry.ts";
+import GlobalCommand from "../../api/command/GlobalCommand.ts";
+import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
+import GroupCommand from "../../api/command/GroupCommand.ts";
+import SubCommand from "../../api/command/SubCommand.ts";
+import Command from "../../api/command/Command.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
   isGroupCommand,
   isSubCommand,
-} from "../api/command/CommandTypeGuards.ts";
-import getLogger from "../util/logger.ts";
-import CommandValidator from "../runtime/command/CommandValidator.ts";
+} from "../../api/command/CommandTypeGuards.ts";
+import getLogger from "../../util/logger.ts";
+import CommandValidator from "../command/CommandValidator.ts";
 
 const logger = getLogger("DefaultCommandRegistry");
 
@@ -44,7 +44,10 @@ export default class DefaultCommandRegistry implements CommandRegistry {
    * @param commands optional list of {@link Command} instances.
    * @param commandValidator optional {@link CommandValidator} to use for all registered {@link Command} instances.
    */
-  public constructor(commands?: ReadonlyArray<Command>, commandValidator?: CommandValidator) {
+  public constructor(
+    commands?: ReadonlyArray<Command>,
+    commandValidator?: CommandValidator,
+  ) {
     this.commandValidator = commandValidator;
     commands?.forEach((command) => this.addCommand(command));
   }

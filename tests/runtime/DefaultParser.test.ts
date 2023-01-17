@@ -3,7 +3,7 @@ import {
   InvalidArgumentReason,
   ParseResult,
   ScanResult,
-} from "../../src/api/runtime/Parser.ts";
+} from "../../src/runtime/Parser.ts";
 import {
   ArgumentValueType,
   ArgumentValueTypeName,
@@ -16,7 +16,7 @@ import {
   SubCommand,
 } from "../../mod.ts";
 import DefaultParser from "../../src/runtime/DefaultParser.ts";
-import DefaultCommandRegistry from "../../src/registry/DefaultCommandRegistry.ts";
+import DefaultCommandRegistry from "../../src/runtime/registry/DefaultCommandRegistry.ts";
 
 function expectScanResult(result: ScanResult, expected: ScanResult) {
   assertEquals(result.unusedLeadingArgs, expected.unusedLeadingArgs);

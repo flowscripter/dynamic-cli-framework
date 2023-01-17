@@ -1,4 +1,4 @@
-import Context from "../api/runtime/Context.ts";
+import Context from "../api/Context.ts";
 import CLIConfig from "../api/CLIConfig.ts";
 
 /**

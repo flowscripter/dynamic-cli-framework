@@ -6,7 +6,7 @@ import {
   ComplexValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
 import SubCommand from "../../api/command/SubCommand.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import UsageExample from "../../api/command/UsageExample.ts";
 import Option from "../../api/argument/Option.ts";
 import Positional from "../../api/argument/Positional.ts";
@@ -504,7 +504,7 @@ export function getCommandArgsHelpSections(
   return helpSections;
 }
 export function getCommandExamplesHelpSections(
-    printer: Printer,
+  printer: Printer,
   context: Context,
   subCommand: SubCommand,
 ): Array<HelpSection> {

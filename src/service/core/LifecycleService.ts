@@ -1,4 +1,6 @@
-import Service, { ServiceInstance } from "../../api/service/Service.ts";
+import ServiceProvider, {
+  ServiceInfo,
+} from "../../api/service/ServiceProvider.ts";
 import Lifecycle, {
   LIFECYCLE_SERVICE_ID,
 } from "../../api/service/core/Lifecycle.ts";
@@ -6,9 +8,9 @@ import DefaultLifecycle from "./DefaultLifecycle.ts";
 import Command from "../../api/command/Command.ts";
 
 /**
- * Exposes a {@link Lifecycle} instance as a {@link Service}.
+ * Exposes a {@link Lifecycle} instance as a {@link ServiceProvider}.
  */
-export default class LifecycleService implements Service {
+export default class LifecycleService implements ServiceProvider {
   readonly initPriority: number;
   readonly lifecycle: Lifecycle;
 
@@ -25,10 +27,10 @@ export default class LifecycleService implements Service {
   }
 
   public init(): Promise<{
-    readonly serviceInstances: ReadonlyArray<ServiceInstance>;
+    readonly serviceInstances: ReadonlyArray<ServiceInfo>;
     readonly commands: ReadonlyArray<Command>;
   }> {
-    const serviceInstances: Array<ServiceInstance> = [
+    const serviceInstances: Array<ServiceInfo> = [
       {
         serviceId: LIFECYCLE_SERVICE_ID,
         instance: this.lifecycle,

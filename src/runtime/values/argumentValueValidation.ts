@@ -1,8 +1,5 @@
 import GlobalCommandArgument from "../../api/argument/GlobalCommandArgument.ts";
-import {
-  InvalidArgument,
-  InvalidArgumentReason,
-} from "../../api/runtime/Parser.ts";
+import { InvalidArgument, InvalidArgumentReason } from "../Parser.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValues,

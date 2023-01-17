@@ -1,5 +1,4 @@
-import { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launch.ts";
-import Context from "./src/api/runtime/Context.ts";
+import Context from "./src/api/Context.ts";
 import SubCommand from "./src/api/command/SubCommand.ts";
 import {
   ArgumentValues,
@@ -13,7 +12,6 @@ import {
 import Lifecycle, {
   LIFECYCLE_SERVICE_ID,
 } from "./src/api/service/core/Lifecycle.ts";
-
 export type {
   ArgumentSingleValueType,
   ArgumentValueType,
@@ -31,25 +29,20 @@ export type { default as GlobalModifierCommand } from "./src/api/command/GlobalM
 export type { default as GroupCommand } from "./src/api/command/GroupCommand.ts";
 export type { default as SubCommand } from "./src/api/command/SubCommand.ts";
 export type { default as UsageExample } from "./src/api/command/UsageExample.ts";
-
 export type { default as Printer } from "./src/api/service/core/Printer.ts";
-
-export type { default as CommandRegistry } from "./src/api/registry/CommandRegistry.ts";
-export type { default as ServiceRegistry } from "./src/api/registry/ServiceRegistry.ts";
-
+export type { default as CommandRegistry } from "./src/runtime/registry/CommandRegistry.ts";
+export type { default as ServiceRegistry } from "./src/runtime/registry/ServiceRegistry.ts";
 export type { default as RunResult } from "./src/api/RunResult.ts";
 export { RunState } from "./src/api/RunResult.ts";
-export type { default as Context } from "./src/api/runtime/Context.ts";
+export type { default as Context } from "./src/api/Context.ts";
 export type {
   default as Parser,
   InvalidArgument,
-} from "./src/api/runtime/Parser.ts";
-export type { default as Runner } from "./src/api/runtime/Runner.ts";
-
-export type { default as Service } from "./src/api/service/Service.ts";
-
+} from "./src/runtime/Parser.ts";
+export type { default as Runner } from "./src/runtime/Runner.ts";
+export type { default as Service } from "./src/api/service/ServiceProvider.ts";
 export type { default as CLI } from "./src/api/CLI.ts";
-
+import { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launch.ts";
 export {
   ArgumentValueTypeName,
   ComplexValueTypeName,
@@ -313,4 +306,4 @@ const command2: SubCommand = {
 //   "3.0.0",
 // );
 
-await launchSingleCommandCLI(command1, "description", );
+await launchSingleCommandCLI(command1, "description");

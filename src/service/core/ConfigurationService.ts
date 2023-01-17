@@ -1,4 +1,6 @@
-import Service, { ServiceInstance } from "../../api/service/Service.ts";
+import ServiceProvider, {
+  ServiceInfo,
+} from "../../api/service/ServiceProvider.ts";
 import Command from "../../api/command/Command.ts";
 import ConfigCommand from "../../command/core/ConfigCommand.ts";
 import {
@@ -8,13 +10,13 @@ import {
 import getLogger from "../../util/logger.ts";
 import DefaultConfiguration from "./DefaultConfiguration.ts";
 import { CONFIGURATION_SERVICE_ID } from "../../api/service/core/Configuration.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import DumpConfigCommand from "../../command/core/DumpConfigCommand.ts";
 
 const logger = getLogger("ConfigurationService");
 
 /**
- * Provides configuration functionality as a {@link Service}. Configuration of {@link ArgumentValues} is provided for
+ * Provides configuration functionality as a {@link ServiceProvider}. Configuration of {@link ArgumentValues} is provided for
  * any {@link Command} instance which has defined {@link Command.enableConfiguration} as `true`.
  *
  * Two sources of configuration are supported:
@@ -47,7 +49,7 @@ const logger = getLogger("ConfigurationService");
  *
  * Any configured values from the above sources will be overridden by any arguments provided on the command line.
  */
-export default class ConfigurationService implements Service {
+export default class ConfigurationService implements ServiceProvider {
   readonly initPriority: number;
   configLocation = "not initialized";
 
@@ -102,12 +104,11 @@ export default class ConfigurationService implements Service {
   //    e.g. help:
   //      use specified arguments and loaded configuration
 
-
   // SOLVE: plugin service using loaded configuration
   // SOLVE: ad-hoc config storage support for services and commands
 
   public async init(context: Context): Promise<{
-    readonly serviceInstances: ReadonlyArray<ServiceInstance>;
+    readonly serviceInstances: ReadonlyArray<ServiceInfo>;
     readonly commands: ReadonlyArray<Command>;
   }> {
     // default to `$HOME/.<application_name>.json`
@@ -126,7 +127,7 @@ export default class ConfigurationService implements Service {
       }],
       commands: [
         new ConfigCommand(this, this.initPriority),
-        new DumpConfigCommand(this)
+        new DumpConfigCommand(this),
       ],
     });
   }

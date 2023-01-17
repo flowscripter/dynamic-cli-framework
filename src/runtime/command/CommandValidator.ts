@@ -20,7 +20,7 @@ import {
   validateGlobalCommandArgumentValue,
   validateOptionValue,
 } from "../values/argumentValueValidation.ts";
-import { InvalidArgument } from "../../api/runtime/Parser.ts";
+import { InvalidArgument } from "../Parser.ts";
 import getLogger from "../../util/logger.ts";
 import CLIConfig from "../../api/CLIConfig.ts";
 import { getConfigurationKey } from "../../util/configHelper.ts";

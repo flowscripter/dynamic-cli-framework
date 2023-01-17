@@ -1,4 +1,6 @@
-import Service, { ServiceInstance } from "../../api/service/Service.ts";
+import ServiceProvider, {
+  ServiceInfo,
+} from "../../api/service/ServiceProvider.ts";
 import Printer, { PRINTER_SERVICE_ID } from "../../api/service/core/Printer.ts";
 import Command from "../../api/command/Command.ts";
 import DefaultPrinter from "./DefaultPrinter.ts";
@@ -7,13 +9,13 @@ import DarkModeCommand from "../../command/core/DarkModeCommand.ts";
 import Lifecycle, {
   LIFECYCLE_SERVICE_ID,
 } from "../../api/service/core/Lifecycle.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import LogLevelCommand from "../../command/core/LogLevelCommand.ts";
 
 /**
- * Exposes a {@link Printer} instance as a {@link Service}.
+ * Exposes a {@link Printer} instance as a {@link ServiceProvider}.
  */
-export default class PrinterService implements Service {
+export default class PrinterService implements ServiceProvider {
   readonly initPriority: number;
   readonly stdoutWriter: Deno.Writer;
   readonly stderrWriter: Deno.Writer;
@@ -37,7 +39,7 @@ export default class PrinterService implements Service {
   }
 
   public init(context: Context): Promise<{
-    readonly serviceInstances: ReadonlyArray<ServiceInstance>;
+    readonly serviceInstances: ReadonlyArray<ServiceInfo>;
     readonly commands: ReadonlyArray<Command>;
   }> {
     const lifecycle = context.getServiceById(LIFECYCLE_SERVICE_ID) as Lifecycle;
@@ -46,7 +48,7 @@ export default class PrinterService implements Service {
       this.stderrWriter,
       lifecycle,
     );
-    const serviceInstances: Array<ServiceInstance> = [
+    const serviceInstances: Array<ServiceInfo> = [
       {
         serviceId: PRINTER_SERVICE_ID,
         instance: this.printer,

@@ -1,5 +1,5 @@
 import { assertEquals, describe, it } from "../test_deps.ts";
-import DefaultServiceRegistry from "../../src/registry/DefaultServiceRegistry.ts";
+import DefaultServiceRegistry from "../../src/runtime/registry/DefaultServiceRegistry.ts";
 import { Service } from "../../mod.ts";
 
 function getService(initPriority: number, id: string): Service {

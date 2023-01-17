@@ -4,7 +4,7 @@ import {
   InvalidArgumentReason,
   MAXIMUM_ARGUMENT_ARRAY_SIZE,
   MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
-} from "../../api/runtime/Parser.ts";
+} from "../Parser.ts";
 import SubCommand from "../../api/command/SubCommand.ts";
 import {
   ArgumentSingleValueType,
@@ -125,10 +125,13 @@ class ParseContext {
   }
 
   /**
-   * Attempt to parse the {@link Option} path specified by the provided option argument. Note that:
-   * * this could be either a reference to a simple option or a property on a nested complex option: `foo` or `alpha.beta.gamma.delta`
-   * * either the option names or short aliases may be specified: `alpha.b.gamma.d`
-   * * explicit array indices may be in use e.g. `alpha[0].beta.gamma[1].delta`
+   * Attempt to parse the {@link Option} path specified by the provided option argument.
+   *
+   * NOTE: the provided path could:
+   *
+   * * be either a reference to a simple option or a property on a nested complex option: `foo` or `alpha.beta.gamma.delta`
+   * * include either the option names or short aliases may be specified: `alpha.b.gamma.d`
+   * * include array indices e.g. `alpha[0].beta.gamma[1].delta`
    *
    * @param optionPath the option path argument to parse.
    *

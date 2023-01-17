@@ -14,7 +14,7 @@ import {
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
-import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
+import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
 
 describe("argumentValueValidation", () => {
   it("Option types", () => {

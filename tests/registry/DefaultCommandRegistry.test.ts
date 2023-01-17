@@ -6,7 +6,7 @@ import {
   Positional,
   SubCommand,
 } from "../../mod.ts";
-import DefaultCommandRegistry from "../../src/registry/DefaultCommandRegistry.ts";
+import DefaultCommandRegistry from "../../src/runtime/registry/DefaultCommandRegistry.ts";
 import { assertThrows, describe, it } from "../test_deps.ts";
 
 function getSubCommand(

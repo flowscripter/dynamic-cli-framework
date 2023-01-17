@@ -3,12 +3,12 @@ import RunResult, { RunState } from "./api/RunResult.ts";
 import getLogger from "./util/logger.ts";
 import DefaultRunner from "./runtime/DefaultRunner.ts";
 import DefaultParser from "./runtime/DefaultParser.ts";
-import DefaultCommandRegistry from "./registry/DefaultCommandRegistry.ts";
+import DefaultCommandRegistry from "./runtime/registry/DefaultCommandRegistry.ts";
 import { NonModifierCommand } from "./api/command/NonModifierCommand.ts";
 import Command from "./api/command/Command.ts";
-import DefaultServiceRegistry from "./registry/DefaultServiceRegistry.ts";
+import DefaultServiceRegistry from "./runtime/registry/DefaultServiceRegistry.ts";
 import DefaultContext from "./runtime/DefaultContext.ts";
-import Service, { ServiceInstance } from "./api/service/Service.ts";
+import ServiceProvider, { ServiceInfo } from "./api/service/ServiceProvider.ts";
 import PrinterService from "./service/core/PrinterService.ts";
 import ConfigurationService from "./service/core/ConfigurationService.ts";
 import BannerCommand from "./command/core/BannerCommand.ts";
@@ -102,11 +102,11 @@ export default abstract class AbstractBaseCLI implements CLI {
   }
 
   /**
-   * Add a {@link Service} to the CLI's {@link ServiceRegistry}.
+   * Add a {@link ServiceProvider} to the CLI's {@link ServiceRegistry}.
    *
-   * @param service the {@link Service} to add.
+   * @param service the {@link ServiceProvider} to add.
    */
-  public addService(service: Service) {
+  public addService(service: ServiceProvider) {
     this.serviceRegistry.addService(service);
   }
 
@@ -137,7 +137,7 @@ export default abstract class AbstractBaseCLI implements CLI {
       // this would be a pretty lame no-command CLI
       if (this.addedNonModifierCommands.length === 0) {
         throw new Error(
-            "No non-modifier commands added to the CLI, nothing to run!",
+          "No non-modifier commands added to the CLI, nothing to run!",
         );
       }
 
@@ -167,7 +167,7 @@ export default abstract class AbstractBaseCLI implements CLI {
         //  added to command registry - should validate no options as they can't have args passed to them.
         const { serviceInstances, commands } = await service.init(context);
 
-        serviceInstances.forEach((serviceInstance: ServiceInstance) => {
+        serviceInstances.forEach((serviceInstance: ServiceInfo) => {
           logger.debug(() =>
             `Adding service instance with ID: ${serviceInstance.serviceId} to context`
           );
@@ -176,7 +176,9 @@ export default abstract class AbstractBaseCLI implements CLI {
             serviceInstance.instance,
           );
         });
-        commands.forEach((command: Command) => commandRegistry.addCommand(command));
+        commands.forEach((command: Command) =>
+          commandRegistry.addCommand(command)
+        );
       }
 
       // setup help and default commands based on the commands explicitly added via {@link addCommand).
@@ -247,10 +249,10 @@ export default abstract class AbstractBaseCLI implements CLI {
       const runResult = await runner.run(
         args,
         commandRegistry,
-          // TODO: SOLVE implement config service access - via context?
+        // TODO: SOLVE implement config service access - via context?
         configurationService.configuredArgumentValuesByCommandName,
         context,
-          // TODO: SOLVE implement service returning post init default run command and pass all here
+        // TODO: SOLVE implement service returning post init default run command and pass all here
         [printBannerCommand],
         defaultCommand,
       );

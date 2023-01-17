@@ -7,7 +7,7 @@ import {
   ArgumentValues,
   ArgumentValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import {
   getCommandArgsHelpSections,
   getCommandExamplesHelpSections,
@@ -23,7 +23,7 @@ import Printer, {
 } from "../../api/service/core/Printer.ts";
 import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
 import { levenshtein } from "../../../deps.ts";
-import CommandRegistry from "../../api/registry/CommandRegistry.ts";
+import CommandRegistry from "../../runtime/registry/CommandRegistry.ts";
 import CLIConfig from "../../api/CLIConfig.ts";
 
 /**

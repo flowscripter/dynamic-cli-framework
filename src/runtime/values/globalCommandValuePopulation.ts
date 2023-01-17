@@ -1,4 +1,4 @@
-import { InvalidArgumentReason } from "../../api/runtime/Parser.ts";
+import { InvalidArgumentReason } from "../Parser.ts";
 import GlobalCommand from "../../api/command/GlobalCommand.ts";
 import { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import {

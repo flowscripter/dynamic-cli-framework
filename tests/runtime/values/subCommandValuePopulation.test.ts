@@ -8,7 +8,7 @@ import {
 import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
 import { PopulatedArgumentValues } from "../../../src/api/argument/ArgumentValueTypes.ts";
 import { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
-import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
+import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
 
 function expectExtractResult(
   result: SubCommandValuePopulationResult,

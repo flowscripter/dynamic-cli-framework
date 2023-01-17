@@ -19,7 +19,7 @@ import {
   thin_font,
 } from "../../../deps.ts";
 import Lifecycle from "../../api/service/core/Lifecycle.ts";
-import {ITALIC_END, ITALIC_START} from "./terminal/Ansi.ts";
+import { ITALIC_END, ITALIC_START } from "./terminal/Ansi.ts";
 
 enum Color {
   PRIMARY = 0,
@@ -35,6 +35,7 @@ enum Color {
   CYAN = 10,
   GREEN = 11,
 }
+// TODO: move all core services into sub-folders and include provided commands
 
 export default class DefaultPrinter implements Printer {
   private readonly stdoutWriter: Deno.Writer;

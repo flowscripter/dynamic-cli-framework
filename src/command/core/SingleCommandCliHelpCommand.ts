@@ -3,7 +3,7 @@ import SubCommand from "../../api/command/SubCommand.ts";
 import Option from "../../api/argument/Option.ts";
 import Positional from "../../api/argument/Positional.ts";
 import { ArgumentValues } from "../../api/argument/ArgumentValueTypes.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import Printer, { PRINTER_SERVICE_ID } from "../../api/service/core/Printer.ts";
 import {
   getCommandArgsHelpSections,
@@ -16,7 +16,7 @@ import {
 } from "./helpHelper.ts";
 import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
 import GroupCommand from "../../api/command/GroupCommand.ts";
-import CommandRegistry from "../../api/registry/CommandRegistry.ts";
+import CommandRegistry from "../../runtime/registry/CommandRegistry.ts";
 import CLIConfig from "../../api/CLIConfig.ts";
 
 /**
@@ -146,10 +146,7 @@ abstract class SingleCommandCliAbstractHelpCommand {
     const printer = context.getServiceById(PRINTER_SERVICE_ID) as Printer;
 
     helpSections.push(
-      ...getCommandExamplesHelpSections(printer,
-        context,
-        this.defaultCommand,
-      ),
+      ...getCommandExamplesHelpSections(printer, context, this.defaultCommand),
     );
 
     await printHelpSections(printer, helpSections);

@@ -3,97 +3,16 @@ import {
   ArgumentValues,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
-} from "../argument/ArgumentValueTypes.ts";
-import CommandRegistry from "../registry/CommandRegistry.ts";
-import Command from "../command/Command.ts";
-import GroupCommand from "../command/GroupCommand.ts";
-import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
-import GlobalCommand from "../command/GlobalCommand.ts";
-import SubCommand from "../command/SubCommand.ts";
-import Argument from "../argument/Argument.ts";
-import ComplexOption from "../argument/ComplexOption.ts";
-
-export const MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH = 10;
-export const MAXIMUM_ARGUMENT_ARRAY_SIZE = 255;
-
-/**
- * Possible reasons for an invalid argument.
- */
-export enum InvalidArgumentReason {
-  /**
-   * The argument value was not specified.
-   */
-  MISSING_VALUE = 0,
-
-  /**
-   * The value specified was not the correct type for the argument.
-   */
-  INCORRECT_VALUE_TYPE = 1,
-
-  /**
-   * The argument does not support multiple values.
-   */
-  ILLEGAL_MULTIPLE_VALUES = 2,
-
-  /**
-   * The value specified was not one of the defined allowable values for the argument.
-   */
-  ILLEGAL_VALUE = 3,
-
-  /**
-   * The arguments specified resulted in a sparse array of values.
-   */
-  ILLEGAL_SPARSE_ARRAY = 4,
-
-  /**
-   * The argument specified an unknown complex option property.
-   */
-  UNKNOWN_PROPERTY = 5,
-
-  /**
-   * Complex option nesting exceeds maximum of {@link MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH}.
-   */
-  NESTING_DEPTH_EXCEEDED = 6,
-
-  /**
-   * Array value nesting exceeds maximum of {@link MAXIMUM_ARGUMENT_ARRAY_SIZE}.
-   */
-  ARRAY_SIZE_EXCEEDED = 7,
-
-  /**
-   * Attempt to set a primitive value on a complex object object.
-   */
-  OPTION_IS_COMPLEX = 8,
-}
-
-/**
- * Details of an invalid parsed argument.
- */
-export interface InvalidArgument {
-  /**
-   * A reason for the parsing error
-   */
-  readonly reason: InvalidArgumentReason;
-
-  /**
-   * The name of the argument (if it was able to be populated)
-   */
-  readonly name?: string;
-
-  /**
-   * The {@link Argument} (if it was able to be populated)
-   */
-  readonly argument?: Argument | ComplexOption;
-
-  /**
-   * The argument value (if it was able to be populated). Note that this value is unlikely to be valid
-   * as it is the cause of the invalid argument error.
-   */
-  readonly value?:
-    | PopulatedArgumentValues
-    | PopulatedArgumentValueType
-    | Array<PopulatedArgumentValues | PopulatedArgumentValueType>;
-}
+} from "../api/argument/ArgumentValueTypes.ts";
+import CommandRegistry from "./registry/CommandRegistry.ts";
+import Command from "../api/command/Command.ts";
+import GroupCommand from "../api/command/GroupCommand.ts";
+import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import GlobalCommand from "../api/command/GlobalCommand.ts";
+import SubCommand from "../api/command/SubCommand.ts";
+import Argument from "../api/argument/Argument.ts";
+import ComplexOption from "../api/argument/ComplexOption.ts";
+// TODO: 12: move out of API
 
 /**
  * A container holding the result of a parser {@link CommandClause} parsing operation.

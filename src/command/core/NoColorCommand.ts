@@ -4,7 +4,7 @@ import {
   ArgumentValues,
   ArgumentValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 import PrinterService from "../../service/core/PrinterService.ts";
 
 /**

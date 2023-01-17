@@ -5,8 +5,8 @@ import Parser, {
   ParseResult,
   ScanResult,
   SubCommandClause,
-} from "../api/runtime/Parser.ts";
-import CommandRegistry from "../api/registry/CommandRegistry.ts";
+} from "./Parser.ts";
+import CommandRegistry from "./registry/CommandRegistry.ts";
 import GroupCommand from "../api/command/GroupCommand.ts";
 import Command from "../api/command/Command.ts";
 import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
@@ -50,6 +50,7 @@ export interface LocalScanResult {
 
   /**
    * Optional parent {@link GroupCommand} if {@link Command} is populated and is a member {@link SubCommand}.
+   *
    * NOTE: Cannot be true if either {@link isGlobalModifierCommand} or {@link isGlobalCommand} is true.
    */
   readonly groupCommand?: GroupCommand;

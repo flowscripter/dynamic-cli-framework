@@ -6,7 +6,7 @@ import {
 import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
 import { Level } from "../../api/service/core/Printer.ts";
 import PrinterService from "../../service/core/PrinterService.ts";
-import Context from "../../api/runtime/Context.ts";
+import Context from "../../api/Context.ts";
 
 /**
  * Command allowing the setting of the log level for {@link PrinterService}.

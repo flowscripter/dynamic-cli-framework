@@ -1,12 +1,13 @@
-import RunResult from "../RunResult.ts";
-import Context from "./Context.ts";
-import CommandRegistry from "../registry/CommandRegistry.ts";
-import { NonModifierCommand } from "../command/NonModifierCommand.ts";
+import RunResult from "../api/RunResult.ts";
+import Context from "../api/Context.ts";
+import CommandRegistry from "./registry/CommandRegistry.ts";
+import { NonModifierCommand } from "../api/command/NonModifierCommand.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValues,
-} from "../argument/ArgumentValueTypes.ts";
-import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
+} from "../api/argument/ArgumentValueTypes.ts";
+import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+// TODO: 13: move out of API
 
 /**
  * Used by a {@link CLI} to parse arguments and run specified {@link Command} instances.

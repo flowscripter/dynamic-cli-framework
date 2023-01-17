@@ -6,7 +6,7 @@ import {
 } from "../../../mod.ts";
 import { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
 import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
-import { InvalidArgumentReason } from "../../../src/api/runtime/Parser.ts";
+import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
 
 function expectExtractResult(
   result: GlobalCommandValuePopulationResult,

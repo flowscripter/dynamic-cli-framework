@@ -14,7 +14,6 @@
 [//]: # (TODO: update docs to ServiceProvider)
 [//]: # (TODO: update docs to servicePriority from initPriority)
 
-
 ## Key Features
 
 - Flexible CLI definitions:
