@@ -1,4 +1,4 @@
-export * as log from "https://deno.land/std@0.163.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.173.0/log/mod.ts";
 export * as colors from "https://deno.land/std@0.161.0/fmt/colors.ts";
 export * as conversions from "https://deno.land/std@0.161.0/streams/conversion.ts";
 export { default as levenshtein } from "https://deno.land/x/levenshtein@v1.0.1/mod.ts";
