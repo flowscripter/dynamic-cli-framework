@@ -1,4 +1,4 @@
-export * as log from "https://deno.land/std@0.173.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.211.0/log/mod.ts";
 export { format } from "https://deno.land/std@0.176.0/node/util.ts";
 export * as colors from "https://deno.land/std@0.173.0/fmt/colors.ts";
 export * as conversions from "https://deno.land/std@0.172.0/streams/conversion.ts";
