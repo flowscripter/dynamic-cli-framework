@@ -1,14 +1,7 @@
 import Option from "../../api/argument/Option.ts";
-import {
-  InvalidArgument,
-  InvalidArgumentReason,
-  MAXIMUM_ARGUMENT_ARRAY_SIZE,
-  MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
-} from "../Parser.ts";
 import SubCommand from "../../api/command/SubCommand.ts";
 import {
   ArgumentSingleValueType,
-  ArgumentValues,
   ArgumentValueTypeName,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
@@ -17,8 +10,12 @@ import {
 import getLogger from "../../util/logger.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
 import { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import ComplexOption from "../../api/argument/ComplexOption.ts";
+import ComplexOption, {
+  MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
+} from "../../api/argument/ComplexOption.ts";
 import { isComplexOption } from "../../api/argument/ArgumentTypeGuards.ts";
+import { InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
 
 const logger = getLogger("subCommandValuePopulation");
 
@@ -144,7 +141,7 @@ class ParseContext {
    * or an unknown property.
    */
   private parseOptionPath(optionPath: string): boolean {
-    logger.debug(() => `Parsing option path: '${optionPath}'`);
+    logger.debug("Parsing option path: %s", optionPath);
     this.currentOptionPath = undefined;
     this.currentOption = undefined;
 
@@ -587,21 +584,21 @@ class ParseContext {
  *
  * @param subCommand the {@link SubCommand} for which {@link PopulatedArgumentValues} values should be populated.
  * @param potentialArgs the potential args to use for population.
- * @param configuredValues optional configured {@link ArgumentValues} to use for population before parsing the provided arguments.
+ * @param defaultValues optional default {@link ArgumentValues} to use for population before parsing the provided arguments.
  */
 export default function populateSubCommandValues(
   subCommand: SubCommand,
   potentialArgs: ReadonlyArray<string>,
-  configuredValues: ArgumentValues | undefined,
+  defaultValues: PopulatedArgumentValues | undefined,
 ): SubCommandValuePopulationResult {
   logger.debug(() => {
     const message =
       `Populating values for sub-command: '${subCommand.name}' using potential args: ${
-        JSON.stringify(potentialArgs, null, 2)
+        potentialArgs.join(" ")
       }`;
-    if (configuredValues !== undefined) {
+    if (defaultValues !== undefined) {
       return `${message} and configured values: ${
-        JSON.stringify(configuredValues, null, 2)
+        JSON.stringify(defaultValues)
       }`;
     }
     return message;
@@ -654,10 +651,10 @@ export default function populateSubCommandValues(
 
   // merge the configured values with the parsed values
   let populatedArgumentValues = parseContext.populatedArgumentValues;
-  if (configuredValues) {
+  if (defaultValues) {
     populatedArgumentValues = argumentValueMerge(
       populatedArgumentValues,
-      configuredValues,
+      defaultValues,
     );
   }
 

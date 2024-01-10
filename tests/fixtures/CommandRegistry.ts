@@ -1,5 +1,5 @@
-import { Command } from "../../mod.ts";
 import DefaultCommandRegistry from "../../src/runtime/registry/DefaultCommandRegistry.ts";
+import Command from "../../src/api/command/Command.ts";
 
 export function getCommandRegistry(
   commands?: Array<Command>,

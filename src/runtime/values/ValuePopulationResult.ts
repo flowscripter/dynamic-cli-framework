@@ -1,12 +1,12 @@
-/**
- * A base interface for a container holding the result of argument value population.
- */
 import {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import { InvalidArgument } from "../Parser.ts";
+import { InvalidArgument } from "../../api/RunResult.ts";
 
+/**
+ * A base interface for a container holding the result of argument value population.
+ */
 export interface ValuePopulationResult {
   /**
    * Any args which were unused during argument value population.

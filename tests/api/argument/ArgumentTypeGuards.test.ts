@@ -1,13 +1,13 @@
 import { assertEquals, describe, it } from "../../test_deps.ts";
+import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 import {
   ArgumentValueTypeName,
-  ComplexOption,
   ComplexValueTypeName,
-  GlobalCommandArgument,
-  Option,
-  Positional,
-} from "../../../mod.ts";
+} from "../../../src/api/argument/ArgumentValueTypes.ts";
+import Positional from "../../../src/api/argument/Positional.ts";
+import GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
 import { isComplexOption } from "../../../src/api/argument/ArgumentTypeGuards.ts";
+import Option from "../../../src/api/argument/Option.ts";
 
 function getComplexOption(): ComplexOption {
   return {
@@ -35,7 +35,6 @@ function getPositional(): Positional {
 
 function getGlobalCommandArgument(): GlobalCommandArgument {
   return {
-    name: "option",
     type: ArgumentValueTypeName.STRING,
   };
 }

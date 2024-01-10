@@ -1,17 +1,19 @@
 import { assertThrows, describe, it } from "../../test_deps.ts";
-import {
-  ArgumentValueTypeName,
-  ComplexOption,
-  ComplexValueTypeName,
-  GlobalCommand,
-  GlobalCommandArgument,
-  GroupCommand,
-  Option,
-  Positional,
-  SubCommand,
-} from "../../../mod.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import CommandValidator from "../../../src/runtime/command/CommandValidator.ts";
+import {
+  getGlobalCommandWithShortAlias,
+  getGroupCommand,
+  getSubCommandWithComplexOptions,
+} from "../../fixtures/Command.ts";
+import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import {
+  ArgumentValueTypeName,
+  ComplexValueTypeName,
+} from "../../../src/api/argument/ArgumentValueTypes.ts";
+import Option from "../../../src/api/argument/Option.ts";
+import Positional from "../../../src/api/argument/Positional.ts";
+import SubCommand from "../../../src/api/command/SubCommand.ts";
 
 function getSubCommand(
   name: string,
@@ -24,73 +26,6 @@ function getSubCommand(
     options,
     positionals,
     enableConfiguration,
-    execute: async (): Promise<void> => {},
-  };
-}
-
-function getGroupCommand(
-  name: string,
-  memberSubCommands: ReadonlyArray<SubCommand>,
-): GroupCommand {
-  return {
-    name,
-    memberSubCommands,
-    execute: async (): Promise<void> => {},
-  };
-}
-
-function getGlobalCommand(
-  name: string,
-  shortAlias: string,
-  argument?: GlobalCommandArgument,
-): GlobalCommand {
-  return {
-    name,
-    shortAlias,
-    argument,
-    execute: async (): Promise<void> => {},
-  };
-}
-
-function getSubCommandWithComplexOptions(): SubCommand {
-  return {
-    name: "subCommand",
-    options: [{
-      name: "alpha",
-      shortAlias: "a",
-      type: ComplexValueTypeName.COMPLEX,
-      isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
-        type: ComplexValueTypeName.COMPLEX,
-        isArray: true,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-          isArray: true,
-        }],
-      }],
-    }, {
-      name: "epsilon",
-      shortAlias: "e",
-      type: ComplexValueTypeName.COMPLEX,
-      properties: [{
-        name: "gamma",
-        shortAlias: "g",
-        type: ArgumentValueTypeName.STRING,
-      }, {
-        name: "delta",
-        shortAlias: "d",
-        type: ArgumentValueTypeName.NUMBER,
-      }],
-    }],
-    positionals: [],
     execute: async (): Promise<void> => {},
   };
 }
@@ -327,8 +262,7 @@ describe("CommandValidator", () => {
     "GlobalCommand validation fails due to the default value" +
       " not matching any values specified in argument valid values",
     () => {
-      const command = getGlobalCommand("command", "c", {
-        name: "value",
+      const command = getGlobalCommandWithShortAlias("command", "c", {
         type: ArgumentValueTypeName.STRING,
         defaultValue: "bar",
         allowableValues: ["goo"],
@@ -344,8 +278,7 @@ describe("CommandValidator", () => {
     "GlobalCommand validation fails due to the type of defaultValue" +
       " not matching the type specified in global argument type",
     () => {
-      const command = getGlobalCommand("command", "c", {
-        name: "value",
+      const command = getGlobalCommandWithShortAlias("command", "c", {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: "bar",
       });
@@ -360,8 +293,7 @@ describe("CommandValidator", () => {
     "GlobalCommand validation fails due to the type of values in argument" +
       " allowableValues not matching the type specified in argument type",
     () => {
-      const command = getGlobalCommand("command", "c", {
-        name: "value",
+      const command = getGlobalCommandWithShortAlias("command", "c", {
         defaultValue: "bar",
         allowableValues: [1],
         type: ArgumentValueTypeName.STRING,
@@ -374,8 +306,7 @@ describe("CommandValidator", () => {
   );
 
   it("GlobalCommand validation fails due to invalid command name", () => {
-    const command = getGlobalCommand("-command", "c", {
-      name: "value",
+    const command = getGlobalCommandWithShortAlias("-command", "c", {
       type: ArgumentValueTypeName.STRING,
     });
 
@@ -383,17 +314,7 @@ describe("CommandValidator", () => {
   });
 
   it("GlobalCommand validation fails due to invalid command short alias", () => {
-    const command = getGlobalCommand("command", "command", {
-      name: "value",
-      type: ArgumentValueTypeName.STRING,
-    });
-
-    assertThrows(() => new CommandValidator(getCLIConfig()).validate(command));
-  });
-
-  it("GlobalCommand validation fails due to invalid global argument name", () => {
-    const command = getGlobalCommand("command", "command", {
-      name: "-",
+    const command = getGlobalCommandWithShortAlias("command", "command", {
       type: ArgumentValueTypeName.STRING,
     });
 
@@ -401,8 +322,7 @@ describe("CommandValidator", () => {
   });
 
   it("GlobalCommand validation succeeds with global argument", () => {
-    const command = getGlobalCommand("command", "c", {
-      name: "value",
+    const command = getGlobalCommandWithShortAlias("command", "c", {
       defaultValue: "bar",
       allowableValues: ["bar", "gar"],
       type: ArgumentValueTypeName.STRING,
@@ -412,7 +332,7 @@ describe("CommandValidator", () => {
   });
 
   it("GlobalCommand validation succeeds without global argument", () => {
-    const command = getGlobalCommand("command", "c");
+    const command = getGlobalCommandWithShortAlias("command", "c");
 
     new CommandValidator(getCLIConfig()).validate(command);
   });
@@ -464,7 +384,7 @@ describe("CommandValidator", () => {
 
   it("SubCommand validation succeeds", () => {
     new CommandValidator(getCLIConfig()).validate(
-      getSubCommandWithComplexOptions(),
+      getSubCommandWithComplexOptions(true),
     );
   });
 
@@ -859,7 +779,7 @@ describe("CommandValidator", () => {
       [{
         name: "foo1",
         type: ArgumentValueTypeName.STRING,
-        configurationKey: "_FOO_BAR",
+        configurationKey: "-FOO_BAR",
       }],
       [],
       true,
@@ -868,7 +788,7 @@ describe("CommandValidator", () => {
     assertThrows(
       () => new CommandValidator(getCLIConfig()).validate(command),
       Error,
-      "Illegal configuration key: '_FOO_BAR'",
+      "Illegal configuration key: '-FOO_BAR'",
     );
 
     command = getSubCommand(

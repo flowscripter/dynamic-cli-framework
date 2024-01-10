@@ -1,11 +1,11 @@
-import { InvalidArgumentReason } from "../Parser.ts";
 import GlobalCommand from "../../api/command/GlobalCommand.ts";
 import { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import {
-  ArgumentSingleValueType,
   ArgumentValueTypeName,
+  PopulatedArgumentSingleValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
 import getLogger from "../../util/logger.ts";
+import { InvalidArgumentReason } from "../../api/RunResult.ts";
 
 const logger = getLogger("globalCommandValuePopulation");
 
@@ -14,20 +14,20 @@ const logger = getLogger("globalCommandValuePopulation");
  *
  * @param globalCommand the {@link GlobalCommand} for which {@link ArgumentValues} values should be populated.
  * @param potentialArgs the potential args to use for population.
- * @param configuredValue optional configured value to use for population before parsing the provided arguments.
+ * @param defaultValue optional default value to use for population before parsing the provided arguments.
  */
 export default function populateGlobalCommandValue(
   globalCommand: GlobalCommand,
   potentialArgs: ReadonlyArray<string>,
-  configuredValue: ArgumentSingleValueType | undefined,
+  defaultValue: PopulatedArgumentSingleValueType,
 ): GlobalCommandValuePopulationResult {
   logger.debug(() => {
     const message =
       `Populating value for global command: '${globalCommand.name}' using potential args: ${
-        JSON.stringify(potentialArgs, null, 2)
+        potentialArgs.join(" ")
       }`;
-    if (configuredValue !== undefined) {
-      return `${message} and configured value: '${configuredValue}'`;
+    if (defaultValue !== undefined) {
+      return `${message} and configured value: '${defaultValue}'`;
     }
     return message;
   });
@@ -37,8 +37,8 @@ export default function populateGlobalCommandValue(
   let populatedArgumentValue = argument.defaultValue;
 
   // override with provided configured value
-  if (configuredValue !== undefined) {
-    populatedArgumentValue = configuredValue;
+  if (defaultValue !== undefined) {
+    populatedArgumentValue = defaultValue;
   }
   let unusedArgs: Array<string> = [];
 
@@ -64,12 +64,13 @@ export default function populateGlobalCommandValue(
         populatedArgumentValue,
         unusedArgs,
         invalidArgument: {
-          name: argument.name,
+          name: globalCommand.name,
           reason: InvalidArgumentReason.MISSING_VALUE,
         },
       };
     }
   }
+
   return {
     populatedArgumentValue,
     unusedArgs,

@@ -24,8 +24,12 @@ export default class DefaultContext implements Context {
 
   public getServiceById(id: string): unknown {
     if (!this.serviceInstancesById.has(id)) {
-      throw new Error(`Service with ID: ${id} is unknown`);
+      throw new Error(`Service with ID: ${id} does not exist`);
     }
     return this.serviceInstancesById.get(id);
+  }
+
+  public doesServiceExist(id: string): boolean {
+    return this.serviceInstancesById.has(id);
   }
 }

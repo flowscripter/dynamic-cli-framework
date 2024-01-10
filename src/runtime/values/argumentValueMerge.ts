@@ -5,6 +5,8 @@ import {
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
+import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "../../api/argument/ComplexOption.ts";
 
 function doClone(
   source:
@@ -12,6 +14,7 @@ function doClone(
     | PopulatedArgumentValues
     | Array<PopulatedArgumentValues | undefined>
     | Array<PopulatedArgumentSingleValueType>,
+  nestingLevel: number,
 ):
   | PopulatedArgumentValueType
   | PopulatedArgumentValues
@@ -22,11 +25,11 @@ function doClone(
   }
   // check if source is an array
   if (Array.isArray(source)) {
-    return arrayMerge(source, []);
+    return arrayMerge(source, [], nestingLevel);
   }
   // check if source is an object
   if (typeof source === "object") {
-    return objectMerge(source, {});
+    return objectMerge(source, {}, nestingLevel);
   }
   // source must be a primitive value
   return source;
@@ -39,25 +42,32 @@ function arrayMerge(
   base:
     | Array<PopulatedArgumentSingleValueType>
     | Array<PopulatedArgumentValues>,
+  nestingLevel: number,
 ): Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues> {
+  if (override.length > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
+    throw new Error(`Maximum array size exceeded: ${override.length}`);
+  }
+  if (base.length > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
+    throw new Error(`Maximum array size exceeded: ${override.length}`);
+  }
   const result = base.slice();
 
   override.forEach((argValue, index) => {
     if (Array.isArray(argValue)) {
       throw new Error(
         `Array of array values discovered, this is not supported: ${
-          JSON.stringify(argValue, null, 2)
+          JSON.stringify(argValue)
         }`,
       );
     }
     if (index >= base.length) {
       result.push(
-        doClone(argValue) as
+        doClone(argValue, nestingLevel) as
           & PopulatedArgumentSingleValueType
           & PopulatedArgumentValues,
       );
     } else {
-      result[index] = doMerge(argValue, base[index]) as
+      result[index] = doMerge(argValue, base[index], nestingLevel) as
         | PopulatedArgumentSingleValueType
         | PopulatedArgumentValues;
     }
@@ -68,16 +78,17 @@ function arrayMerge(
 function objectMerge(
   override: PopulatedArgumentValues,
   base: PopulatedArgumentValues,
+  nestingLevel: number,
 ): PopulatedArgumentValues {
   const result: PopulatedArgumentValues = {};
 
   Object.keys(override).forEach((argName) => {
     if (base[argName] === undefined) {
       // nothing to merge so just clone the override
-      result[argName] = doClone(override[argName]);
+      result[argName] = doClone(override[argName], nestingLevel);
     } else {
       // merge the base and the override
-      result[argName] = doMerge(override[argName], base[argName]);
+      result[argName] = doMerge(override[argName], base[argName], nestingLevel);
     }
   });
   Object.keys(base).forEach((argName) => {
@@ -86,7 +97,7 @@ function objectMerge(
       return;
     }
     // nothing to merge so just clone the base
-    result[argName] = doClone(base[argName]);
+    result[argName] = doClone(base[argName], nestingLevel);
   });
   return result;
 }
@@ -100,6 +111,7 @@ function doMerge(
     | PopulatedArgumentValues
     | PopulatedArgumentValueType
     | Array<PopulatedArgumentValues | undefined>,
+  nestingLevel: number,
 ):
   | PopulatedArgumentValues
   | PopulatedArgumentValueType
@@ -107,7 +119,7 @@ function doMerge(
   if (defaults === undefined) {
     throw new Error(
       `Undefined value provided in merge: override = ${
-        JSON.stringify(override, null, 2)
+        JSON.stringify(override)
       }, defaults = undefined`,
     );
   }
@@ -136,8 +148,8 @@ function doMerge(
   if (override !== undefined && (typeof override !== typeof defaults)) {
     throw new Error(
       `Incompatible value types provided in merge: override = ${
-        JSON.stringify(override, null, 2)
-      }, defaults = ${JSON.stringify(defaults, null, 2)}`,
+        JSON.stringify(override)
+      }, defaults = ${JSON.stringify(defaults)}`,
     );
   }
 
@@ -146,16 +158,22 @@ function doMerge(
     return arrayMerge(
       override,
       defaults as Array<ArgumentValues> | Array<ArgumentSingleValueType>,
+      nestingLevel,
     );
   }
   // check if override is an object
   if (typeof override === "object") {
-    return objectMerge(override, defaults as ArgumentValues);
+    if (nestingLevel === MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
+      throw new Error(
+        `Maximum complex option nesting depth exceeded: ${nestingLevel + 1}`,
+      );
+    }
+    return objectMerge(override, defaults as ArgumentValues, nestingLevel + 1);
   }
 
   // check if override is undefined so we should use default
   if (override === undefined) {
-    return doClone(defaults);
+    return doClone(defaults, nestingLevel);
   }
 
   // override must be a primitive value
@@ -174,7 +192,7 @@ function doMerge(
  */
 export default function argumentValueMerge(
   override: PopulatedArgumentValues,
-  defaults: ArgumentValues,
+  defaults: PopulatedArgumentValues,
 ): PopulatedArgumentValues {
-  return doMerge(override, defaults) as PopulatedArgumentValues;
+  return doMerge(override, defaults, 0) as PopulatedArgumentValues;
 }

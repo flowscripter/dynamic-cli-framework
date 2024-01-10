@@ -1,14 +1,14 @@
 import { assertEquals, assertFalse, describe, it } from "../../test_deps.ts";
+import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
 import {
   ArgumentValueTypeName,
-  ComplexOption,
   ComplexValueTypeName,
-  SubCommand,
-} from "../../../mod.ts";
-import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
-import { PopulatedArgumentValues } from "../../../src/api/argument/ArgumentValueTypes.ts";
+  PopulatedArgumentValues,
+} from "../../../src/api/argument/ArgumentValueTypes.ts";
 import { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
-import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
+import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
+import SubCommand from "../../../src/api/command/SubCommand.ts";
+import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 
 function expectExtractResult(
   result: SubCommandValuePopulationResult,
@@ -97,10 +97,50 @@ describe("subCommandValueValidation", () => {
 
     let result = populateSubCommandValues(
       command,
-      ["--foo", "1"],
+      ["--foo", "1.1"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "1.1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.INTEGER,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["-f", "1"],
       undefined,
     );
     expectExtractResult(result, { foo: "1" }, []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "command",
+      options: [{
+        name: "foo",
+        shortAlias: "f",
+        type: ArgumentValueTypeName.SECRET,
+      }],
+      positionals: [],
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateSubCommandValues(
+      command,
+      ["-f", "xxx"],
+      undefined,
+    );
+    expectExtractResult(result, { foo: "xxx" }, []);
     assertFalse(result.invalidArgument);
 
     command = {

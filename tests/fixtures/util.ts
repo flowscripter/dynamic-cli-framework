@@ -1,8 +1,8 @@
-import { Buffer } from "https://deno.land/std@0.161.0/io/buffer.ts";
 import {
   assert,
   assertEquals,
   assertFalse,
+  Buffer,
   colors,
   conversions,
 } from "../test_deps.ts";

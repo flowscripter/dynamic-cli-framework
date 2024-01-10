@@ -18,6 +18,7 @@ export type ArgumentValueType =
  *
  * The following are all valid examples:
  *
+ * * `{ }`
  * * `{ foo: 1 }`
  * * `{ foo: true }`
  * * `{ foo: 'bar' }`

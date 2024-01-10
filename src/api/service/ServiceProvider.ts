@@ -1,24 +1,20 @@
-import GlobalModifierCommand from "../command/GlobalModifierCommand.ts";
+import Command from "../command/Command.ts";
 import Context from "../Context.ts";
+import CLIConfig from "../CLIConfig.ts";
 
 /**
  * Information regarding a service instance provided by a {@link ServiceProvider}.
  */
 export interface ServiceInfo {
   /**
-   * The ID which identifies the service.
+   * Optional, a service in the {@link Context}.
    */
-  readonly serviceId: string;
+  readonly service?: unknown;
 
   /**
-   * The actual service instance.
+   * Zero or more {@link Command} instances related to the service which should be registered.
    */
-  readonly service: unknown;
-
-  /**
-   * Zero or more {@link GlobalModifierCommand} instances related to the service which should be registered.
-   */
-  readonly globalModifierCommands: ReadonlyArray<GlobalModifierCommand>;
+  readonly commands: ReadonlyArray<Command>;
 }
 
 /**
@@ -26,17 +22,22 @@ export interface ServiceInfo {
  */
 export default interface ServiceProvider {
   /**
+   * The ID which identifies the service provided.
+   */
+  readonly serviceId: string;
+
+  /**
    * Used to determine the order in which multiple service instances will be initialised. Higher values
    * will be initialised before lower values.
    */
   readonly servicePriority: number;
 
   /**
-   * Return {@link ServiceInfo} describing the service and any commands which should be registered in the CLI.
+   * Return {@link ServiceInfo} containing the service and any commands which should be registered in the CLI.
    *
-   * @param context the {@link Context} in which the CLI is running.
+   * @param cliConfig the {@link CLIConfig} for the CLI.
    */
-  getServiceInfo(context: Context): Promise<ServiceInfo>;
+  provide(cliConfig: CLIConfig): Promise<ServiceInfo>;
 
   /**
    * Initialise the service. This will be invoked AFTER any {@link GlobalModifierCommand} provided in the

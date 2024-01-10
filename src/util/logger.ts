@@ -1,4 +1,5 @@
-import { log } from "../../deps.ts";
+import { format, log } from "../../deps.ts";
+import { getEnvVarIfPermitted } from "./envVarHelper.ts";
 
 let defaultLogger: log.Logger | undefined;
 
@@ -10,9 +11,15 @@ async function setupLogger() {
   await log.setup({
     handlers: {
       console: new log.handlers.ConsoleHandler(
-        (Deno.env.get("CLI_DEBUG") !== undefined) ? "DEBUG" : "ERROR",
+        (await getEnvVarIfPermitted("CLI_DEBUG") !== undefined) ? "DEBUG" : "ERROR",
         {
-          formatter: "{levelName} [{loggerName}] {msg}",
+          formatter: (logRecord) => {
+            const { msg, args, levelName, loggerName } = logRecord;
+            if (args.length === 0) {
+              return `${levelName} [${loggerName}] ${msg}`;
+            }
+            return `${levelName} [${loggerName}] ${format(msg, ...args)}`;
+          },
         },
       ),
     },

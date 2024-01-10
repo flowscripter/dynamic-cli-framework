@@ -1,6 +1,6 @@
-import { describe, it } from "../../test_deps.ts";
+import { assertEquals, assertThrows, describe, it } from "../../test_deps.ts";
 import argumentValueMerge from "../../../src/runtime/values/argumentValueMerge.ts";
-import { assertEquals } from "../../test_deps.ts";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../../src/api/argument/SubCommandArgument.ts";
 
 describe("argumentValueMerge", () => {
   it("One layer merge", () => {
@@ -261,5 +261,36 @@ describe("argumentValueMerge", () => {
       a: { b: { c: "foo" } },
     });
     assertEquals(result, { a: { b: { c: "foo" } } });
+  });
+
+  it("Maximum array size asserted", () => {
+    const illegal = new Array<number>();
+    for (let i = 0; i <= MAXIMUM_ARGUMENT_ARRAY_SIZE; i++) {
+      illegal.push(i);
+    }
+    assertThrows(
+      () => argumentValueMerge({ a: illegal }, { a: [1, 2] }),
+      "Maximum array size exceeded: 256",
+    );
+    assertThrows(
+      () => argumentValueMerge({ a: [1, 2] }, { a: illegal }),
+      "Maximum array size exceeded:",
+    );
+  });
+
+  it("Maximum nesting depth asserted", () => {
+    const illegal = {
+      a: {
+        b: { c: { d: { e: { f: { g: { h: { i: { j: { k: 1 } } } } } } } } },
+      },
+    };
+    assertThrows(
+      () => argumentValueMerge(illegal, {}),
+      "Maximum complex option nesting depth exceeded: 11",
+    );
+    assertThrows(
+      () => argumentValueMerge({}, illegal),
+      "Maximum complex option nesting depth exceeded: 11",
+    );
   });
 });

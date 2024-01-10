@@ -9,7 +9,7 @@ export const MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH = 10;
 export default interface ComplexOption extends
   Omit<
     Option,
-    "type" | "defaultValue" | "allowableValues" | "configurationKey"
+    "type" | "defaultValue" | "allowableValues"
   > {
   /**
    * Type of the argument value.

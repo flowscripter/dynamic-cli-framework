@@ -1,20 +1,23 @@
 import { assertEquals, describe, it } from "../../test_deps.ts";
 import {
-  ArgumentValueTypeName,
-  ComplexOption,
-  ComplexValueTypeName,
-  GlobalCommandArgument,
-  InvalidArgument,
-  Option,
-  PopulatedArgumentValues,
-  Positional,
-} from "../../../mod.ts";
-import {
   validateGlobalCommandArgumentValue,
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
-import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
+import {
+  InvalidArgument,
+  InvalidArgumentReason,
+} from "../../../src/api/RunResult.ts";
+import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
+import {
+  ArgumentValueTypeName,
+  ComplexValueTypeName,
+  PopulatedArgumentValues,
+} from "../../../src/api/argument/ArgumentValueTypes.ts";
+import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import Positional from "../../../src/api/argument/Positional.ts";
+import GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
+import Option from "../../../src/api/argument/Option.ts";
 
 describe("argumentValueValidation", () => {
   it("Option types", () => {
@@ -35,9 +38,79 @@ describe("argumentValueValidation", () => {
 
     option = {
       name: "foo",
+      type: ArgumentValueTypeName.NUMBER,
+    };
+    assertEquals(validateOptionValue(option, "1.1", invalidArguments), 1.1);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.NUMBER,
+    };
+    assertEquals(validateOptionValue(option, "-1.1", invalidArguments), -1.1);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.INTEGER,
+    };
+    assertEquals(validateOptionValue(option, "1", invalidArguments), 1);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.INTEGER,
+    };
+    assertEquals(validateOptionValue(option, "-1", invalidArguments), -1);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.SECRET,
+    };
+    assertEquals(validateOptionValue(option, "xxx", invalidArguments), "xxx");
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
       type: ArgumentValueTypeName.BOOLEAN,
     };
     assertEquals(validateOptionValue(option, "true", invalidArguments), true);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, "TRUE", invalidArguments), true);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, "True", invalidArguments), true);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, "false", invalidArguments), false);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, "FALSE", invalidArguments), false);
+    assertEquals(invalidArguments, []);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.BOOLEAN,
+    };
+    assertEquals(validateOptionValue(option, "False", invalidArguments), false);
     assertEquals(invalidArguments, []);
 
     option = {
@@ -89,6 +162,21 @@ describe("argumentValueValidation", () => {
       argument: option,
       name: "foo",
       value: "foo",
+      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+    }]);
+
+    option = {
+      name: "foo",
+      type: ArgumentValueTypeName.INTEGER,
+    };
+    assertEquals(
+      validateOptionValue(option, "1.1", invalidArguments),
+      undefined,
+    );
+    assertEquals(invalidArguments, [{
+      argument: option,
+      name: "foo",
+      value: "1.1",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
     }]);
   });
@@ -737,13 +825,17 @@ describe("argumentValueValidation", () => {
 
   it("Global command argument types", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
     };
+    let globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     let invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "foo",
         invalidArguments,
       ),
@@ -752,12 +844,16 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.NUMBER,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "1",
         invalidArguments,
       ),
@@ -766,12 +862,16 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.BOOLEAN,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "true",
         invalidArguments,
       ),
@@ -780,12 +880,16 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "1",
         invalidArguments,
       ),
@@ -794,12 +898,16 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.NUMBER,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "foo",
         invalidArguments,
       ),
@@ -807,19 +915,23 @@ describe("argumentValueValidation", () => {
     );
     assertEquals(invalidArguments, [{
       argument: globalCommandArgument,
-      name: "value",
+      name: "globalCommand",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
     }]);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.BOOLEAN,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     invalidArguments = [];
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "foo",
         invalidArguments,
       ),
@@ -827,7 +939,7 @@ describe("argumentValueValidation", () => {
     );
     assertEquals(invalidArguments, [{
       argument: globalCommandArgument,
-      name: "value",
+      name: "globalCommand",
       value: "foo",
       reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
     }]);
@@ -835,14 +947,18 @@ describe("argumentValueValidation", () => {
 
   it("Optional global command argument", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
       isOptional: true,
     };
+    let globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     const invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         undefined,
         invalidArguments,
       ),
@@ -851,12 +967,16 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         undefined,
         invalidArguments,
       ),
@@ -864,21 +984,25 @@ describe("argumentValueValidation", () => {
     );
     assertEquals(invalidArguments, [{
       argument: globalCommandArgument,
-      name: "value",
+      name: "globalCommand",
       reason: InvalidArgumentReason.MISSING_VALUE,
     }]);
   });
 
   it("Invalid global command argument value", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
+    let globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     const invalidArguments: Array<InvalidArgument> = [];
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "bar",
         invalidArguments,
       ),
@@ -887,13 +1011,17 @@ describe("argumentValueValidation", () => {
     assertEquals(invalidArguments, []);
 
     globalCommandArgument = {
-      name: "value",
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
+    globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
     assertEquals(
       validateGlobalCommandArgumentValue(
-        globalCommandArgument,
+        globalCommand,
         "goo",
         invalidArguments,
       ),
@@ -901,7 +1029,7 @@ describe("argumentValueValidation", () => {
     );
     assertEquals(invalidArguments, [{
       argument: globalCommandArgument,
-      name: "value",
+      name: "globalCommand",
       value: "goo",
       reason: InvalidArgumentReason.ILLEGAL_VALUE,
     }]);

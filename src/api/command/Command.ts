@@ -1,6 +1,3 @@
-import Context from "../Context.ts";
-import { ArgumentValues } from "../argument/ArgumentValueTypes.ts";
-
 /**
  * Common interface for all command types.
  */
@@ -18,15 +15,8 @@ export default interface Command {
   readonly description?: string;
 
   /**
-   * Optionally enable support for populating {@link ArgumentValues} via configuration.
+   * Optionally enable support for populating argument values via configuration. If this is `true` then
+   * default argument values may be sourced using a configuration source provided by the CLI runtime.
    */
   readonly enableConfiguration?: boolean;
-
-  /**
-   * Execute the command.
-   *
-   * @param argumentValues the argument values for the command.
-   * @param context the {@link Context} in which to execute the command.
-   */
-  execute(argumentValues: ArgumentValues, context: Context): Promise<void>;
 }

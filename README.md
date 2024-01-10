@@ -7,12 +7,19 @@
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https://deno.land/x/flowscripter_dynamic_cli_framework/mod.ts)
 [![license: MIT](https://img.shields.io/github/license/flowscripter/dynamic-cli-framework)](https://github.com/flowscripter/dynamic-cli-framework/blob/main/LICENSE)
 
-> A framework for developing CLI applications which support dynamic discovery
+> A framework for developing CLI applications which supports dynamic discovery
 > and installation of new commands.
 
-[//]: # (TODO: split out API for plugin developers)
-[//]: # (TODO: update docs to ServiceProvider)
-[//]: # (TODO: update docs to servicePriority from initPriority)
+[//]: # (TODO: Remove this when plugin support and compiled binaries available.)
+
+**DYNAMIC ASPECT IS STILL IN DEVELOPMENT**
+
+NOTE: The dynamic aspect is still in development as it relies upon:
+
+- some outstanding work on the
+  [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
+  dependency.
+- a workaround solution for https://github.com/denoland/deno/issues/18327.
 
 ## Key Features
 
@@ -37,9 +44,8 @@
     `executable <positional_1_value_1> <positional_1_value_2>`
 - Support for complex nested options e.g.
   `executable --<option_name>.<property_1_name>=<property_1_value> --<option_name>.<property_1>.<property_1_a>=<property_1_a_value>`
-- Core (but optional) commands for help, logging level, version management and
-  plugin management.
-- Core (but optional) services for colour output to stdout and stderr and
+- Core (but optional) commands for help, logging level and version management.
+- Core (but optional) services for color output to stdout and stderr and
   configuration management.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
@@ -49,6 +55,21 @@
   command argument defaults.
 - ES2015 module based.
 - Written in Typescript.
+- Compiled to a binary executable using a Deno runtime.
+
+## Usage Examples
+
+The following example projects are available:
+
+[//]: # (TODO: Add this when implemented.)
+[//]: # (- [example-cli]&#40;https://github.com/flowscripter/example-cli&#41; is an example CLI)
+[//]: # (  application based on this framework.)
+[//]: # (TODO: Add this when implemented.)
+[//]: # (- [example-cli-plugin]&#40;https://github.com/flowscripter/example-cli-plugin&#41; is an)
+[//]: # (  example command and service plugin based on this framework.)
+[//]: # (TODO: Add this when implemented.)
+[//]: # (- [sdl-tool]&#40;https://github.com/flowscripter/sdl-tool&#41; is a real world use case CLI)
+[//]: # (  application based on this framework.)
 
 ## Key Concepts
 
@@ -57,22 +78,20 @@ The key concepts are:
 - All functionality is implemented within one or more `Command` instances.
 - The `CLI` is responsible for:
   - maintaining a `CommandRegistry` and ensuring the `Command` instances it has
-    registered are available to a `Runner`.
-  - providing invocation arguments to the `Runner` which parses them and
-    determines which `Command` to execute.
-  - maintaining a `ServiceRegistry` and ensuring the `Service` instances it has
-    registered are available in a `Context`.
-  - executing the specified `Command` providing it with the parsed arguments and
-    a `Context`.
+    registered are available when scanning, parsing and executing specified
+    commands.
+  - maintaining a `ServiceProviderRegistry` and ensuring that services provided
+    by each of the registered `ServiceProvider` instances are available for use
+    by any invoked `Command` via a a `Context`.
 - Dynamic plugins (enabled by
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework))
   are used to allow:
   - dynamic load and import of one or more `CommandFactory` implementations
     providing one or more `Command` implementations.
-  - dynamic load and import of one or more `ServiceFactory` implementations
-    providing one or more `Service` implementations.
+  - dynamic load and import of one or more `ServiceProviderFactory`
+    implementations providing one or more `ServiceProvider` implementations.
 
-The following high level class diagram illustrates these relationships:
+The following high-level conceptual diagram illustrates these relationships:
 
 ```mermaid
 classDiagram
@@ -87,17 +106,13 @@ classDiagram
         <<interface>>
     }
 
-    class Service {
+    class ServiceProvider {
         <<interface>>
-        initPriority
-        init()
+        serviceId
+        servicePriority
     }
 
     class Context {
-        <<interface>>
-    }
-
-    class Runner {
         <<interface>>
     }
 
@@ -105,13 +120,33 @@ classDiagram
         <<interface>>
     }
 
-    class ServiceRegistry {
+    class ServiceProviderRegistry {
         <<interface>>
     }
 
-    Runner --> CommandRegistry
+    class Service {
+        <<interface>>
+    }
+
+    CLI --> CLIConfig
+
+    CLI --> Context
 
     CLI --> CommandRegistry
+
+    CommandRegistry --> "*" Command : registers
+    
+    ServiceProviderRegistry --> "*" ServiceProvider : registers
+
+    CLI --> "1..*" Command : executes
+
+    Command --> Context : executed within
+
+    Context --> CLIConfig
+
+    Context --> "*" Service : access to
+    
+    ServiceProvider --> "*" Service : provides
 
     class PluginManager {
     }
@@ -120,45 +155,27 @@ classDiagram
         <<interface>>
     }
 
-    CLI --> CLIConfig
-
-    CLI --> Context
-
-    Runner --> CLIConfig
-
-    CLI --> Runner
-
     CLI --> PluginManager
-
-    class ServiceFactory {
-        <<interface>>
-    }
 
     class CommandFactory {
         <<interface>>
     }
 
-    Runner --> Command : executes
+    class ServiceProviderFactory {
+        <<interface>>
+    }
 
-    Context --> ServiceRegistry
+    CLI-->ServiceProviderRegistry
 
-    CommandRegistry --> "*" Command : registers
-
-    CLI-->ServiceRegistry
-    
-    ServiceRegistry --> "*" Service : registers
-    
-    Command --> Context : executed within
-        
     PluginManager --> "*" Plugin : registers
 
     Plugin --> "*" CommandFactory: implements
 
-    Plugin --> "*" ServiceFactory: implements
+    Plugin --> "*" ServiceProviderFactory: implements
  
     CommandFactory --> "*" Command : provides
     
-    ServiceFactory --> "*" Service : provides
+    ServiceProviderFactory --> "*" ServiceProvider : provides
 ```
 
 ### Commands
@@ -166,25 +183,54 @@ classDiagram
 A `Command` declares:
 
 - a `name` which is to be used in command line arguments to invoke it.
-- the arguments it supports in an `argumentDefinitions` array.
 - a function `execute()` which is invoked if the command is specified. This
   function is invoked with the parsed arguments and a context.
+- an optional declaration of arguments it supports.
 
 The sub-types of command are: `GlobalCommand`, `GlobalModifierCommand`,
 `SubCommand` and `GroupCommand`.
 
-The following diagram provides an overview of the Command API:
+The following high-level conceptual diagram illustrates the Command API:
 
 ```mermaid
 classDiagram
-    class Argument {
+    class Command {
         <<interface>>
         name
+        description
+        enableConfiguration
+    }
+
+    class SubCommand {
+        <<interface>>
+        execute()
+    }
+
+    class GroupCommand {
+        <<interface>>
+        execute()
+    }
+
+    class GlobalCommand {
+        <<interface>>
+        shortAlias
+        execute()
+    }
+
+    class GlobalModifierCommand {
+        <<interface>>
+        executePriority
+    }
+
+    class Argument {
+        <<interface>>
         type
         allowableValues
+        configurationKey
     }
 
     class SubCommandArgument {
+        name
         description
         <<interface>>
     }
@@ -213,36 +259,10 @@ classDiagram
         isOptional
     }
 
-    class GroupCommand {
-        <<interface>>
-    }
-
-    class SubCommand {
-        <<interface>>
-    }
-
-    class GlobalCommand {
-        <<interface>>
-        shortAlias
-    }
-
-    class GroupCommand {
-        <<interface>>
-    }
-
-    class Command {
-        <<interface>>
-        name
-        description
-        execute()
-    }
-
-    class GlobalModifierCommand {
-        <<interface>>
-        executePriority
-    }
-
     class UsageExample {
+        description
+        exampleArguments
+        output
     }
 
     Argument <|-- SubCommandArgument
@@ -263,15 +283,15 @@ classDiagram
 
     Positional "0..*" <-- SubCommand
 
-    Command <|-- GlobalCommand 
+    GlobalCommand --> "0..1" GlobalCommandArgument
     
     Command <|-- SubCommand 
     
-    GroupCommand --> "1..*" SubCommand : memberSubCommands  
-    
-    GlobalCommand --> "0..1" GlobalCommandArgument
-
     GlobalCommand <|-- GlobalModifierCommand 
+
+    Command <|-- GlobalCommand 
+    
+    GroupCommand --> "1..*" SubCommand : memberSubCommands  
     
     SubCommand --> "0..*" UsageExample
 ```
@@ -283,7 +303,7 @@ argument and one optional value:
 
     executable --<global_command>[=<value>]
 
-Some concrete examples:
+A concrete example:
 
     myNetworkApp --help=connect
 
@@ -291,23 +311,22 @@ A `GlobalCommand` also supports a short character alias:
 
     executable -<global_command_short_alias>[=<value>]
 
-Some concrete examples:
+A concrete example:
 
     myNetworkApp -h=connect
 
 #### Global Modifier Commands
 
 Any number of `GlobalModifierCommand` instances can be specified as long as they
-are accompanied by a `GlobalCommand`, `GroupCommand` or `SubCommand`:
+are accompanied by a `GlobalCommand` or a `SubCommand`:
 
     executable --<global_modifier_command_1> [global_modifier_command_1_arguments] \
                --<global_modifier_command_2> [global_modifier_command_2_arguments] \
                <global_command>[=<value>]
 
 Each `GlobalModifierCommand` will be executed before the single specified
-`GlobalCommand`, `SubCommand` or `GroupCommand` is executed. This behaviour
-allows `GlobalModifierCommands` to modify the context in which later commands
-execute.
+`GlobalCommand` or `SubCommand` is executed. This behaviour allows
+`GlobalModifierCommands` to modify the context in which later commands execute.
 
 A `GlobalModifierCommand` defines an "execution priority" which is used to
 determine the order of execution when multiple `GlobalModifierCommands` are
@@ -315,12 +334,12 @@ specified.
 
 A concrete example:
 
-    myNetworkApp --loglevel=debug --config=config.json --help
+    myNetworkApp --log-level=DEBUG --config=./config.json --help
 
 where:
 
-- `loglevel` is a `GlobalModifierCommand` with a value of `debug`
-- `config` is a `GlobalModifierCommand` with a value of `config.json`
+- `log-level` is a `GlobalModifierCommand` with a value of `DEBUG`
+- `config` is a `GlobalModifierCommand` with a value of `./config.json`
 - `help` is a `GlobalCommand`.
 
 #### Sub-Command
@@ -352,7 +371,7 @@ Some concrete examples:
 
 **NOTE**: A `GroupCommand` also provides for it's own logic to be invoked BEFORE
 the specified sub-command. However, a `GroupCommand` does not support any
-arguments itself (apart from the member `SubCommand` name and its arguments).
+arguments itself.
 
 ### Arguments
 
@@ -361,7 +380,7 @@ arguments itself (apart from the member `SubCommand` name and its arguments).
 `GlobalCommand` and `GlobalModifierCommand` instances support the definition of
 a single `GlobalCommandArgument` consisting of:
 
-- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING`.
+- a type: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING` or `SECRET`.
 - an optional set of allowable values.
 - an optional default value.
 - whether the value is mandatory.
@@ -400,7 +419,7 @@ Common to both are the following features:
 
 - a name which must consist of alphanumeric non-whitespace ASCII characters or
   `_` and `-` characters. It cannot start with `-`.
-- a type of either: `NUMBER`, `INTEGER`, `BOOLEAN` or `STRING`.
+- a type: `NUMBER`, `INTEGER`, `BOOLEAN`, `STRING` or `SECRET`.
 - an optional set of valid value choices.
 
 ##### Options
@@ -466,7 +485,7 @@ separator:
     executable <sub_command> --<parent_option_name>.<property_short_alias>=<value> --<parent_option_short_alias>.<property_name>.<sub-property-name>=<value>
 
 Mixed use of option names and short aliases is supported when specifying nested
-complex option properties. As an example these would all be equivalent:
+complex option properties. As an example these are all equivalent:
 
     --alpha.beta.gamma=1
     --alpha.b.gamma=1
@@ -516,38 +535,207 @@ multiple) which allows for zero, one or more entries:
 **NOTE**: Only one "varargs" `positional` can be defined and it must be the last
 positional expected for the command.
 
-If "varargs" optional is set for `positional_1`, these are valid:
+If "varargs" optional is set for `positional_1`, these are both valid:
 
     executable <sub_command>
     executable <sub_command> <positional_1_value_1>
 
-If "varargs" multiple is set for `positional_1`, these are valid:
+If "varargs" multiple is set for `positional_1`, these are both valid:
 
     executable <sub_command> <positional_1_value_1>
     executable <sub_command> <positional_1_value_1> <positional_1_value_2>
 
-If "varargs" optional AND multiple is set for `positional_1`, these are valid:
+If "varargs" optional AND multiple is set for `positional_1`, these are all
+valid:
 
     executable <sub_command>
     executable <sub_command> <positional_1_value_1>
     executable <sub_command> <positional_1_value_1> <positional_1_value_2> <positional_1_value_3>
 
-### Command Configuration
+### Argument Values
 
-[//]: # (TODO: 8A - document configuration support for env vars and config file for services and commands)
+#### Value Types
 
-#### Environment Variables
+The supported value types which can be specified for an `Option`, a `Positional`
+or `GlobalCommandArgument` are:
 
-#### Configuration File
+- `STRING` - a string with whitespace can be provided within double quotes e.g.
+  `myHelloWorldApp say "hello world"`
+- `NUMBER` - any number value such as `0.01` or `-10`
+- `INTEGER` - any positive or negative integer value. Note that these values
+  will still be stored as a JavaScript number and specification as `INTEGER` is
+  only used for validation when parsing arguments.
+- `BOOLEAN` - string values of `true`, `TRUE`, `false` and `FALSE` are converted
+  to a JavaScript boolean value. As stated earlier, specifying just the argument
+  name is sufficient to indicate a value of `true`.
+- `SECRET` - a string value which may be specified as an argument or as a default value in 
+  a configuration file should ideally be sourced from an environment
+  variable. 
+
+[//]: # (TODO: remove when PromptService is implemented.)
+NOTE: `SECRET` will be more useful as a type when a `PromptService` is implemented.
+
+#### Default Values
+
+Support for reading default argument values from a configuration file and/or
+environment variables is provided by `ConfigurationServiceProvider`.
+
+Configuration of default values for each `Command` is enabled if the
+`Command.enableConfiguration` is `true`.
+
+##### Configuration File
+
+Default values can be stored in a JSON file which contains a top level
+`defaults` property. The second level of properties under `defaults` is used to
+refer to each `Command` by `Command.name` and the contained values are treated
+as command argument values. As an example:
+
+```
+{
+    "defaults": {
+        "subCommand1": {
+            "arg1": [
+                1,
+                2
+            ],
+            "arg2": {
+                "arg3": "foo"
+            }
+        },
+        "subCommand2": {
+            "arg4": true
+        },
+        "globalCommand": "globalArgumentValue"
+    }
+}
+```
+
+The default location of the configuration file is
+`$HOME/.<application_name>.json`. If `$HOME` is not defined no default
+configuration will be used. The location of the configuration file can be
+modified via the `ConfigCommand` global modifier command.
+
+As a concrete example, the following command line:
+
+`myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080`
+
+is equivalent to specifying default values for the `address.host` and
+`address.port` arguments in the configuration file `$HOME/.myNetworkApp.json`:
+
+```
+{
+    "defaults": {
+        "connect": {
+            "address.host": "127.0.0.1",
+            "address.port": 8080
+        }
+    }
+}
+```
+
+and using the command line:
+
+`myNetworkApp --connect`
+
+##### Environment Variables
+
+Values are also sourced from environment variable values using a variable naming
+scheme defined by either custom `Argument.configurationKey` values or using a
+default naming scheme.
+
+Any values set by environment variables will override those sourced from a
+configuration file.
+
+The optional `Argument.configurationKey` value is a configuration key to use for
+the argument. It must consist of alphanumeric non-whitespace uppercase ASCII or
+`_` characters and must not start with a digit.
+
+If not specified a default configuration key is determined as follows:
+
+The `Argument.name` is capitalized and any `-` characters are replaced with `_`
+characters. If the result starts with a digit, it is prefixed with `_`. Some
+examples:
+
+- name: `FooBar` => configuration key: `FOOBAR`
+- name: `Hello-World-` => configuration key: `HELLO_WORLD_`
+- name: `3` => configuration key: `_3`
+
+**NOTE**: Regardless of whether a `configurationKey` is specified, or the
+default is relied upon, it will only be used if the parent `Command` has
+`Command.enableConfiguration` specified as `true`.
+
+The argument key path is derived for an argument (or nested argument) as
+follows:
+
+- Argument configuration keys are concatenated with a `_` separator.
+- Any arguments which support array values must by suffixed with `_` and an
+  explicit array index.
+- If the root argument in the path does not use a custom
+  `Argument.configurationKey` then the key path is additionally suffixed with
+  the `CLIConfig.name` and the `Command.name` with `_` separators.
+
+This is best explained with examples...
+
+Examples for no custom configuration key:
+
+- executable: `MyCLI`, command: `command1`, simple root argument: `arg1` =>
+  environment variable: `MYCLI_COMMAND1_ARG1`
+- executable: `MyCLI`, command: `command1`, array root argument, 1st element:
+  `arg2[0]` => environment variable: `MYCLI_COMMAND1_ARG2_0`
+- executable: `MyCLI`, command: `command1`, argument is a digit so it is by
+  default suffixed with `_`: `3` => environment variable: `MYCLI_COMMAND1__3`
+- executable: `MyCLI`, command: `command1`, nested sub-argument: `arg1.arg2` =>
+  environment variable: `MYCLI_COMMAND1_ARG1_ARG2`
+- executable: `MyCLI`, command: `command1`, nested sub-argument with both levels
+  being arrays and referring to the 2nd element of each: `arg1[1].arg2[1]` =>
+  environment variable: `MYCLI_COMMAND1_ARG1_1_ARG2_2`
+
+Examples for custom configuration key at the root level (and therefore not
+prefixed with CLI and command names):
+
+- executable: `MyCLI`, command: `command1`, simple root argument: `arg1`, arg1
+  configuration key: `FOO` => environment variable: `FOO`
+- executable: `MyCLI`, command: `command1`, array root argument, 1st element:
+  `arg2[0]`, arg1 configuration key: `BAR` => environment variable: `BAR_0`
+
+Examples for custom configuration key NOT at the root level (and therefore
+prefixed with CLI and command names) examples:
+
+- executable: `MyCLI`, command: `command1`, nested sub-argument: `arg1.arg2`,
+  arg2 configuration key: `FOO` => environment variable:
+  `MYCLI_COMMAND1_ARG1_FOO`
+- executable: `MyCLI`, command: `command1`, nested sub-argument with both levels
+  being arrays and referring to the 2nd element of each: `arg1[1].arg2[1]`, arg2
+  configuration key: `BAR` => environment variable:
+  `MYCLI_COMMAND1_ARG1_1_BAR_2`
+
+As a concrete example, the following command line:
+
+`myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080`
+
+is equivalent to defining the following environment variables:
+
+- `MYNETWORKAPP_CONNECT_ADDRESS_HOST=127.0.0.1`
+- `MYNETWORKAPP_CONNECT_ADDRESS_PORT=8080`
+
+and using the command line:
+
+`myNetworkApp --connect`
 
 #### Configured Value Merging
 
-The configured values are merged with parsed values before being validated based
+Any configured values are merged with parsed values before being validated based
 on their associated argument definitions.
 
 The following logic is applied during merging of configured and parsed values:
 
 **Configured primitive values are used unless overridden by parsed values**
+
+Example:
+
+    configured: { foo: 'bar' }
+    parsed:     undefined
+    result:     { foo: 'bar1' }
 
 Example:
 
@@ -583,11 +771,13 @@ Example:
     parsed:     { foo: [ { a: 5 }, undefined, { a: 6, b: 7 } ] }
     result:     { foo: [ { a: 5 }, { a: 2 }, { a: 6, b: 7 }, { a: 4 } ] }
 
+#### 
+
 ### Value Validation
 
-After parsing command line arguments and assigning values to relevant command
-arguments (and merging with any pre-configured values), values are validated
-based on the argument definitions.
+After parsing of specified arguments, merging with configured defaults and
+assigning values to relevant command arguments, values are validated based on
+the argument definitions.
 
 The following scenarios produce validation errors:
 
@@ -604,170 +794,225 @@ The following scenarios produce validation errors:
   indices and this resulted in empty entries in the array of values.
 - **Unknown Property**: If the value provided is for a property which is not
   defined on a complex object argument.
-- **Array Size Exceeded**: If there is an attempt set more than the maximum
-  (255) number of values for an array option.
 - **Nesting Depth Exceeded**: If there is an attempt specify a complex option
   property at a nesting depth more than the maximum (10).
+- **Array Size Exceeded**: If there is an attempt set more than the maximum
+  (255) number of values for an array option.
 - **Option Is Complex**: If the argument attempts to set a value on a complex
-  option rather than on an option or a property of a complex option
-
-## Command Execution
-
-[//]: # (TODO: 8B - document Argument Values provided as valid and matching structure of defined options then positionals)
-
-## Usage Examples
-
-The following example projects are available:
-
-- [example-cli](https://github.com/flowscripter/example-cli) is an example CLI
-  application based on this framework.
-- [example-cli-plugin](https://github.com/flowscripter/example-cli-plugin) is an
-  example command and service plugin based on this framework.
+  option rather than on a primitive option or a primitive property of a complex
+  option.
 
 ## Implementation Details
 
-### CLI
+### `launcher`
 
-[//]: # (TODO: 8C - document AbstractBaseCLI logic flow and RunResult handling)
+The standard way to make use of the framework is to import `launcher` and use
+one of the two helper functions it provides for quickly building a CLI:
 
-### Runner
+- `launchSingleCommandCLI`
+- `launchMultiCommandCLI`
 
-Core CLI behaviour is provided by a `Runner` implementation which is responsible
-for parsing arguments, determining which `Command` to execute and then executing
-it.
+These allow a CLI implementor to simply specify `Command` instances to use
+together with basic CLI details such as name and description.
 
-The provided default `Runner` implementation (`DefaultRunner`) supports
-specification of a default command which should be executed if no command names
-are parsed on the command line. In this scenario, any arguments provided will be
-parsed as possible arguments for the default command as well as potential
-`GlobalModifierCommand` names.
+### `CLI`
 
-[//]: # (TODO: 8D - document default GlobalModifierCommands and add to flowchart)
+The `CLI` interface has the simple responsibility of taking a `CLIConfig` and a
+list of user specified command line arguments which it should parse and execute
+any valid specified `Command`.
 
-The following activity diagram illustrates the `DefaultRunner` logic:
+#### `BaseCLI`
+
+The `BaseCLI` class provides a base implementation of the `CLI` interface which
+supports both single command and multiple sub-command CLI scenarios. It provides
+the ability to add any number of `Command` and `ServiceProvider` instances.
+
+If only one command is provided, `BaseCLI` will operate as a single command CLI
+and the provided command will be set as a default command. If more than one
+command is added, `BaseCLI` will operate as a multi-command CLI. In this case
+the default command will be set to a help command. In the case of no command
+being specified or a parse error occurring, appropriate help will be displayed.
+
+By default the `BaseCLI` adds the following `ServiceProvider` implementations
+(these are documented in further detail below):
+
+- `ShutdownServiceProvider` allowing CLI shutdown hooks to be registered.
+- `ConfigurationServiceProvider` allowing argument value defaults to be loaded
+  from a configuration file or environment variables. This also provides a
+  key-value store service.
+- `PrinterServiceProvider` allowing CLI output to stdout and stderr writable
+  streams.
+
+By default the `BaseCLI` adds the following `Command` implementations (these are
+documented in further detail below):
+
+- Appropriate help commands depending on whether the CLI is configured with a
+  single command or multiple sub-command.
+- commands provided by the `ConfigurationServiceProvider`.
+- commands provided by the `PrinterServiceProvider`.
+
+#### `DenoRuntimeCLI`
+
+`DenoRuntimeCLI` is a simple extension to `BaseCLI` which uses Deno specific
+APIs to access the command line arguments, stdout and stderr streams and to exit
+the process.
+
+### `runner`
+
+Core CLI behaviour is provided by a `runner` implementation which is responsible
+for parsing arguments, determining which `Command` instances to execute and then
+executing them.
+
+The `runner` implementation supports specification of a default command which
+should be executed if no command names are parsed on the command line. In this
+scenario, any arguments provided will be parsed as possible arguments for the
+default command as well as potential `GlobalModifierCommand` names.
+
+The logic for the `runner` is somewhat complex as it allows for the prioritised
+execution of `GlobalModifierCommand` instances and the prioritised
+initialisation of `ServiceProvider` instances. One reason for this is to allow
+the `ConfigurationServiceProvider` to be initialised first and for the resulting
+configuration to be available to other `ServiceProvider` instances which are yet
+to be initialised.
+
+The following activity diagram illustrates the `runner` logic:
 
 ```mermaid
 flowchart TD
     A([start])
 
-    B(scan for command clauses)
+    subgraph 1 [for each ServiceProvider in servicePriority order:]
 
-    C{global modifier clauses found?}
-
-    D(parse global modifier clauses)
-
-    E{parse error?}
-
-    F(log error)
-
-    G(execute global modifier commands in runPriority order)
-
-    H{execution error?}
-
-    Ha{default command provided}
-
-    I{non-global modifier clause found?}
-
-    J(look for default command clause)
-
-    K{command clause found?}
-
-    L(log no command error)
-
-    M(parse command clause)
-
-    N{parse error?}
-
-    O{unused args?}
-
-    P(log warning)
-
-    Q(is member of group command?)
+        B([scan args for provided\nGlobalModifierCommand clauses])
     
-    Q1(execute group command)
-
-    Q2(execute command)
-
-    Q3{execution error?}
+        subgraph 2 [for each discovered clause:]
+            C([set default\narg values])
+            D([parse args])
+            E([add to list of\nGlobalModifierCommands\nclauses to execute])
+        end
     
-    R{execution error?}
+        F([scan default arg values for provided\nGlobalModifierCommand clauses])
+    
+        subgraph 3 [for each discovered clause:]
+            G([parse args])
+            H([add to list of\nGlobalModifierCommands\nclauses to execute])
+        end
+    
+        I([order GlobalModifierCommands\nclauses by executePriority])
+    
+        subgraph 4 [for each discovered clause:]
+            J([execute GlobalModifierCommand])
+        end
+    
+        K([init service provided by ServiceProvider])
+    end
 
-    S([end])
+    L([scan args for non-ServiceProvider\nGlobalModifierCommand clauses])
 
-    A --> B
-    
-    B --> C
-    
-    C --> |yes|D
-    
+    subgraph 5 [for each discovered clause:]
+        M([set default\narg values])
+        N([parse args])
+        O([add to list of\nGlobalModifierCommands\nclauses to execute])
+    end
+
+    P([scan default arg values for non-ServiceProvider\nGlobalModifierCommand clauses])
+
+    subgraph 6 [for each discovered clause:]
+        Q([parse args])
+        R([add to list of\nGlobalModifierCommands\nclauses to execute])
+    end
+
+    S([order GlobalModifierCommands\nclauses by executePriority])
+
+    subgraph 7 [for each discovered clause:]
+        T([execute GlobalModifierCommand])
+    end
+
+    U([scan args for non-modifier Command clause])
+
+    V{clause found?}
+        V1([set default\narg values])
+        V2([parse args])
+        V3([execute\nnon-modifier Command])
+    W{default\nnon-modifier Command\nprovided?}
+        W1([scan args for\nnon-modifier Command clause])
+        W2{clause\nfound?}
+            W21([set default\narg values])
+            W22([parse args])
+            W23{valid?}
+                W24([execute\nnon-modifier Command])
+        W3([set default\narg values])
+        W31{valid?}
+            W32([execute\nnon-modifier Command])
+
+    Z([end])
+
+    C --> D
     D --> E
-    
-    E --> |no|G
 
-    H --> |no|I
-
-    E --> |yes|F
-    
-    F --> S
-
-    C --> |no|I
-    
     G --> H
-    
-    H --> |yes|F
-    
-    I --> |no|Ha
-    
-    Ha --> |yes|J
 
-    J --> K
-    
-    K --> |no|L
-    
-    Ha --> |no|L
-
-    K --> |yes|M
-
-    I --> |yes|M
-    
     M --> N
+    N --> O
     
-    N --> |yes|F
+    Q --> R
+
+    A --> 1
+    B --> 2
+    2 --> F
+    F --> 3
+    3 --> I
+    I --> 4
+    4 --> K
+    1 --> L
+    L --> 5
+    5 --> P
+    P --> 6
+    6 --> S
+    S --> 7
+    7 --> U
+    U --> V
+    V --> |yes|V1
+    V --> |no|W
+    W --> |yes|W1
+    W --> |no|Z
     
-    N --> |no|O
+    V1 --> V2
+    V2 --> V3
+    V3 --> Z
     
-    O --> |yes|P
+    W1 --> W2
+    W2 --> |yes|W21
+    W2 --> |no|W3
     
-    P --> Q
-
-    Q3 --> |no|Q2
-
-    Q --> |no|Q2
-
-    Q --> |yes|Q1
-
-    Q1 --> Q3
-
-    Q3 --> |yes|F
-
-    O --> |no|Q
-
-    Q2 --> R
-
-    R --> |yes|F     
-
-    R --> |no|S
-
-    L --> S
+    W21 --> W22
+    W22 --> W23
+    
+    W23 --> |yes|W24
+    W23 --> |no|Z
+    
+    W24 --> Z
+    
+    W3 --> W31
+    W31 --> |yes|W32
+    W31 --> |no|Z
+    
+    W32 --> Z
 ```
 
-### Parser
+### `scanner`
 
-The `Runner` defers to a `Parser` implementation which performs the actual
-argument parsing.
+The `runner` defers to a `scanner` implementation which scans arguments for
+potential `CommandClause` instances e.g. a `Command.name` followed by potential
+arguments for that command..
 
-The following parsing rules apply for the provided `DefaultParser`
-implementation:
+### `parser`
+
+The `runner` defers to a `parser` implementation which performs the actual
+argument parsing based on the `CommandClause` instances returned from the
+`scanner`.
+
+The following parsing rules apply:
 
 **Arguments Must Follow Command**
 
@@ -837,14 +1082,199 @@ the following are all equivalent:
     executable --<modifier_command_1_name> <modifier_command_1_argument> <default_command_argument> \
                --<modifier_command_2_name> <modifier_command_2_argument>
 
-### Core Services
+### Command Execution
 
-[//]: # (TODO: 8E - document Lifecycle, Configuration, DefaultConfiguration and ConfigurationService)
-[//]: # (TODO: 8F - document Printer, DefaultPrinter and PrinterService)
+When a `Command` is executed using the implemented function:
+
+    execute(argumentValues: ArgumentValues, context: Context): Promise<void>;
+
+the `Context` instance allow access to the `CLIConfig` and the ability to access
+services by known IDs.
+
+The `ArgumentValues` instance provides access to the populated and validated
+arguments for the command. These values are provided either:
+
+- as a single key-value pair in the form `commandName: globalArgumentValue` for
+  a `GlobalCommand` or GlobalModifierCommand`.
+- as complex nested key-value structure mirroring the the defined `Option` and
+  `Positional` instances of a `SubCommand`
+
+As an example, if a `GlobalModifierCommand` is defined as follows:
+
+```
+const globalModifierCommand: GlobalModifierCommand = {
+    name: 'log-level',
+    argument: {
+        name: 'level',
+        type: ArgumentValueTypeName.STRING,
+    },
+    executePriority: 1,
+    execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
+};
+```
+
+and a `SubCommand` is defined as follows:
+
+```
+const subCommand: SubCommand = {
+  name: 'connect',
+  options: [
+    {
+      name: 'address',
+        type: ComplexValueTypeName.COMPLEX,
+        properties: [
+          {
+            name: 'host',
+            type: ArgumentValueTypeName.STRING
+          },
+          {
+            name: 'port',
+            type: ArgumentValueTypeName.NUMBER
+          }
+      ]
+    }
+  ],
+  positionals: [
+    {
+      name: 'retryOnError',
+      type: ArgumentValueTypeName.BOOLEAN
+    }
+  ],
+  execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
+};
+```
+
+when the following command line arguments are specified:
+
+`myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080 true --log-level=DEBUG`
+
+then the `ArgumentValues` passed to the `globalModifierCommand.execute(...)`
+function would be:
+
+```
+{
+  'log-level': 'DEBUG'
+}
+```
+
+and the `ArgumentValues` passed to the `subCommand.execute(...)` function would
+be:
+
+```
+{
+  'address': {
+    'host': '127.0.0.1',
+    'port': 8080
+  },
+  'retryOnError': true
+}
+```
+
+### Core Service Providers
+
+The core `ServiceProvider` implementations (and the service and `Command`
+implementations they provide) built into the framework are:
+
+#### `BannerServiceProvider`
+
+On initialisation this uses the `PrinterService` to output the CLI name in ASCII
+banner text together with the CLI description and version.
+
+Provides:
+
+- `NoBannerCommand` allowing banner printing to be disabled via the argument
+  `--no-banner` or the env var `NO_BANNER`.
+
+#### `ConfigurationServiceProvider`
+
+Provides:
+
+- `KeyValueService` allowing the storage and retrieval of key value pairs scoped
+  to the current `Command` or service being executed. The values are persisted
+  to the CLI configuration file.
+- `ConfigCommand` allowing the default location of the configuration file to be
+  overridden via the argument `--config` or the env var `CONFIG_LOCATION`.
+- `DumpConfigCommand` a global command allowing a dumps of all CLI configuration
+  to stdout via `--dump-config`.
+
+#### `ShutdownServiceProvider`
+
+Provides:
+
+- `ShutdownService` allowing registration of callbacks for CLI shutdown.
+
+#### `PrinterServiceProvider`
+
+Provides:
+
+- `DefaultPrinterService` allowing color output to stdout, stderr, management of
+  log levels and widgets such as a spinner and progress bars.
+- `DarkModeCommand` which allows dark or light mode to be enabled via the
+  argument `--dark-mode` or the env var `DARK_MODE`.
+- `NoColorCommand` which allows color output to be disabled via the argument
+  `--no-color` or the env var `NO_COLOR`.
+- `LogLevelCommand` which allows the log level to be set via the argument
+  `--log-level` or the env var `LOG_LEVEL`.
+
+#### `SyntaxHighlighterServiceProvider`
+
+Provides:
+
+- `SyntaxHighlighterService` allowing ANSI based color highlighting of
+  structured data and source code. JSON highlighting is provided by default and
+  other data or language formats can be added on demand by commands.
+
+Note that the `SyntaxHighlighterService` has no effect if the
+`DefaultPrinterService` is configured to disable color output.
+
+#### `AsciiBannerGeneratorServiceProvider`
+
+Provides:
+
+- `AsciiBannerGeneratorService` allowing messages to be rendered using ASCII
+  banner [FIGlet](http://www.figlet.org) fonts. The FIGlet "standard" font is
+  provided by default and other fonts can be added on demand by commands.
 
 ### Core Commands
 
-[//]: # (TODO: 8G - document Core Commands: ...)
+The core `Command` implementations provided with the framework are:
+
+#### `MultiCommandCliHelpGlobalCommand`
+
+Implementation of multi-command CLI help. Some examples:
+
+- `myCli --help`
+- `myCli -h`
+- `myCli --help <command>`
+- `myCli -h <command>`
+
+#### `MultiCommandCliHelpSubCommand`
+
+Implementation of multi-command CLI help. Some examples:
+
+- `myCli help`
+- `myCli help <command>`
+
+#### `SingleCommandCliHelpGlobalCommand`
+
+Implementation of single (default) command CLI help. Some examples:
+
+- `myCli --help`
+- `myCli -h`
+
+#### `SingleCommandCliHelpSubCommand`
+
+Implementation of single (default) command CLI help. An example:
+
+- `myCli help`
+
+#### `UsageCommand`
+
+Implementation which prints basic CLI usage instructions.
+
+#### `VersionCommand`
+
+Implementation which prints the version of the CLI.
 
 ## API
 
@@ -856,12 +1286,19 @@ API docs for the library:
 
 Test: `deno test -A --unstable`
 
-Lint: `deno fmt`
+Lint: `deno fmt && deno lint`
 
-The following diagram provides an overview of the main internal classes:
+The following diagram provides an overview of the main internal modules and
+classes:
 
 ```mermaid
 classDiagram
+
+    class parser {
+    }
+
+    class scanner {
+    }
 
     class Context {
         <<interface>>
@@ -871,119 +1308,113 @@ classDiagram
         <<interface>>
     }
 
-    class Runner {
-        <<interface>>
+    class runner {
     }
 
-    class Parser {
-        <<interface>>
-    }
-
-    class AbstractBaseCLI {
-    }
-
-    class DefaultRunner {
-    }
-
-    class DefaultParser {
-    }
-
-    class DefaultCommandRegistry {
-    }
-
-    class DefaultServiceRegistry {
+    class BaseCLI {
     }
 
     class Command {
         <<interface>>
     }
 
-    class Service {
+    class DefaultCommandRegistry {
+    }
+
+    class launcher {
+    }
+
+    class DefaultServiceProviderRegistry {
+    }
+
+    class ServiceProvider {
         <<interface>>
+    }
+
+    class DefaultContext {
     }
 
     class CommandRegistry {
         <<interface>>
     }
 
-    class ServiceRegistry {
+    class ServiceProviderRegistry {
         <<interface>>
+    }
+
+    class DenoRuntimeCLI {
     }
 
     class CLIConfig {
     }
 
-    class DefaultCLIConfig {
+    class ServiceXYZ {
     }
 
-    class SingleCommandCLI {
-    }
+    runner --> scanner
 
-    class MultipleCommandCLI {
-    }
+    runner --> parser
 
-    class PluggableMultipleCommandCLI {
-    }
+    CLI <|.. BaseCLI
 
-    CLI <|.. AbstractBaseCLI
-    
-    AbstractBaseCLI <|-- SingleCommandCLI
+    BaseCLI <|-- DenoRuntimeCLI
 
-    AbstractBaseCLI <|-- MultipleCommandCLI
+    runner --> Context
 
-    MultipleCommandCLI <|-- PluggableMultipleCommandCLI
+    runner --> CommandRegistry
 
-    CLIConfig <|.. DefaultCLIConfig
+    runner --> ServiceProviderRegistry
 
-    Runner --> CLIConfig
+    ServiceProviderRegistry <|.. DefaultServiceProviderRegistry
 
-    Runner --> Context
+    ServiceProviderRegistry --> "0..*" ServiceProvider : registers
 
-    Runner --> CommandRegistry
-
-    Runner --> "0..1" Command : defaultCommand
-
-    ServiceRegistry <|.. DefaultServiceRegistry
-    
-    ServiceRegistry --> "0..*" Service : registers
-
-    CLI --> CLIConfig
-
-    CLI --> Context
-
-    DefaultRunner --> Parser
-
-    Runner <|.. DefaultRunner
-    
-    Parser <|.. DefaultParser
-
-    CLI --> CommandRegistry
-
-    CLI --> ServiceRegistry
+    BaseCLI --> DefaultCommandRegistry
 
     CommandRegistry <|.. DefaultCommandRegistry
 
     CommandRegistry --> "0..*" Command : registers
 
-    Context --> ServiceRegistry
+    runner --> "0..1" Command : defaultCommand
+
+    Context <|.. DefaultContext
+
+    BaseCLI --> DefaultContext
+
+    BaseCLI --> DefaultServiceProviderRegistry
+
+    Context --> CLIConfig
+
+    BaseCLI --> CLIConfig
+
+    Context --> ServiceProviderRegistry
+    
+    ServiceProvider --> ServiceXYZ : provides
+
+    Context --> ServiceXYZ : access to
+        
+    DenoRuntimeCLI <-- launcher
 ```
 
 ### Debug Logging
 
 Internal framework logging can be enabled by setting the `CLI_DEBUG` environment
-variable. `AbstractBaseCLI` will detect this and define a default Deno
+variable. Permission will need to be granted to the CLI to access the environment using `--allow-env`.  
+
+The `logger` implementation will detect this and define a default Deno
 `ConsoleHandler` logger with `DEBUG` level which is used by internal
-implementation classes such as `DefaultRunner` and `DefaultParser`.
+implementation classes such as the `runner` and `parser`.
 
 ### Command and Service Validation
 
-By default commands and services that are built into the CLI or provided by
+By default, commands and services that are built into the CLI or provided by
 already installed plugins are not validated as they are loaded. The only
 validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
-Runtime validation of all commands and services can be enabled by setting the
-`CLI_VALIDATE_ALL` environment variable.
+When using `launcher.ts` runtime validation of all commands and services can be
+forced by defining the `CLI_VALIDATE_ALL` environment variable.
+Permission will need to be granted to the CLI to access the environment using `--allow-env`.
 
 Command validation includes:
 

@@ -10,9 +10,16 @@ export default interface Context {
   readonly cliConfig: CLIConfig;
 
   /**
-   * Return the {@link Service} identified by the specified ID.
+   * Return the service identified by the specified ID.
    *
-   * @param id the ID of the {@link Service} to retrieve.
+   * @param id the ID of the service to retrieve.
    */
   getServiceById(id: string): unknown;
+
+  /**
+   * Check if the specified service exists in the context.
+   *
+   * @param id the ID of the desired service.
+   */
+  doesServiceExist(id: string): boolean;
 }

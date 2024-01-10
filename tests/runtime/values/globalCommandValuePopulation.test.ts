@@ -1,12 +1,12 @@
 import { assertEquals, assertFalse, describe, it } from "../../test_deps.ts";
+import { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
+import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
+import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
+import GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValueTypeName,
-  GlobalCommand,
-} from "../../../mod.ts";
-import { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
-import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
-import { InvalidArgumentReason } from "../../../src/runtime/Parser.ts";
+} from "../../../src/api/argument/ArgumentValueTypes.ts";
 
 function expectExtractResult(
   result: GlobalCommandValuePopulationResult,
@@ -23,7 +23,6 @@ describe("argumentValueValidation", () => {
       name: "foo",
       argument: {
         type: ArgumentValueTypeName.STRING,
-        name: "value",
       },
       execute: async (): Promise<void> => {
       },
@@ -42,7 +41,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.NUMBER,
       },
       execute: async (): Promise<void> => {
@@ -50,6 +48,23 @@ describe("argumentValueValidation", () => {
     };
 
     let result = populateGlobalCommandValue(
+      command,
+      ["1.1"],
+      undefined,
+    );
+    expectExtractResult(result, "1.1", []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "foo",
+      argument: {
+        type: ArgumentValueTypeName.INTEGER,
+      },
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateGlobalCommandValue(
       command,
       ["1"],
       undefined,
@@ -60,7 +75,23 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
+        type: ArgumentValueTypeName.SECRET,
+      },
+      execute: async (): Promise<void> => {
+      },
+    };
+
+    result = populateGlobalCommandValue(
+      command,
+      ["xxx"],
+      undefined,
+    );
+    expectExtractResult(result, "xxx", []);
+    assertFalse(result.invalidArgument);
+
+    command = {
+      name: "foo",
+      argument: {
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -78,7 +109,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {
@@ -106,7 +136,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -120,14 +149,13 @@ describe("argumentValueValidation", () => {
     );
     expectExtractResult(result, undefined, []);
     assertEquals(result.invalidArgument, {
-      name: "value",
+      name: "foo",
       reason: InvalidArgumentReason.MISSING_VALUE,
     });
 
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         isOptional: true,
       },
@@ -146,7 +174,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         defaultValue: "bar",
       },
@@ -167,7 +194,6 @@ describe("argumentValueValidation", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -187,7 +213,6 @@ describe("argumentValueValidation", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -207,7 +232,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.NUMBER,
         defaultValue: 0,
       },
@@ -225,7 +249,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         defaultValue: "foo",
       },
@@ -244,7 +267,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
@@ -265,7 +287,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.NUMBER,
       },
       execute: async (): Promise<void> => {
@@ -283,7 +304,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -301,7 +321,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {
@@ -319,7 +338,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {
@@ -339,7 +357,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.NUMBER,
         defaultValue: 0,
       },
@@ -358,7 +375,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         defaultValue: "foo",
       },
@@ -377,7 +393,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
@@ -396,7 +411,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: true,
       },
@@ -417,7 +431,6 @@ describe("argumentValueValidation", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {
@@ -435,7 +448,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         isOptional: true,
       },
@@ -454,7 +466,6 @@ describe("argumentValueValidation", () => {
     command = {
       name: "foo",
       argument: {
-        name: "value",
         type: ArgumentValueTypeName.STRING,
         defaultValue: "bar",
       },

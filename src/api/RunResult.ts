@@ -96,7 +96,7 @@ export interface InvalidArgument {
   readonly reason: InvalidArgumentReason;
 
   /**
-   * The name of the argument (if it was able to be populated)
+   * The name of the argument specified (if it was able to be populated)
    */
   readonly name?: string;
 
