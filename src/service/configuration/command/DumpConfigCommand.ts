@@ -12,7 +12,6 @@ import SyntaxHighlighterService, {
  * Command which dumps the configuration loaded by the {@link ConfigurationServiceProvider}.
  */
 export default class DumpConfigCommand implements GlobalCommand {
-
   readonly name = "dump-config";
   readonly description = "Dump configuration values";
 

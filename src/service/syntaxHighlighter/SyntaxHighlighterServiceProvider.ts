@@ -3,7 +3,7 @@ import ServiceProvider, {
 } from "../../api/service/ServiceProvider.ts";
 import DefaultSyntaxHighlighterService from "./DefaultSyntaxHighlighterService.ts";
 import {
-  HIGHLIGHTER_SERVICE_ID,
+  SYNTAX_HIGHLIGHTER_SERVICE_ID,
 } from "../../api/service/core/SyntaxHighlighterService.ts";
 import Context from "../../api/Context.ts";
 import PrinterService, {
@@ -16,7 +16,7 @@ import CLIConfig from "../../api/CLIConfig.ts";
  */
 export default class SyntaxHighlighterServiceProvider
   implements ServiceProvider {
-  readonly serviceId = HIGHLIGHTER_SERVICE_ID;
+  readonly serviceId = SYNTAX_HIGHLIGHTER_SERVICE_ID;
   readonly servicePriority: number;
   readonly defaultSyntaxHighlighterService: DefaultSyntaxHighlighterService;
 

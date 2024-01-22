@@ -173,7 +173,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   private serviceKeyValueData = new Map<string, Map<string, string>>();
 
   // the optional service providing scope limited key-value data to commands and other services
-  private readonly defaultKeyValueService: DefaultKeyValueService | undefined
+  private readonly defaultKeyValueService: DefaultKeyValueService | undefined;
 
   private currentCommandNameKeyValueScope: string | undefined;
   private currentServiceIdKeyValueScope: string | undefined;
@@ -186,13 +186,16 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @param configEnabled optionally enable configuration file support for default argument values.
    * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
    */
-  public constructor(servicePriority: number,
-                     envVarsEnabled = false,
-                     configEnabled = false,
-                     keyValueServiceEnabled = false,
-                     ) {
+  public constructor(
+    servicePriority: number,
+    envVarsEnabled = false,
+    configEnabled = false,
+    keyValueServiceEnabled = false,
+  ) {
     if (!configEnabled && keyValueServiceEnabled) {
-      throw new Error('configEnabled must be true if keyValueServiceEnabled is true');
+      throw new Error(
+        "configEnabled must be true if keyValueServiceEnabled is true",
+      );
     }
     this.servicePriority = servicePriority;
     this.envVarsEnabled = envVarsEnabled;
@@ -236,7 +239,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   ): PopulatedArgumentValues | PopulatedArgumentValueType | undefined {
     if (!this.configEnabled) {
       logger.debug(
-          "configuration of default values is not enabled"
+        "configuration of default values is not enabled",
       );
       return undefined;
     }
@@ -261,10 +264,12 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       const configuredValue = this.defaultsData.get(
         command.name,
       ) as ArgumentSingleValueType;
-      const envVarValue = this.envVarsEnabled ? getGlobalCommandValueFromEnvVars(
-        cliConfig,
-        command,
-      ) : undefined;
+      const envVarValue = this.envVarsEnabled
+        ? getGlobalCommandValueFromEnvVars(
+          cliConfig,
+          command,
+        )
+        : undefined;
 
       // default to environment variable value
       if (envVarValue !== undefined) {
@@ -276,10 +281,12 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       const configuredValues = this.defaultsData.get(
         command.name,
       ) as ArgumentValues;
-      const envVarValues = this.envVarsEnabled ? getSubCommandValuesFromEnvVars(
-        cliConfig,
-        command,
-      ) : undefined;
+      const envVarValues = this.envVarsEnabled
+        ? getSubCommandValuesFromEnvVars(
+          cliConfig,
+          command,
+        )
+        : undefined;
       if (envVarValues === undefined) {
         return configuredValues;
       }
@@ -304,7 +311,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public setCommandKeyValueScope(commandName: string): void {
     if (!this.keyValueServiceEnabled) {
       throw new Error(
-          `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService which is not enabled`,
       );
     }
     if (this.currentCommandNameKeyValueScope) {
@@ -340,7 +347,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public setServiceKeyValueScope(serviceId: string): void {
     if (!this.keyValueServiceEnabled) {
       throw new Error(
-          `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService which is not enabled`,
       );
     }
     if (this.currentServiceIdKeyValueScope) {
@@ -374,7 +381,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public async clearKeyValueScope(): Promise<void> {
     if (!this.keyValueServiceEnabled) {
       throw new Error(
-          `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService which is not enabled`,
       );
     }
     if (this.defaultKeyValueService!.isDirty()) {

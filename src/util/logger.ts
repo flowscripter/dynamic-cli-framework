@@ -11,7 +11,9 @@ async function setupLogger() {
   await log.setup({
     handlers: {
       console: new log.handlers.ConsoleHandler(
-        (await getEnvVarIfPermitted("CLI_DEBUG") !== undefined) ? "DEBUG" : "ERROR",
+        (await getEnvVarIfPermitted("CLI_DEBUG") !== undefined)
+          ? "DEBUG"
+          : "ERROR",
         {
           formatter: (logRecord) => {
             const { msg, args, levelName, loggerName } = logRecord;

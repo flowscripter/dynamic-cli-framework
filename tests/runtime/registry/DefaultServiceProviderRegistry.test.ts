@@ -4,6 +4,7 @@ import ServiceProvider, {
 } from "../../../src/api/service/ServiceProvider.ts";
 import DefaultServiceProviderRegistry from "../../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
 import Context from "../../../src/api/Context.ts";
+import CLIConfig from "../../../src/api/CLIConfig.ts";
 
 function getServiceProvider(
   serviceId: string,
@@ -12,7 +13,7 @@ function getServiceProvider(
   return {
     serviceId,
     servicePriority,
-    provide(_context: Context): Promise<ServiceInfo> {
+    provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
       return Promise.resolve({
         service: {},
         commands: [],

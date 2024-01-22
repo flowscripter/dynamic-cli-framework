@@ -178,9 +178,9 @@ export default class BaseCLI implements CLI {
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,
-        this.envVarsEnabled,
-        this.configEnabled,
-        this.keyValueServiceEnabled
+      this.envVarsEnabled,
+      this.configEnabled,
+      this.keyValueServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
 
@@ -215,13 +215,13 @@ export default class BaseCLI implements CLI {
         defaultCommand = this.addedNonModifierCommands[0];
         helpSubCommand = new SingleCommandCliHelpSubCommand(
           this.cliConfig,
-            this.envVarsEnabled,
+          this.envVarsEnabled,
           defaultCommand as SubCommand,
           this.commandRegistry,
         );
         helpGlobalCommand = new SingleCommandCliHelpGlobalCommand(
           this.cliConfig,
-            this.envVarsEnabled,
+          this.envVarsEnabled,
           defaultCommand as SubCommand,
           this.commandRegistry,
         );
@@ -229,7 +229,7 @@ export default class BaseCLI implements CLI {
         // a multi-command CLI
         helpSubCommand = new MultiCommandCliHelpSubCommand(
           this.cliConfig,
-            this.envVarsEnabled,
+          this.envVarsEnabled,
           this.commandRegistry,
         );
         helpGlobalCommand = new MultiCommandCliHelpGlobalCommand(

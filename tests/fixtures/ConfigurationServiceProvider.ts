@@ -21,8 +21,8 @@ class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
 }
 
 export function getConfigurationServiceProvider(
-  servicePriority: number,
-  defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType>,
+  servicePriority = 0,
+  defaultsData = new Map<string, ArgumentValues | ArgumentSingleValueType>(),
 ) {
   return new DummyConfigurationServiceProvider(servicePriority, defaultsData);
 }

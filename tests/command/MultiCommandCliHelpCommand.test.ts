@@ -26,7 +26,7 @@ describe("MultiCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     const help = new MultiCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       commandRegistry,
     );
 
@@ -43,7 +43,7 @@ describe("MultiCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     const help = new MultiCommandCliHelpSubCommand(
       getCLIConfig(),
-        true,
+      true,
       commandRegistry,
     );
 
@@ -60,7 +60,8 @@ describe("MultiCommandCliHelpCommand", () => {
     const subCommand = getSubCommandWithOption("command_a");
     const commandRegistry = getCommandRegistry([subCommand]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -77,7 +78,8 @@ describe("MultiCommandCliHelpCommand", () => {
     const subCommand = getSubCommandWithOption("command_a");
     const commandRegistry = getCommandRegistry([subCommand]);
     const help = new MultiCommandCliHelpSubCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -93,7 +95,8 @@ describe("MultiCommandCliHelpCommand", () => {
     const context = getContext(buffer);
     const commandRegistry = getCommandRegistry();
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -109,7 +112,8 @@ describe("MultiCommandCliHelpCommand", () => {
     const context = getContext(buffer);
     const commandRegistry = getCommandRegistry();
     const help = new MultiCommandCliHelpSubCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -129,7 +133,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("other2"),
     ]);
     const help = new MultiCommandCliHelpSubCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -149,7 +154,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getGlobalModifierCommand("aaa", "a", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -178,7 +184,8 @@ describe("MultiCommandCliHelpCommand", () => {
       } as GroupCommand,
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -213,7 +220,8 @@ describe("MultiCommandCliHelpCommand", () => {
       } as GroupCommand,
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -242,7 +250,8 @@ describe("MultiCommandCliHelpCommand", () => {
       } as GroupCommand,
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -265,7 +274,8 @@ describe("MultiCommandCliHelpCommand", () => {
       } as SubCommand,
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -283,7 +293,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getGlobalModifierCommand("aaa"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -305,7 +316,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -323,7 +335,8 @@ describe("MultiCommandCliHelpCommand", () => {
     const context = getContext(buffer);
     const commandRegistry = getCommandRegistry();
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -343,7 +356,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -361,7 +375,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -380,7 +395,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -399,7 +415,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -418,7 +435,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -436,7 +454,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getGlobalModifierCommand("modifier2"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -453,7 +472,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -470,7 +490,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a"),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -487,7 +508,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_a", true, true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -505,7 +527,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_b", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -523,7 +546,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_b", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -541,7 +565,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_b", true, true, true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -559,7 +584,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_b", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 
@@ -588,7 +614,8 @@ describe("MultiCommandCliHelpCommand", () => {
       getSubCommandWithOption("command_b", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(
-      getCLIConfig(), true,
+      getCLIConfig(),
+      true,
       commandRegistry,
     );
 

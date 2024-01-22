@@ -183,8 +183,8 @@ describe("configHelper", () => {
     let command = getSubCommandWithComplexOptions();
 
     let arg0 = command.options![0] as ComplexOption;
-    let arg1 = (arg0).properties[0] as ComplexOption;
-    let arg2 = (arg1).properties[0] as Option;
+    let arg1 = arg0.properties[0] as ComplexOption;
+    let arg2 = arg1.properties[0] as Option;
 
     assertEquals(
       getSubCommandArgumentConfigurationKey(
@@ -202,8 +202,8 @@ describe("configHelper", () => {
     command = getSubCommandWithComplexOptions(true, true);
 
     arg0 = command.options![0] as ComplexOption;
-    arg1 = (arg0).properties[0] as ComplexOption;
-    arg2 = (arg1).properties[0] as Option;
+    arg1 = arg0.properties[0] as ComplexOption;
+    arg2 = arg1.properties[0] as Option;
 
     assertEquals(
       getSubCommandArgumentConfigurationKey(
@@ -218,7 +218,7 @@ describe("configHelper", () => {
       "FOO_SUBCOMMAND_ALPHA[_<index>]_BETA[_<index>]_GAMMA",
     );
 
-    arg2 = (arg1).properties[1] as Option;
+    arg2 = arg1.properties[1] as Option;
 
     assertEquals(
       getSubCommandArgumentConfigurationKey(
@@ -234,7 +234,7 @@ describe("configHelper", () => {
     );
 
     arg0 = command.options![1] as ComplexOption;
-    arg1 = (arg0).properties[0] as ComplexOption;
+    arg1 = arg0.properties[0] as ComplexOption;
 
     assertEquals(
       getSubCommandArgumentConfigurationKey(
@@ -251,7 +251,7 @@ describe("configHelper", () => {
     command = getSubCommandWithComplexOptions(true, true, true);
 
     arg0 = command.options![1] as ComplexOption;
-    arg1 = (arg0).properties[1] as ComplexOption;
+    arg1 = arg0.properties[1] as ComplexOption;
 
     assertEquals(
       getSubCommandArgumentConfigurationKey(

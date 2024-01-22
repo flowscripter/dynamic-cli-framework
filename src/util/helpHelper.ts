@@ -275,9 +275,9 @@ export function getGlobalArgumentHelpEntry(
 
   if (includeEnvVars) {
     const configurationKey = getGlobalCommandArgumentConfigurationKey(
-        cliConfig,
-        globalCommand,
-        argument,
+      cliConfig,
+      globalCommand,
+      argument,
     );
     if (configurationKey !== undefined) {
       notesItems.push(`env var: ${configurationKey}`);
@@ -489,16 +489,16 @@ function getPositionalHelpEntry(
   }
 
   if (includeEnvVars) {
-   const configurationKey = getSubCommandArgumentConfigurationKey(
-       cliConfig,
-       command,
-       [
-         positional,
-       ],
-   );
-   if (configurationKey !== undefined) {
-     notesItems.push(`env var: ${configurationKey}`);
-   }
+    const configurationKey = getSubCommandArgumentConfigurationKey(
+      cliConfig,
+      command,
+      [
+        positional,
+      ],
+    );
+    if (configurationKey !== undefined) {
+      notesItems.push(`env var: ${configurationKey}`);
+    }
   }
 
   let description = positional.description || "";
@@ -520,7 +520,7 @@ export function getCommandArgsHelpSections(
   cliConfig: CLIConfig,
   includeEnvVars: boolean,
   subCommand: SubCommand,
-  isSingleCommandApp: boolean
+  isSingleCommandApp: boolean,
 ): Array<HelpSection> {
   const helpSections: Array<HelpSection> = [];
   if ((subCommand.options.length > 0) || (subCommand.positionals.length > 0)) {
@@ -530,12 +530,22 @@ export function getCommandArgsHelpSections(
     };
     subCommand.options.forEach((option) => {
       argumentsSection.helpEntries.push(
-        getOptionHelpEntry(cliConfig, includeEnvVars, subCommand, option as Option),
+        getOptionHelpEntry(
+          cliConfig,
+          includeEnvVars,
+          subCommand,
+          option as Option,
+        ),
       );
     });
     subCommand.positionals.forEach((positional) => {
       argumentsSection.helpEntries.push(
-        getPositionalHelpEntry(cliConfig, includeEnvVars, subCommand, positional),
+        getPositionalHelpEntry(
+          cliConfig,
+          includeEnvVars,
+          subCommand,
+          positional,
+        ),
       );
     });
     helpSections.push(argumentsSection);

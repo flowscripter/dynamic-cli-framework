@@ -10,16 +10,22 @@ export class DenoRuntimeCLI extends BaseCLI {
    * Constructor configures the instance with the specified CLI application details
    * and making use of `Deno.stdout` and `Deno.stderr`.
    */
-  constructor(cliConfig: CLIConfig,
-              envVarsEnabled = false,
-              configEnabled = false,
-              keyValueServiceEnabled = false,
-              validateAllCommands = false) {
-    super(cliConfig, Deno.stdout, Deno.stderr,
-        envVarsEnabled,
-        configEnabled,
-        keyValueServiceEnabled,
-        validateAllCommands);
+  constructor(
+    cliConfig: CLIConfig,
+    envVarsEnabled = false,
+    configEnabled = false,
+    keyValueServiceEnabled = false,
+    validateAllCommands = false,
+  ) {
+    super(
+      cliConfig,
+      Deno.stdout,
+      Deno.stderr,
+      envVarsEnabled,
+      configEnabled,
+      keyValueServiceEnabled,
+      validateAllCommands,
+    );
   }
 
   /**
@@ -32,6 +38,5 @@ export class DenoRuntimeCLI extends BaseCLI {
       console.error(runResult.error);
     }
     Deno.exit(runResult.runState);
-    return runResult;
   }
 }

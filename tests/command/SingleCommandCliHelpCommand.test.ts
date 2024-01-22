@@ -55,7 +55,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       commandRegistry,
     );
@@ -75,7 +75,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       commandRegistry,
     );
@@ -93,7 +93,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       commandRegistry,
     );
@@ -106,7 +106,7 @@ describe("SingleCommandCliHelpCommand", () => {
     const context = getContext(buffer);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       getCommandRegistry(),
     );
@@ -121,7 +121,7 @@ describe("SingleCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true),
       commandRegistry,
     );
@@ -136,7 +136,7 @@ describe("SingleCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true),
       commandRegistry,
     );
@@ -153,7 +153,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       commandRegistry,
     );
@@ -170,7 +170,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, true, true),
       commandRegistry,
     );
@@ -187,7 +187,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true),
       commandRegistry,
     );
@@ -207,7 +207,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, false, true),
       commandRegistry,
     );
@@ -228,7 +228,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption("command_a", true, false, true),
       commandRegistry,
     );
@@ -255,7 +255,7 @@ describe("SingleCommandCliHelpCommand", () => {
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption(
         "command_a",
         true,
@@ -276,7 +276,7 @@ describe("SingleCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     const help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithOption(
         "command_a",
         true,
@@ -298,7 +298,7 @@ describe("SingleCommandCliHelpCommand", () => {
     const commandRegistry = getCommandRegistry();
     let help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional("command_a"),
       commandRegistry,
     );
@@ -308,7 +308,7 @@ describe("SingleCommandCliHelpCommand", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional("command_a", true, true),
       commandRegistry,
     );
@@ -317,7 +317,7 @@ describe("SingleCommandCliHelpCommand", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional(
         "command_a",
         true,
@@ -331,7 +331,7 @@ describe("SingleCommandCliHelpCommand", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional(
         "command_a",
         true,
@@ -345,7 +345,7 @@ describe("SingleCommandCliHelpCommand", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional(
         "command_a",
         false,
@@ -359,7 +359,7 @@ describe("SingleCommandCliHelpCommand", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       getCLIConfig(),
-        true,
+      true,
       getSubCommandWithPositional(
         "command_a",
         false,

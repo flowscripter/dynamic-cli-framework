@@ -37,7 +37,11 @@ abstract class MultiCommandCliAbstractHelpCommand {
   readonly includeEnvVars: boolean;
   readonly commandRegistry: CommandRegistry;
 
-  constructor(cliConfig: CLIConfig, includeEnvVars: boolean, commandRegistry: CommandRegistry) {
+  constructor(
+    cliConfig: CLIConfig,
+    includeEnvVars: boolean,
+    commandRegistry: CommandRegistry,
+  ) {
     this.cliConfig = cliConfig;
     this.includeEnvVars = includeEnvVars;
     this.commandRegistry = commandRegistry;
@@ -82,7 +86,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
     globalCommands.forEach((globalCommand) => {
       const { syntax, description } = getGlobalArgumentHelpEntry(
         this.cliConfig,
-          this.includeEnvVars,
+        this.includeEnvVars,
         globalCommand,
       );
       globalCommandsSection.helpEntries.push({
@@ -309,7 +313,12 @@ abstract class MultiCommandCliAbstractHelpCommand {
     });
 
     helpSections.push(
-      ...getCommandArgsHelpSections(this.cliConfig, this.includeEnvVars, subCommand, false),
+      ...getCommandArgsHelpSections(
+        this.cliConfig,
+        this.includeEnvVars,
+        subCommand,
+        false,
+      ),
     );
 
     helpSections.push(

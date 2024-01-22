@@ -17,7 +17,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
   readonly servicePriority: number;
   readonly stdoutWriter: Deno.Writer;
   readonly stderrWriter: Deno.Writer;
-  defaultPrinterService?: DefaultPrinterService;
+  printerService?: DefaultPrinterService;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -37,13 +37,13 @@ export default class PrinterServiceProvider implements ServiceProvider {
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
-    this.defaultPrinterService = new DefaultPrinterService(
+    this.printerService = new DefaultPrinterService(
       this.stdoutWriter,
       this.stderrWriter,
     );
 
     return Promise.resolve({
-      service: this.defaultPrinterService,
+      service: this.printerService,
       commands: [
         new DarkModeCommand(this, this.servicePriority + 2),
         new NoColorCommand(this, this.servicePriority + 1),
@@ -53,7 +53,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
   }
 
   initService(context: Context): Promise<void> {
-    this.defaultPrinterService!.init(context);
+    this.printerService!.init(context);
     return Promise.resolve(undefined);
   }
 }

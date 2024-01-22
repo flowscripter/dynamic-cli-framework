@@ -55,7 +55,9 @@ function getGlobalArgumentKeyPrefix(
  *
  * @param envVar the environment variable name to access.
  */
-export async function getEnvVarIfPermitted(envVar: string): Promise<string | undefined> {
+export async function getEnvVarIfPermitted(
+  envVar: string,
+): Promise<string | undefined> {
   const permissionDescriptor = { name: "env", path: envVar } as const;
   const status = await Deno.permissions.query(permissionDescriptor);
 

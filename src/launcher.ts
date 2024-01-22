@@ -29,31 +29,38 @@ async function getName(): Promise<string> {
 }
 
 export async function checkPermissions(
-    envVarsEnabled: boolean,
-    configEnabled: boolean,
-    keyValueServiceEnabled: boolean
+  envVarsEnabled: boolean,
+  configEnabled: boolean,
+  keyValueServiceEnabled: boolean,
 ): Promise<void> {
   if (envVarsEnabled) {
-    const readPermissionDescriptor = {name: "env"} as const;
+    const readPermissionDescriptor = { name: "env" } as const;
     const readStatus = await Deno.permissions.request(readPermissionDescriptor);
     if (readStatus.state !== "granted") {
-      throw new Error('--allow-env must be specified if envVarsEnabled is true');
+      throw new Error(
+        "--allow-env must be specified if envVarsEnabled is true",
+      );
     }
   }
-    if (configEnabled) {
-      const readPermissionDescriptor = { name: "read" } as const;
-      const writePermissionDescriptor = { name: "write" } as const;
-      const readStatus = await Deno.permissions.request(readPermissionDescriptor);
-      const writeStatus = await Deno.permissions.request(writePermissionDescriptor);
-      if ((readStatus.state !== "granted") || (writeStatus.state !== "granted")) {
-        throw new Error('--allow-read and --allow-write must be specified if configEnabled is true');
-      }
+  if (configEnabled) {
+    const readPermissionDescriptor = { name: "read" } as const;
+    const writePermissionDescriptor = { name: "write" } as const;
+    const readStatus = await Deno.permissions.request(readPermissionDescriptor);
+    const writeStatus = await Deno.permissions.request(
+      writePermissionDescriptor,
+    );
+    if ((readStatus.state !== "granted") || (writeStatus.state !== "granted")) {
+      throw new Error(
+        "--allow-read and --allow-write must be specified if configEnabled is true",
+      );
+    }
     if (!configEnabled && keyValueServiceEnabled) {
-      throw new Error('configEnabled must be true if keyValueServiceEnabled is true');
+      throw new Error(
+        "configEnabled must be true if keyValueServiceEnabled is true",
+      );
     }
   }
 }
-
 
 /**
  * Launch a {@link DenoRuntimeCLI} with the specified {@link SubCommand} instance.
@@ -89,11 +96,13 @@ export async function launchSingleCommandCLI(
   await checkPermissions(envVarsEnabled, configEnabled, keyValueServiceEnabled);
   const validateAllCommands =
     (await getEnvVarIfPermitted("CLI_VALIDATE_ALL")) !== undefined;
-  const cli = new DenoRuntimeCLI(cliConfig,
-      envVarsEnabled,
-      configEnabled,
-      keyValueServiceEnabled,
-      validateAllCommands);
+  const cli = new DenoRuntimeCLI(
+    cliConfig,
+    envVarsEnabled,
+    configEnabled,
+    keyValueServiceEnabled,
+    validateAllCommands,
+  );
 
   cli.addCommand(command);
 
@@ -133,11 +142,13 @@ export async function launchMultiCommandCLI(
   await checkPermissions(envVarsEnabled, configEnabled, keyValueServiceEnabled);
   const validateAllCommands =
     (await getEnvVarIfPermitted("CLI_VALIDATE_ALL")) !== undefined;
-  const cli = new DenoRuntimeCLI(cliConfig,
-      envVarsEnabled,
-      configEnabled,
-      keyValueServiceEnabled,
-      validateAllCommands);
+  const cli = new DenoRuntimeCLI(
+    cliConfig,
+    envVarsEnabled,
+    configEnabled,
+    keyValueServiceEnabled,
+    validateAllCommands,
+  );
 
   commands.forEach((command) => cli.addCommand(command));
 

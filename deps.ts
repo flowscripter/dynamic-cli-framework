@@ -9,4 +9,4 @@ export { default as figlet_factory } from "https://x.nest.land/deno-figlet@0.0.5
 export { default as figlet_serializer } from "https://x.nest.land/deno-figlet@0.0.5/deps/serializer.js";
 export { emphasize } from "https://esm.sh/emphasize@6.0.0/lib/core";
 export { default as jsonSyntaxDefinition } from "https://esm.sh/highlight.js@11.8.0/lib/languages/json";
-export type { LanguageFn as HighlightSyntax } from "https://esm.sh/highlight.js@11.8.0";
+export type { LanguageFn as HighlightSyntax } from "https://esm.sh/highlight.js@11.6.0";

@@ -111,7 +111,7 @@ async function executeParsedCommand(
  * @param availableArgSequences the list of argument sequences to process.
  * @param unusedArgSequences an array to which any unused argument sequences will be added.
  * @param globalModifierCommandsByName a map of non-modifier {@link Command} instances by name to parse for.
- * @param globalModifierCommandsByShortAlias: a map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
+ * @param globalModifierCommandsByShortAlias a map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
  * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param context the {@link Context} to use.
  */
@@ -232,7 +232,7 @@ async function findAndExecuteGlobalModifierCommands(
  * @param availableArgs the list of argument sequences to process.
  * @param unusedArgs an array to which any unused argument sequences will be added.
  * @param nonModifierCommandsByName the map of non-modifier {@link Command} instances by name to parse for.
- * @param globalCommandsByShortAlias: the map of {@link GlobalCommand} instances by short alias to use when scanning.
+ * @param globalCommandsByShortAlias the map of {@link GlobalCommand} instances by short alias to use when scanning.
  * @param groupAndMemberCommandsByJoinedName optional map of {@link GroupCommand} and member {@link SubCommand} instances to use when scanning.
  * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param context the {@link Context} to use.
@@ -512,7 +512,7 @@ export async function run(
   args: ReadonlyArray<string>,
   commandRegistry: CommandRegistry,
   serviceProviderRegistry: ServiceProviderRegistry,
-  configurationServiceProvider: ConfigurationServiceProvider,
+  configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
   defaultCommand?: Command,
 ): Promise<RunResult> {

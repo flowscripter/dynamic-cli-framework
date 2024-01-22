@@ -62,7 +62,7 @@ function validatePrimitiveValue(
         convertedValue = value;
         break;
       }
-      if (typeof (value) === "string") {
+      if (typeof value === "string") {
         castValue = value as string;
         castValue = castValue.toLowerCase();
       }

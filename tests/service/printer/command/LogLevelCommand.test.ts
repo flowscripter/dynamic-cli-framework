@@ -29,14 +29,14 @@ describe("LogLevelCommand", () => {
     const logLevelCommand = new LogLevelCommand(printerServiceProvider, 100);
 
     assertEquals(
-      printerServiceProvider.defaultPrinterService!.getLevel(),
+      printerServiceProvider.printerService!.getLevel(),
       Level.INFO,
     );
 
     await logLevelCommand.execute(context, "ERROR");
 
     assertEquals(
-      printerServiceProvider.defaultPrinterService!.getLevel(),
+      printerServiceProvider.printerService!.getLevel(),
       Level.ERROR,
     );
 

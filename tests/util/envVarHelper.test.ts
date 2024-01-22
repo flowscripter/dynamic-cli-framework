@@ -13,7 +13,7 @@ import {
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 
 describe("envVarHelper", () => {
-  it("getGlobalCommandValuesFromEnvVars works", async () => {
+  it("getGlobalCommandValuesFromEnvVars works", () => {
     try {
       let command = getGlobalCommand("blah", true);
 
@@ -55,7 +55,7 @@ describe("envVarHelper", () => {
     }
   });
 
-  it("getSubCommandValuesFromEnvVars works for simple option", async () => {
+  it("getSubCommandValuesFromEnvVars works for simple option", () => {
     try {
       let command = getSubCommandWithOption("blah", true, false);
 
@@ -114,7 +114,7 @@ describe("envVarHelper", () => {
     }
   });
 
-  it("getSubCommandValuesFromEnvVars works for positional", async () => {
+  it("getSubCommandValuesFromEnvVars works for positional", () => {
     try {
       let command = getSubCommandWithPositional("blah", true, false);
 
@@ -169,7 +169,7 @@ describe("envVarHelper", () => {
     }
   });
 
-  it("getSubCommandValuesFromEnvVars works for complex option", async () => {
+  it("getSubCommandValuesFromEnvVars works for complex option", () => {
     try {
       const command = getSubCommandWithComplexOptions(true, true);
 
@@ -191,7 +191,7 @@ describe("envVarHelper", () => {
     }
   });
 
-  it("getSubCommandValuesFromEnvVars ignores partially matched complex option", async () => {
+  it("getSubCommandValuesFromEnvVars ignores partially matched complex option", () => {
     try {
       const command = getSubCommandWithComplexOptions(true);
 

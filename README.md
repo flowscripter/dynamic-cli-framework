@@ -568,12 +568,14 @@ or `GlobalCommandArgument` are:
 - `BOOLEAN` - string values of `true`, `TRUE`, `false` and `FALSE` are converted
   to a JavaScript boolean value. As stated earlier, specifying just the argument
   name is sufficient to indicate a value of `true`.
-- `SECRET` - a string value which may be specified as an argument or as a default value in 
-  a configuration file should ideally be sourced from an environment
-  variable. 
+- `SECRET` - a string value which may be specified as an argument or as a
+  default value in a configuration file should ideally be sourced from an
+  environment variable.
 
 [//]: # (TODO: remove when PromptService is implemented.)
-NOTE: `SECRET` will be more useful as a type when a `PromptService` is implemented.
+
+NOTE: `SECRET` will be more useful as a type when a `PromptService` is
+implemented.
 
 #### Default Values
 
@@ -1399,7 +1401,8 @@ classDiagram
 ### Debug Logging
 
 Internal framework logging can be enabled by setting the `CLI_DEBUG` environment
-variable. Permission will need to be granted to the CLI to access the environment using `--allow-env`.  
+variable. Permission will need to be granted to the CLI to access the
+environment using `--allow-env`.
 
 The `logger` implementation will detect this and define a default Deno
 `ConsoleHandler` logger with `DEBUG` level which is used by internal
@@ -1413,8 +1416,8 @@ validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
 When using `launcher.ts` runtime validation of all commands and services can be
-forced by defining the `CLI_VALIDATE_ALL` environment variable.
-Permission will need to be granted to the CLI to access the environment using `--allow-env`.
+forced by defining the `CLI_VALIDATE_ALL` environment variable. Permission will
+need to be granted to the CLI to access the environment using `--allow-env`.
 
 Command validation includes:
 

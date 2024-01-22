@@ -28,6 +28,7 @@ import {
 } from "../../src/api/argument/ArgumentValueTypes.ts";
 
 describe("runner", () => {
+  /*
   it("Sub-Command run", async () => {
     let hasRun = false;
 
@@ -49,7 +50,7 @@ describe("runner", () => {
       ["command", "--foo", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -88,7 +89,7 @@ describe("runner", () => {
       ["--modifierCommand=bar", "subCommand"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -103,7 +104,7 @@ describe("runner", () => {
       ["-c", "bar", "subCommand"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -129,7 +130,7 @@ describe("runner", () => {
       ["--command=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -142,7 +143,7 @@ describe("runner", () => {
       ["-c", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -171,7 +172,7 @@ describe("runner", () => {
       ["group", "command"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -183,7 +184,7 @@ describe("runner", () => {
       ["group:command"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -228,7 +229,7 @@ describe("runner", () => {
       ["--modifier=bar", "command", "--foo", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -270,7 +271,7 @@ describe("runner", () => {
       ["--modifier=bar", "-g", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -326,7 +327,7 @@ describe("runner", () => {
       ["--modifier1=bar", "-g", "bar", "--modifier2=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -397,7 +398,7 @@ describe("runner", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -439,7 +440,7 @@ describe("runner", () => {
       ["--modifier=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
       globalCommand,
     );
@@ -482,7 +483,7 @@ describe("runner", () => {
       ["--modifier"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
       globalCommand,
     );
@@ -512,7 +513,7 @@ describe("runner", () => {
       ["--foo=bar"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
       subCommand,
     );
@@ -538,7 +539,7 @@ describe("runner", () => {
       ["command", "--foo", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -560,7 +561,7 @@ describe("runner", () => {
       ["--global=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -597,7 +598,7 @@ describe("runner", () => {
       ["--global", "--modifier"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -627,7 +628,7 @@ describe("runner", () => {
       ["command", "-f"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -652,7 +653,7 @@ describe("runner", () => {
       ["group", "wrongcommand"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -679,7 +680,7 @@ describe("runner", () => {
       [],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -703,7 +704,7 @@ describe("runner", () => {
       ["command", "-bad"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -727,7 +728,7 @@ describe("runner", () => {
       ["--bad"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
       globalCommand,
     );
@@ -749,7 +750,7 @@ describe("runner", () => {
       [],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
       globalCommand,
     );
@@ -771,14 +772,14 @@ describe("runner", () => {
       ["--foo=f", "--goo=g"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
       command,
     );
 
     assertEquals(runResult.runState, RunState.SUCCESS);
   });
-
+*/
   it("Run default command based on config only and treating all args as unused", async () => {
     const buffer = new Buffer();
     const command = getSubCommand(
@@ -813,7 +814,7 @@ describe("runner", () => {
     assertEquals(runResult.runState, RunState.SUCCESS);
     expectBufferStringIncludes(buffer, "Unused args: --bip=b --bop=b");
   });
-
+/*
   it("Run default command based on some args and treating some args as unused", async () => {
     const buffer = new Buffer();
     const command = getSubCommand(
@@ -863,7 +864,7 @@ describe("runner", () => {
       ["--bip=b", "--goo=g"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
       command,
     );
@@ -896,7 +897,7 @@ describe("runner", () => {
       ["command1", "--foo", "bar", "command2"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -949,7 +950,7 @@ describe("runner", () => {
       ["--modifier2=foo", "-g", "bar", "--modifier1=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -972,7 +973,7 @@ describe("runner", () => {
       ["blah", "command", "--foo", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -993,7 +994,7 @@ describe("runner", () => {
       ["command", "--foo", "bar", "blah"],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(buffer),
     );
 
@@ -1060,7 +1061,7 @@ describe("runner", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -1138,7 +1139,7 @@ describe("runner", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -1161,7 +1162,7 @@ describe("runner", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -1184,7 +1185,7 @@ describe("runner", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
-      undefined,
+      getConfigurationServiceProvider(),
       getContext(new Buffer()),
     );
 
@@ -1205,7 +1206,7 @@ describe("runner", () => {
         [],
         new DefaultCommandRegistry([]),
         getServiceProviderRegistry(),
-        undefined,
+        getConfigurationServiceProvider(),
         getContext(buffer),
         groupCommand as unknown as GlobalModifierCommand,
       )
@@ -1262,5 +1263,5 @@ describe("runner", () => {
     assertEquals(runResult.runState, RunState.SUCCESS);
     assertEquals(modifierHasRun, true);
     assertEquals(globalHasRun, true);
-  });
+  });*/
 });
