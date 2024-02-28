@@ -30,9 +30,10 @@ export {
 export * from "./src/api/argument/ArgumentTypeGuards.ts";
 export * from "./src/api/command/CommandTypeGuards.ts";
 export * from "./src/cli/BaseCLI.ts";
-export {RunState} from "./src/api/RunResult.ts";
+export { RunState } from "./src/api/RunResult.ts";
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export {
-  MultiCommandCliHelpGlobalCommand, MultiCommandCliHelpSubCommand,
+  MultiCommandCliHelpGlobalCommand,
+  MultiCommandCliHelpSubCommand,
 } from "./src/command/MultiCommandCliHelpCommand.ts";
 export { SingleCommandCliHelpGlobalCommand } from "./src/command/SingleCommandCliHelpCommand.ts";
