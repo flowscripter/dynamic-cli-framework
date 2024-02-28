@@ -1,4 +1,4 @@
-export * as log from "https://deno.land/std@0.216.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.217.0/log/mod.ts";
 export { sprintf } from "https://deno.land/std@0.216.0/fmt/printf.ts";
 export * as colors from "https://deno.land/std@0.216.0/fmt/colors.ts";
 export * as io from "https://deno.land/std@0.216.0/io/mod.ts";
