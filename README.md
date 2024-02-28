@@ -45,7 +45,7 @@ NOTE: The dynamic aspect is still in development as it relies upon:
 - Support for complex nested options e.g.
   `executable --<option_name>.<property_1_name>=<property_1_value> --<option_name>.<property_1>.<property_1_a>=<property_1_a_value>`
 - Core (but optional) commands for help, logging level and version management.
-- Core (but optional) services for color output to stdout and stderr and
+- Core (but optional) services for color output to stdout/stderr and
   configuration management.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using

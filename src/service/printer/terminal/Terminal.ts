@@ -1,4 +1,3 @@
-import { conversions } from "../../../../deps.ts";
 import {
   CLEAR_LINE,
   CURSOR_LEFT,
@@ -8,41 +7,50 @@ import {
 } from "./Ansi.ts";
 
 export default class Terminal {
-  private readonly writer: Deno.Writer;
+  private readonly writableStream: WritableStream;
   private readonly encoder = new TextEncoder();
 
-  constructor(writer: Deno.Writer) {
-    this.writer = writer;
+  constructor(writableStream: WritableStream) {
+    this.writableStream = writableStream;
+  }
+
+  private async writeAll(message: string): Promise<void> {
+    const encoded = this.encoder.encode(message);
+    const writer = this.writableStream.getWriter();
+
+    await writer.ready;
+    await writer.write(encoded);
+
+    writer.releaseLock();
   }
 
   async clearLine(): Promise<void> {
-    await conversions.writeAll(
-      this.writer,
-      this.encoder.encode(CLEAR_LINE + CURSOR_LEFT),
-    );
+    await this.writeAll(CLEAR_LINE + CURSOR_LEFT);
   }
 
   async clearUpLines(count: number): Promise<void> {
-    await conversions.writeAll(
-      this.writer,
-      this.encoder.encode(
-        (CURSOR_UP + CLEAR_LINE).repeat(count) + CLEAR_LINE + CURSOR_LEFT,
-      ),
+    await this.writeAll(
+      (CURSOR_UP + CLEAR_LINE).repeat(count) + CLEAR_LINE + CURSOR_LEFT,
     );
   }
 
   async hideCursor(): Promise<void> {
-    await conversions.writeAll(this.writer, this.encoder.encode(HIDE_CURSOR));
+    await this.writeAll(HIDE_CURSOR);
   }
 
   async showCursor(): Promise<void> {
-    await conversions.writeAll(this.writer, this.encoder.encode(SHOW_CURSOR));
+    await this.writeAll(SHOW_CURSOR);
   }
 
   async write(text: string): Promise<void> {
-    await conversions.writeAll(
-      this.writer,
-      this.encoder.encode(text),
-    );
+    await this.writeAll(text);
+  }
+
+  columns(): number {
+    try {
+      return Deno.consoleSize().columns;
+    } catch {
+      return 80;
+    }
   }
 }

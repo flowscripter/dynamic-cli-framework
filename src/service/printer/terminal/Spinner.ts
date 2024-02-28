@@ -21,25 +21,25 @@ export default class Spinner {
   private intervalId: number | undefined;
   private spinColor = 0x8a8a8a;
   private msgColor = 0x808080;
-  private readonly terminal: Terminal;
+  private readonly term: Terminal;
 
-  public constructor(writer: Deno.Writer) {
-    this.terminal = new Terminal(writer);
+  public constructor(terminal: Terminal) {
+    this.term = terminal;
   }
 
   private async nextFrame(): Promise<void> {
     if (!this.isShown) {
       return;
     }
-    await this.terminal.clearLine();
+    await this.term.clearLine();
     if (this.message) {
-      await this.terminal.write(
+      await this.term.write(
         `${colors.rgb24(FRAMES[this.frameIndex], this.spinColor)} ${
           colors.rgb24(this.message!, this.msgColor)
         }`,
       );
     } else {
-      await this.terminal.write(
+      await this.term.write(
         colors.rgb24(FRAMES[this.frameIndex], this.spinColor),
       );
     }
@@ -56,7 +56,7 @@ export default class Spinner {
     this.intervalId = setInterval(async () => {
       await this.nextFrame();
     }, 100);
-    await this.terminal.hideCursor();
+    await this.term.hideCursor();
   }
 
   public async hide(): Promise<void> {
@@ -65,8 +65,8 @@ export default class Spinner {
     }
     this.isShown = false;
     clearInterval(this.intervalId);
-    await this.terminal.clearLine();
-    await this.terminal.showCursor();
+    await this.term.clearLine();
+    await this.term.showCursor();
     this.message = undefined;
   }
 
@@ -76,7 +76,7 @@ export default class Spinner {
     }
     clearInterval(this.intervalId);
     delete this.intervalId;
-    await this.terminal.clearLine();
+    await this.term.clearLine();
   }
 
   public resume(): void {

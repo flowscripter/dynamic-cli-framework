@@ -19,8 +19,8 @@ export class DenoRuntimeCLI extends BaseCLI {
   ) {
     super(
       cliConfig,
-      Deno.stdout,
-      Deno.stderr,
+      Deno.stdout.writable,
+      Deno.stderr.writable,
       envVarsEnabled,
       configEnabled,
       keyValueServiceEnabled,

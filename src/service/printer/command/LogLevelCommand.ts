@@ -46,17 +46,17 @@ export default class LogLevelCommand implements GlobalModifierCommand {
 
     switch (logLevel) {
       case "DEBUG":
-        this.printerServiceProvider.printerService!.setLevel(Level.DEBUG);
-        break;
+        return this.printerServiceProvider.printerService!.setLevel(
+          Level.DEBUG,
+        );
       case "INFO":
-        this.printerServiceProvider.printerService!.setLevel(Level.INFO);
-        break;
+        return this.printerServiceProvider.printerService!.setLevel(Level.INFO);
       case "WARN":
-        this.printerServiceProvider.printerService!.setLevel(Level.WARN);
-        break;
+        return this.printerServiceProvider.printerService!.setLevel(Level.WARN);
       case "ERROR":
-        this.printerServiceProvider.printerService!.setLevel(Level.ERROR);
-        break;
+        return this.printerServiceProvider.printerService!.setLevel(
+          Level.ERROR,
+        );
     }
 
     return Promise.resolve();

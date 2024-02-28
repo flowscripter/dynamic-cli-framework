@@ -12,7 +12,7 @@ export default interface AsciiBannerGeneratorService {
    * (replacing newlines with `\n`) and placing in a simple JSON file: `{ "font": "<figlet font definition>" }`.
    * This can then be imported as follows:
    *
-   * `import { font as myFont } from "./myfont.json" assert { type: "json" };
+   * `import { font as myFont } from "./myfont.json" with { type: "json" };
    *
    * @param fontName the name used to refer to the font.
    * @param fontDefinition the definition for the syntax conforming to the

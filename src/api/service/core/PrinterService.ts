@@ -45,12 +45,12 @@ export default interface PrinterService {
   /**
    * The WritableStream used for `stdout`. Can be accessed directly for output of binary data etc.
    */
-  stdout: WritableStream;
+  stdoutWritable: WritableStream;
 
   /**
    * The WritableStream used for `stderr`. Can be accessed directly for output of binary data etc.
    */
-  stderr: WritableStream;
+  stderrWritable: WritableStream;
 
   /**
    * Return the provided message so that the foreground is colored as primary content. This is the default

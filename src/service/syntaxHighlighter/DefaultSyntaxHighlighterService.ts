@@ -1,6 +1,6 @@
 import SyntaxHighlighterService from "../../api/service/core/SyntaxHighlighterService.ts";
 import {
-  emphasize,
+  createEmphasize,
   HighlightSyntax,
   jsonSyntaxDefinition,
 } from "../../../deps.ts";
@@ -12,17 +12,21 @@ import {
 export default class DefaultSyntaxHighlighterService
   implements SyntaxHighlighterService {
   colorEnabled = true;
+  // deno-lint-ignore no-explicit-any
+  emphasize: any;
 
   constructor() {
+    this.emphasize = createEmphasize();
     this.registerSyntax("json", jsonSyntaxDefinition);
   }
+
   getRegisteredSyntaxes(): ReadonlyArray<string> {
-    return emphasize.listLanguages();
+    return this.emphasize.listLanguages();
   }
 
   highlight(text: string, syntaxName: string): string {
     const name = syntaxName.toLowerCase();
-    if (!emphasize.registered(name)) {
+    if (!this.emphasize.registered(name)) {
       throw new Error(`Syntax name is not registered: ${name}`);
     }
 
@@ -31,14 +35,14 @@ export default class DefaultSyntaxHighlighterService
       return text;
     }
 
-    return emphasize.highlight(name, text).value;
+    return this.emphasize.highlight(name, text).value;
   }
 
   registerSyntax(syntaxName: string, syntaxDefinition: HighlightSyntax): void {
     const name = syntaxName.toLowerCase();
-    if (emphasize.registered(name)) {
+    if (this.emphasize.registered(name)) {
       throw new Error(`Syntax name already registered: ${name}`);
     }
-    emphasize.registerLanguage(name, syntaxDefinition);
+    this.emphasize.register(name, syntaxDefinition);
   }
 }

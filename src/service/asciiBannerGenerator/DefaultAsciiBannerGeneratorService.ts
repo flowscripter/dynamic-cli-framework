@@ -2,7 +2,7 @@ import AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGener
 import { figlet_factory, figlet_serializer } from "../../../deps.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
-import { font as standardFont } from "./standard.flf.json" assert { type: "json" };
+import standardFont from "./standard.flf.json" with { type: "json" };
 
 /**
  * Default implementation of {@link AsciiBannerGeneratorService} which has a font definition
@@ -14,7 +14,7 @@ export default class DefaultAsciiBannerGeneratorService
   private fontDictionariesByName: Map<string, string> = new Map();
 
   constructor() {
-    this.registerFont("standard", standardFont);
+    this.registerFont("standard", standardFont.font);
   }
   getRegisteredFonts(): ReadonlyArray<string> {
     return Array.from(this.fontDefinitionsByName.keys());

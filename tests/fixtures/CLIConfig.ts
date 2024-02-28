@@ -1,8 +1,8 @@
 import CLIConfig from "../../src/api/CLIConfig.ts";
 
-export function getCLIConfig(): CLIConfig {
+export function getCLIConfig(name = "foo"): CLIConfig {
   return {
-    name: "foo",
+    name,
     description: "bar",
     version: "foobar",
   };

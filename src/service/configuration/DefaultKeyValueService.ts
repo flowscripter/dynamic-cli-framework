@@ -25,7 +25,7 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   public getKey(key: string): string {
     if (this.keyValueData === undefined) {
-      throw new Error("Attempt to access empty key-value data");
+      throw new Error("Attempt to access undefined key-value data");
     }
     const value = this.keyValueData.get(key);
     if (value === undefined) {
@@ -37,14 +37,14 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   public hasKey(key: string): boolean {
     if (this.keyValueData === undefined) {
-      throw new Error("Attempt to access empty key-value data");
+      throw new Error("Attempt to access undefined key-value data");
     }
     return this.keyValueData.has(key);
   }
 
   public setKey(key: string, value: string): void {
     if (this.keyValueData === undefined) {
-      throw new Error("Attempt to access empty key-value data");
+      throw new Error("Attempt to access undefined key-value data");
     }
     this.keyValueData.set(key, value);
     this.dirty = true;
@@ -52,7 +52,7 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   public deleteKey(key: string): void {
     if (this.keyValueData === undefined) {
-      throw new Error("Attempt to access empty key-value data");
+      throw new Error("Attempt to access undefined key-value data");
     }
     this.keyValueData.delete(key);
     this.dirty = true;

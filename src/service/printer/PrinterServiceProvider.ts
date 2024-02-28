@@ -15,31 +15,31 @@ import CLIConfig from "../../api/CLIConfig.ts";
 export default class PrinterServiceProvider implements ServiceProvider {
   readonly serviceId = PRINTER_SERVICE_ID;
   readonly servicePriority: number;
-  readonly stdoutWriter: Deno.Writer;
-  readonly stderrWriter: Deno.Writer;
+  readonly stdoutWritable: WritableStream;
+  readonly stderrWritable: WritableStream;
   printerService?: DefaultPrinterService;
 
   /**
    * Create an instance of the service provider with the specified details.
    *
    * @param servicePriority the priority of the service.
-   * @param stdoutWriter the Writer to use for stdout output.
-   * @param stderrWriter the Writer to use for stderr output.
+   * @param stdoutWritableStream the WritableStream to use for stdout output.
+   * @param stderrWritableStream the WritableStream to use for stderr output.
    */
   public constructor(
     servicePriority: number,
-    stdoutWriter: Deno.Writer,
-    stderrWriter: Deno.Writer,
+    stdoutWritableStream: WritableStream,
+    stderrWritableStream: WritableStream,
   ) {
     this.servicePriority = servicePriority;
-    this.stdoutWriter = stdoutWriter;
-    this.stderrWriter = stderrWriter;
+    this.stdoutWritable = stdoutWritableStream;
+    this.stderrWritable = stderrWritableStream;
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     this.printerService = new DefaultPrinterService(
-      this.stdoutWriter,
-      this.stderrWriter,
+      this.stdoutWritable,
+      this.stderrWritable,
     );
 
     return Promise.resolve({

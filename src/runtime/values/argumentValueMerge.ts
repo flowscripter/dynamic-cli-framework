@@ -80,6 +80,14 @@ function objectMerge(
   base: PopulatedArgumentValues,
   nestingLevel: number,
 ): PopulatedArgumentValues {
+  if (nestingLevel > MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
+    throw new Error(
+      `Maximum complex option nesting depth exceeded: ${nestingLevel}`,
+    );
+  }
+
+  nestingLevel++;
+
   const result: PopulatedArgumentValues = {};
 
   Object.keys(override).forEach((argName) => {
@@ -163,12 +171,7 @@ function doMerge(
   }
   // check if override is an object
   if (typeof override === "object") {
-    if (nestingLevel === MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
-      throw new Error(
-        `Maximum complex option nesting depth exceeded: ${nestingLevel + 1}`,
-      );
-    }
-    return objectMerge(override, defaults as ArgumentValues, nestingLevel + 1);
+    return objectMerge(override, defaults as ArgumentValues, nestingLevel);
   }
 
   // check if override is undefined so we should use default

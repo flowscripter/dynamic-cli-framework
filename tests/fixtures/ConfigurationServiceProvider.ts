@@ -10,7 +10,7 @@ class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
     servicePriority: number,
     defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType>,
   ) {
-    super(servicePriority);
+    super(servicePriority, false, true);
 
     this.defaultsData = defaultsData;
   }
@@ -21,8 +21,8 @@ class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
 }
 
 export function getConfigurationServiceProvider(
-  servicePriority = 0,
-  defaultsData = new Map<string, ArgumentValues | ArgumentSingleValueType>(),
+  servicePriority: number,
+  defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType>,
 ) {
   return new DummyConfigurationServiceProvider(servicePriority, defaultsData);
 }

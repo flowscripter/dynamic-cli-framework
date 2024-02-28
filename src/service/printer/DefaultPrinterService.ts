@@ -1,6 +1,6 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
-import { colors, conversions } from "../../../deps.ts";
+import { colors } from "../../../deps.ts";
 import { ITALIC_END, ITALIC_START } from "./terminal/Ansi.ts";
 import PrinterService, {
   Icon,
@@ -10,6 +10,7 @@ import ShutdownService, {
   SHUTDOWN_SERVICE_ID,
 } from "../../api/service/core/ShutdownService.ts";
 import Context from "../../api/Context.ts";
+import Terminal from "./terminal/Terminal.ts";
 
 enum Color {
   PRIMARY = 0,
@@ -27,14 +28,16 @@ enum Color {
 }
 
 export default class DefaultPrinterService implements PrinterService {
-  private readonly stdoutWriter: Deno.Writer;
-  private readonly stderrWriter: Deno.Writer;
+  readonly stdoutWritable: WritableStream;
+  readonly stderrWritable: WritableStream;
   private isDarkMode = true;
   private threshold = Level.INFO;
   private iconDefinitions: Array<string> = [];
+  private theme: Array<number> = [];
+  private encoder = new TextEncoder();
   private spinner: Spinner;
   private progress: Progress;
-  private theme: Array<number> = [];
+  private terminal: Terminal;
 
   private async log(
     level: number,
@@ -46,24 +49,22 @@ export default class DefaultPrinterService implements PrinterService {
     }
     await this.spinner.pause();
     await this.progress.pause();
-    await conversions.writeAll(
-      this.stderrWriter,
-      new TextEncoder().encode(
-        `${icon ? `${this.iconDefinitions[icon]} ` : ""}${message}`,
-      ),
+    await this.terminal.write(
+      `${icon ? `${this.iconDefinitions[icon]} ` : ""}${message}`,
     );
     this.spinner.resume();
-    await this.progress.resume();
+    this.progress.resume();
   }
 
   public constructor(
-    stdoutWriter: Deno.Writer,
-    stderrWriter: Deno.Writer,
+    stdoutWritableStream: WritableStream,
+    stderrWritableStream: WritableStream,
   ) {
-    this.stdoutWriter = stdoutWriter;
-    this.stderrWriter = stderrWriter;
-    this.spinner = new Spinner(this.stderrWriter);
-    this.progress = new Progress(this.stderrWriter);
+    this.stdoutWritable = stdoutWritableStream;
+    this.stderrWritable = stderrWritableStream;
+    this.terminal = new Terminal(this.stderrWritable);
+    this.spinner = new Spinner(this.terminal);
+    this.progress = new Progress(this.terminal);
     this.theme[Color.YELLOW] = 0xb58900;
     this.theme[Color.ORANGE] = 0xcb4b16;
     this.theme[Color.RED] = 0xdc322f;
@@ -85,10 +86,10 @@ export default class DefaultPrinterService implements PrinterService {
     const shutdownService = context.getServiceById(
       SHUTDOWN_SERVICE_ID,
     ) as ShutdownService;
-    shutdownService?.addShutdownListener(async () => {
+    shutdownService.addShutdownListener(async () => {
       await this.spinner.hide();
     });
-    shutdownService?.addShutdownListener(async () => {
+    shutdownService.addShutdownListener(async () => {
       await this.progress.hideAll();
     });
   }
@@ -139,14 +140,6 @@ export default class DefaultPrinterService implements PrinterService {
 
   get darkMode(): boolean {
     return this.isDarkMode;
-  }
-
-  get stdout(): WritableStream {
-    return conversions.writableStreamFromWriter(this.stdoutWriter);
-  }
-
-  get stderr(): WritableStream {
-    return conversions.writableStreamFromWriter(this.stderrWriter);
   }
 
   public primary(message: string): string {
@@ -218,12 +211,15 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public async print(message: string, icon?: Icon): Promise<void> {
-    await conversions.writeAll(
-      this.stdoutWriter,
-      new TextEncoder().encode(
-        `${icon ? `${this.iconDefinitions[icon]} ` : ""}${message}`,
-      ),
+    const writer = this.stdoutWritable.getWriter();
+    const encoded = this.encoder.encode(
+      `${icon ? `${this.iconDefinitions[icon]} ` : ""}${message}`,
     );
+
+    await writer.ready;
+    await writer.write(encoded);
+
+    writer.releaseLock();
   }
 
   public async setLevel(level: Level): Promise<void> {

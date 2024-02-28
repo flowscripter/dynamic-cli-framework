@@ -278,7 +278,7 @@ function scanForNextCommandClause(
  *
  * @param argSequences the list of argument sequences to scan.
  * @param globalModifierCommandsByName the map of {@link GlobalModifierCommand} instances by name to use when scanning.
- * @param globalModifierCommandsByShortAlias: the map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
+ * @param globalModifierCommandsByShortAlias the map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
  */
 export function scanForGlobalModifierCommandClauses(
   argSequences: ReadonlyArray<ReadonlyArray<string>>,

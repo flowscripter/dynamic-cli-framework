@@ -75,7 +75,7 @@ function validatePrimitiveValue(
           },
         };
       }
-      convertedValue = value === "true";
+      convertedValue = castValue === "true";
       break;
     case ArgumentValueTypeName.INTEGER:
       if (!Number.isInteger(Number(value))) {

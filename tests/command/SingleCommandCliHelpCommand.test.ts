@@ -1,4 +1,4 @@
-import { Buffer, describe, it } from "../test_deps.ts";
+import { Buffer } from "../test_deps.ts";
 import { getCommandRegistry } from "../fixtures/CommandRegistry.ts";
 import {
   getGlobalCommand,
@@ -16,359 +16,357 @@ import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes
 import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleCommandCliHelpCommand.ts";
 import SubCommand from "../../src/api/command/SubCommand.ts";
 
-describe("SingleCommandCliHelpCommand", () => {
-  it("Ensure single command CLI with simple default command help is rendered correctly: simple default command", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+Deno.test("Ensure single command CLI with simple default command help is rendered correctly: simple default command", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    getCommandRegistry(),
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "--foo");
+});
+
+Deno.test("Ensure single command CLI aggregates all non-default command arguments", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalCommand("global1", true, true),
+    getGlobalCommand("global2", true),
+    getSubCommandWithOption(
+      "command_a",
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      getCommandRegistry(),
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "--foo");
-  });
-
-  it("Ensure single command CLI aggregates all non-default command arguments", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalCommand("global1", true, true),
-      getGlobalCommand("global2", true),
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        true,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
-      getSubCommandWithOption("command_b", true),
-      {
-        name: "topic",
-        helpTopic: "topic",
-        options: [],
-        positionals: [],
-        execute: async (): Promise<void> => {},
-      } as SubCommand,
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringNotIncludes(buffer, "Global");
-    expectBufferStringNotIncludes(buffer, "Topic");
-    expectBufferStringIncludes(buffer, "Command Arguments");
-    expectBufferStringIncludes(buffer, "Other Arguments");
-  });
-
-  it("Ensure single command CLI with default and globals help is rendered correctly: default and global modifier", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1", "m", true, true),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      commandRegistry,
-    );
+      ArgumentValueTypeName.BOOLEAN,
+    ),
+    getSubCommandWithOption("command_b", true),
+    {
+      name: "topic",
+      helpTopic: "topic",
+      options: [],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    } as SubCommand,
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    commandRegistry,
+  );
 
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "Other Arguments");
-  });
+  await help.execute(context);
+  expectBufferStringNotIncludes(buffer, "Global");
+  expectBufferStringNotIncludes(buffer, "Topic");
+  expectBufferStringIncludes(buffer, "Command Arguments");
+  expectBufferStringIncludes(buffer, "Other Arguments");
+});
 
-  it("Ensure single command CLI with default and globals help is rendered correctly: default, global modifier and global", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-      getGlobalCommand("global1"),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+Deno.test("Ensure single command CLI with default and globals help is rendered correctly: default and global modifier", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1", "m", true, true),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "Other Arguments");
+});
+
+Deno.test("Ensure single command CLI with default and globals help is rendered correctly: default, global modifier and global", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+    getGlobalCommand("global1"),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "Other Arguments");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: simple default command", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    getCommandRegistry(),
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: simple default command with non-multiple arg", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry();
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo --foo <string_value>");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: simple default command with optional arg", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry();
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo <string_value>]");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with mandatory arg global modifier", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1", "m", true, true),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with global modifier with no arg", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, true, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with singular optional arg and global modifier", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo <string_value>]");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with multiple optional arg and multiple global modifiers and multiple global commands", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+    getGlobalModifierCommand("modifier2", "m", true, true),
+    getGlobalCommand("global1", true, true),
+    getGlobalCommand("global2", true, true),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, false, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with optional arg, multiple global modifiers, multiple global commands, multiple sub-commands", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+    getGlobalModifierCommand("modifier2", "m", true, true),
+    getGlobalCommand("global1", true, true),
+    getGlobalCommand("global2", true, true),
+    getSubCommandWithOption("sub1", true, true),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption("command_a", true, false, true),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
+});
+
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: also with boolean args", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry([
+    getGlobalModifierCommand("modifier1"),
+    getGlobalModifierCommand("modifier2", "m", true, true),
+    getGlobalCommand("global1", true, true),
+    getGlobalCommand("global2", true, true),
+    getSubCommandWithOption(
+      "sub1",
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "Other Arguments");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: simple default command", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      getCommandRegistry(),
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: simple default command with non-multiple arg", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry();
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+      false,
+      ArgumentValueTypeName.BOOLEAN,
+    ),
+  ]);
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption(
+      "command_a",
       true,
-      getSubCommandWithOption("command_a", true, true),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo --foo <string_value>");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: simple default command with optional arg", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry();
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+      false,
       true,
-      getSubCommandWithOption("command_a", true),
-      commandRegistry,
-    );
+      ArgumentValueTypeName.BOOLEAN,
+    ),
+    commandRegistry,
+  );
 
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo <string_value>]");
-  });
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo [true|false]]...");
+});
 
-  it("Ensure single command CLI usage syntax is rendered correctly: with mandatory arg global modifier", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1", "m", true, true),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: also with default value", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry();
+  const help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithOption(
+      "command_a",
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: with global modifier with no arg", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+      false,
       true,
-      getSubCommandWithOption("command_a", true, true, true),
-      commandRegistry,
-    );
+      ArgumentValueTypeName.STRING,
+      "foo",
+    ),
+    commandRegistry,
+  );
 
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo --foo <string_value>...");
-  });
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
+});
 
-  it("Ensure single command CLI usage syntax is rendered correctly: with singular optional arg and global modifier", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+Deno.test("Ensure single command CLI usage syntax is rendered correctly: with positionals", async () => {
+  const buffer = new Buffer();
+  const context = getContext(buffer);
+  const commandRegistry = getCommandRegistry();
+  let help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional("command_a"),
+    commandRegistry,
+  );
+
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo <foo>");
+
+  help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional("command_a", true, true),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [<foo>]...");
+
+  help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional(
+      "command_a",
       true,
-      getSubCommandWithOption("command_a", true),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo <string_value>]");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: with multiple optional arg and multiple global modifiers and multiple global commands", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-      getGlobalModifierCommand("modifier2", "m", true, true),
-      getGlobalCommand("global1", true, true),
-      getGlobalCommand("global2", true, true),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
       true,
-      getSubCommandWithOption("command_a", true, false, true),
-      commandRegistry,
-    );
+      ArgumentValueTypeName.BOOLEAN,
+    ),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [<foo>]...");
 
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: with optional arg, multiple global modifiers, multiple global commands, multiple sub-commands", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-      getGlobalModifierCommand("modifier2", "m", true, true),
-      getGlobalCommand("global1", true, true),
-      getGlobalCommand("global2", true, true),
-      getSubCommandWithOption("sub1", true, true),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+  help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional(
+      "command_a",
       true,
-      getSubCommandWithOption("command_a", true, false, true),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: also with boolean args", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-      getGlobalModifierCommand("modifier2", "m", true, true),
-      getGlobalCommand("global1", true, true),
-      getGlobalCommand("global2", true, true),
-      getSubCommandWithOption(
-        "sub1",
-        true,
-        true,
-        false,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
-    ]);
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
       true,
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        false,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
-      commandRegistry,
-    );
+      ArgumentValueTypeName.STRING,
+    ),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo [<foo>]...");
 
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo [true|false]]...");
-  });
+  help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional(
+      "command_a",
+      false,
+      false,
+      ArgumentValueTypeName.STRING,
+    ),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo <foo>");
 
-  it("Ensure single command CLI usage syntax is rendered correctly: also with default value", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry();
-    const help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
+  help = new SingleCommandCliHelpGlobalCommand(
+    getCLIConfig(),
+    true,
+    getSubCommandWithPositional(
+      "command_a",
+      false,
       true,
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        false,
-        true,
-        ArgumentValueTypeName.STRING,
-        "foo",
-      ),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [--foo <string_value>]...");
-  });
-
-  it("Ensure single command CLI usage syntax is rendered correctly: with positionals", async () => {
-    const buffer = new Buffer();
-    const context = getContext(buffer);
-    const commandRegistry = getCommandRegistry();
-    let help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional("command_a"),
-      commandRegistry,
-    );
-
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo <foo>");
-
-    help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional("command_a", true, true),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [<foo>]...");
-
-    help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional(
-        "command_a",
-        true,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [<foo>]...");
-
-    help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional(
-        "command_a",
-        true,
-        true,
-        ArgumentValueTypeName.STRING,
-      ),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo [<foo>]...");
-
-    help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional(
-        "command_a",
-        false,
-        false,
-        ArgumentValueTypeName.STRING,
-      ),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo <foo>");
-
-    help = new SingleCommandCliHelpGlobalCommand(
-      getCLIConfig(),
-      true,
-      getSubCommandWithPositional(
-        "command_a",
-        false,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
-      commandRegistry,
-    );
-    await help.execute(context);
-    expectBufferStringIncludes(buffer, "foo <foo>...");
-  });
+      ArgumentValueTypeName.BOOLEAN,
+    ),
+    commandRegistry,
+  );
+  await help.execute(context);
+  expectBufferStringIncludes(buffer, "foo <foo>...");
 });

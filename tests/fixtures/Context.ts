@@ -9,7 +9,10 @@ import Context from "../../src/api/Context.ts";
 
 export function getContext(buffer: Buffer): Context {
   const defaultContext = new DefaultContext(getCLIConfig());
-  const defaultPrinterService = new DefaultPrinterService(buffer, buffer);
+  const defaultPrinterService = new DefaultPrinterService(
+    buffer.writable,
+    buffer.writable,
+  );
 
   defaultPrinterService.colorEnabled = false;
   defaultContext.addServiceInstance(PRINTER_SERVICE_ID, defaultPrinterService);

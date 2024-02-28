@@ -51,8 +51,8 @@ const logger = getLogger("BaseCLI");
  */
 export default class BaseCLI implements CLI {
   private readonly cliConfig: CLIConfig;
-  private readonly stdoutWriter: Deno.Writer;
-  private readonly stderrWriter: Deno.Writer;
+  private readonly stdoutWritable: WritableStream;
+  private readonly stderrWritable: WritableStream;
   private readonly envVarsEnabled: boolean;
   private readonly configEnabled: boolean;
   private readonly keyValueServiceEnabled: boolean;
@@ -62,11 +62,11 @@ export default class BaseCLI implements CLI {
   private readonly context: DefaultContext;
 
   /**
-   * Constructor configures the instance with the specified CLI application details and Writer instances.
+   * Constructor configures the instance with the specified CLI application details and WritableStream instances.
    *
    * @param cliConfig the {@link CLIConfig} for the CLI application.
-   * @param stdoutWriter the Writer to use for stdout output.
-   * @param stderrWriter the Writer to use for stderr output.
+   * @param stdoutWritableStream the WritableStream to use for stdout output.
+   * @param stderrWritableStream the WritableStream to use for stderr output.
    * @param envVarsEnabled optionally support checking env variables for default argument values.
    * @param configEnabled optionally enable configuration file support for default argument values.
    * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
@@ -74,8 +74,8 @@ export default class BaseCLI implements CLI {
    */
   constructor(
     cliConfig: CLIConfig,
-    stdoutWriter: Deno.Writer,
-    stderrWriter: Deno.Writer,
+    stdoutWritableStream: WritableStream,
+    stderrWritableStream: WritableStream,
     envVarsEnabled = false,
     configEnabled = false,
     keyValueServiceEnabled = false,
@@ -99,8 +99,8 @@ export default class BaseCLI implements CLI {
       throw new Error("Invalid empty CLI version provided");
     }
     this.cliConfig = cliConfig;
-    this.stdoutWriter = stdoutWriter;
-    this.stderrWriter = stderrWriter;
+    this.stdoutWritable = stdoutWritableStream;
+    this.stderrWritable = stderrWritableStream;
     this.envVarsEnabled = envVarsEnabled;
     this.configEnabled = configEnabled;
     this.keyValueServiceEnabled = keyValueServiceEnabled;
@@ -173,7 +173,11 @@ export default class BaseCLI implements CLI {
     // create and add core services
     this.addServiceProvider(new ShutdownServiceProvider(100));
     this.addServiceProvider(
-      new PrinterServiceProvider(80, this.stdoutWriter, this.stderrWriter),
+      new PrinterServiceProvider(
+        80,
+        this.stdoutWritable,
+        this.stderrWritable,
+      ),
     );
 
     const configurationServiceProvider = new ConfigurationServiceProvider(

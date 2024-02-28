@@ -1,4 +1,4 @@
-import { assertEquals, describe, it } from "../../test_deps.ts";
+import { assertEquals } from "../../test_deps.ts";
 import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 import {
   ArgumentValueTypeName,
@@ -39,11 +39,9 @@ function getGlobalCommandArgument(): GlobalCommandArgument {
   };
 }
 
-describe("ArgumentTypeGuards", () => {
-  it("isComplexOption works", () => {
-    assertEquals(isComplexOption(getComplexOption()), true);
-    assertEquals(isComplexOption(getOption()), false);
-    assertEquals(isComplexOption(getPositional()), false);
-    assertEquals(isComplexOption(getGlobalCommandArgument()), false);
-  });
+Deno.test("isComplexOption works", () => {
+  assertEquals(isComplexOption(getComplexOption()), true);
+  assertEquals(isComplexOption(getOption()), false);
+  assertEquals(isComplexOption(getPositional()), false);
+  assertEquals(isComplexOption(getGlobalCommandArgument()), false);
 });

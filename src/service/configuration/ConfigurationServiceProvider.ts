@@ -25,6 +25,7 @@ import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,
 } from "../../util/envVarHelper.ts";
+import { path } from "../../../deps.ts";
 
 const logger = getLogger("ConfigurationServiceProvider");
 
@@ -409,9 +410,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       // default to `$HOME/.<application_name>.json`
       const home = Deno.env.get("HOME");
       if (home) {
-        this.configLocation = `${home}/.${
-          context.cliConfig.name.replace(/\W/g, "")
-        }.json`;
+        this.configLocation = path.join(
+          home,
+          `.${context.cliConfig.name.replace(/\W/g, "")}.json`,
+        );
       }
     }
     if (this.configLocation === undefined) {
@@ -560,6 +562,6 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         }
       }
     }
-    return JSON.stringify(config);
+    return JSON.stringify(config, null, 2);
   }
 }

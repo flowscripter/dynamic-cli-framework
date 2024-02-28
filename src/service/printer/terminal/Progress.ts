@@ -15,8 +15,7 @@ interface Bar {
 }
 
 export default class Progress {
-  private readonly writer: Deno.Writer;
-  private readonly terminal: Terminal;
+  private readonly term: Terminal;
   private readonly bars: Map<number, Bar> = new Map();
   private intervalId: number | undefined;
   private progressIsDirty = true;
@@ -27,9 +26,8 @@ export default class Progress {
   private labColor = 0x585858;
   private valColor = 0x808080;
 
-  public constructor(writer: Deno.Writer) {
-    this.writer = writer;
-    this.terminal = new Terminal(writer);
+  public constructor(terminal: Terminal) {
+    this.term = terminal;
   }
 
   public async add(
@@ -43,7 +41,7 @@ export default class Progress {
         await this.renderBars();
       }, 100);
     }
-    await this.terminal.hideCursor();
+    await this.term.hideCursor();
 
     if (total < 0) {
       total = 100;
@@ -114,10 +112,10 @@ export default class Progress {
     if (this.bars.size === 0) {
       clearInterval(this.intervalId);
       delete this.intervalId;
-      await this.terminal.showCursor();
+      await this.term.showCursor();
     } else {
       if (this.lastBarSize > 0) {
-        await this.terminal.clearUpLines(2);
+        await this.term.clearUpLines(2);
       }
       this.lastBarSize -= 1;
       if (this.lastBarSize < 0) {
@@ -136,8 +134,8 @@ export default class Progress {
     const size = this.bars.size;
     this.bars.clear();
     this.lastBarSize = 0;
-    await this.terminal.clearUpLines(size * 2);
-    await this.terminal.showCursor();
+    await this.term.clearUpLines(size * 2);
+    await this.term.showCursor();
     this.progressIsDirty = true;
   }
 
@@ -147,7 +145,7 @@ export default class Progress {
     }
     clearInterval(this.intervalId);
     delete this.intervalId;
-    await this.terminal.clearUpLines(this.bars.size * 2);
+    await this.term.clearUpLines(this.bars.size * 2);
     this.lastBarSize = 0;
   }
 
@@ -175,7 +173,7 @@ export default class Progress {
     }
     this.lastTime = now;
 
-    const consoleWidth = Deno.consoleSize().columns;
+    const consoleWidth = this.term.columns();
     const lines: Array<string> = [];
 
     const barInfo: Array<
@@ -224,8 +222,8 @@ export default class Progress {
           colors.rgb24(bar.units + "/s, time remaining:", this.labColor)
         } ${remaining}`;
       }
-      let available = consoleWidth - colors.stripColor(prefix).length -
-        colors.stripColor(suffix).length;
+      let available = consoleWidth - colors.stripAnsiCode(prefix).length -
+        colors.stripAnsiCode(suffix).length;
       if (available < 0) {
         available = 0;
       }
@@ -260,8 +258,8 @@ export default class Progress {
       lines.push(barInfo.prefix + complete + remaining + barInfo.suffix);
     });
 
-    await this.terminal.clearUpLines(this.lastBarSize * 2);
-    await this.terminal.write(lines.join("\n") + "\n");
+    await this.term.clearUpLines(this.lastBarSize * 2);
+    await this.term.write(lines.join("\n") + "\n");
     this.lastBarSize = this.bars.size;
     this.progressIsDirty = false;
   }

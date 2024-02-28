@@ -1,73 +1,125 @@
 import {
   assertEquals,
   assertThrows,
-  describe,
-  it,
+  Buffer,
   yamlSyntaxDefinition,
 } from "../../test_deps.ts";
+import { expectBufferBytesEquals } from "../../fixtures/util.ts";
 import DefaultSyntaxHighlighterService from "../../../src/service/syntaxHighlighter/DefaultSyntaxHighlighterService.ts";
 
-describe("DefaultSyntaxHighlighterService", () => {
-  it("JSON registered by default", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("JSON registered by default", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    assertEquals(syntaxHighlighterService.getRegisteredSyntaxes(), ["json"]);
-  });
+  assertEquals(syntaxHighlighterService.getRegisteredSyntaxes(), ["json"]);
+});
 
-  it("Cannot register a syntax if already registered", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("Cannot register a syntax if already registered", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    assertThrows(() =>
-      syntaxHighlighterService.registerSyntax("jSon", yamlSyntaxDefinition)
-    );
-  });
+  assertThrows(() =>
+    syntaxHighlighterService.registerSyntax("jSon", yamlSyntaxDefinition)
+  );
+});
 
-  it("Can register new syntax", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("Can register new syntax", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
-    assertEquals(syntaxHighlighterService.getRegisteredSyntaxes(), [
-      "json",
-      "yaml",
-    ]);
-  });
+  syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
+  assertEquals(syntaxHighlighterService.getRegisteredSyntaxes(), [
+    "json",
+    "yaml",
+  ]);
+});
 
-  it("Cannot highlight with unknown syntax", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("Cannot highlight with unknown syntax", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    assertThrows(() => syntaxHighlighterService.highlight("foo: 1", "yaml"));
-  });
+  assertThrows(() => syntaxHighlighterService.highlight("foo: 1", "yaml"));
+});
 
-  it("Can highlight with JSON syntax", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("Can highlight with JSON syntax", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
+  syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
 
-    const highlighted = syntaxHighlighterService.highlight(
-      "{ foo: 1 }",
-      "json",
-    );
-    assertEquals(highlighted, "{ foo: 1 }");
-  });
+  const highlighted = syntaxHighlighterService.highlight(
+    "{ foo: 1 }",
+    "json",
+  );
+  expectBufferBytesEquals(
+    new Buffer(new TextEncoder().encode(highlighted)),
+    new Uint8Array([
+      123,
+      32,
+      102,
+      111,
+      111,
+      58,
+      32,
+      27,
+      91,
+      51,
+      54,
+      109,
+      49,
+      27,
+      91,
+      51,
+      57,
+      109,
+      32,
+      125,
+    ]),
+  );
+});
 
-  it("Can highlight with newly registered syntax", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+Deno.test("Can highlight with newly registered syntax", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 
-    syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
+  syntaxHighlighterService.registerSyntax("yaml", yamlSyntaxDefinition);
 
-    const highlighted = syntaxHighlighterService.highlight("foo: 1", "yaml");
-    assertEquals(highlighted, "{ foo: 1 }");
-  });
+  const highlighted = syntaxHighlighterService.highlight("foo: 1", "yaml");
+  expectBufferBytesEquals(
+    new Buffer(new TextEncoder().encode(highlighted)),
+    new Uint8Array([
+      27,
+      91,
+      51,
+      51,
+      109,
+      102,
+      111,
+      111,
+      58,
+      27,
+      91,
+      51,
+      57,
+      109,
+      32,
+      27,
+      91,
+      51,
+      54,
+      109,
+      49,
+      27,
+      91,
+      51,
+      57,
+      109,
+    ]),
+  );
+});
 
-  it("Skipped if color disabled", () => {
-    const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
-    syntaxHighlighterService.colorEnabled = false;
+Deno.test("Skipped if color disabled", () => {
+  const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
+  syntaxHighlighterService.colorEnabled = false;
 
-    const highlighted = syntaxHighlighterService.highlight(
-      "{ foo: 1 }",
-      "json",
-    );
+  const highlighted = syntaxHighlighterService.highlight(
+    "{ foo: 1 }",
+    "json",
+  );
 
-    assertEquals(highlighted, "{ foo: 1 }");
-  });
+  assertEquals(highlighted, "{ foo: 1 }");
 });

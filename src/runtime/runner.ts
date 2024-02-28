@@ -42,12 +42,12 @@ const logger = getLogger("runner");
  *
  * @param parseResult the {@link ParseResult} to execute.
  * @param context the {@link Context} to use.
- * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
  */
 async function executeParsedCommand(
   parseResult: ParseResult,
   context: Context,
-  configurationServiceProvider: ConfigurationServiceProvider,
+  configurationServiceProvider: ConfigurationServiceProvider | undefined,
 ): Promise<RunResult> {
   try {
     if (parseResult.groupCommand !== undefined) {
@@ -55,13 +55,13 @@ async function executeParsedCommand(
         "Executing group command with name: %s",
         parseResult!.groupCommand!.name,
       );
-      if (configurationServiceProvider.keyValueServiceEnabled) {
+      if (configurationServiceProvider?.keyValueServiceEnabled) {
         configurationServiceProvider.setCommandKeyValueScope(
           parseResult!.groupCommand!.name,
         );
       }
       await parseResult.groupCommand.execute(context);
-      if (configurationServiceProvider.keyValueServiceEnabled) {
+      if (configurationServiceProvider?.keyValueServiceEnabled) {
         await configurationServiceProvider.clearKeyValueScope();
       }
     }
@@ -72,7 +72,7 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
-    if (configurationServiceProvider.keyValueServiceEnabled) {
+    if (configurationServiceProvider?.keyValueServiceEnabled) {
       configurationServiceProvider.setCommandKeyValueScope(
         parseResult.command.name,
       );
@@ -88,7 +88,7 @@ async function executeParsedCommand(
         parseResult.populatedArgumentValues as ArgumentSingleValueType,
       );
     }
-    if (configurationServiceProvider.keyValueServiceEnabled) {
+    if (configurationServiceProvider?.keyValueServiceEnabled) {
       await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
@@ -112,7 +112,7 @@ async function executeParsedCommand(
  * @param unusedArgSequences an array to which any unused argument sequences will be added.
  * @param globalModifierCommandsByName a map of non-modifier {@link Command} instances by name to parse for.
  * @param globalModifierCommandsByShortAlias a map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
- * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteGlobalModifierCommands(
@@ -123,7 +123,7 @@ async function findAndExecuteGlobalModifierCommands(
     string,
     GlobalModifierCommand
   >,
-  configurationServiceProvider: ConfigurationServiceProvider,
+  configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   // build a list of GlobalModifierCommands to execute
@@ -149,10 +149,12 @@ async function findAndExecuteGlobalModifierCommands(
     ) {
       // parse and fast fail on error
       const defaultArgumentValues = configurationServiceProvider
-        .getDefaultArgumentValues(
-          context.cliConfig,
-          globalModifierCommandClause.command,
-        );
+        ? configurationServiceProvider
+          .getDefaultArgumentValues(
+            context.cliConfig,
+            globalModifierCommandClause.command,
+          )
+        : undefined;
       const parseResult = parseGlobalCommandClause(
         globalModifierCommandClause,
         defaultArgumentValues as PopulatedArgumentSingleValueType,
@@ -186,7 +188,9 @@ async function findAndExecuteGlobalModifierCommands(
   for (const globalModifierCommand of remainingGlobalModifierCommands) {
     // if there is a config entry run this by default even though no arguments were provided on the command line
     const defaultArgumentValues = configurationServiceProvider
-      .getDefaultArgumentValues(context.cliConfig, globalModifierCommand);
+      ? configurationServiceProvider
+        .getDefaultArgumentValues(context.cliConfig, globalModifierCommand)
+      : undefined;
 
     if (defaultArgumentValues !== undefined) {
       // parse and fast fail on error
@@ -234,7 +238,7 @@ async function findAndExecuteGlobalModifierCommands(
  * @param nonModifierCommandsByName the map of non-modifier {@link Command} instances by name to parse for.
  * @param globalCommandsByShortAlias the map of {@link GlobalCommand} instances by short alias to use when scanning.
  * @param groupAndMemberCommandsByJoinedName optional map of {@link GroupCommand} and member {@link SubCommand} instances to use when scanning.
- * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteNonModifierCommand(
@@ -245,7 +249,7 @@ async function findAndExecuteNonModifierCommand(
   groupAndMemberCommandsByJoinedName:
     | ReadonlyMap<string, { groupCommand: GroupCommand; command: SubCommand }>
     | undefined,
-  configurationServiceProvider: ConfigurationServiceProvider,
+  configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   let parseResult: ParseResult | undefined;
@@ -262,10 +266,12 @@ async function findAndExecuteNonModifierCommand(
 
   if (scanResult.nonModifierCommandClause) {
     const defaultArgumentValues = configurationServiceProvider
-      .getDefaultArgumentValues(
-        context.cliConfig,
-        scanResult.nonModifierCommandClause.command,
-      );
+      ? configurationServiceProvider
+        .getDefaultArgumentValues(
+          context.cliConfig,
+          scanResult.nonModifierCommandClause.command,
+        )
+      : undefined;
 
     if (isGlobalCommand(scanResult.nonModifierCommandClause.command)) {
       parseResult = parseGlobalCommandClause(
@@ -296,7 +302,9 @@ async function findAndExecuteNonModifierCommand(
     for (const nonModifierCommand of nonModifierCommandsByName.values()) {
       // if there is a config entry run this by default even though no arguments were provided on the command line
       const defaultArgumentValues = configurationServiceProvider
-        .getDefaultArgumentValues(context.cliConfig, nonModifierCommand);
+        ? configurationServiceProvider
+          .getDefaultArgumentValues(context.cliConfig, nonModifierCommand)
+        : undefined;
 
       if (defaultArgumentValues !== undefined) {
         if (isGlobalCommand(nonModifierCommand)) {
@@ -347,18 +355,20 @@ async function findAndExecuteNonModifierCommand(
  * @param availableArgs the list of argument sequences to process.
  * @param unusedArgs an array to which any unused argument sequences will be added.
  * @param defaultNonModifierCommand the default non-modifier {@link Command} to use.
- * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteDefaultNonModifierCommand(
   availableArgs: ReadonlyArray<ReadonlyArray<string>>,
   unusedArgs: Array<ReadonlyArray<string>>,
   defaultNonModifierCommand: Command,
-  configurationServiceProvider: ConfigurationServiceProvider,
+  configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   const defaultArgumentValues = configurationServiceProvider
-    .getDefaultArgumentValues(context.cliConfig, defaultNonModifierCommand);
+    ? configurationServiceProvider
+      .getDefaultArgumentValues(context.cliConfig, defaultNonModifierCommand)
+    : undefined;
   const isGlobal = isGlobalCommand(defaultNonModifierCommand);
   let parseResult: ParseResult | undefined;
 
@@ -503,7 +513,7 @@ async function findAndExecuteDefaultNonModifierCommand(
  * @param args the command line arguments (which do not include the invoked executable name).
  * @param commandRegistry the {@link CommandRegistry} to use when scanning and parsing.
  * @param serviceProviderRegistry the {@link ServiceProviderRegistry} to use when scanning and parsing.
- * @param configurationServiceProvider the {@link ConfigurationServiceProvider} to use for accessing argument defaults.
+ * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use for accessing argument defaults.
  * @param context the {@link Context} in which to execute specified {@link Command} instances.
  * @param defaultCommand optional {@link SubCommand} or {@link GlobalCommand} implementation to attempt to parse arguments for and execute if
  * no non-modifier {@link Command} name is identified in the provided arguments.
@@ -542,6 +552,52 @@ export async function run(
         serviceProvider.serviceId,
       );
 
+    // if there are GlobalModifierCommands provided by the ServiceProvider...
+    if (globalModifierCommandsByName.size > 0) {
+      // ...scan arguments, parse any resulting clauses and execute any resulting parsed GlobalModifierCommands
+      const runResult = await findAndExecuteGlobalModifierCommands(
+        availableArgs,
+        unusedArgs,
+        globalModifierCommandsByName,
+        globalModifierCommandsByShortAlias,
+        configurationServiceProvider,
+        context,
+      );
+
+      // nothing is returned unless a command was found and there was an error, in which case return the error
+      if (runResult) {
+        return runResult;
+      }
+
+      // update args for the next scan operation
+      availableArgs = unusedArgs;
+      unusedArgs = [];
+    }
+
+    // init the service provider's service
+
+    logger.debug("Initialising service with ID: %s", serviceProvider.serviceId);
+
+    if (configurationServiceProvider?.keyValueServiceEnabled) {
+      configurationServiceProvider.setServiceKeyValueScope(
+        serviceProvider.serviceId,
+      );
+    }
+
+    await serviceProvider.initService(context);
+    if (configurationServiceProvider?.keyValueServiceEnabled) {
+      await configurationServiceProvider.clearKeyValueScope();
+    }
+  }
+
+  // using the GlobalModifierCommands instances which are NOT provided by a ServiceProvider...
+  const globalModifierCommandsByName = commandRegistry
+    .getGlobalModifierCommandsByNameNotProvidedByService();
+  const globalModifierCommandsByShortAlias = commandRegistry
+    .getGlobalModifierCommandsByShortAliasNotProvidedByService();
+
+  // if there are GlobalModifierCommands NOT provided by the ServiceProvider...
+  if (globalModifierCommandsByName.size > 0) {
     // ...scan arguments, parse any resulting clauses and execute any resulting parsed GlobalModifierCommands
     const runResult = await findAndExecuteGlobalModifierCommands(
       availableArgs,
@@ -552,50 +608,15 @@ export async function run(
       context,
     );
 
-    // nothing is returned unless a command was found and there was an error
+    // nothing is returned unless a command was found and there was an error, in which case return the error
     if (runResult) {
       return runResult;
-    }
-
-    // init the service provider's service leaving any error to be handled as a framework error by the caller
-    if (configurationServiceProvider) {
-      configurationServiceProvider.setServiceKeyValueScope(
-        serviceProvider.serviceId,
-      );
-    }
-    await serviceProvider.initService(context);
-    if (configurationServiceProvider) {
-      await configurationServiceProvider.clearKeyValueScope();
     }
 
     // update args for the next scan operation
     availableArgs = unusedArgs;
     unusedArgs = [];
   }
-
-  // using the GlobalModifierCommands instances which are NOT provided by a ServiceProvider...
-  const globalModifierCommandsByName = commandRegistry
-    .getGlobalModifierCommandsByNameNotProvidedByService();
-  const globalModifierCommandsByShortAlias = commandRegistry
-    .getGlobalModifierCommandsByShortAliasNotProvidedByService();
-
-  // ...scan arguments, parse any resulting clauses and execute any resulting parsed GlobalModifierCommands
-  let runResult = await findAndExecuteGlobalModifierCommands(
-    availableArgs,
-    unusedArgs,
-    globalModifierCommandsByName,
-    globalModifierCommandsByShortAlias,
-    configurationServiceProvider,
-    context,
-  );
-  // nothing is returned unless a command was found and there was an error
-  if (runResult) {
-    return runResult;
-  }
-
-  // update args for the next scan operation
-  availableArgs = unusedArgs;
-  unusedArgs = [];
 
   // using the non-modifier Command instances...
   const nonModifierCommandsByName = commandRegistry
@@ -607,7 +628,7 @@ export async function run(
     .getGroupAndMemberCommandsByJoinedName();
 
   // ...scan arguments, parse a resulting clause and execute a resulting parsed non-modifier Command
-  runResult = await findAndExecuteNonModifierCommand(
+  let runResult = await findAndExecuteNonModifierCommand(
     availableArgs,
     unusedArgs,
     nonModifierCommandsByName,

@@ -1,4 +1,4 @@
-import { format, log } from "../../deps.ts";
+import { log, sprintf } from "../../deps.ts";
 import { getEnvVarIfPermitted } from "./envVarHelper.ts";
 
 let defaultLogger: log.Logger | undefined;
@@ -8,9 +8,9 @@ if (defaultLogger === undefined) {
 }
 
 async function setupLogger() {
-  await log.setup({
+  log.setup({
     handlers: {
-      console: new log.handlers.ConsoleHandler(
+      console: new log.ConsoleHandler(
         (await getEnvVarIfPermitted("CLI_DEBUG") !== undefined)
           ? "DEBUG"
           : "ERROR",
@@ -20,7 +20,7 @@ async function setupLogger() {
             if (args.length === 0) {
               return `${levelName} [${loggerName}] ${msg}`;
             }
-            return `${levelName} [${loggerName}] ${format(msg, ...args)}`;
+            return `${levelName} [${loggerName}] ${sprintf(msg, ...args)}`;
           },
         },
       ),

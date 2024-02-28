@@ -30,12 +30,14 @@ export default class ConfigCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public async execute(
+  public execute(
     _context: Context,
     argumentValue: ArgumentSingleValueType,
   ): Promise<void> {
     const configLocation = argumentValue as string;
 
-    await this.configurationServiceProvider.setConfigLocation(configLocation);
+    this.configurationServiceProvider.setConfigLocation(configLocation);
+
+    return Promise.resolve();
   }
 }
