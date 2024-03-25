@@ -12,12 +12,12 @@ export default class UsageCommand implements GlobalCommand {
   readonly name = "usage";
   readonly description = "Show usage information";
 
-  private readonly helpCommand: Command;
+  readonly #helpCommand: Command;
 
   public constructor(
     helpCommand: Command,
   ) {
-    this.helpCommand = helpCommand;
+    this.#helpCommand = helpCommand;
   }
 
   public async execute(
@@ -28,9 +28,9 @@ export default class UsageCommand implements GlobalCommand {
     ) as PrinterService;
 
     await printerService.print(
-      `\n${printerService.secondary("Try running:")}\n\n  ${
+      `${printerService.secondary("Try running:")}\n\n  ${
         printerService.primary(context.cliConfig.name)
-      } --${printerService.primary(this.helpCommand.name)}\n\n`,
+      } --${printerService.primary(this.#helpCommand.name)}\n\n`,
     );
   }
 }

@@ -15,34 +15,27 @@ interface Bar {
 }
 
 export default class Progress {
-  private readonly term: Terminal;
-  private readonly bars: Map<number, Bar> = new Map();
-  private intervalId: number | undefined;
-  private progressIsDirty = true;
-  private lastTime = 0;
-  private lastBarSize = 0;
-  private comColor = 0x5f8700;
-  private remColor = 0x585858;
-  private labColor = 0x585858;
-  private valColor = 0x808080;
+  readonly #term: Terminal;
+  readonly #bars: Map<number, Bar> = new Map();
+  #intervalId: number | undefined;
+  #isDirty = false;
+  #currentRenderedBarCount = 0;
+  #lastRenderTime = 0;
+  #comColor = 0x5f8700;
+  #remColor = 0x585858;
+  #labColor = 0x585858;
+  #valColor = 0x808080;
 
   public constructor(terminal: Terminal) {
-    this.term = terminal;
+    this.#term = terminal;
   }
 
-  public async add(
+  public add(
     units: string,
     message: string,
     total: number,
     current: number,
-  ): Promise<number> {
-    if (this.bars.size === 0) {
-      this.intervalId = setInterval(async () => {
-        await this.renderBars();
-      }, 100);
-    }
-    await this.term.hideCursor();
-
+  ): number {
     if (total < 0) {
       total = 100;
     }
@@ -53,19 +46,28 @@ export default class Progress {
       current = total;
     }
 
-    this.bars.set(this.bars.size + 1, {
+    this.#bars.set(this.#bars.size + 1, {
       name: message,
       current,
       total,
       units,
       startMillis: Date.now(),
     });
-    this.progressIsDirty = true;
 
-    return Promise.resolve(this.bars.size);
+    // force render on next timeout
+    this.#isDirty = true;
+
+    // start rendering timer
+    if (this.#intervalId === undefined) {
+      this.#intervalId = setInterval(async () => {
+        await this.#renderBars();
+      }, 100);
+    }
+
+    return this.#bars.size;
   }
 
-  private updateRate(bar: Bar, current: number): void {
+  #updateRate(bar: Bar, current: number): void {
     const now = Date.now();
     if (bar.lastMillis === undefined) {
       bar.rate = ((current - bar.current) * 1000) / (now - bar.startMillis!);
@@ -82,98 +84,110 @@ export default class Progress {
   }
 
   public update(handle: number, current: number, message?: string): void {
-    if (this.bars.has(handle)) {
-      const bar = this.bars.get(handle)!;
-      if (current < 0) {
-        current = 0;
-      }
-      if (current > bar.total) {
-        current = bar.total;
-      }
-      if ((current === bar.total) && (bar.endMillis === undefined)) {
-        bar.endMillis = Date.now();
-      }
-
-      this.updateRate(bar, current);
-
-      bar.current = current;
-
-      if (message !== undefined) {
-        bar.name = message;
-      }
-      this.progressIsDirty = true;
+    if (!this.#bars.has(handle)) {
+      return;
     }
+    const bar = this.#bars.get(handle)!;
+    if (current < 0) {
+      current = 0;
+    }
+    if (current > bar.total) {
+      current = bar.total;
+    }
+    if ((current === bar.total) && (bar.endMillis === undefined)) {
+      bar.endMillis = Date.now();
+    }
+
+    this.#updateRate(bar, current);
+
+    bar.current = current;
+
+    if (message !== undefined) {
+      bar.name = message;
+    }
+
+    // force render on next timeout
+    this.#isDirty = true;
   }
 
   public async hide(handle: number): Promise<void> {
-    if (this.bars.has(handle)) {
-      this.bars.delete(handle);
+    // clear specified bar
+    if (this.#bars.has(handle)) {
+      this.#bars.delete(handle);
     }
-    if (this.bars.size === 0) {
-      clearInterval(this.intervalId);
-      delete this.intervalId;
-      await this.term.showCursor();
-    } else {
-      if (this.lastBarSize > 0) {
-        await this.term.clearUpLines(2);
-      }
-      this.lastBarSize -= 1;
-      if (this.lastBarSize < 0) {
-        this.lastBarSize = 0;
-      }
+
+    // if no more bars, effectively this is a pause
+    if (this.#bars.size === 0) {
+      await this.pause();
+
+      return;
     }
-    this.progressIsDirty = true;
+
+    // otherwise, force render on next timeout
+    this.#isDirty = true;
   }
 
   public async hideAll(): Promise<void> {
-    if (this.bars.size === 0) {
-      return Promise.resolve();
-    }
-    clearInterval(this.intervalId);
-    delete this.intervalId;
-    const size = this.bars.size;
-    this.bars.clear();
-    this.lastBarSize = 0;
-    await this.term.clearUpLines(size * 2);
-    await this.term.showCursor();
-    this.progressIsDirty = true;
+    // clear all bars
+    this.#bars.clear();
+
+    await this.pause();
   }
 
   public async pause(): Promise<void> {
-    if (this.bars.size === 0) {
-      return Promise.resolve();
+    if (this.#intervalId === undefined) {
+      return;
     }
-    clearInterval(this.intervalId);
-    delete this.intervalId;
-    await this.term.clearUpLines(this.bars.size * 2);
-    this.lastBarSize = 0;
+
+    this.#isDirty = false;
+
+    // stop rendering timer
+    clearInterval(this.#intervalId);
+    this.#intervalId = undefined;
+
+    // clear the previously rendered bars
+    await this.#term.clearUpLines(this.#currentRenderedBarCount * 2);
+
+    this.#currentRenderedBarCount = 0;
+
+    // restore the cursor
+    await this.#term.showCursor();
   }
 
   public resume(): void {
-    if ((this.bars.size === 0) || (this.intervalId !== undefined)) {
+    // don't resume if nothing to render
+    if (this.#bars.size === 0) {
       return;
     }
-    this.intervalId = setInterval(async () => {
-      await this.renderBars();
-    }, 100);
+
+    // force render on next timeout
+    this.#isDirty = true;
+
+    // start rendering timer
+    if (this.#intervalId === undefined) {
+      this.#intervalId = setInterval(async () => {
+        await this.#renderBars();
+      }, 100);
+    }
   }
 
-  private async renderBars(): Promise<void> {
+  async #renderBars(): Promise<void> {
     const now = Date.now();
 
-    // force re-draw after one second to update eta
-    if ((now - this.lastTime >= 1000) && !this.progressIsDirty) {
-      this.bars.forEach((bar) => this.updateRate(bar, bar.current));
-      this.progressIsDirty = true;
+    // force render after one second to update newly calculated eta
+    if ((now - this.#lastRenderTime >= 1000) && !this.#isDirty) {
+      this.#bars.forEach((bar) => this.#updateRate(bar, bar.current));
+      this.#isDirty = true;
     }
 
-    // don't re-draw if we don't need to
-    if ((this.bars.size === 0) || !this.progressIsDirty) {
+    // don't render if we don't need to
+    if (!this.#isDirty) {
       return;
     }
-    this.lastTime = now;
 
-    const consoleWidth = this.term.columns();
+    this.#lastRenderTime = now;
+
+    const consoleWidth = this.#term.columns();
     const lines: Array<string> = [];
 
     const barInfo: Array<
@@ -185,41 +199,42 @@ export default class Progress {
         bar: Bar;
       }
     > = [];
-    this.bars.forEach((bar) => {
-      const name = `${colors.rgb24(bar.name, this.valColor)}${
-        colors.rgb24(":", this.labColor)
+
+    this.#bars.forEach((bar) => {
+      const name = `${colors.rgb24(bar.name, this.#valColor)}${
+        colors.rgb24(":", this.#labColor)
       }`;
-      const prefix = `${colors.rgb24("[", this.labColor)}`;
+      const prefix = `${colors.rgb24("[", this.#labColor)}`;
       const percent = colors.rgb24(
         ((bar.current / bar.total) * 100).toFixed(2),
-        this.valColor,
-      ) + colors.rgb24("%,", this.labColor);
+        this.#valColor,
+      ) + colors.rgb24("%,", this.#labColor);
 
       const rate = `${
         colors.rgb24(
           (bar.rate === undefined) ? "-" : bar.rate.toFixed(2) + "",
-          this.valColor,
+          this.#valColor,
         )
       }`;
 
-      let suffix = `${colors.rgb24("]", this.labColor)} ${percent} `;
+      let suffix = `${colors.rgb24("]", this.#labColor)} ${percent} `;
       if (bar.current === bar.total) {
-        const taken = this.formatTime(bar.endMillis! - bar.startMillis!);
-        suffix += `${colors.rgb24(bar.total + "", this.valColor)}${
-          colors.rgb24(bar.units + ", rate:", this.labColor)
+        const taken = this.#formatTime(bar.endMillis! - bar.startMillis!);
+        suffix += `${colors.rgb24(bar.total + "", this.#valColor)}${
+          colors.rgb24(bar.units + ", rate:", this.#labColor)
         } ${rate}${
-          colors.rgb24(bar.units + "/s, time taken:", this.labColor)
+          colors.rgb24(bar.units + "/s, time taken:", this.#labColor)
         } ${taken}`;
       } else {
         const remaining = ((bar.rate === undefined) || (bar.rate === 0))
           ? "-"
-          : this.formatTime(((bar.total - bar.current) / bar.rate) * 1000);
-        suffix += `${colors.rgb24(bar.current + "", this.valColor)}${
-          colors.rgb24("/", this.labColor)
-        }${colors.rgb24(bar.total + "", this.valColor)}${
-          colors.rgb24(bar.units + ", rate:", this.labColor)
+          : this.#formatTime(((bar.total - bar.current) / bar.rate) * 1000);
+        suffix += `${colors.rgb24(bar.current + "", this.#valColor)}${
+          colors.rgb24("/", this.#labColor)
+        }${colors.rgb24(bar.total + "", this.#valColor)}${
+          colors.rgb24(bar.units + ", rate:", this.#labColor)
         } ${rate}${
-          colors.rgb24(bar.units + "/s, time remaining:", this.labColor)
+          colors.rgb24(bar.units + "/s, time remaining:", this.#labColor)
         } ${remaining}`;
       }
       let available = consoleWidth - colors.stripAnsiCode(prefix).length -
@@ -248,75 +263,89 @@ export default class Progress {
       const completeLength = Math.floor(
         totalLength * barInfo.bar.current / barInfo.bar.total,
       );
-      const complete = colors.rgb24("=".repeat(completeLength), this.comColor);
+      const complete = colors.rgb24("=".repeat(completeLength), this.#comColor);
       const remaining = colors.rgb24(
         "-".repeat(totalLength - completeLength),
-        this.remColor,
+        this.#remColor,
       );
 
       lines.push(barInfo.name);
       lines.push(barInfo.prefix + complete + remaining + barInfo.suffix);
     });
 
-    await this.term.clearUpLines(this.lastBarSize * 2);
-    await this.term.write(lines.join("\n") + "\n");
-    this.lastBarSize = this.bars.size;
-    this.progressIsDirty = false;
+    // hide the cursor before rendering
+    await this.#term.hideCursor();
+
+    // clear the previously rendered bars
+    await this.#term.clearUpLines(this.#currentRenderedBarCount * 2);
+
+    // rendere the new bars
+    await this.#term.write(lines.join("\n") + "\n");
+
+    // save count rendered bars so we can clear on the next render cycle
+    this.#currentRenderedBarCount = barInfo.length;
+
+    // show the cursor if there are no bars or the timer is not running
+    if (this.#bars.size === 0 || this.#intervalId === undefined) {
+      await this.#term.showCursor();
+    }
+
+    this.#isDirty = false;
   }
 
   set completeColor(color: number) {
-    this.comColor = color;
+    this.#comColor = color;
   }
 
   set remainingColor(color: number) {
-    this.remColor = color;
+    this.#remColor = color;
   }
 
   set labelColor(color: number) {
-    this.labColor = color;
+    this.#labColor = color;
   }
 
   set valueColor(color: number) {
-    this.valColor = color;
+    this.#valColor = color;
   }
 
-  private formatTime(millis: number): string {
+  #formatTime(millis: number): string {
     let sec = millis / 1000;
     if (sec < 60) {
-      return `${colors.rgb24(sec.toFixed(0), this.valColor)}${
-        colors.rgb24("s", this.labColor)
+      return `${colors.rgb24(sec.toFixed(0), this.#valColor)}${
+        colors.rgb24("s", this.#labColor)
       }`;
     }
     let min = Math.floor(sec / 60);
     sec %= 60;
     if (min < 60) {
-      return `${colors.rgb24(min.toFixed(0), this.valColor)}${
-        colors.rgb24("m", this.labColor)
-      } ${colors.rgb24(sec.toFixed(0), this.valColor)}${
-        colors.rgb24("s", this.labColor)
+      return `${colors.rgb24(min.toFixed(0), this.#valColor)}${
+        colors.rgb24("m", this.#labColor)
+      } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
+        colors.rgb24("s", this.#labColor)
       }`;
     }
     let hour = Math.floor(min / 60);
     min %= 60;
     if (hour < 24) {
-      return `${colors.rgb24(hour.toFixed(0), this.valColor)}${
-        colors.rgb24("h", this.labColor)
-      } ${colors.rgb24(min.toFixed(0), this.valColor)}${
-        colors.rgb24("m", this.labColor)
-      } ${colors.rgb24(sec.toFixed(0), this.valColor)}${
-        colors.rgb24("s", this.labColor)
+      return `${colors.rgb24(hour.toFixed(0), this.#valColor)}${
+        colors.rgb24("h", this.#labColor)
+      } ${colors.rgb24(min.toFixed(0), this.#valColor)}${
+        colors.rgb24("m", this.#labColor)
+      } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
+        colors.rgb24("s", this.#labColor)
       }`;
     }
     const day = Math.floor(hour / 24);
     hour %= 24;
-    return `${colors.rgb24(day.toFixed(0), this.valColor)}${
-      colors.rgb24("d", this.labColor)
-    } ${colors.rgb24(hour.toFixed(0), this.valColor)}${
-      colors.rgb24("h", this.labColor)
-    } ${colors.rgb24(min.toFixed(0), this.valColor)}${
-      colors.rgb24("m", this.labColor)
-    } ${colors.rgb24(sec.toFixed(0), this.valColor)}${
-      colors.rgb24("s", this.labColor)
+    return `${colors.rgb24(day.toFixed(0), this.#valColor)}${
+      colors.rgb24("d", this.#labColor)
+    } ${colors.rgb24(hour.toFixed(0), this.#valColor)}${
+      colors.rgb24("h", this.#labColor)
+    } ${colors.rgb24(min.toFixed(0), this.#valColor)}${
+      colors.rgb24("m", this.#labColor)
+    } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
+      colors.rgb24("s", this.#labColor)
     }`;
   }
 }

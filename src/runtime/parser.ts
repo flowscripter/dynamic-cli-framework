@@ -184,10 +184,11 @@ export function parseGlobalCommandClause(
   }
 
   logger.debug(
-    "Command arguments for command: %s after value population: %j with invalid args: %j",
+    "Command arguments for command: %s after value population: %j with invalid args: %j and unused args: %j",
     command.name,
     populatedArgumentValue,
     invalidArguments,
+    unusedArgs,
   );
 
   // don't validate the value if the argument is already invalid

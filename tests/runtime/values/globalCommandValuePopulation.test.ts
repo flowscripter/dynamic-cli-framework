@@ -131,6 +131,41 @@ Deno.test("Global command argument types", () => {
   assertFalse(result.invalidArgument);
 });
 
+Deno.test("Argument following is not used if not applicable to a boolean", () => {
+  const command: GlobalCommand = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  let result = populateGlobalCommandValue(
+    command,
+    ["--bar"],
+    undefined,
+  );
+  expectExtractResult(result, "true", ["--bar"]);
+  assertFalse(result.invalidArgument);
+
+  result = populateGlobalCommandValue(
+    command,
+    ["True"],
+    undefined,
+  );
+  expectExtractResult(result, "True", []);
+  assertFalse(result.invalidArgument);
+
+  result = populateGlobalCommandValue(
+    command,
+    ["FALSE"],
+    undefined,
+  );
+  expectExtractResult(result, "FALSE", []);
+  assertFalse(result.invalidArgument);
+});
+
 Deno.test("Missing argument", () => {
   let command: GlobalCommand = {
     name: "foo",

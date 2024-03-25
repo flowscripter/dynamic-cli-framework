@@ -15,12 +15,12 @@ export default class DumpConfigCommand implements GlobalCommand {
   readonly name = "dump-config";
   readonly description = "Dump configuration values";
 
-  private readonly configurationServiceProvider: ConfigurationServiceProvider;
+  readonly #configurationServiceProvider: ConfigurationServiceProvider;
 
   public constructor(
     configurationServiceProvider: ConfigurationServiceProvider,
   ) {
-    this.configurationServiceProvider = configurationServiceProvider;
+    this.#configurationServiceProvider = configurationServiceProvider;
   }
 
   public async execute(
@@ -36,7 +36,7 @@ export default class DumpConfigCommand implements GlobalCommand {
     await printerService.print(
       `${
         syntaxHighlighterService.highlight(
-          this.configurationServiceProvider.getConfigString(),
+          this.#configurationServiceProvider.getConfigString(),
           "json",
         )
       }\n`,

@@ -21,13 +21,13 @@ export default class DarkModeCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  private readonly printerServiceProvider: PrinterServiceProvider;
+  readonly #printerServiceProvider: PrinterServiceProvider;
 
   public constructor(
     printerServiceProvider: PrinterServiceProvider,
     executePriority: number,
   ) {
-    this.printerServiceProvider = printerServiceProvider;
+    this.#printerServiceProvider = printerServiceProvider;
     this.executePriority = executePriority;
   }
 
@@ -35,7 +35,7 @@ export default class DarkModeCommand implements GlobalModifierCommand {
     _context: Context,
     argumentValue: ArgumentSingleValueType,
   ): Promise<void> {
-    this.printerServiceProvider.printerService!.darkMode =
+    this.#printerServiceProvider.printerService!.darkMode =
       argumentValue as boolean;
 
     return Promise.resolve();

@@ -1,8 +1,5 @@
 import Command from "../../api/command/Command.ts";
-import {
-  isGroupCommand,
-  isSubCommand,
-} from "../../api/command/CommandTypeGuards.ts";
+import { isGroupCommand, isSubCommand } from "./CommandTypeGuards.ts";
 import GlobalCommand from "../../api/command/GlobalCommand.ts";
 import Argument from "../../api/argument/Argument.ts";
 import GroupCommand from "../../api/command/GroupCommand.ts";
@@ -14,7 +11,7 @@ import {
 } from "../../api/argument/ArgumentValueTypes.ts";
 import Option from "../../api/argument/Option.ts";
 import ComplexOption from "../../api/argument/ComplexOption.ts";
-import { isComplexOption } from "../../api/argument/ArgumentTypeGuards.ts";
+import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
 import {
   getInvalidArgumentString,
   validateGlobalCommandArgumentValue,
@@ -147,11 +144,11 @@ export default class CommandValidator {
     logger.debug("Validating command: %s", command.name);
 
     if (isSubCommand(command)) {
-      this.validateSubCommand(command);
+      this.#validateSubCommand(command);
     } else if (isGroupCommand(command)) {
-      this.validateGroupCommand(command);
+      this.#validateGroupCommand(command);
     } else {
-      this.validateGlobalCommand(command as GlobalCommand);
+      this.#validateGlobalCommand(command as GlobalCommand);
     }
   }
 
@@ -167,7 +164,7 @@ export default class CommandValidator {
    * * the {@link GlobalCommand.shortAlias} does not consist of a single alphanumeric non-whitespace ASCII character.
    * * the {@link GlobalCommand.argument} is defined and it is not valid.
    */
-  private validateGlobalCommand(globalCommand: GlobalCommand): void {
+  #validateGlobalCommand(globalCommand: GlobalCommand): void {
     if (!isNameLegal(globalCommand.name)) {
       throw new Error(`Illegal global command name: '${globalCommand.name}'`);
     }
@@ -200,7 +197,7 @@ export default class CommandValidator {
           );
         }
       }
-      this.validateGlobalCommandArgumentConfigurationKey(
+      this.#validateGlobalCommandArgumentConfigurationKey(
         globalCommand,
         argument,
       );
@@ -221,7 +218,7 @@ export default class CommandValidator {
    * * any of the member {@link SubCommand} instances define duplicate names.
    * * any of the member {@link SubCommand} instances define a name which duplicates the group command name.
    */
-  private validateGroupCommand(groupCommand: GroupCommand): void {
+  #validateGroupCommand(groupCommand: GroupCommand): void {
     if (!isNameLegal(groupCommand.name)) {
       throw new Error(`Illegal group command name: '${groupCommand.name}'`);
     }
@@ -243,7 +240,7 @@ export default class CommandValidator {
         );
       }
       subCommandNames.push(subCommand.name);
-      this.validateSubCommand(subCommand);
+      this.#validateSubCommand(subCommand);
     });
   }
 
@@ -265,7 +262,7 @@ export default class CommandValidator {
    * * there are duplicate property paths defined by {@link Argument.name} and {@link Option.shortAlias} entries in nested
    * {@link ComplexOption} instances.
    */
-  private validateSubCommand(subCommand: SubCommand): void {
+  #validateSubCommand(subCommand: SubCommand): void {
     if (!isNameLegal(subCommand.name)) {
       throw new Error(`Illegal sub-command name: '${subCommand.name}'`);
     }
@@ -294,7 +291,7 @@ export default class CommandValidator {
           }
           optionAliases.push(option.shortAlias);
         }
-        this.validateOptionOrComplexOption(
+        this.#validateOptionOrComplexOption(
           subCommand,
           option,
           currentOptionPaths,
@@ -322,14 +319,14 @@ export default class CommandValidator {
             `Positional: '${positional.name}' for the command: '${subCommand.name}' is defined as a vararg but it is not the last positional argument`,
           );
         }
-        this.validateSubCommandArgumentConfigurationKey(subCommand, [
+        this.#validateSubCommandArgumentConfigurationKey(subCommand, [
           positional,
         ]);
       }
     }
   }
 
-  private validateSubCommandArgumentConfigurationKey(
+  #validateSubCommandArgumentConfigurationKey(
     command: Command,
     argumentAncestry: Array<SubCommandArgument>,
   ) {
@@ -364,7 +361,7 @@ export default class CommandValidator {
     }
   }
 
-  private validateGlobalCommandArgumentConfigurationKey(
+  #validateGlobalCommandArgumentConfigurationKey(
     command: Command,
     globalCommandArgument: GlobalCommandArgument,
   ) {
@@ -398,7 +395,7 @@ export default class CommandValidator {
     }
   }
 
-  private validateOptionOrComplexOption(
+  #validateOptionOrComplexOption(
     subCommand: SubCommand,
     option: Option | ComplexOption,
     currentOptionPaths: Array<string>,
@@ -414,7 +411,7 @@ export default class CommandValidator {
       );
     }
     if (isComplexOption(option)) {
-      this.validateComplexOption(
+      this.#validateComplexOption(
         subCommand,
         option,
         currentOptionPaths,
@@ -422,15 +419,15 @@ export default class CommandValidator {
         [...argumentAncestry, option as unknown as SubCommandArgument],
       );
     } else {
-      this.validateOption(option, currentOptionPaths, allOptionPaths);
-      this.validateSubCommandArgumentConfigurationKey(subCommand, [
+      this.#validateOption(option, currentOptionPaths, allOptionPaths);
+      this.#validateSubCommandArgumentConfigurationKey(subCommand, [
         ...argumentAncestry,
         option,
       ]);
     }
   }
 
-  private validateOption(
+  #validateOption(
     option: Option,
     currentOptionPaths: Array<string>,
     allOptionPaths: Array<string>,
@@ -482,7 +479,7 @@ export default class CommandValidator {
     }
   }
 
-  private validateComplexOption(
+  #validateComplexOption(
     subCommand: SubCommand,
     complexOption: ComplexOption,
     currentOptionPaths: Array<string>,
@@ -538,7 +535,7 @@ export default class CommandValidator {
           );
         });
       }
-      this.validateOptionOrComplexOption(
+      this.#validateOptionOrComplexOption(
         subCommand,
         property,
         newCurrentOptionPaths,

@@ -1,10 +1,7 @@
 import Context from "../api/Context.ts";
 import RunResult, { RunState } from "../api/RunResult.ts";
 import CommandRegistry from "./registry/CommandRegistry.ts";
-import {
-  isGlobalCommand,
-  isSubCommand,
-} from "../api/command/CommandTypeGuards.ts";
+import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
 import {
   ArgumentSingleValueType,
   ArgumentValues,
@@ -43,11 +40,13 @@ const logger = getLogger("runner");
  * @param parseResult the {@link ParseResult} to execute.
  * @param context the {@link Context} to use.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param isDefaultCommand whether the command is the default command for the CLI.
  */
 async function executeParsedCommand(
   parseResult: ParseResult,
   context: Context,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  isDefaultCommand = false,
 ): Promise<RunResult> {
   try {
     if (parseResult.groupCommand !== undefined) {
@@ -92,7 +91,12 @@ async function executeParsedCommand(
       await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
-    await printCommandExecutionError(context, parseResult, err);
+    await printCommandExecutionError(
+      context,
+      parseResult,
+      err,
+      isDefaultCommand,
+    );
     return {
       runState: RunState.EXECUTION_ERROR,
       command: parseResult.command,
@@ -165,6 +169,7 @@ async function findAndExecuteGlobalModifierCommands(
         return {
           runState: RunState.PARSE_ERROR,
           command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
         };
       }
 
@@ -204,6 +209,7 @@ async function findAndExecuteGlobalModifierCommands(
         return {
           runState: RunState.PARSE_ERROR,
           command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
         };
       }
 
@@ -290,6 +296,7 @@ async function findAndExecuteNonModifierCommand(
       return {
         runState: RunState.PARSE_ERROR,
         command: parseResult.command,
+        invalidArguments: parseResult.invalidArguments,
       };
     }
 
@@ -324,6 +331,7 @@ async function findAndExecuteNonModifierCommand(
           return {
             runState: RunState.PARSE_ERROR,
             command: parseResult.command,
+            invalidArguments: parseResult.invalidArguments,
           };
         }
 
@@ -372,6 +380,9 @@ async function findAndExecuteDefaultNonModifierCommand(
   const isGlobal = isGlobalCommand(defaultNonModifierCommand);
   let parseResult: ParseResult | undefined;
 
+  // save invalid args to report them if no valid command is found
+  let lastErroneousParseResult;
+
   // create a dummy clause using the default command for each arg sequence
   for (const argSequence of availableArgs) {
     // if already successfully parsed a clause, cycle through remaining arg sequences to add them to unusedArgs
@@ -397,6 +408,7 @@ async function findAndExecuteDefaultNonModifierCommand(
     }
 
     if (parseResult.invalidArguments.length > 0) {
+      lastErroneousParseResult = parseResult;
       parseResult = undefined;
     }
   }
@@ -429,8 +441,19 @@ async function findAndExecuteDefaultNonModifierCommand(
     }
 
     if (parseResult.invalidArguments.length > 0) {
+      lastErroneousParseResult = parseResult;
       parseResult = undefined;
     }
+  }
+
+  // if there were invalid arguments, treat this as the error
+  if (lastErroneousParseResult) {
+    await printParseResultError(context, lastErroneousParseResult, true);
+    return {
+      runState: RunState.PARSE_ERROR,
+      command: defaultNonModifierCommand,
+      invalidArguments: lastErroneousParseResult.invalidArguments,
+    };
   }
 
   // give up if still nothing found
@@ -447,6 +470,7 @@ async function findAndExecuteDefaultNonModifierCommand(
     parseResult,
     context,
     configurationServiceProvider,
+    true,
   );
 }
 

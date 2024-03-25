@@ -10,7 +10,7 @@ import {
   isGlobalModifierCommand,
   isGroupCommand,
   isSubCommand,
-} from "../../../src/api/command/CommandTypeGuards.ts";
+} from "../../../src/runtime/command/CommandTypeGuards.ts";
 
 Deno.test("isSubCommand works", () => {
   assertEquals(isSubCommand(getSubCommandWithOption()), true);

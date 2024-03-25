@@ -3,7 +3,7 @@ import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import getLogger from "../util/logger.ts";
 import Command from "../api/command/Command.ts";
 import SubCommand from "../api/command/SubCommand.ts";
-import { isGroupCommand } from "../api/command/CommandTypeGuards.ts";
+import { isGroupCommand } from "./command/CommandTypeGuards.ts";
 
 const logger = getLogger("scanner");
 

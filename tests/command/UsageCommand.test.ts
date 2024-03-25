@@ -43,6 +43,6 @@ Deno.test("Usage works", async () => {
 
   expectBufferString(
     buffer,
-    "\nTry running:\n\n  foo --help\n\n",
+    "sTry running:\n\n  foo --help\n\n",
   );
 });

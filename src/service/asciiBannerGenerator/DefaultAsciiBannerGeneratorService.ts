@@ -10,14 +10,14 @@ import standardFont from "./standard.flf.json" with { type: "json" };
  */
 export default class DefaultAsciiBannerGeneratorService
   implements AsciiBannerGeneratorService {
-  private fontDefinitionsByName: Map<string, string> = new Map();
-  private fontDictionariesByName: Map<string, string> = new Map();
+  #fontDefinitionsByName: Map<string, string> = new Map();
+  #fontDictionariesByName: Map<string, string> = new Map();
 
   constructor() {
     this.registerFont("standard", standardFont.font);
   }
   getRegisteredFonts(): ReadonlyArray<string> {
-    return Array.from(this.fontDefinitionsByName.keys());
+    return Array.from(this.#fontDefinitionsByName.keys());
   }
 
   registerFont(fontName: string, fontDefinition: string): void {
@@ -25,7 +25,7 @@ export default class DefaultAsciiBannerGeneratorService
     if (this.getRegisteredFonts().includes(name)) {
       throw new Error(`Font name already registered: ${name}`);
     }
-    this.fontDefinitionsByName.set(name, fontDefinition);
+    this.#fontDefinitionsByName.set(name, fontDefinition);
   }
 
   async generate(message: string, fontName: string): Promise<string> {
@@ -34,12 +34,12 @@ export default class DefaultAsciiBannerGeneratorService
       throw new Error(`Syntax name is not registered: ${name}`);
     }
 
-    let dictionary = this.fontDictionariesByName.get(name);
+    let dictionary = this.#fontDictionariesByName.get(name);
     if (!dictionary) {
       dictionary = await figlet_serializer(
-        this.fontDefinitionsByName.get(name),
+        this.#fontDefinitionsByName.get(name),
       );
-      this.fontDictionariesByName.set(name, dictionary as string);
+      this.#fontDictionariesByName.set(name, dictionary as string);
     }
     return await figlet_factory(message, dictionary);
   }

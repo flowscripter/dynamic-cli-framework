@@ -1,8 +1,8 @@
-import SubCommand from "./SubCommand.ts";
-import GroupCommand from "./GroupCommand.ts";
-import GlobalCommand from "./GlobalCommand.ts";
-import GlobalModifierCommand from "./GlobalModifierCommand.ts";
-import Command from "./Command.ts";
+import SubCommand from "../../api/command/SubCommand.ts";
+import GroupCommand from "../../api/command/GroupCommand.ts";
+import GlobalCommand from "../../api/command/GlobalCommand.ts";
+import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
+import Command from "../../api/command/Command.ts";
 
 export function isGroupCommand(
   command: Command,

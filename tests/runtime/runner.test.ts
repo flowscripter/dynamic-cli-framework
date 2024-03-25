@@ -842,7 +842,7 @@ Deno.test("Run default command based on some args and treating some args as unus
   expectBufferStringIncludes(buffer, "Unused arg: --bip=b");
 });
 
-Deno.test("Fail to parse default command with some unused args", async () => {
+Deno.test("Fail to parse default command with some unused args and missing required values", async () => {
   const buffer = new Buffer();
   const command = getSubCommand("command", [{
     name: "foo",
@@ -860,9 +860,31 @@ Deno.test("Fail to parse default command with some unused args", async () => {
     getContext(buffer),
     command,
   );
+  assertEquals(runResult.runState, RunState.PARSE_ERROR);
+  expectBufferStringIncludes(buffer, "missing value");
+});
 
-  assertEquals(runResult.runState, RunState.NO_COMMAND);
-  expectBufferStringIncludes(buffer, "No command specified");
+Deno.test("Fail to parse default command with some unused args", async () => {
+  const buffer = new Buffer();
+  const command = getSubCommand("command", [{
+    name: "foo",
+    type: ArgumentValueTypeName.STRING,
+    isOptional: true,
+  }, {
+    name: "goo",
+    type: ArgumentValueTypeName.STRING,
+  }], []);
+
+  const runResult = await run(
+    ["--bip=b", "--goo=g"],
+    new DefaultCommandRegistry([]),
+    getServiceProviderRegistry(),
+    undefined,
+    getContext(buffer),
+    command,
+  );
+  assertEquals(runResult.runState, RunState.SUCCESS);
+  expectBufferStringIncludes(buffer, "Unused arg");
 });
 
 Deno.test("Illegal second command treated as unknown arg", async () => {
