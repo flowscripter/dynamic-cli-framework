@@ -20,13 +20,13 @@ export default class ConfigCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  private readonly configurationServiceProvider: ConfigurationServiceProvider;
+  readonly #configurationServiceProvider: ConfigurationServiceProvider;
 
   public constructor(
     configurationServiceProvider: ConfigurationServiceProvider,
     executePriority: number,
   ) {
-    this.configurationServiceProvider = configurationServiceProvider;
+    this.#configurationServiceProvider = configurationServiceProvider;
     this.executePriority = executePriority;
   }
 
@@ -36,7 +36,7 @@ export default class ConfigCommand implements GlobalModifierCommand {
   ): Promise<void> {
     const configLocation = argumentValue as string;
 
-    this.configurationServiceProvider.setConfigLocation(configLocation);
+    this.#configurationServiceProvider.setConfigLocation(configLocation);
 
     return Promise.resolve();
   }

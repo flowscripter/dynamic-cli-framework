@@ -13,7 +13,7 @@ import { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import ComplexOption, {
   MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
 } from "../../api/argument/ComplexOption.ts";
-import { isComplexOption } from "../../api/argument/ArgumentTypeGuards.ts";
+import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
 import { InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
 
@@ -140,7 +140,7 @@ class ParseContext {
    * found to be referring to a complex property for the current sub-command but parsing the entire path failed either due to an invalid expression
    * or an unknown property.
    */
-  private parseOptionPath(optionPath: string): boolean {
+  #parseOptionPath(optionPath: string): boolean {
     logger.debug("Parsing option path: %s", optionPath);
     this.currentOptionPath = undefined;
     this.currentOption = undefined;
@@ -541,7 +541,7 @@ class ParseContext {
         }
 
         // Parse the option path and return if it failed
-        if (!this.parseOptionPath(potentialOptionPath)) {
+        if (!this.#parseOptionPath(potentialOptionPath)) {
           return;
         }
 

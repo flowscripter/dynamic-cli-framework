@@ -11,7 +11,7 @@ import {
 import Positional from "../../api/argument/Positional.ts";
 import Option from "../../api/argument/Option.ts";
 import ComplexOption from "../../api/argument/ComplexOption.ts";
-import { isComplexOption } from "../../api/argument/ArgumentTypeGuards.ts";
+import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
 import { InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
 import SubCommandArgument from "../../api/argument/SubCommandArgument.ts";
 import Argument from "../../api/argument/Argument.ts";
@@ -556,11 +556,7 @@ export function getInvalidArgumentString(
   }
   let valueString = "";
   if (invalidArgument.value !== undefined) {
-    if (invalidArgument.argument!.type !== ComplexValueTypeName.COMPLEX) {
-      valueString = JSON.stringify(invalidArgument.value);
-    } else {
-      valueString = `${invalidArgument.value}`;
-    }
+    valueString = `'${invalidArgument.value}'`;
   }
   let argString = "";
   if (nameString !== "") {

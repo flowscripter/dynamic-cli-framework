@@ -10,7 +10,6 @@ import {
   expectBufferStringNotIncludes,
 } from "../fixtures/util.ts";
 import { getContext } from "../fixtures/Context.ts";
-import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import {
   MultiCommandCliHelpGlobalCommand,
   MultiCommandCliHelpSubCommand,
@@ -24,7 +23,6 @@ Deno.test("MultiCommandCliHelpGlobalCommand works", async () => {
   const context = getContext(buffer);
   const commandRegistry = getCommandRegistry();
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -41,7 +39,6 @@ Deno.test("MultiCommandCliHelpSubCommand works", async () => {
   const context = getContext(buffer);
   const commandRegistry = getCommandRegistry();
   const help = new MultiCommandCliHelpSubCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -59,7 +56,6 @@ Deno.test("MultiCommandCliHelpGlobalCommand with command specified works", async
   const subCommand = getSubCommandWithOption("command_a");
   const commandRegistry = getCommandRegistry([subCommand]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -77,7 +73,6 @@ Deno.test("MultiCommandCliHelpSubCommand with command specified works", async ()
   const subCommand = getSubCommandWithOption("command_a");
   const commandRegistry = getCommandRegistry([subCommand]);
   const help = new MultiCommandCliHelpSubCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -94,7 +89,6 @@ Deno.test("MultiCommandCliHelpGlobalCommand with unknown command specified error
   const context = getContext(buffer);
   const commandRegistry = getCommandRegistry();
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -111,7 +105,6 @@ Deno.test("MultiCommandCliHelpSubCommand with unknown command specified displays
   const context = getContext(buffer);
   const commandRegistry = getCommandRegistry();
   const help = new MultiCommandCliHelpSubCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -132,7 +125,6 @@ Deno.test("MultiCommandCliHelpSubCommand with mistyped command specified propose
     getSubCommandWithOption("other2"),
   ]);
   const help = new MultiCommandCliHelpSubCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -153,7 +145,6 @@ Deno.test("Ensure global options are ordered", async () => {
     getGlobalModifierCommand("aaa", "a", true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -183,7 +174,6 @@ Deno.test("Ensure commands are sectioned by topic and group", async () => {
     } as GroupCommand,
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -219,7 +209,6 @@ Deno.test("Ensure non-topic commands are referred to as 'Other Commands' if ther
     } as GroupCommand,
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -249,7 +238,6 @@ Deno.test("Ensure non-topic commands are referred to as 'Other Commands' if ther
     } as GroupCommand,
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -273,7 +261,6 @@ Deno.test("Ensure non-topic commands are referred to as 'Sub-Commands' if there 
     } as SubCommand,
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -292,7 +279,6 @@ Deno.test("Ensure global items are renamed without global if no sub or group com
     getGlobalModifierCommand("aaa"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -315,7 +301,6 @@ Deno.test("Ensure global items are named with global if sub commands", async () 
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -334,7 +319,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
   const context = getContext(buffer);
   const commandRegistry = getCommandRegistry();
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -355,7 +339,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render g
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -374,7 +357,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -394,7 +376,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -414,7 +395,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -434,7 +414,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render g
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -453,7 +432,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getGlobalModifierCommand("modifier2"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -471,7 +449,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render c
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -489,7 +466,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getSubCommandWithOption("command_a"),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -507,7 +483,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render a
     getSubCommandWithOption("command_a", true, true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -526,7 +501,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render a
     getSubCommandWithOption("command_b", true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -545,7 +519,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: render a
     getSubCommandWithOption("command_b", true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -564,7 +537,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: do not r
     getSubCommandWithOption("command_b", true, true, true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -583,7 +555,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: multiple
     getSubCommandWithOption("command_b", true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );
@@ -613,7 +584,6 @@ Deno.test("Ensure multi-command CLI usage syntax is rendered correctly: multiple
     getSubCommandWithOption("command_b", true),
   ]);
   const help = new MultiCommandCliHelpGlobalCommand(
-    getCLIConfig(),
     true,
     commandRegistry,
   );

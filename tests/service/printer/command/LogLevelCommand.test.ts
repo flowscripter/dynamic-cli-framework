@@ -40,5 +40,5 @@ Deno.test("LogLevelCommand works", async () => {
     Level.ERROR,
   );
 
-  ShutdownServiceProvider.shutdown();
+  await ShutdownServiceProvider.shutdown();
 });

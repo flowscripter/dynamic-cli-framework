@@ -15,7 +15,6 @@ import {
 import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import GroupCommand from "../api/command/GroupCommand.ts";
 import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
-import CLIConfig from "../api/CLIConfig.ts";
 import PrinterService, {
   PRINTER_SERVICE_ID,
 } from "../api/service/core/PrinterService.ts";
@@ -24,28 +23,26 @@ import PrinterService, {
  * Provides common implementation for both {@link SingleCommandCliHelpGlobalCommand} and {@link SingleCommandCliHelpSubCommand}.
  */
 abstract class SingleCommandCliAbstractHelpCommand {
-  readonly cliConfig: CLIConfig;
-  readonly includeEnvVars: boolean;
-  readonly defaultCommand: SubCommand;
-  readonly commandRegistry: CommandRegistry;
+  readonly #includeEnvVars: boolean;
+  readonly #defaultCommand: SubCommand;
+  readonly #commandRegistry: CommandRegistry;
 
   constructor(
-    cliConfig: CLIConfig,
     includeEnvVars: boolean,
     defaultCommand: SubCommand,
     commandRegistry: CommandRegistry,
   ) {
-    this.cliConfig = cliConfig;
-    this.includeEnvVars = includeEnvVars;
-    this.defaultCommand = defaultCommand;
-    this.commandRegistry = commandRegistry;
+    this.#includeEnvVars = includeEnvVars;
+    this.#defaultCommand = defaultCommand;
+    this.#commandRegistry = commandRegistry;
   }
 
   readonly name = "help";
 
   readonly description = "Display application help";
 
-  private getAmalgamatedGenericHelpSection(
+  #getAmalgamatedGenericHelpSection(
+    context: Context,
     globalModifierCommands: ReadonlyArray<GlobalModifierCommand>,
     globalCommands: ReadonlyArray<GlobalCommand>,
     groupCommands: ReadonlyArray<GroupCommand>,
@@ -58,8 +55,8 @@ abstract class SingleCommandCliAbstractHelpCommand {
     if (globalModifierCommands.length > 0) {
       globalModifierCommands.forEach((globalModifierCommand) => {
         const { syntax, description } = getGlobalArgumentHelpEntry(
-          this.cliConfig,
-          this.includeEnvVars,
+          context.cliConfig,
+          this.#includeEnvVars,
           globalModifierCommand,
         );
         helpSection.helpEntries.push({
@@ -77,8 +74,8 @@ abstract class SingleCommandCliAbstractHelpCommand {
     if (globalCommands.length > 0) {
       globalCommands.forEach((globalCommand) => {
         const { syntax, description } = getGlobalArgumentHelpEntry(
-          this.cliConfig,
-          this.includeEnvVars,
+          context.cliConfig,
+          this.#includeEnvVars,
           globalCommand,
         );
         helpSection.helpEntries.push({
@@ -123,25 +120,26 @@ abstract class SingleCommandCliAbstractHelpCommand {
       title: "Usage",
       helpEntries: [{
         syntax: `${context.cliConfig.name || ""}${
-          getSubCommandArgumentsSyntax(this.defaultCommand)
+          getSubCommandArgumentsSyntax(this.#defaultCommand)
         }`,
       }],
     });
 
     helpSections.push(
       ...getCommandArgsHelpSections(
-        this.cliConfig,
-        this.includeEnvVars,
-        this.defaultCommand,
+        context.cliConfig,
+        this.#includeEnvVars,
+        this.#defaultCommand,
         true,
       ),
     );
 
-    const globalModifierCommands = this.commandRegistry
+    const globalModifierCommands = this.#commandRegistry
       .getGlobalModifierCommands();
-    const globalCommands = this.commandRegistry.getGlobalCommands();
+    const globalCommands = this.#commandRegistry.getGlobalCommands();
     helpSections.push(
-      this.getAmalgamatedGenericHelpSection(
+      this.#getAmalgamatedGenericHelpSection(
+        context,
         globalModifierCommands,
         globalCommands,
         [],
@@ -157,7 +155,7 @@ abstract class SingleCommandCliAbstractHelpCommand {
       ...getCommandExamplesHelpSections(
         printerService,
         context,
-        this.defaultCommand,
+        this.#defaultCommand,
       ),
     );
 

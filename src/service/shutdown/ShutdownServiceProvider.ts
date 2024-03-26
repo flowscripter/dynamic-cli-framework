@@ -43,10 +43,12 @@ export default class ShutdownServiceProvider implements ServiceProvider {
     return Promise.resolve(undefined);
   }
 
-  static shutdown() {
+  static async shutdown() {
     try {
-      DefaultShutdownService.callbacks.forEach((callback) => callback());
       Deno.removeSignalListener("SIGINT", ShutdownServiceProvider.shutdown);
+      for await (const callback of DefaultShutdownService.callbacks) {
+        await callback();
+      }
     } catch (error) {
       logger.error("shutdown error: %s", error.message);
     }

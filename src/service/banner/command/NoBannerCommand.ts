@@ -21,13 +21,13 @@ export default class NoBannerCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  bannerServiceProvider: BannerServiceProvider;
+  readonly #bannerServiceProvider: BannerServiceProvider;
 
   public constructor(
     bannerServiceProvider: BannerServiceProvider,
     executePriority: number,
   ) {
-    this.bannerServiceProvider = bannerServiceProvider;
+    this.#bannerServiceProvider = bannerServiceProvider;
     this.executePriority = executePriority;
   }
 
@@ -35,7 +35,7 @@ export default class NoBannerCommand implements GlobalModifierCommand {
     _context: Context,
     argumentValue: ArgumentSingleValueType,
   ): Promise<void> {
-    this.bannerServiceProvider.printBanner = !(argumentValue as boolean);
+    this.#bannerServiceProvider.printBanner = !(argumentValue as boolean);
 
     return Promise.resolve();
   }

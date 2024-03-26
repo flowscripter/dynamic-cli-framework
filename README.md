@@ -12,8 +12,6 @@
 
 [//]: # (TODO: Remove this when plugin support and compiled binaries available.)
 
-**DYNAMIC ASPECT IS STILL IN DEVELOPMENT**
-
 NOTE: The dynamic aspect is still in development as it relies upon:
 
 - some outstanding work on the
@@ -24,7 +22,7 @@ NOTE: The dynamic aspect is still in development as it relies upon:
 ## Key Features
 
 - Flexible CLI definitions:
-  - single default global command with global arguments e.g.
+  - a single default global command with global arguments e.g.
     `executable [global_arguments]`
   - multiple sub-commands with sub-command based arguments e.g.
     `executable <sub_command> [sub_command_arguments]`
@@ -44,6 +42,8 @@ NOTE: The dynamic aspect is still in development as it relies upon:
     `executable <positional_1_value_1> <positional_1_value_2>`
 - Support for complex nested options e.g.
   `executable --<option_name>.<property_1_name>=<property_1_value> --<option_name>.<property_1>.<property_1_a>=<property_1_a_value>`
+- Support (optional) for persisted configuration and environment variables to
+  specify command argument defaults.
 - Core (but optional) commands for help, logging level and version management.
 - Core (but optional) services for color output to stdout/stderr and
   configuration management.
@@ -51,15 +51,16 @@ NOTE: The dynamic aspect is still in development as it relies upon:
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
 - Minimal dependencies.
-- Support for persisted configuration and environment variables to specify
-  command argument defaults.
-- ES2015 module based.
+- Deno based.
+- Based on native JavaScript modules.
 - Written in Typescript.
 - Compiled to a binary executable using a Deno runtime.
 
 ## Usage Examples
 
 The following example projects are available:
+
+Pending completion of core library API before samples are released.
 
 [//]: # (TODO: Add this when implemented.)
 [//]: # (- [example-cli]&#40;https://github.com/flowscripter/example-cli&#41; is an example CLI)
@@ -75,17 +76,20 @@ The following example projects are available:
 
 The key concepts are:
 
-- All functionality is implemented within one or more `Command` instances.
+- Specific command functionality is implemented within one or more `Command`
+  instances.
+- Generic support functionality is implemented within or or more `Service`
+  instances.
 - The `CLI` is responsible for:
   - maintaining a `CommandRegistry` and ensuring the `Command` instances it has
-    registered are available when scanning, parsing and executing specified
-    commands.
+    registered are available when scanning and parsing arguments and executing
+    specified commands.
   - maintaining a `ServiceProviderRegistry` and ensuring that services provided
     by each of the registered `ServiceProvider` instances are available for use
     by any invoked `Command` via a a `Context`.
 - Dynamic plugins (enabled by
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework))
-  are used to allow:
+  allow:
   - dynamic load and import of one or more `CommandFactory` implementations
     providing one or more `Command` implementations.
   - dynamic load and import of one or more `ServiceProviderFactory`
@@ -320,8 +324,8 @@ A concrete example:
 Any number of `GlobalModifierCommand` instances can be specified as long as they
 are accompanied by a `GlobalCommand` or a `SubCommand`:
 
-    executable --<global_modifier_command_1> [global_modifier_command_1_arguments] \
-               --<global_modifier_command_2> [global_modifier_command_2_arguments] \
+    executable --<global_modifier_command_1>[=<global_modifier_command_1_argument>] \
+               --<global_modifier_command_2>[=<global_modifier_command_2_argument>] \
                <global_command>[=<value>]
 
 Each `GlobalModifierCommand` will be executed before the single specified
@@ -485,7 +489,9 @@ separator:
     executable <sub_command> --<parent_option_name>.<property_short_alias>=<value> --<parent_option_short_alias>.<property_name>.<sub-property-name>=<value>
 
 Mixed use of option names and short aliases is supported when specifying nested
-complex option properties. As an example these are all equivalent:
+complex option properties. If the property specification starts with the root
+options's name then `--` must be used; whereas if it starts with the root
+option's short alias then `-` must be used. The following are all equivalent:
 
     --alpha.beta.gamma=1
     --alpha.b.gamma=1
@@ -496,7 +502,7 @@ complex option properties. As an example these are all equivalent:
 
 Implicit and explicit array indexing is supported when specifying nested complex
 option properties. However the implicit indexing is only applied to the last
-nested property reference. As an example these would be equivalent:
+nested property reference. The following are equivalent:
 
     --foo.bar=1 --foo.bar=2
     --foo.bar[0]=1 --foo.bar[1]=2
@@ -559,22 +565,22 @@ valid:
 The supported value types which can be specified for an `Option`, a `Positional`
 or `GlobalCommandArgument` are:
 
-- `STRING` - a string with whitespace can be provided within double quotes e.g.
-  `myHelloWorldApp say "hello world"`
+- `STRING` - a string value where whitespace can be included by using double
+  quotes e.g. `myHelloWorldApp say "hello world"`
 - `NUMBER` - any number value such as `0.01` or `-10`
 - `INTEGER` - any positive or negative integer value. Note that these values
   will still be stored as a JavaScript number and specification as `INTEGER` is
   only used for validation when parsing arguments.
 - `BOOLEAN` - string values of `true`, `TRUE`, `false` and `FALSE` are converted
-  to a JavaScript boolean value. As stated earlier, specifying just the argument
-  name is sufficient to indicate a value of `true`.
-- `SECRET` - a string value which may be specified as an argument or as a
-  default value in a configuration file should ideally be sourced from an
-  environment variable.
+  to a JavaScript boolean value. Specifying just the argument name is also
+  sufficient to indicate a value of `true`.
+- `SECRET` - a string value which may be specified as an argument, as a default
+  value in a configuration file or (ideally) sourced from an environment
+  variable.
 
-[//]: # (TODO: remove when PromptService is implemented.)
+[//]: # (TODO: remove when PromptService is implemented: https://github.com/flowscripter/dynamic-cli-framework/issues/10)
 
-NOTE: `SECRET` will be more useful as a type when a `PromptService` is
+**NOTE**: `SECRET` will be more useful as a type when a `PromptService` is
 implemented.
 
 #### Default Values
@@ -582,7 +588,7 @@ implemented.
 Support for reading default argument values from a configuration file and/or
 environment variables is provided by `ConfigurationServiceProvider`.
 
-Configuration of default values for each `Command` is enabled if the
+Usage of configured default values for each `Command` is only enabled if
 `Command.enableConfiguration` is `true`.
 
 ##### Configuration File
@@ -613,7 +619,7 @@ as command argument values. As an example:
 ```
 
 The default location of the configuration file is
-`$HOME/.<application_name>.json`. If `$HOME` is not defined no default
+`$HOME/.<application_name>.json`. If `$HOME` is not defined then no default
 configuration will be used. The location of the configuration file can be
 modified via the `ConfigCommand` global modifier command.
 
@@ -639,14 +645,16 @@ and using the command line:
 
 `myNetworkApp --connect`
 
+These defaults can then be overridden on the command line:
+
+`myNetworkApp --connect --address.host=192.168.1.1`
+
 ##### Environment Variables
 
-Values are also sourced from environment variable values using a variable naming
-scheme defined by either custom `Argument.configurationKey` values or using a
-default naming scheme.
-
-Any values set by environment variables will override those sourced from a
-configuration file.
+Default values are also sourced from environment variable values. Any values set
+by environment variables will override those sourced from a configuration file.
+Any values set on the command line override environment variable and
+configuration file values.
 
 The optional `Argument.configurationKey` value is a configuration key to use for
 the argument. It must consist of alphanumeric non-whitespace uppercase ASCII or
@@ -658,18 +666,18 @@ The `Argument.name` is capitalized and any `-` characters are replaced with `_`
 characters. If the result starts with a digit, it is prefixed with `_`. Some
 examples:
 
-- name: `FooBar` => configuration key: `FOOBAR`
-- name: `Hello-World-` => configuration key: `HELLO_WORLD_`
-- name: `3` => configuration key: `_3`
+- name: `FooBar` => default configuration key: `FOOBAR`
+- name: `Hello-World-` => default configuration key: `HELLO_WORLD_`
+- name: `3` => default configuration key: `_3`
 
 **NOTE**: Regardless of whether a `configurationKey` is specified, or the
 default is relied upon, it will only be used if the parent `Command` has
 `Command.enableConfiguration` specified as `true`.
 
-The argument key path is derived for an argument (or nested argument) as
-follows:
+The full key for an argument (or a nested option in a complex option) is
+determined as follows:
 
-- Argument configuration keys are concatenated with a `_` separator.
+- Nested argument configuration keys are concatenated with a `_` separator.
 - Any arguments which support array values must by suffixed with `_` and an
   explicit array index.
 - If the root argument in the path does not use a custom
@@ -680,36 +688,38 @@ This is best explained with examples...
 
 Examples for no custom configuration key:
 
-- executable: `MyCLI`, command: `command1`, simple root argument: `arg1` =>
+- executable: `MyCLI`, command: `command1`, simple argument: `arg1` =>
   environment variable: `MYCLI_COMMAND1_ARG1`
-- executable: `MyCLI`, command: `command1`, array root argument, 1st element:
-  `arg2[0]` => environment variable: `MYCLI_COMMAND1_ARG2_0`
-- executable: `MyCLI`, command: `command1`, argument is a digit so it is by
-  default suffixed with `_`: `3` => environment variable: `MYCLI_COMMAND1__3`
-- executable: `MyCLI`, command: `command1`, nested sub-argument: `arg1.arg2` =>
+- executable: `MyCLI`, command: `command1`, array argument referring to the 1st
+  element: `arg2[0]` => environment variable: `MYCLI_COMMAND1_ARG2_0`
+- executable: `MyCLI`, command: `command1`, argument name: `3` (this is a digit
+  so it is by default suffixed with `_`) => environment variable:
+  `MYCLI_COMMAND1__3`
+- executable: `MyCLI`, command: `command1`, nested option: `arg1.arg2` =>
   environment variable: `MYCLI_COMMAND1_ARG1_ARG2`
-- executable: `MyCLI`, command: `command1`, nested sub-argument with both levels
-  being arrays and referring to the 2nd element of each: `arg1[1].arg2[1]` =>
-  environment variable: `MYCLI_COMMAND1_ARG1_1_ARG2_2`
+- executable: `MyCLI`, command: `command1`, nested option with both levels being
+  arrays and referring to the 2nd element of each: `arg1[1].arg2[1]` =>
+  environment variable: `MYCLI_COMMAND1_ARG1_1_ARG2_1`
 
 Examples for custom configuration key at the root level (and therefore not
 prefixed with CLI and command names):
 
-- executable: `MyCLI`, command: `command1`, simple root argument: `arg1`, arg1
+- executable: `MyCLI`, command: `command1`, simple argument: `arg1` with
   configuration key: `FOO` => environment variable: `FOO`
-- executable: `MyCLI`, command: `command1`, array root argument, 1st element:
-  `arg2[0]`, arg1 configuration key: `BAR` => environment variable: `BAR_0`
+- executable: `MyCLI`, command: `command1`, array argument referring to the 1st
+  element: `arg2[0]` and with configuration key: `BAR` => environment variable:
+  `BAR_0`
 
 Examples for custom configuration key NOT at the root level (and therefore
 prefixed with CLI and command names) examples:
 
-- executable: `MyCLI`, command: `command1`, nested sub-argument: `arg1.arg2`,
-  arg2 configuration key: `FOO` => environment variable:
+- executable: `MyCLI`, command: `command1`, nested option: `arg1.arg2` with
+  `arg2` configuration key: `FOO` => environment variable:
   `MYCLI_COMMAND1_ARG1_FOO`
-- executable: `MyCLI`, command: `command1`, nested sub-argument with both levels
-  being arrays and referring to the 2nd element of each: `arg1[1].arg2[1]`, arg2
-  configuration key: `BAR` => environment variable:
-  `MYCLI_COMMAND1_ARG1_1_BAR_2`
+- executable: `MyCLI`, command: `command1`, nested option with both levels being
+  arrays and referring to the 2nd element of each: `arg1[1].arg2[1]` and with
+  arg2 configuration key: `BAR` => environment variable:
+  `MYCLI_COMMAND1_ARG1_1_BAR_1`
 
 As a concrete example, the following command line:
 
@@ -724,6 +734,19 @@ and using the command line:
 
 `myNetworkApp --connect`
 
+**NOTE**: For boolean values, defining the environment variable with ANY value
+is equivalent to setting it to `true`. All of the following set the value to
+`true`:
+
+    NO_COLOR=1
+    NO_COLOR=true
+    NO_COLOR=false // sets the value to true as the environment variable has a value set!
+
+To specify the value as `false`, set the environment variable to be an empty
+string e.g.
+
+    NO_COLOR= // sets the value to false
+
 #### Configured Value Merging
 
 Any configured values are merged with parsed values before being validated based
@@ -735,43 +758,45 @@ The following logic is applied during merging of configured and parsed values:
 
 Example:
 
-    configured: { foo: 'bar' }
+    configured: { "foo": "bar" }
     parsed:     undefined
-    result:     { foo: 'bar1' }
+    result:     { "foo": "bar1" }
 
 Example:
 
-    configured: { foo: 'bar' }
-    parsed:     { foo: 'bar1' }
-    result:     { foo: 'bar1' }
+    configured: { "foo": "bar" }
+    parsed:     { "foo": "bar1" }
+    result:     { "foo": "bar1" }
 
-**Configured complex values are merged with or overridden by parsed values**
-
-Example:
-
-    configured: { foo: { a: 1, b: 2 } }
-    parsed:     { foo: { a: 3, c: 4 } }
-    result:     { foo: { a: 1, b: 2, c: 4 } }
-
-**Configured array values are merged with or overridden by parsed values**
+**Configured complex values are merged (union of unique property names) or
+overridden (replacement of duplicate property names) by parsed values**
 
 Example:
 
-    configured: { foo: [ 0, 1, 2, 3 ] }
-    parsed:     { foo: [ 0, 4, 2 ] }
-    result:     { foo: [ 0, 4, 2, 3 ] }
+    configured: { "foo": { "a": 1, "b": 2 } }
+    parsed:     { "foo": { "a": 3, "c": 4 } }
+    result:     { "foo": { "a": 1, "b": 2, "c": 4 } }
+
+**Configured array values are merged (for unique indices) or overridden
+(replacement of duplicate indices) by parsed values**
 
 Example:
 
-    configured: { foo: [ 0, 1, 2, 3 ] }
-    parsed:     { foo: [ 0, undefined, 2 ] }
-    result:     { foo: [ 0, 4, 2, 3 ] }
+    configured: { "foo": [ 0, 1, 2, 3 ] }
+    parsed:     { "foo": [ 0, 4, 2 ] }
+    result:     { "foo": [ 0, 4, 2, 3 ] }
 
 Example:
 
-    configured: { foo: [ { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 } ] }
-    parsed:     { foo: [ { a: 5 }, undefined, { a: 6, b: 7 } ] }
-    result:     { foo: [ { a: 5 }, { a: 2 }, { a: 6, b: 7 }, { a: 4 } ] }
+    configured: { "foo": [ 0, 1, 2, 3 ] }
+    parsed:     { "foo": [ 0, undefined, 2 ] }
+    result:     { "foo": [ 0, 4, 2, 3 ] }
+
+Example:
+
+    configured: { "foo": [ { "a": 1 }, { "a": 2 }, { "a": 3 }, { "a": 4 } ] }
+    parsed:     { "foo": [ { "a": 5 }, undefined, { "a": 6, "b": 7 } ] }
+    result:     { "foo": [ { "a": 5 }, { "a": 2 }, { "a": 6, "b": 7 }, { "a": 4 } ] }
 
 #### 
 
@@ -809,19 +834,19 @@ The following scenarios produce validation errors:
 ### `launcher`
 
 The standard way to make use of the framework is to import `launcher` and use
-one of the two helper functions it provides for quickly building a CLI:
+one of the two helper functions it provides:
 
 - `launchSingleCommandCLI`
 - `launchMultiCommandCLI`
 
-These allow a CLI implementor to simply specify `Command` instances to use
-together with basic CLI details such as name and description.
+These allow a CLI implementor to specify `Command` instances to use together
+with basic CLI details such as name and description.
 
 ### `CLI`
 
 The `CLI` interface has the simple responsibility of taking a `CLIConfig` and a
-list of user specified command line arguments which it should parse and execute
-any valid specified `Command`.
+list of user specified command line arguments which it should then parse and
+execute any valid specified `Command` it discovers.
 
 #### `BaseCLI`
 
@@ -852,6 +877,7 @@ documented in further detail below):
   single command or multiple sub-command.
 - commands provided by the `ConfigurationServiceProvider`.
 - commands provided by the `PrinterServiceProvider`.
+- `VersionCommand`
 
 #### `DenoRuntimeCLI`
 
@@ -867,8 +893,8 @@ executing them.
 
 The `runner` implementation supports specification of a default command which
 should be executed if no command names are parsed on the command line. In this
-scenario, any arguments provided will be parsed as possible arguments for the
-default command as well as potential `GlobalModifierCommand` names.
+scenario, any arguments provided will also be parsed as possible arguments for
+the default command.
 
 The logic for the `runner` is somewhat complex as it allows for the prioritised
 execution of `GlobalModifierCommand` instances and the prioritised
@@ -1077,41 +1103,39 @@ considered unused and a warning is output.
 
 If a command is NOT identified, any retained arguments are considered potential
 arguments for a default command if it has been configured. This behaviour means
-the following are all equivalent:
+the following are equivalent:
 
     executable <default_command_argument> --<modifier_command_name> <modifier_command_argument>
     executable --<modifier_command_name> <modifier_command_argument> <default_command_argument>
-    executable --<modifier_command_1_name> <modifier_command_1_argument> <default_command_argument> \
-               --<modifier_command_2_name> <modifier_command_2_argument>
 
 ### Command Execution
 
-When a `Command` is executed using the implemented function:
+A `Command` is executed via the implemented function:
 
     execute(argumentValues: ArgumentValues, context: Context): Promise<void>;
 
-the `Context` instance allow access to the `CLIConfig` and the ability to access
-services by known IDs.
+The `Context` instance allow access to the `CLIConfig` and the ability to access
+services by registered service IDs.
 
 The `ArgumentValues` instance provides access to the populated and validated
 arguments for the command. These values are provided either:
 
 - as a single key-value pair in the form `commandName: globalArgumentValue` for
-  a `GlobalCommand` or GlobalModifierCommand`.
-- as complex nested key-value structure mirroring the the defined `Option` and
+  a `GlobalCommand` or a `GlobalModifierCommand`.
+- as a complex nested key-value structure mirroring the defined `Option` and
   `Positional` instances of a `SubCommand`
 
 As an example, if a `GlobalModifierCommand` is defined as follows:
 
 ```
 const globalModifierCommand: GlobalModifierCommand = {
-    name: 'log-level',
-    argument: {
-        name: 'level',
-        type: ArgumentValueTypeName.STRING,
-    },
-    executePriority: 1,
-    execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
+  name: "log-level",
+  argument: {
+    name: "level",
+    type: ArgumentValueTypeName.STRING,
+  },
+  executePriority: 1,
+  execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
 };
 ```
 
@@ -1119,26 +1143,26 @@ and a `SubCommand` is defined as follows:
 
 ```
 const subCommand: SubCommand = {
-  name: 'connect',
+  name: "connect",
   options: [
     {
-      name: 'address',
-        type: ComplexValueTypeName.COMPLEX,
-        properties: [
-          {
-            name: 'host',
-            type: ArgumentValueTypeName.STRING
-          },
-          {
-            name: 'port',
-            type: ArgumentValueTypeName.NUMBER
-          }
+      name: "address",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [
+        {
+          name: "host",
+          type: ArgumentValueTypeName.STRING
+        },
+        {
+          name: "port",
+          type: ArgumentValueTypeName.NUMBER
+        }
       ]
     }
   ],
   positionals: [
     {
-      name: 'retryOnError',
+      name: "retryOnError",
       type: ArgumentValueTypeName.BOOLEAN
     }
   ],
@@ -1155,7 +1179,7 @@ function would be:
 
 ```
 {
-  'log-level': 'DEBUG'
+  "log-level": "DEBUG"
 }
 ```
 
@@ -1164,11 +1188,11 @@ be:
 
 ```
 {
-  'address': {
-    'host': '127.0.0.1',
-    'port': 8080
+  address: {
+    host: "127.0.0.1",
+    port: 8080
   },
-  'retryOnError': true
+  retryOnError: true
 }
 ```
 
@@ -1196,8 +1220,8 @@ Provides:
   to the CLI configuration file.
 - `ConfigCommand` allowing the default location of the configuration file to be
   overridden via the argument `--config` or the env var `CONFIG_LOCATION`.
-- `DumpConfigCommand` a global command allowing a dumps of all CLI configuration
-  to stdout via `--dump-config`.
+- `DumpConfigCommand` a global command which dumps the full CLI configuration to
+  stdout via `--dump-config`.
 
 #### `ShutdownServiceProvider`
 
@@ -1286,7 +1310,7 @@ API docs for the library:
 
 ## Development
 
-Test: `deno test -A --unstable`
+Test: `deno test -A`
 
 Lint: `deno fmt && deno lint`
 
@@ -1401,8 +1425,8 @@ classDiagram
 ### Debug Logging
 
 Internal framework logging can be enabled by setting the `CLI_DEBUG` environment
-variable. Permission will need to be granted to the CLI to access the
-environment using `--allow-env`.
+variable. (Permission will need to be granted to the CLI to access the
+environment to look for this environment variable i.e. `--allow-env`.)
 
 The `logger` implementation will detect this and define a default Deno
 `ConsoleHandler` logger with `DEBUG` level which is used by internal
@@ -1416,8 +1440,9 @@ validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
 When using `launcher.ts` runtime validation of all commands and services can be
-forced by defining the `CLI_VALIDATE_ALL` environment variable. Permission will
-need to be granted to the CLI to access the environment using `--allow-env`.
+forced by defining the `CLI_VALIDATE_ALL` environment variable. (Permission will
+need to be granted to the CLI to access the environment to look for this
+environment variable i.e. `--allow-env`.)
 
 Command validation includes:
 
@@ -1432,7 +1457,7 @@ Command validation includes:
 - command options for each command do not include duplicate names or short
   aliases.
 - only the last positional for a command is defined as a vararg.
-- default values for complex options matched the nested property hierarchy.
+- default values for complex options match the nested property hierarchy.
 - paths to nested properties of complex options are unique.
 
 ## License

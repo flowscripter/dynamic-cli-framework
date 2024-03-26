@@ -19,7 +19,7 @@ import {
   isGlobalCommand,
   isGlobalModifierCommand,
   isSubCommand,
-} from "../../api/command/CommandTypeGuards.ts";
+} from "../../runtime/command/CommandTypeGuards.ts";
 import CLIConfig from "../../api/CLIConfig.ts";
 import {
   getGlobalCommandValueFromEnvVars,
@@ -167,17 +167,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
-  private commandKeyValueData = new Map<string, Map<string, string>>();
+  #commandKeyValueData = new Map<string, Map<string, string>>();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating service scoped access to key-value data via the key-value service.
-  private serviceKeyValueData = new Map<string, Map<string, string>>();
+  #serviceKeyValueData = new Map<string, Map<string, string>>();
 
   // the optional service providing scope limited key-value data to commands and other services
-  private readonly defaultKeyValueService: DefaultKeyValueService | undefined;
+  readonly #defaultKeyValueService: DefaultKeyValueService | undefined;
 
-  private currentCommandNameKeyValueScope: string | undefined;
-  private currentServiceIdKeyValueScope: string | undefined;
+  #currentCommandNameKeyValueScope: string | undefined;
+  #currentServiceIdKeyValueScope: string | undefined;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -203,7 +203,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.configEnabled = configEnabled;
     this.keyValueServiceEnabled = keyValueServiceEnabled;
     if (keyValueServiceEnabled) {
-      this.defaultKeyValueService = new DefaultKeyValueService();
+      this.#defaultKeyValueService = new DefaultKeyValueService();
     }
   }
 
@@ -216,7 +216,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     }
     return Promise.resolve({
       // this may be undefined if keyValueServiceEnabled is false
-      service: this.defaultKeyValueService,
+      service: this.#defaultKeyValueService,
       // this may be empty if configEnabled is false
       commands,
     });
@@ -271,7 +271,6 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
           command,
         )
         : undefined;
-
       // default to environment variable value
       if (envVarValue !== undefined) {
         return envVarValue;
@@ -315,25 +314,25 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         `Attempt to use KeyValueService which is not enabled`,
       );
     }
-    if (this.currentCommandNameKeyValueScope) {
+    if (this.#currentCommandNameKeyValueScope) {
       throw new Error(
-        `Attempt to set CommandNameKeyValueScope to ${commandName} when it is currently set to ${this.currentCommandNameKeyValueScope}`,
+        `Attempt to set CommandNameKeyValueScope to ${commandName} when it is currently set to ${this.#currentCommandNameKeyValueScope}`,
       );
     }
-    if (this.currentServiceIdKeyValueScope) {
+    if (this.#currentServiceIdKeyValueScope) {
       throw new Error(
-        `Attempt to set CommandNameKeyValueScope to ${commandName} when ServiceIdKeyValueScope is currently set to ${this.currentCommandNameKeyValueScope}`,
+        `Attempt to set CommandNameKeyValueScope to ${commandName} when ServiceIdKeyValueScope is currently set to ${this.#currentCommandNameKeyValueScope}`,
       );
     }
-    this.currentCommandNameKeyValueScope = commandName;
+    this.#currentCommandNameKeyValueScope = commandName;
 
     logger.debug("currentCommandNameKeyValueScope: %s", commandName);
 
-    if (!this.commandKeyValueData.has(commandName)) {
-      this.commandKeyValueData.set(commandName, new Map());
+    if (!this.#commandKeyValueData.has(commandName)) {
+      this.#commandKeyValueData.set(commandName, new Map());
     }
-    this.defaultKeyValueService!.setKeyValueData(
-      this.commandKeyValueData.get(commandName)!,
+    this.#defaultKeyValueService!.setKeyValueData(
+      this.#commandKeyValueData.get(commandName)!,
     );
   }
 
@@ -351,25 +350,25 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         `Attempt to use KeyValueService which is not enabled`,
       );
     }
-    if (this.currentServiceIdKeyValueScope) {
+    if (this.#currentServiceIdKeyValueScope) {
       throw new Error(
-        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when it is currently set to ${this.currentServiceIdKeyValueScope}`,
+        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when it is currently set to ${this.#currentServiceIdKeyValueScope}`,
       );
     }
-    if (this.currentCommandNameKeyValueScope) {
+    if (this.#currentCommandNameKeyValueScope) {
       throw new Error(
-        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when CommandNameKeyValueScope is currently set to ${this.currentServiceIdKeyValueScope}`,
+        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when CommandNameKeyValueScope is currently set to ${this.#currentServiceIdKeyValueScope}`,
       );
     }
-    this.currentServiceIdKeyValueScope = serviceId;
+    this.#currentServiceIdKeyValueScope = serviceId;
 
     logger.debug("currentServiceIdKeyValueScope: %s", serviceId);
 
-    if (!this.serviceKeyValueData.has(serviceId)) {
-      this.serviceKeyValueData.set(serviceId, new Map());
+    if (!this.#serviceKeyValueData.has(serviceId)) {
+      this.#serviceKeyValueData.set(serviceId, new Map());
     }
-    this.defaultKeyValueService!.setKeyValueData(
-      this.serviceKeyValueData.get(serviceId)!,
+    this.#defaultKeyValueService!.setKeyValueData(
+      this.#serviceKeyValueData.get(serviceId)!,
     );
   }
 
@@ -385,18 +384,18 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         `Attempt to use KeyValueService which is not enabled`,
       );
     }
-    if (this.defaultKeyValueService!.isDirty()) {
+    if (this.#defaultKeyValueService!.isDirty()) {
       if (this.configLocation === undefined) {
         throw new Error(
           "Attempt to write updated config with no configLocation set",
         );
       }
-      await this.writeConfig(this.configLocation);
+      await this.#writeConfig(this.configLocation);
     }
-    delete this.currentCommandNameKeyValueScope;
-    delete this.currentServiceIdKeyValueScope;
+    this.#currentCommandNameKeyValueScope = undefined;
+    this.#currentServiceIdKeyValueScope = undefined;
 
-    this.defaultKeyValueService!.clearKeyValueData();
+    this.#defaultKeyValueService!.clearKeyValueData();
   }
 
   public async initService(context: Context): Promise<void> {
@@ -443,10 +442,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       );
     }
 
-    await this.readConfig(this.configLocation);
+    await this.#readConfig(this.configLocation);
   }
 
-  private async readConfig(location: string): Promise<void> {
+  async #readConfig(location: string): Promise<void> {
     try {
       logger.debug("Reading config from: %s", location);
 
@@ -457,8 +456,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         return;
       }
       this.defaultsData.clear();
-      this.commandKeyValueData.clear();
-      this.serviceKeyValueData.clear();
+      this.#commandKeyValueData.clear();
+      this.#serviceKeyValueData.clear();
       if (config.defaults !== undefined) {
         const defaults = config.defaults;
         Object.keys(defaults).forEach((commandName) => {
@@ -477,7 +476,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         if (keyValues.commands !== undefined) {
           const commandKeyValues = keyValues.commands;
           Object.keys(commandKeyValues).forEach((commandName) => {
-            this.commandKeyValueData.set(
+            this.#commandKeyValueData.set(
               commandName,
               new Map(Object.entries(commandKeyValues[commandName])),
             );
@@ -490,7 +489,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         if (keyValues.services !== undefined) {
           const serviceKeyValues = keyValues.services;
           Object.keys(serviceKeyValues).forEach((serviceId) => {
-            this.serviceKeyValueData.set(
+            this.#serviceKeyValueData.set(
               serviceId,
               new Map(Object.entries(serviceKeyValues[serviceId])),
             );
@@ -508,7 +507,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     }
   }
 
-  private async writeConfig(location: string): Promise<void> {
+  async #writeConfig(location: string): Promise<void> {
     logger.debug("Writing config to: %s", location);
 
     try {
@@ -533,13 +532,14 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       config.defaults = Object.fromEntries(this.defaultsData);
     }
     if (
-      (this.commandKeyValueData.size > 0) || (this.serviceKeyValueData.size > 0)
+      (this.#commandKeyValueData.size > 0) ||
+      (this.#serviceKeyValueData.size > 0)
     ) {
       config["key-values"] = {};
-      if (this.commandKeyValueData.size > 0) {
+      if (this.#commandKeyValueData.size > 0) {
         config["key-values"].commands = {};
         for (
-          const [commandName, keyValueData] of this.commandKeyValueData
+          const [commandName, keyValueData] of this.#commandKeyValueData
             .entries()
         ) {
           if (keyValueData.size > 0) {
@@ -549,10 +549,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
           }
         }
       }
-      if (this.serviceKeyValueData.size > 0) {
+      if (this.#serviceKeyValueData.size > 0) {
         config["key-values"].services = {};
         for (
-          const [serviceId, keyValueData] of this.serviceKeyValueData.entries()
+          const [serviceId, keyValueData] of this.#serviceKeyValueData.entries()
         ) {
           if (keyValueData.size > 0) {
             config["key-values"].services[serviceId] = Object.fromEntries(
