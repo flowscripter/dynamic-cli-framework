@@ -1,6 +1,7 @@
 import Command from "../api/command/Command.ts";
 import CLIConfig from "../api/CLIConfig.ts";
 import {
+  ArgumentValueTypeName,
   ComplexValueTypeName,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
@@ -84,7 +85,17 @@ export function getGlobalCommandValueFromEnvVars(
   }
 
   // simple check for a specific env var name
-  return Deno.env.get(getGlobalArgumentKeyPrefix(cliConfig, command, argument));
+  let envVarValue = Deno.env.get(
+    getGlobalArgumentKeyPrefix(cliConfig, command, argument),
+  );
+  if (
+    (envVarValue != undefined) &&
+    (argument.type === ArgumentValueTypeName.BOOLEAN)
+  ) {
+    envVarValue = (envVarValue.length > 0) ? "true" : "false";
+  }
+
+  return envVarValue;
 }
 
 function getOptionValuesFromEnvVars(
@@ -175,11 +186,18 @@ function getOptionValuesFromEnvVars(
           throw new Error(`Incomplete argument path in env var: ${match}`);
         } else {
           // set primitive value
+          let envVarValue = env[match];
+          if (
+            (envVarValue != undefined) &&
+            (option.type === ArgumentValueTypeName.BOOLEAN)
+          ) {
+            envVarValue = envVarValue.length > 1 ? "true" : "false";
+          }
           (envVarValues[option.name] as Array<
             PopulatedArgumentSingleValueType
           >)[
             index
-          ] = env[match];
+          ] = envVarValue;
         }
 
         const elements = envVarValues[option.name] as Array<
@@ -218,9 +236,12 @@ function getOptionValuesFromEnvVars(
     });
   } else {
     // simple check for a specific env var name
-    const value = Deno.env.get(envVarNamePrefix);
+    let value = Deno.env.get(envVarNamePrefix);
     if (value === undefined) {
       return undefined;
+    }
+    if (option.type === ArgumentValueTypeName.BOOLEAN) {
+      value = value.length > 1 ? "true" : "false";
     }
     // set primitive value
     envVarValues[option.name] = value;
@@ -290,16 +311,26 @@ export function getSubCommandValuesFromEnvVars(
               envVarValues[positional.name] = [];
             }
             // set primitive value
+            let envVarValue = env[match];
+            if (
+              (envVarValue != undefined) &&
+              (positional.type === ArgumentValueTypeName.BOOLEAN)
+            ) {
+              envVarValue = envVarValue.length > 1 ? "true" : "false";
+            }
             (envVarValues[positional.name] as Array<
               PopulatedArgumentSingleValueType
-            >)[index] = env[match];
+            >)[index] = envVarValue;
           }
         });
       } else {
         // simple check for a specific env var name
-        const value = Deno.env.get(envVarNamePrefix);
+        let value = Deno.env.get(envVarNamePrefix);
         if (value === undefined) {
           return undefined;
+        }
+        if (positional.type === ArgumentValueTypeName.BOOLEAN) {
+          value = value.length > 1 ? "true" : "false";
         }
         // set primitive value
         envVarValues[positional.name] = value;

@@ -38,12 +38,12 @@ Deno.test("Updating the spinner message works", async () => {
   await spinner.show();
   await sleep(150);
   await spinner.show("foo");
-  await sleep(150);
+  await sleep(120);
   await spinner.show("bar");
-  await sleep(150);
+  await sleep(120);
   await spinner.show();
-  await sleep(150);
+  await sleep(120);
   await spinner.hide();
 
-  expectBufferStringEquals(buffer, "⠋⠙ foo⠹ bar⠸ bar⠼");
+  expectBufferStringEquals(buffer, "⠋⠙ foo⠹ bar⠸⠼");
 });

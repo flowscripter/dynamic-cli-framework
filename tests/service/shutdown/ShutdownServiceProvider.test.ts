@@ -7,5 +7,5 @@ Deno.test("ShutdownServiceProvider provide works", async () => {
   const serviceInfo = await shutdownServiceProvider.provide(getCLIConfig());
   assertEquals(serviceInfo.commands.length, 0);
 
-  ShutdownServiceProvider.shutdown();
+  await ShutdownServiceProvider.shutdown();
 });

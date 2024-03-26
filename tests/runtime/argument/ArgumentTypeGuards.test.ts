@@ -6,7 +6,7 @@ import {
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
 import Positional from "../../../src/api/argument/Positional.ts";
 import GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
-import { isComplexOption } from "../../../src/api/argument/ArgumentTypeGuards.ts";
+import { isComplexOption } from "../../../src/runtime/argument/ArgumentTypeGuards.ts";
 import Option from "../../../src/api/argument/Option.ts";
 
 function getComplexOption(): ComplexOption {

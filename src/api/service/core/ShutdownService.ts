@@ -8,5 +8,5 @@ export default interface ShutdownService {
   /**
    * Register a callback method for CLI shutdown.
    */
-  addShutdownListener(callback: () => void): void;
+  addShutdownListener(callback: () => Promise<void>): void;
 }

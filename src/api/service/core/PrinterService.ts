@@ -211,7 +211,7 @@ export default interface PrinterService {
   /**
    * Hide the spinner.
    *
-   * NOTE: Showing a progress bar will hide the spinner.
+   * NOTE: Showing a progress bar will also hide the spinner.
    */
   hideSpinner(): Promise<void>;
 
@@ -241,11 +241,11 @@ export default interface PrinterService {
   /**
    * Hides a specified progress bar.
    *
-   * NOTE: Showing the spinner will hide ALL progress bars.
+   * NOTE: Showing the spinner will also hide ALL progress bars.
    *
    * @param handle the handle referring to the progress bar to be hidden.
    */
-  hideProgressBar(handle: number): void;
+  hideProgressBar(handle: number): Promise<void>;
 
   /**
    * Update a specific progress bar.

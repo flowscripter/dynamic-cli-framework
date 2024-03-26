@@ -70,21 +70,21 @@ export default class BannerServiceProvider implements ServiceProvider {
       "standard",
     );
 
-    await printerService.print(printerService.blue(bannerText));
+    await printerService.info(printerService.blue(bannerText));
     if (cliConfig.description !== undefined) {
-      await printerService.print(
+      await printerService.info(
         `  ${printerService.primary(cliConfig.description)}\n`,
       );
     }
     if (cliConfig.version.length > 0) {
-      await printerService.print(
+      await printerService.info(
         `  ${printerService.secondary("version: " + cliConfig.version)}\n`,
       );
     }
     if (this.configurationServiceProvider) {
       const configLocation = this.configurationServiceProvider.configLocation;
       if (configLocation && configLocation.length > 0) {
-        await printerService.print(
+        await printerService.info(
           `  ${
             printerService.secondary(
               "config: " + configLocation,
@@ -93,6 +93,6 @@ export default class BannerServiceProvider implements ServiceProvider {
         );
       }
     }
-    await printerService.print("\n");
+    await printerService.info("\n");
   }
 }

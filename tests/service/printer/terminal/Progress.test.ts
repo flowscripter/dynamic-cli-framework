@@ -10,7 +10,7 @@ Deno.test("Progress works", async () => {
   const terminal = new Terminal(buffer.writable);
   const progress = new Progress(terminal);
 
-  const handle = await progress.add("foo", "bar", 100, 0);
+  const handle = progress.add("foo", "bar", 100, 0);
   await sleep(150);
   progress.update(handle, 50, "bar2");
   await sleep(150);
@@ -24,8 +24,8 @@ Deno.test("Multiple progress works", async () => {
   const terminal = new Terminal(buffer.writable);
   const progress = new Progress(terminal);
 
-  const handle1 = await progress.add("foo1", "bar2", 100, 0);
-  const handle2 = await progress.add("foo2", "bar2", 200, 0);
+  const handle1 = progress.add("foo1", "bar2", 100, 0);
+  const handle2 = progress.add("foo2", "bar2", 200, 0);
   await sleep(150);
   progress.update(handle1, 50, "bar3");
   await sleep(150);

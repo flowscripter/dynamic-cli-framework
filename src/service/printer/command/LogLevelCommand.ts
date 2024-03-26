@@ -28,13 +28,13 @@ export default class LogLevelCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  private readonly printerServiceProvider: PrinterServiceProvider;
+  readonly #printerServiceProvider: PrinterServiceProvider;
 
   public constructor(
     printerServiceProvider: PrinterServiceProvider,
     executePriority: number,
   ) {
-    this.printerServiceProvider = printerServiceProvider;
+    this.#printerServiceProvider = printerServiceProvider;
     this.executePriority = executePriority;
   }
 
@@ -46,15 +46,19 @@ export default class LogLevelCommand implements GlobalModifierCommand {
 
     switch (logLevel) {
       case "DEBUG":
-        return this.printerServiceProvider.printerService!.setLevel(
+        return this.#printerServiceProvider.printerService!.setLevel(
           Level.DEBUG,
         );
       case "INFO":
-        return this.printerServiceProvider.printerService!.setLevel(Level.INFO);
+        return this.#printerServiceProvider.printerService!.setLevel(
+          Level.INFO,
+        );
       case "WARN":
-        return this.printerServiceProvider.printerService!.setLevel(Level.WARN);
+        return this.#printerServiceProvider.printerService!.setLevel(
+          Level.WARN,
+        );
       case "ERROR":
-        return this.printerServiceProvider.printerService!.setLevel(
+        return this.#printerServiceProvider.printerService!.setLevel(
           Level.ERROR,
         );
     }

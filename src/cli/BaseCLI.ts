@@ -17,11 +17,13 @@ import {
   MultiCommandCliHelpGlobalCommand,
   MultiCommandCliHelpSubCommand,
 } from "../command/MultiCommandCliHelpCommand.ts";
+import VersionCommand from "../command/VersionCommand.ts";
+import UsageCommand from "../command/UsageCommand.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
   isSubCommand,
-} from "../api/command/CommandTypeGuards.ts";
+} from "../runtime/command/CommandTypeGuards.ts";
 import CommandValidator from "../runtime/command/CommandValidator.ts";
 import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
@@ -50,16 +52,16 @@ const logger = getLogger("BaseCLI");
  * * commands provided by the {@link PrinterServiceProvider}.
  */
 export default class BaseCLI implements CLI {
-  private readonly cliConfig: CLIConfig;
-  private readonly stdoutWritable: WritableStream;
-  private readonly stderrWritable: WritableStream;
-  private readonly envVarsEnabled: boolean;
-  private readonly configEnabled: boolean;
-  private readonly keyValueServiceEnabled: boolean;
-  private readonly addedNonModifierCommands: Array<Command>;
-  private readonly serviceProviderRegistry: DefaultServiceProviderRegistry;
-  private readonly commandRegistry: DefaultCommandRegistry;
-  private readonly context: DefaultContext;
+  readonly #cliConfig: CLIConfig;
+  readonly #stdoutWritable: WritableStream;
+  readonly #stderrWritable: WritableStream;
+  readonly #envVarsEnabled: boolean;
+  readonly #configEnabled: boolean;
+  readonly #keyValueServiceEnabled: boolean;
+  readonly #addedNonModifierCommands: Array<Command>;
+  readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
+  readonly #commandRegistry: DefaultCommandRegistry;
+  readonly #context: DefaultContext;
 
   /**
    * Constructor configures the instance with the specified CLI application details and WritableStream instances.
@@ -98,28 +100,28 @@ export default class BaseCLI implements CLI {
     if ((cliConfig.version !== undefined) && (cliConfig.version.length === 0)) {
       throw new Error("Invalid empty CLI version provided");
     }
-    this.cliConfig = cliConfig;
-    this.stdoutWritable = stdoutWritableStream;
-    this.stderrWritable = stderrWritableStream;
-    this.envVarsEnabled = envVarsEnabled;
-    this.configEnabled = configEnabled;
-    this.keyValueServiceEnabled = keyValueServiceEnabled;
-    this.addedNonModifierCommands = [];
+    this.#cliConfig = cliConfig;
+    this.#stdoutWritable = stdoutWritableStream;
+    this.#stderrWritable = stderrWritableStream;
+    this.#envVarsEnabled = envVarsEnabled;
+    this.#configEnabled = configEnabled;
+    this.#keyValueServiceEnabled = keyValueServiceEnabled;
+    this.#addedNonModifierCommands = [];
 
     // create a validator if required
     let commandValidator: CommandValidator | undefined;
     if (validateAllCommands) {
-      commandValidator = new CommandValidator(this.cliConfig);
+      commandValidator = new CommandValidator(this.#cliConfig);
     }
 
     // create a service provider registry
-    this.serviceProviderRegistry = new DefaultServiceProviderRegistry();
+    this.#serviceProviderRegistry = new DefaultServiceProviderRegistry();
 
     // create a command registry
-    this.commandRegistry = new DefaultCommandRegistry([], commandValidator);
+    this.#commandRegistry = new DefaultCommandRegistry([], commandValidator);
 
     // create a context
-    this.context = new DefaultContext(this.cliConfig);
+    this.#context = new DefaultContext(this.#cliConfig);
   }
 
   /**
@@ -131,7 +133,7 @@ export default class BaseCLI implements CLI {
    * @param serviceProvider the {@link ServiceProvider} to add.
    */
   public addServiceProvider(serviceProvider: ServiceProvider) {
-    this.serviceProviderRegistry.addServiceProvider(serviceProvider);
+    this.#serviceProviderRegistry.addServiceProvider(serviceProvider);
   }
 
   /**
@@ -146,24 +148,24 @@ export default class BaseCLI implements CLI {
   public addCommand(command: Command) {
     if (!isGlobalModifierCommand(command)) {
       // store the command locally to help determine if this CLI will be a single or multi-command CLI
-      this.addedNonModifierCommands.push(command);
+      this.#addedNonModifierCommands.push(command);
     }
 
     // register the command
-    this.commandRegistry.addCommand(command);
+    this.#commandRegistry.addCommand(command);
   }
 
   async run(args: ReadonlyArray<string>): Promise<RunResult> {
-    if (this.addedNonModifierCommands.length === 0) {
+    if (this.#addedNonModifierCommands.length === 0) {
       throw new Error(
         "No non-modifier commands added to the CLI, nothing to run!",
       );
     }
 
     if (
-      (this.addedNonModifierCommands.length === 1) &&
-      !isSubCommand(this.addedNonModifierCommands[0]) &&
-      !isGlobalCommand(this.addedNonModifierCommands[0])
+      (this.#addedNonModifierCommands.length === 1) &&
+      !isSubCommand(this.#addedNonModifierCommands[0]) &&
+      !isGlobalCommand(this.#addedNonModifierCommands[0])
     ) {
       throw new Error(
         "If only one command is added, if must be a global command or sub-command!",
@@ -175,34 +177,34 @@ export default class BaseCLI implements CLI {
     this.addServiceProvider(
       new PrinterServiceProvider(
         80,
-        this.stdoutWritable,
-        this.stderrWritable,
+        this.#stdoutWritable,
+        this.#stderrWritable,
       ),
     );
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,
-      this.envVarsEnabled,
-      this.configEnabled,
-      this.keyValueServiceEnabled,
+      this.#envVarsEnabled,
+      this.#configEnabled,
+      this.#keyValueServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
 
     for (
-      const serviceProvider of this.serviceProviderRegistry
+      const serviceProvider of this.#serviceProviderRegistry
         .getServiceProviders()
     ) {
-      const serviceInfo = await serviceProvider.provide(this.cliConfig);
+      const serviceInfo = await serviceProvider.provide(this.#cliConfig);
 
       if (serviceInfo.service) {
-        this.context.addServiceInstance(
+        this.#context.addServiceInstance(
           serviceProvider.serviceId,
           serviceInfo.service,
         );
       }
 
       serviceInfo.commands.forEach((command) => {
-        this.commandRegistry.addCommand(command, serviceProvider.serviceId);
+        this.#commandRegistry.addCommand(command, serviceProvider.serviceId);
       });
     }
 
@@ -214,52 +216,51 @@ export default class BaseCLI implements CLI {
 
     try {
       // setup help commands and default command based on the number of commands explicitly added via {@link addCommand)
-      if (this.addedNonModifierCommands.length === 1) {
+      if (this.#addedNonModifierCommands.length === 1) {
         // a single-command CLI
-        defaultCommand = this.addedNonModifierCommands[0];
+        defaultCommand = this.#addedNonModifierCommands[0];
         helpSubCommand = new SingleCommandCliHelpSubCommand(
-          this.cliConfig,
-          this.envVarsEnabled,
+          this.#envVarsEnabled,
           defaultCommand as SubCommand,
-          this.commandRegistry,
+          this.#commandRegistry,
         );
         helpGlobalCommand = new SingleCommandCliHelpGlobalCommand(
-          this.cliConfig,
-          this.envVarsEnabled,
+          this.#envVarsEnabled,
           defaultCommand as SubCommand,
-          this.commandRegistry,
+          this.#commandRegistry,
         );
       } else {
         // a multi-command CLI
         helpSubCommand = new MultiCommandCliHelpSubCommand(
-          this.cliConfig,
-          this.envVarsEnabled,
-          this.commandRegistry,
+          this.#envVarsEnabled,
+          this.#commandRegistry,
         );
         helpGlobalCommand = new MultiCommandCliHelpGlobalCommand(
-          this.cliConfig,
-          this.envVarsEnabled,
-          this.commandRegistry,
+          this.#envVarsEnabled,
+          this.#commandRegistry,
         );
-        defaultCommand = helpGlobalCommand;
       }
 
       // register the help commands
-      this.commandRegistry.addCommand(helpSubCommand);
-      this.commandRegistry.addCommand(helpGlobalCommand);
+      this.#commandRegistry.addCommand(helpSubCommand);
+      this.#commandRegistry.addCommand(helpGlobalCommand);
+
+      // register the version command
+      this.#commandRegistry.addCommand(new VersionCommand());
 
       // run...
       const runResult = await run(
         args,
-        this.commandRegistry,
-        this.serviceProviderRegistry,
+        this.#commandRegistry,
+        this.#serviceProviderRegistry,
         configurationServiceProvider,
-        this.context,
+        this.#context,
         defaultCommand,
       );
       // then handle the result...
       if (runResult.runState === RunState.NO_COMMAND) {
-        await helpGlobalCommand.execute(this.context);
+        // print usage
+        await new UsageCommand(helpGlobalCommand).execute(this.#context);
       } else if (runResult.runState === RunState.PARSE_ERROR) {
         if (
           (runResult.command !== undefined) && (
@@ -267,14 +268,14 @@ export default class BaseCLI implements CLI {
             isGlobalCommand(runResult.command)
           )
         ) {
-          await helpGlobalCommand.execute(
-            this.context,
-            runResult.command!.name,
+          // print help on specific command
+          await helpSubCommand.execute(
+            this.#context,
+            { command: runResult.command!.name },
           );
         } else {
-          await helpGlobalCommand.execute(
-            this.context,
-          );
+          // print usage
+          await new UsageCommand(helpGlobalCommand).execute(this.#context);
         }
       }
       return runResult;
@@ -286,7 +287,7 @@ export default class BaseCLI implements CLI {
         error,
       };
     } finally {
-      ShutdownServiceProvider.shutdown();
+      await ShutdownServiceProvider.shutdown();
     }
   }
 }

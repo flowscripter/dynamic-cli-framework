@@ -43,13 +43,27 @@ export default function populateGlobalCommandValue(
   let unusedArgs: Array<string> = [];
 
   if (potentialArgs.length > 0) {
-    // override with parsed argument value
-    populatedArgumentValue = potentialArgs[0];
-    unusedArgs = potentialArgs.slice(1);
-  }
+    const firstPotentialArg = potentialArgs[0];
 
-  // check if there is no value
-  if (populatedArgumentValue === undefined) {
+    // don't use potentialArg if it cannot be a boolean value...
+    if (argument.type === ArgumentValueTypeName.BOOLEAN) {
+      const firstPotentialArgLower = firstPotentialArg.toLowerCase();
+
+      if (
+        (firstPotentialArgLower !== "true") &&
+        (firstPotentialArgLower !== "false")
+      ) {
+        // ...instead, use the fact that the argument is present as the value true
+        return {
+          populatedArgumentValue: "true",
+          unusedArgs: potentialArgs,
+        };
+      }
+    }
+    // otherwise override with parsed argument value
+    populatedArgumentValue = firstPotentialArg;
+    unusedArgs = potentialArgs.slice(1);
+  } else if (populatedArgumentValue === undefined) {
     // check if argument type is boolean and therefore command being specified is an implicit value of true
     if (argument.type === ArgumentValueTypeName.BOOLEAN) {
       return {
@@ -57,18 +71,18 @@ export default function populateGlobalCommandValue(
         unusedArgs,
       };
     }
+  }
 
-    // error if the global command argument is not optional
-    if (!argument.isOptional) {
-      return {
-        populatedArgumentValue,
-        unusedArgs,
-        invalidArgument: {
-          name: globalCommand.name,
-          reason: InvalidArgumentReason.MISSING_VALUE,
-        },
-      };
-    }
+  // check if there is no value and the global command argument is not optional
+  if ((populatedArgumentValue === undefined) && !argument.isOptional) {
+    return {
+      populatedArgumentValue,
+      unusedArgs,
+      invalidArgument: {
+        name: globalCommand.name,
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    };
   }
 
   return {

@@ -6,7 +6,7 @@ import { ParseResult } from "../runtime/parser.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
-} from "../api/command/CommandTypeGuards.ts";
+} from "../runtime/command/CommandTypeGuards.ts";
 import Context from "../api/Context.ts";
 import { getInvalidArgumentString } from "../runtime/values/argumentValueValidation.ts";
 
@@ -16,30 +16,27 @@ function getCommandString(
 ): string {
   const { command, groupCommand } = parseResult;
 
-  let commandString;
-  if (isGlobalCommand(command)) {
-    commandString = "global command ";
-  } else if (isGlobalModifierCommand(command)) {
-    commandString = "global modifier command ";
-  } else {
-    commandString = "command ";
-  }
   if (groupCommand) {
     return printerService.yellow(
-      `${commandString}'${groupCommand.name}:${command.name}'`,
+      `'${groupCommand.name}:${command.name}'`,
     );
   }
-  return printerService.yellow(`${commandString}'${command.name}'`);
+  return printerService.yellow(`'${command.name}'`);
 }
 
 export async function printParseResultError(
   context: Context,
   parseResult: ParseResult,
+  isDefaultCommand = false,
 ) {
   const printerService = context.getServiceById(
     PRINTER_SERVICE_ID,
   ) as PrinterService;
-  const commandString = getCommandString(printerService, parseResult);
+  const commandErrorString = isDefaultCommand
+    ? "Parse error: "
+    : `Parse error for command: ${
+      getCommandString(printerService, parseResult)
+    }`;
   const { command, invalidArguments } = parseResult;
 
   let errorString = "=> ";
@@ -47,12 +44,12 @@ export async function printParseResultError(
   const skipArgName = isGlobalModifierCommand(command) ||
     isGlobalCommand(command);
   const argsString = invalidArguments.map(
-    (arg) => printerService.yellow(getInvalidArgumentString(arg, skipArgName)),
+    (arg) => getInvalidArgumentString(arg, skipArgName),
   ).join(", ");
-  errorString = `${errorString}${argsString}`;
+  errorString = `${errorString}${printerService.yellow(argsString)}`;
 
   await printerService.error(
-    `Parse error: ${commandString}\n  ${errorString}\n\n`,
+    `${commandErrorString}\n  ${errorString}\n\n`,
     Icon.FAILURE,
   );
 }
@@ -61,19 +58,26 @@ export async function printCommandExecutionError(
   context: Context,
   parseResult: ParseResult,
   err: Error,
+  isDefaultCommand = false,
 ) {
   const printerService = context.getServiceById(
     PRINTER_SERVICE_ID,
   ) as PrinterService;
-  const commandString = getCommandString(printerService, parseResult);
+  const commandErrorString = isDefaultCommand
+    ? "Execution error: "
+    : `Execution error for command: ${
+      getCommandString(printerService, parseResult)
+    }`;
   if (err !== undefined) {
     await printerService.error(
-      `Execution error: ${commandString}\n  => '${err.message}'\n\n`,
+      `${commandErrorString}\n  => ${printerService.yellow(err.message)}\n\n`,
       Icon.FAILURE,
     );
   } else {
     await printerService.error(
-      `Execution error: ${commandString}\n  => error is undefined\n\n`,
+      `${commandErrorString}\n  => ${
+        printerService.yellow("error is undefined")
+      }\n\n`,
       Icon.FAILURE,
     );
   }

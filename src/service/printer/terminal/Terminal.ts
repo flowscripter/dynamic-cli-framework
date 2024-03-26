@@ -7,16 +7,16 @@ import {
 } from "./Ansi.ts";
 
 export default class Terminal {
-  private readonly writableStream: WritableStream;
-  private readonly encoder = new TextEncoder();
+  readonly #writableStream: WritableStream;
+  readonly #encoder = new TextEncoder();
 
   constructor(writableStream: WritableStream) {
-    this.writableStream = writableStream;
+    this.#writableStream = writableStream;
   }
 
-  private async writeAll(message: string): Promise<void> {
-    const encoded = this.encoder.encode(message);
-    const writer = this.writableStream.getWriter();
+  async #writeAll(message: string): Promise<void> {
+    const encoded = this.#encoder.encode(message);
+    const writer = this.#writableStream.getWriter();
 
     await writer.ready;
     await writer.write(encoded);
@@ -25,25 +25,25 @@ export default class Terminal {
   }
 
   async clearLine(): Promise<void> {
-    await this.writeAll(CLEAR_LINE + CURSOR_LEFT);
+    await this.#writeAll(CLEAR_LINE + CURSOR_LEFT);
   }
 
   async clearUpLines(count: number): Promise<void> {
-    await this.writeAll(
+    await this.#writeAll(
       (CURSOR_UP + CLEAR_LINE).repeat(count) + CLEAR_LINE + CURSOR_LEFT,
     );
   }
 
   async hideCursor(): Promise<void> {
-    await this.writeAll(HIDE_CURSOR);
+    await this.#writeAll(HIDE_CURSOR);
   }
 
   async showCursor(): Promise<void> {
-    await this.writeAll(SHOW_CURSOR);
+    await this.#writeAll(SHOW_CURSOR);
   }
 
   async write(text: string): Promise<void> {
-    await this.writeAll(text);
+    await this.#writeAll(text);
   }
 
   columns(): number {

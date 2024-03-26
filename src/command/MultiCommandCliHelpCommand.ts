@@ -21,7 +21,6 @@ import {
 import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import { levenshtein } from "../../deps.ts";
 import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
-import CLIConfig from "../api/CLIConfig.ts";
 import PrinterService, {
   Icon,
   PRINTER_SERVICE_ID,
@@ -33,21 +32,18 @@ import PrinterService, {
 abstract class MultiCommandCliAbstractHelpCommand {
   readonly name = "help";
   readonly description = "Display application help";
-  readonly cliConfig: CLIConfig;
-  readonly includeEnvVars: boolean;
-  readonly commandRegistry: CommandRegistry;
+  readonly #includeEnvVars: boolean;
+  readonly #commandRegistry: CommandRegistry;
 
   constructor(
-    cliConfig: CLIConfig,
     includeEnvVars: boolean,
     commandRegistry: CommandRegistry,
   ) {
-    this.cliConfig = cliConfig;
-    this.includeEnvVars = includeEnvVars;
-    this.commandRegistry = commandRegistry;
+    this.#includeEnvVars = includeEnvVars;
+    this.#commandRegistry = commandRegistry;
   }
 
-  private findPossibleCommandNames(
+  #findPossibleCommandNames(
     commandName: string,
     groupCommands: ReadonlyArray<GroupCommand>,
     subCommands: ReadonlyArray<SubCommand>,
@@ -75,7 +71,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
       .map((value) => value[1]);
   }
 
-  private getGlobalCommandsHelpSection(
+  #getGlobalCommandsHelpSection(
+    context: Context,
     title: string,
     globalCommands: ReadonlyArray<GlobalCommand>,
   ): HelpSection {
@@ -85,8 +82,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     };
     globalCommands.forEach((globalCommand) => {
       const { syntax, description } = getGlobalArgumentHelpEntry(
-        this.cliConfig,
-        this.includeEnvVars,
+        context.cliConfig,
+        this.#includeEnvVars,
         globalCommand,
       );
       globalCommandsSection.helpEntries.push({
@@ -106,7 +103,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     return globalCommandsSection;
   }
 
-  private getGenericHelpSections(
+  #getGenericHelpSections(
+    context: Context,
     globalModifierCommands: ReadonlyArray<GlobalModifierCommand>,
     globalCommands: ReadonlyArray<GlobalCommand>,
     groupCommands: ReadonlyArray<GroupCommand>,
@@ -117,7 +115,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     const helpSections: HelpSection[] = [];
     if (globalModifierCommands.length > 0) {
       helpSections.push(
-        this.getGlobalCommandsHelpSection(
+        this.#getGlobalCommandsHelpSection(
+          context,
           `${globalPrefix}Options`,
           globalModifierCommands,
         ),
@@ -125,7 +124,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     }
     if (globalCommands.length > 0) {
       helpSections.push(
-        this.getGlobalCommandsHelpSection(
+        this.#getGlobalCommandsHelpSection(
+          context,
           `${globalPrefix}Commands`,
           globalCommands,
         ),
@@ -206,11 +206,11 @@ abstract class MultiCommandCliAbstractHelpCommand {
       PRINTER_SERVICE_ID,
     ) as PrinterService;
 
-    const globalModifierCommands = this.commandRegistry
+    const globalModifierCommands = this.#commandRegistry
       .getGlobalModifierCommands();
-    const globalCommands = this.commandRegistry.getGlobalCommands();
-    const groupCommands = this.commandRegistry.getGroupCommands();
-    const subCommands = this.commandRegistry.getSubCommands();
+    const globalCommands = this.#commandRegistry.getGlobalCommands();
+    const groupCommands = this.#commandRegistry.getGroupCommands();
+    const subCommands = this.#commandRegistry.getSubCommands();
     const helpSections: Array<HelpSection> = [];
     helpSections.push({
       title: "Usage",
@@ -228,7 +228,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     });
 
     helpSections.push(
-      ...this.getGenericHelpSections(
+      ...this.#getGenericHelpSections(
+        context,
         globalModifierCommands,
         globalCommands,
         groupCommands,
@@ -247,15 +248,16 @@ abstract class MultiCommandCliAbstractHelpCommand {
       PRINTER_SERVICE_ID,
     ) as PrinterService;
 
-    const groupCommands = this.commandRegistry.getGroupCommands();
-    const subCommands = this.commandRegistry.getSubCommands();
+    const groupCommands = this.#commandRegistry.getGroupCommands();
+    const subCommands = this.#commandRegistry.getSubCommands();
 
     // find sub-command or group sub-command
-    let subCommand = this.commandRegistry.getSubCommandByName(commandName);
+    let subCommand = this.#commandRegistry.getSubCommandByName(commandName);
+
     let groupCommand: GroupCommand | undefined;
 
     if (subCommand === undefined) {
-      const result = this.commandRegistry
+      const result = this.#commandRegistry
         .getGroupCommandAndMemberSubCommandByJoinedName(commandName);
       if (result !== undefined) {
         groupCommand = result.groupCommand;
@@ -265,12 +267,12 @@ abstract class MultiCommandCliAbstractHelpCommand {
 
     if (subCommand === undefined) {
       await printerService.print(
-        `Unknown command: ${printerService.red(commandName)}\n`,
+        `Unknown command: ${printerService.red(commandName)}\n\n`,
         Icon.FAILURE,
       );
 
       // look for other possible matches
-      const possibleCommandNames = this.findPossibleCommandNames(
+      const possibleCommandNames = this.#findPossibleCommandNames(
         commandName,
         groupCommands,
         subCommands,
@@ -314,8 +316,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
 
     helpSections.push(
       ...getCommandArgsHelpSections(
-        this.cliConfig,
-        this.includeEnvVars,
+        context.cliConfig,
+        this.#includeEnvVars,
         subCommand,
         false,
       ),
