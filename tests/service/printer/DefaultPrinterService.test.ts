@@ -190,20 +190,50 @@ Deno.test("Level filtering works", async () => {
   );
 });
 
-Deno.test("Icons work", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+Deno.test("Icons work on stderr", async () => {
+    const buffer = new Buffer();
+    const printerService = new DefaultPrinterService(
+        buffer.writable,
+        buffer.writable,
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.info("hello info", Icon.INFORMATION);
+    await printerService.info("hello info", Icon.INFORMATION);
 
-  expectBufferStringEquals(
-    buffer,
-    "ℹ hello info",
-  );
+    expectBufferStringEquals(
+        buffer,
+        "ℹ hello info",
+    );
+
+    await printerService.info("hello success", Icon.SUCCESS);
+
+    expectBufferStringEquals(
+        buffer,
+        "ℹ hello info✔ hello success",
+    );
+});
+
+Deno.test("Icons work on stdout", async () => {
+    const buffer = new Buffer();
+    const printerService = new DefaultPrinterService(
+        buffer.writable,
+        buffer.writable,
+    );
+    printerService.colorEnabled = false;
+
+    await printerService.print("hello info", Icon.INFORMATION);
+
+    expectBufferStringEquals(
+        buffer,
+        "ℹ hello info",
+    );
+
+    await printerService.print("hello success", Icon.SUCCESS);
+
+    expectBufferStringEquals(
+        buffer,
+        "ℹ hello info✔ hello success",
+    );
 });
 
 Deno.test("Spinner works", async () => {
