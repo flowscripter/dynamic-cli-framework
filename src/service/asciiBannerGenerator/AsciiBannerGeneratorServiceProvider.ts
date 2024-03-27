@@ -1,5 +1,6 @@
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import Context from "../../api/Context.ts";
 import AsciiBannerGeneratorService, {
@@ -13,7 +14,7 @@ import CLIConfig from "../../api/CLIConfig.ts";
  */
 export default class AsciiBannerGeneratorServiceProvider
   implements ServiceProvider {
-  readonly serviceId = ASCII_BANNER_GENERATOR_SERVICE_ID;
+  readonly serviceId: string = ASCII_BANNER_GENERATOR_SERVICE_ID;
   readonly servicePriority: number;
   readonly asciiBannerGeneratorService: AsciiBannerGeneratorService;
 

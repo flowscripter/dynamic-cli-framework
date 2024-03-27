@@ -1,6 +1,6 @@
 import DefaultServiceProviderRegistry from "../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
 import ServiceProviderRegistry from "../../src/runtime/registry/ServiceProviderRegistry.ts";
-import ServiceProvider from "../../src/api/service/ServiceProvider.ts";
+import { ServiceProvider } from "../../src/api/service/ServiceProvider.ts";
 
 export function getServiceProviderRegistry(
   serviceProviders?: Array<ServiceProvider>,

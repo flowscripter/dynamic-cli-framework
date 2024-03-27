@@ -2331,6 +2331,32 @@ Deno.test("Option complex values with invalid properties", () => {
     name: "--alpha.beta.delta",
     reason: InvalidArgumentReason.MISSING_VALUE,
   });
+
+  result = populateSubCommandValues(
+    command,
+    ["-a.b.x", "foo"],
+    undefined,
+  );
+  expectExtractResult(result, {
+    alpha: { beta: {} },
+  }, ["foo"]);
+  assertEquals(result.invalidArgument, {
+    name: "-a.b.x",
+    reason: InvalidArgumentReason.UNKNOWN_PROPERTY,
+  });
+
+  result = populateSubCommandValues(
+    command,
+    ["-a.b.g.a", "foo"],
+    undefined,
+  );
+  expectExtractResult(result, {
+    alpha: { beta: {} },
+  }, ["foo"]);
+  assertEquals(result.invalidArgument, {
+    name: "-a.b.g.a",
+    reason: InvalidArgumentReason.UNKNOWN_PROPERTY,
+  });
 });
 
 Deno.test("Option complex values with missing properties supplied by configured defaults", () => {

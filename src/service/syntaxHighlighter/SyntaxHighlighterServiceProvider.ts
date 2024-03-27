@@ -1,5 +1,6 @@
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import DefaultSyntaxHighlighterService from "./DefaultSyntaxHighlighterService.ts";
 import {
@@ -16,7 +17,7 @@ import CLIConfig from "../../api/CLIConfig.ts";
  */
 export default class SyntaxHighlighterServiceProvider
   implements ServiceProvider {
-  readonly serviceId = SYNTAX_HIGHLIGHTER_SERVICE_ID;
+  readonly serviceId: string = SYNTAX_HIGHLIGHTER_SERVICE_ID;
   readonly servicePriority: number;
   readonly defaultSyntaxHighlighterService: DefaultSyntaxHighlighterService;
 

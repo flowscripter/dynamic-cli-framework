@@ -211,8 +211,19 @@ class ParseContext {
 
         // lazy creation of nested option paths to options
         if (!this.optionLookupMapsByPath.has(lookupPath)) {
+          const properties = (option! as ComplexOption).properties;
+
+          if (properties === undefined) {
+            this.invalidArgument = {
+              name: optionPath,
+              reason: InvalidArgumentReason.UNKNOWN_PROPERTY,
+            };
+            this.state = ParseState.ERROR;
+            return false;
+          }
+
           const lookupMap = new Map();
-          (option! as ComplexOption).properties.forEach((option) => {
+          properties.forEach((option) => {
             lookupMap.set(option.name, option);
             if (option.shortAlias) {
               lookupMap.set(option.shortAlias, option);

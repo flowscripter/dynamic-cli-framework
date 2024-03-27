@@ -1,6 +1,7 @@
 import Context from "../../api/Context.ts";
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import NoBannerCommand from "./command/NoBannerCommand.ts";
 import PrinterService, {
@@ -18,7 +19,7 @@ export const BANNER_SERVICE_ID =
  * Provides ascii banner functionality.
  */
 export default class BannerServiceProvider implements ServiceProvider {
-  readonly serviceId = BANNER_SERVICE_ID;
+  readonly serviceId: string = BANNER_SERVICE_ID;
   readonly servicePriority: number;
   readonly configurationServiceProvider:
     | ConfigurationServiceProvider

@@ -19,7 +19,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     this.#dirty = false;
   }
 
-  public isDirty() {
+  public isDirty(): boolean {
     return this.#dirty;
   }
 
