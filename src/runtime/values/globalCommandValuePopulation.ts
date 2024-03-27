@@ -63,14 +63,16 @@ export default function populateGlobalCommandValue(
     // otherwise override with parsed argument value
     populatedArgumentValue = firstPotentialArg;
     unusedArgs = potentialArgs.slice(1);
-  } else if (populatedArgumentValue === undefined) {
-    // check if argument type is boolean and therefore command being specified is an implicit value of true
-    if (argument.type === ArgumentValueTypeName.BOOLEAN) {
-      return {
-        populatedArgumentValue: "true",
-        unusedArgs,
-      };
-    }
+  } // check if argument type is boolean and therefore command being specified is an implicit value of true
+  else if (
+    (argument.type === ArgumentValueTypeName.BOOLEAN) &&
+    ((populatedArgumentValue === undefined) ||
+      (argument.defaultValue === false))
+  ) {
+    return {
+      populatedArgumentValue: "true",
+      unusedArgs,
+    };
   }
 
   // check if there is no value and the global command argument is not optional

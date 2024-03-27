@@ -5,7 +5,7 @@ import CLIConfig from "../api/CLIConfig.ts";
 /**
  * Deno implementation of a {@link CLI} using `Deno.stdout`, `Deno.stderr` and `Deno.args`.
  */
-export class DenoRuntimeCLI extends BaseCLI {
+export default class DenoRuntimeCLI extends BaseCLI {
   /**
    * Constructor configures the instance with the specified CLI application details
    * and making use of `Deno.stdout` and `Deno.stderr`.

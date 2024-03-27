@@ -131,6 +131,149 @@ Deno.test("Global command argument types", () => {
   assertFalse(result.invalidArgument);
 });
 
+Deno.test("Global command boolean argument with defaults", () => {
+  let command: GlobalCommand = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  let result = populateGlobalCommandValue(
+    command,
+    [],
+    undefined,
+  );
+  expectExtractResult(result, "true", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    ["true"],
+    undefined,
+  );
+  expectExtractResult(result, "true", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    ["false"],
+    undefined,
+  );
+  expectExtractResult(result, "false", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+      defaultValue: true,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    [],
+    undefined,
+  );
+  expectExtractResult(result, true, []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+      defaultValue: true,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    ["false"],
+    undefined,
+  );
+  expectExtractResult(result, "false", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+      defaultValue: false,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    [],
+    undefined,
+  );
+  expectExtractResult(result, "true", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+      defaultValue: false,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    ["false"],
+    undefined,
+  );
+  expectExtractResult(result, "false", []);
+  assertFalse(result.invalidArgument);
+
+  command = {
+    name: "foo",
+    argument: {
+      type: ArgumentValueTypeName.BOOLEAN,
+      defaultValue: false,
+    },
+    execute: async (): Promise<void> => {
+    },
+  };
+
+  result = populateGlobalCommandValue(
+    command,
+    ["true"],
+    undefined,
+  );
+  expectExtractResult(result, "true", []);
+  assertFalse(result.invalidArgument);
+});
+
 Deno.test("Argument following is not used if not applicable to a boolean", () => {
   const command: GlobalCommand = {
     name: "foo",

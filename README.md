@@ -60,11 +60,9 @@ NOTE: The dynamic aspect is still in development as it relies upon:
 
 The following example projects are available:
 
-Pending completion of core library API before samples are released.
+- [example-cli](https://github.com/flowscripter/example-cli) is an example CLI
+  application based on this framework.
 
-[//]: # (TODO: Add this when implemented.)
-[//]: # (- [example-cli]&#40;https://github.com/flowscripter/example-cli&#41; is an example CLI)
-[//]: # (  application based on this framework.)
 [//]: # (TODO: Add this when implemented.)
 [//]: # (- [example-cli-plugin]&#40;https://github.com/flowscripter/example-cli-plugin&#41; is an)
 [//]: # (  example command and service plugin based on this framework.)
