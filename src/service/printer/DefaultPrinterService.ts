@@ -50,7 +50,9 @@ export default class DefaultPrinterService implements PrinterService {
     await this.#spinner.pause();
     await this.#progress.pause();
     await this.#terminal.write(
-      `${(icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""}${message}`,
+      `${
+        (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
+      }${message}`,
     );
     this.#spinner.resume();
     this.#progress.resume();
@@ -216,7 +218,9 @@ export default class DefaultPrinterService implements PrinterService {
 
     const writer = this.stdoutWritable.getWriter();
     const encoded = this.#encoder.encode(
-      `${(icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""}${message}`,
+      `${
+        (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
+      }${message}`,
     );
 
     await writer.ready;
