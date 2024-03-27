@@ -1,20 +1,20 @@
 import { path } from "../deps.ts";
 import CLIConfig from "./api/CLIConfig.ts";
 import SubCommand from "./api/command/SubCommand.ts";
-import { DenoRuntimeCLI } from "./cli/DenoRuntimeCLI.ts";
+import DenoRuntimeCLI from "./cli/DenoRuntimeCLI.ts";
 import Command from "./api/command/Command.ts";
 import RunResult from "./api/RunResult.ts";
 import ServiceProvider from "./api/service/ServiceProvider.ts";
 import { getEnvVarIfPermitted } from "./util/envVarHelper.ts";
 
-function parseVersion(moduleUrl?: string): string {
+function parseVersion(moduleUrl?: string): string | undefined {
   if (moduleUrl === undefined) {
-    return "";
+    return undefined;
   }
 
   const v = moduleUrl.match(/@([^\/]+)[\/$]?/);
   if (v === null) {
-    return "";
+    return undefined;
   }
   return v[1];
 }
@@ -125,7 +125,6 @@ export async function launchSingleCommandCLI(
  * @param configEnabled optionally enable configuration file support for default argument values.
  * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
  * @param callingModuleUrl optional URL of the calling module, can be used in an attempt to derive the version of the CLI if {@link version} is not provided. If not possible the default is `N/A`.
- * @param services optional array of {@link ServiceProvider} instances to add to the CLI.
  * @param serviceProviders optional array of {@link ServiceProvider} instances to add to the CLI.
  */
 export async function launchMultiCommandCLI(
@@ -145,7 +144,7 @@ export async function launchMultiCommandCLI(
   const cliConfig: CLIConfig = {
     description,
     name,
-    version: version || parseVersion(callingModuleUrl),
+    version: version || parseVersion(callingModuleUrl) || "N/A",
   };
   await checkPermissions(envVarsEnabled, configEnabled, keyValueServiceEnabled);
   const validateAllCommands =
