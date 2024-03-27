@@ -1,7 +1,10 @@
 // Argument API
 export type { default as Argument } from "./src/api/argument/Argument.ts";
 export type { ArgumentValues } from "./src/api/argument/ArgumentValueTypes.ts";
-export { ArgumentValueTypeName, ComplexValueTypeName } from "./src/api/argument/ArgumentValueTypes.ts";
+export {
+  ArgumentValueTypeName,
+  ComplexValueTypeName,
+} from "./src/api/argument/ArgumentValueTypes.ts";
 export type { default as ComplexOption } from "./src/api/argument/ComplexOption.ts";
 export type { default as SubCommandArgument } from "./src/api/argument/SubCommandArgument.ts";
 export type { default as GlobalCommandArgument } from "./src/api/argument/GlobalCommandArgument.ts";
@@ -58,4 +61,7 @@ export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export { default as DenoRuntimeCLI } from "./src/cli/DenoRuntimeCLI.ts";
 
 // Convenience functions
-export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";
+export {
+  launchMultiCommandCLI,
+  launchSingleCommandCLI,
+} from "./src/launcher.ts";
