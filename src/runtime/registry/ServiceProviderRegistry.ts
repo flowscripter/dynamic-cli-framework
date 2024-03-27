@@ -1,4 +1,4 @@
-import ServiceProvider from "../../api/service/ServiceProvider.ts";
+import { ServiceProvider } from "../../api/service/ServiceProvider.ts";
 
 /**
  * Interface used by a {@link CLI} to register {@link ServiceProvider} instances.

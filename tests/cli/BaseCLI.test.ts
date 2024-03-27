@@ -12,8 +12,9 @@ import BaseCLI from "../../src/cli/BaseCLI.ts";
 import KeyValueService, {
   KEY_VALUE_SERVICE_ID,
 } from "../../src/api/service/core/KeyValueService.ts";
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../src/api/service/ServiceProvider.ts";
 import Context from "../../src/api/Context.ts";
 import CLIConfig from "../../src/api/CLIConfig.ts";

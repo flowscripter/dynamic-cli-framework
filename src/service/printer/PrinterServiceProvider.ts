@@ -1,7 +1,8 @@
 import Context from "../../api/Context.ts";
 import LogLevelCommand from "./command/LogLevelCommand.ts";
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import DefaultPrinterService from "./DefaultPrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
@@ -13,7 +14,7 @@ import CLIConfig from "../../api/CLIConfig.ts";
  * Provides a {@link PrinterService}.
  */
 export default class PrinterServiceProvider implements ServiceProvider {
-  readonly serviceId = PRINTER_SERVICE_ID;
+  readonly serviceId: string = PRINTER_SERVICE_ID;
   readonly servicePriority: number;
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;

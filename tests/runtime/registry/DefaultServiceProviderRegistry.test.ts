@@ -1,6 +1,7 @@
 import { assertEquals } from "../../test_deps.ts";
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../../src/api/service/ServiceProvider.ts";
 import DefaultServiceProviderRegistry from "../../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
 import Context from "../../../src/api/Context.ts";

@@ -1,5 +1,6 @@
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import DefaultShutdownService from "./DefaultShutdownService.ts";
 import ShutdownService, {
@@ -15,7 +16,7 @@ const logger = getLogger("ShutdownServiceProvider");
  * Provides a {@link ShutdownService}.
  */
 export default class ShutdownServiceProvider implements ServiceProvider {
-  readonly serviceId = SHUTDOWN_SERVICE_ID;
+  readonly serviceId: string = SHUTDOWN_SERVICE_ID;
   readonly servicePriority: number;
   readonly shutdownService: ShutdownService;
 

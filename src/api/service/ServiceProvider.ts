@@ -20,7 +20,7 @@ export interface ServiceInfo {
 /**
  * Interface allowing services to be provided to the CLI.
  */
-export default interface ServiceProvider {
+export interface ServiceProvider {
   /**
    * The ID which identifies the service provided.
    */

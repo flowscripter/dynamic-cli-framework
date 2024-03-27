@@ -1,5 +1,6 @@
-import ServiceProvider, {
+import {
   ServiceInfo,
+  ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import ConfigCommand from "./command/ConfigCommand.ts";
 import {
@@ -147,7 +148,7 @@ const logger = getLogger("ConfigurationServiceProvider");
  * ```
  */
 export default class ConfigurationServiceProvider implements ServiceProvider {
-  readonly serviceId = KEY_VALUE_SERVICE_ID;
+  readonly serviceId: string = KEY_VALUE_SERVICE_ID;
   readonly servicePriority: number;
 
   public readonly envVarsEnabled: boolean;

@@ -5,7 +5,7 @@ import DefaultCommandRegistry from "../runtime/registry/DefaultCommandRegistry.t
 import Command from "../api/command/Command.ts";
 import DefaultServiceProviderRegistry from "../runtime/registry/DefaultServiceProviderRegistry.ts";
 import DefaultContext from "../runtime/DefaultContext.ts";
-import ServiceProvider from "../api/service/ServiceProvider.ts";
+import { ServiceProvider } from "../api/service/ServiceProvider.ts";
 import CLIConfig from "../api/CLIConfig.ts";
 import SubCommand from "../api/command/SubCommand.ts";
 import GlobalCommand from "../api/command/GlobalCommand.ts";
