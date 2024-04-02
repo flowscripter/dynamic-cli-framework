@@ -4,7 +4,7 @@ import SubCommand from "./api/command/SubCommand.ts";
 import DenoRuntimeCLI from "./cli/DenoRuntimeCLI.ts";
 import Command from "./api/command/Command.ts";
 import RunResult from "./api/RunResult.ts";
-import ServiceProvider from "./api/service/ServiceProvider.ts";
+import { ServiceProvider } from "./api/service/ServiceProvider.ts";
 import { getEnvVarIfPermitted } from "./util/envVarHelper.ts";
 
 function parseVersion(moduleUrl?: string): string | undefined {
