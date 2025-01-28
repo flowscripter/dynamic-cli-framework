@@ -1,9 +1,9 @@
-import CommandRegistry from "./CommandRegistry.ts";
-import GlobalCommand from "../../api/command/GlobalCommand.ts";
-import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../../api/command/GroupCommand.ts";
-import SubCommand from "../../api/command/SubCommand.ts";
-import Command from "../../api/command/Command.ts";
+import type CommandRegistry from "./CommandRegistry.ts";
+import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../../api/command/GroupCommand.ts";
+import type SubCommand from "../../api/command/SubCommand.ts";
+import type Command from "../../api/command/Command.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
@@ -11,7 +11,7 @@ import {
   isSubCommand,
 } from "../command/CommandTypeGuards.ts";
 import getLogger from "../../util/logger.ts";
-import CommandValidator from "../command/CommandValidator.ts";
+import type CommandValidator from "../command/CommandValidator.ts";
 
 const logger = getLogger("DefaultCommandRegistry");
 

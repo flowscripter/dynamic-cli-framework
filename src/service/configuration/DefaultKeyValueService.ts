@@ -1,4 +1,4 @@
-import KeyValueService from "../../api/service/core/KeyValueService.ts";
+import type KeyValueService from "../../api/service/core/KeyValueService.ts";
 
 export default class DefaultKeyValueService implements KeyValueService {
   #keyValueData: Map<string, string> | undefined;

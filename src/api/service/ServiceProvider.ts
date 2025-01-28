@@ -1,6 +1,6 @@
-import Command from "../command/Command.ts";
-import Context from "../Context.ts";
-import CLIConfig from "../CLIConfig.ts";
+import type Command from "../command/Command.ts";
+import type Context from "../Context.ts";
+import type CLIConfig from "../CLIConfig.ts";
 
 /**
  * Information regarding a service instance provided by a {@link ServiceProvider}.

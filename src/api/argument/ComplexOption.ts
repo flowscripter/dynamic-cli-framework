@@ -1,5 +1,8 @@
-import Option from "./Option.ts";
-import { ArgumentValues, ComplexValueTypeName } from "./ArgumentValueTypes.ts";
+import type Option from "./Option.ts";
+import type {
+  ArgumentValues,
+  ComplexValueTypeName,
+} from "./ArgumentValueTypes.ts";
 
 export const MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH = 10;
 

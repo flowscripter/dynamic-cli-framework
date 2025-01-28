@@ -1,4 +1,4 @@
-import { Buffer } from "../test_deps.ts";
+import { Buffer } from "@std/streams";
 import { getCommandRegistry } from "../fixtures/CommandRegistry.ts";
 import {
   getGlobalCommand,
@@ -14,8 +14,8 @@ import {
   MultiCommandCliHelpGlobalCommand,
   MultiCommandCliHelpSubCommand,
 } from "../../src/command/MultiCommandCliHelpCommand.ts";
-import SubCommand from "../../src/api/command/SubCommand.ts";
-import GroupCommand from "../../src/api/command/GroupCommand.ts";
+import type SubCommand from "../../src/api/command/SubCommand.ts";
+import type GroupCommand from "../../src/api/command/GroupCommand.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 
 Deno.test("MultiCommandCliHelpGlobalCommand works", async () => {

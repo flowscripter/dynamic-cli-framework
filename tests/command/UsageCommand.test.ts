@@ -1,12 +1,13 @@
-import { assertEquals, Buffer } from "../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals } from "@std/assert";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import UsageCommand from "../../src/command/UsageCommand.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { PRINTER_SERVICE_ID } from "../../src/api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../../src/service/printer/DefaultPrinterService.ts";
-import { ArgumentValues } from "../../src/api/argument/ArgumentValueTypes.ts";
-import Context from "../../src/api/Context.ts";
-import Command from "../../src/api/command/Command.ts";
+import type { ArgumentValues } from "../../src/api/argument/ArgumentValueTypes.ts";
+import type Context from "../../src/api/Context.ts";
+import type Command from "../../src/api/command/Command.ts";
 
 const decoder = new TextDecoder();
 

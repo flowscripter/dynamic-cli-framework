@@ -1,4 +1,4 @@
-import { Buffer } from "../test_deps.ts";
+import { Buffer } from "@std/streams";
 import { getCommandRegistry } from "../fixtures/CommandRegistry.ts";
 import {
   getGlobalCommand,
@@ -13,7 +13,7 @@ import {
 } from "../fixtures/util.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleCommandCliHelpCommand.ts";
-import SubCommand from "../../src/api/command/SubCommand.ts";
+import type SubCommand from "../../src/api/command/SubCommand.ts";
 
 Deno.test("Ensure single command CLI with simple default command help is rendered correctly: simple default command", async () => {
   const buffer = new Buffer();

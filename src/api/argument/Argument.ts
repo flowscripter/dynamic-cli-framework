@@ -1,4 +1,4 @@
-import {
+import type {
   ArgumentSingleValueType,
   ArgumentValueTypeName,
 } from "./ArgumentValueTypes.ts";

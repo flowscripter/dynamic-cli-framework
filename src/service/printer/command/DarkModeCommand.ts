@@ -1,11 +1,11 @@
-import GlobalModifierCommand from "../../../api/command/GlobalModifierCommand.ts";
-import GlobalCommandArgument from "../../../api/argument/GlobalCommandArgument.ts";
+import type GlobalModifierCommand from "../../../api/command/GlobalModifierCommand.ts";
+import type GlobalCommandArgument from "../../../api/argument/GlobalCommandArgument.ts";
 import {
-  ArgumentSingleValueType,
+  type ArgumentSingleValueType,
   ArgumentValueTypeName,
 } from "../../../api/argument/ArgumentValueTypes.ts";
-import Context from "../../../api/Context.ts";
-import PrinterServiceProvider from "../PrinterServiceProvider.ts";
+import type Context from "../../../api/Context.ts";
+import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
 
 /**
  * Command allowing the specification of dark/light mode for {@link PrinterServiceProvider}.

@@ -1,14 +1,15 @@
-import CLI from "../api/CLI.ts";
-import RunResult, { RunState } from "../api/RunResult.ts";
+import type CLI from "../api/CLI.ts";
+import type RunResult from "../api/RunResult.ts";
+import { RunState } from "../api/RunResult.ts";
 import getLogger from "../util/logger.ts";
 import DefaultCommandRegistry from "../runtime/registry/DefaultCommandRegistry.ts";
-import Command from "../api/command/Command.ts";
+import type Command from "../api/command/Command.ts";
 import DefaultServiceProviderRegistry from "../runtime/registry/DefaultServiceProviderRegistry.ts";
 import DefaultContext from "../runtime/DefaultContext.ts";
-import { ServiceProvider } from "../api/service/ServiceProvider.ts";
-import CLIConfig from "../api/CLIConfig.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
+import type { ServiceProvider } from "../api/service/ServiceProvider.ts";
+import type CLIConfig from "../api/CLIConfig.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import {
   SingleCommandCliHelpGlobalCommand,
   SingleCommandCliHelpSubCommand,
@@ -281,10 +282,10 @@ export default class BaseCLI implements CLI {
       return runResult;
     } catch (error) {
       // An unexpected error in the framework
-      logger.error("Runtime error: %s", error.message);
+      logger.error("Runtime error: %s", (error as Error).message);
       return {
         runState: RunState.RUNTIME_ERROR,
-        error,
+        error: error as Error,
       };
     } finally {
       await ShutdownServiceProvider.shutdown();

@@ -1,4 +1,4 @@
-import { Buffer } from "../../test_deps.ts";
+import { Buffer } from "@std/streams";
 import {
   expectBufferBytesEquals,
   expectBufferStringEquals,

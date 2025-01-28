@@ -1,8 +1,8 @@
-import {
+import type {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import { InvalidArgument } from "../../api/RunResult.ts";
+import type { InvalidArgument } from "../../api/RunResult.ts";
 
 /**
  * A base interface for a container holding the result of argument value population.

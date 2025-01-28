@@ -1,4 +1,4 @@
-import GlobalCommand from "./GlobalCommand.ts";
+import type GlobalCommand from "./GlobalCommand.ts";
 
 /**
  * Interface for a global modifier command.

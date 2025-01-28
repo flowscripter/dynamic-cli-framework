@@ -1,25 +1,25 @@
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
 } from "../api/argument/ArgumentValueTypes.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import Context from "../api/Context.ts";
-import UsageExample from "../api/command/UsageExample.ts";
-import Option from "../api/argument/Option.ts";
-import Positional from "../api/argument/Positional.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
+import type Context from "../api/Context.ts";
+import type UsageExample from "../api/command/UsageExample.ts";
+import type Option from "../api/argument/Option.ts";
+import type Positional from "../api/argument/Positional.ts";
+import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
 import {
   getGlobalCommandArgumentConfigurationKey,
   getSubCommandArgumentConfigurationKey,
 } from "./configHelper.ts";
-import Command from "../api/command/Command.ts";
-import CLIConfig from "../api/CLIConfig.ts";
-import PrinterService from "../api/service/core/PrinterService.ts";
-import SubCommandArgument from "../api/argument/SubCommandArgument.ts";
-import ComplexOption from "../api/argument/ComplexOption.ts";
+import type Command from "../api/command/Command.ts";
+import type CLIConfig from "../api/CLIConfig.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
+import type ComplexOption from "../api/argument/ComplexOption.ts";
 
 const SYNTAX_INDENT_WIDTH = 2;
 const SYNTAX_MIN_PADDING_WIDTH = 2;

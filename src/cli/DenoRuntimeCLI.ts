@@ -1,6 +1,7 @@
 import BaseCLI from "./BaseCLI.ts";
-import RunResult, { RunState } from "../api/RunResult.ts";
-import CLIConfig from "../api/CLIConfig.ts";
+import type RunResult from "../api/RunResult.ts";
+import { RunState } from "../api/RunResult.ts";
+import type CLIConfig from "../api/CLIConfig.ts";
 
 /**
  * Deno implementation of a {@link CLI} using `Deno.stdout`, `Deno.stderr` and `Deno.args`.
@@ -32,7 +33,7 @@ export default class DenoRuntimeCLI extends BaseCLI {
    * Run the CLI using `Deno.args` for the arguments and call `Deno.exit()` passing the
    * {@link RunState} value resulting from the invocation.
    */
-  async run(): Promise<RunResult> {
+  override async run(): Promise<RunResult> {
     const runResult = await super.run(Deno.args);
     if (runResult.runState === RunState.RUNTIME_ERROR) {
       console.error(runResult.error);

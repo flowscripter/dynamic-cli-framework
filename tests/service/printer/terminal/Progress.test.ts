@@ -1,5 +1,4 @@
-import { Buffer } from "../../../test_deps.ts";
-
+import { Buffer } from "@std/streams";
 import Terminal from "../../../../src/service/printer/terminal/Terminal.ts";
 import Progress from "../../../../src/service/printer/terminal/Progress.ts";
 import { sleep } from "../../../fixtures/util.ts";

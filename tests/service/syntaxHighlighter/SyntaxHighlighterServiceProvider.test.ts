@@ -1,4 +1,5 @@
-import { assertEquals, Buffer } from "../../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals } from "@std/assert";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import SyntaxHighlighterServiceProvider from "../../../src/service/syntaxHighlighter/SyntaxHighlighterServiceProvider.ts";

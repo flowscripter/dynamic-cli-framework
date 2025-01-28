@@ -1,4 +1,6 @@
-import { assertEquals, assertSnapshot, Buffer } from "../../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import BannerServiceProvider from "../../../src/service/banner/BannerServiceProvider.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";

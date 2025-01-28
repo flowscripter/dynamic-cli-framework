@@ -1,12 +1,12 @@
-import Command from "../api/command/Command.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
-import {
+import type Command from "../api/command/Command.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
+import type {
   ArgumentValueType,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
 } from "../api/argument/ArgumentValueTypes.ts";
-import { InvalidArgument } from "../api/RunResult.ts";
-import { CommandClause } from "./scanner.ts";
+import type { InvalidArgument } from "../api/RunResult.ts";
+import type { CommandClause } from "./scanner.ts";
 import populateGlobalCommandValue from "./values/globalCommandValuePopulation.ts";
 import {
   validateGlobalCommandArgumentValue,
@@ -15,8 +15,8 @@ import {
 } from "./values/argumentValueValidation.ts";
 import getLogger from "../util/logger.ts";
 import populateSubCommandValues from "./values/subCommandValuePopulation.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import SubCommand from "../api/command/SubCommand.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
 
 const logger = getLogger("parser");
 

@@ -1,8 +1,8 @@
-import GroupCommand from "../../api/command/GroupCommand.ts";
-import SubCommand from "../../api/command/SubCommand.ts";
-import GlobalCommand from "../../api/command/GlobalCommand.ts";
-import GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
-import Command from "../../api/command/Command.ts";
+import type GroupCommand from "../../api/command/GroupCommand.ts";
+import type SubCommand from "../../api/command/SubCommand.ts";
+import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
+import type Command from "../../api/command/Command.ts";
 
 /**
  * Interface used by a {@link CLI} to register {@link Command} instances.

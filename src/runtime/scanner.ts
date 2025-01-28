@@ -1,8 +1,8 @@
-import GroupCommand from "../api/command/GroupCommand.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
+import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import getLogger from "../util/logger.ts";
-import Command from "../api/command/Command.ts";
-import SubCommand from "../api/command/SubCommand.ts";
+import type Command from "../api/command/Command.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
 import { isGroupCommand } from "./command/CommandTypeGuards.ts";
 
 const logger = getLogger("scanner");

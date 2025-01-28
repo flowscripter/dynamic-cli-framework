@@ -1,20 +1,24 @@
-import Option from "../../api/argument/Option.ts";
-import SubCommand from "../../api/command/SubCommand.ts";
+import type Option from "../../api/argument/Option.ts";
+import type SubCommand from "../../api/command/SubCommand.ts";
 import {
-  ArgumentSingleValueType,
+  type ArgumentSingleValueType,
   ArgumentValueTypeName,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
-  PopulatedArgumentValueType,
+  type PopulatedArgumentSingleValueType,
+  type PopulatedArgumentValues,
+  type PopulatedArgumentValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
 import getLogger from "../../util/logger.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
-import { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import ComplexOption, {
+import type { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
+import type ComplexOption from "../../api/argument/ComplexOption.ts";
+import {
   MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
 } from "../../api/argument/ComplexOption.ts";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
-import { InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
+import {
+  type InvalidArgument,
+  InvalidArgumentReason,
+} from "../../api/RunResult.ts";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
 
 const logger = getLogger("subCommandValuePopulation");

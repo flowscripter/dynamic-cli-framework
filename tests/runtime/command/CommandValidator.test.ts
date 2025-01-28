@@ -1,4 +1,4 @@
-import { assertThrows } from "../../test_deps.ts";
+import { assertThrows } from "@std/assert";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import CommandValidator from "../../../src/runtime/command/CommandValidator.ts";
 import {
@@ -6,14 +6,14 @@ import {
   getGroupCommand,
   getSubCommandWithComplexOptions,
 } from "../../fixtures/Command.ts";
-import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import Option from "../../../src/api/argument/Option.ts";
-import Positional from "../../../src/api/argument/Positional.ts";
-import SubCommand from "../../../src/api/command/SubCommand.ts";
+import type Option from "../../../src/api/argument/Option.ts";
+import type Positional from "../../../src/api/argument/Positional.ts";
+import type SubCommand from "../../../src/api/command/SubCommand.ts";
 
 function getSubCommand(
   name: string,

@@ -1,16 +1,18 @@
-import Command from "../../api/command/Command.ts";
+import type Command from "../../api/command/Command.ts";
 import { isGroupCommand, isSubCommand } from "./CommandTypeGuards.ts";
-import GlobalCommand from "../../api/command/GlobalCommand.ts";
-import Argument from "../../api/argument/Argument.ts";
-import GroupCommand from "../../api/command/GroupCommand.ts";
-import SubCommand from "../../api/command/SubCommand.ts";
-import {
+import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type Argument from "../../api/argument/Argument.ts";
+import type GroupCommand from "../../api/command/GroupCommand.ts";
+import type SubCommand from "../../api/command/SubCommand.ts";
+import type {
   ArgumentSingleValueType,
+} from "../../api/argument/ArgumentValueTypes.ts";
+import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
 } from "../../api/argument/ArgumentValueTypes.ts";
-import Option from "../../api/argument/Option.ts";
-import ComplexOption from "../../api/argument/ComplexOption.ts";
+import type Option from "../../api/argument/Option.ts";
+import type ComplexOption from "../../api/argument/ComplexOption.ts";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
 import {
   getInvalidArgumentString,
@@ -18,14 +20,14 @@ import {
   validateOptionValue,
 } from "../values/argumentValueValidation.ts";
 import getLogger from "../../util/logger.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 import {
   getGlobalCommandArgumentConfigurationKey,
   getSubCommandArgumentConfigurationKey,
 } from "../../util/configHelper.ts";
-import { InvalidArgument } from "../../api/RunResult.ts";
-import SubCommandArgument from "../../api/argument/SubCommandArgument.ts";
-import GlobalCommandArgument from "../../api/argument/GlobalCommandArgument.ts";
+import type { InvalidArgument } from "../../api/RunResult.ts";
+import type SubCommandArgument from "../../api/argument/SubCommandArgument.ts";
+import type GlobalCommandArgument from "../../api/argument/GlobalCommandArgument.ts";
 
 const logger = getLogger("commandValidation");
 

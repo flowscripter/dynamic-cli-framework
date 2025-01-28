@@ -1,10 +1,10 @@
 /**
  * State of a {@link CLI} after invocation.
  */
-import Command from "./command/Command.ts";
-import Argument from "./argument/Argument.ts";
-import ComplexOption from "./argument/ComplexOption.ts";
-import {
+import type Command from "./command/Command.ts";
+import type Argument from "./argument/Argument.ts";
+import type ComplexOption from "./argument/ComplexOption.ts";
+import type {
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
 } from "./argument/ArgumentValueTypes.ts";

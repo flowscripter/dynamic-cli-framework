@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "../test_deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 

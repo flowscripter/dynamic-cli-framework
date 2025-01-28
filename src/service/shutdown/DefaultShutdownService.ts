@@ -1,4 +1,4 @@
-import ShutdownService from "../../api/service/core/ShutdownService.ts";
+import type ShutdownService from "../../api/service/core/ShutdownService.ts";
 
 export default class DefaultShutdownService implements ShutdownService {
   static readonly callbacks: Array<() => Promise<void>> = [];

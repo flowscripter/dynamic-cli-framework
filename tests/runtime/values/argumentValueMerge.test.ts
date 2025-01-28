@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "../../test_deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import argumentValueMerge from "../../../src/runtime/values/argumentValueMerge.ts";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../../src/api/argument/SubCommandArgument.ts";
 

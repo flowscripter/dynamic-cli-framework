@@ -1,27 +1,28 @@
-import Positional from "../api/argument/Positional.ts";
-import Option from "../api/argument/Option.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
+import type Positional from "../api/argument/Positional.ts";
+import type Option from "../api/argument/Option.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
+import { distance } from "fastest-levenshtein";
 import {
-  ArgumentSingleValueType,
-  ArgumentValues,
+  type ArgumentSingleValueType,
+  type ArgumentValues,
   ArgumentValueTypeName,
 } from "../api/argument/ArgumentValueTypes.ts";
-import Context from "../api/Context.ts";
+import type Context from "../api/Context.ts";
+import type { HelpSection } from "../util/helpHelper.ts";
 import {
   getCommandArgsHelpSections,
   getCommandExamplesHelpSections,
   getGlobalArgumentHelpEntry,
   getMultiCommandAppSyntax,
   getSubCommandArgumentsSyntax,
-  HelpSection,
   printHelpSections,
 } from "../util/helpHelper.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import { levenshtein } from "../../deps.ts";
-import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
-import PrinterService, {
+import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import {
   Icon,
   PRINTER_SERVICE_ID,
 } from "../api/service/core/PrinterService.ts";
@@ -51,7 +52,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
     const levenCommandArray = new Array<[number, string]>();
     subCommands.forEach((subCommand) => {
       levenCommandArray.push([
-        levenshtein(subCommand.name, commandName),
+        distance(subCommand.name, commandName),
         subCommand.name,
       ]);
     });
@@ -59,7 +60,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
       groupCommand.memberSubCommands.forEach((memberCommand) => {
         const memberName = `${groupCommand.name}:${memberCommand.name}`;
         levenCommandArray.push([
-          levenshtein(memberName, commandName),
+          distance(memberName, commandName),
           memberName,
         ]);
       });

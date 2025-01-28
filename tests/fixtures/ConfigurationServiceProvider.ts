@@ -1,9 +1,9 @@
 import ConfigurationServiceProvider from "../../src/service/configuration/ConfigurationServiceProvider.ts";
-import {
+import type {
   ArgumentSingleValueType,
   ArgumentValues,
 } from "../../src/api/argument/ArgumentValueTypes.ts";
-import Context from "../../src/api/Context.ts";
+import type Context from "../../src/api/Context.ts";
 
 class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
   constructor(
@@ -15,7 +15,7 @@ class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
     this.defaultsData = defaultsData;
   }
 
-  public initService(_context: Context): Promise<void> {
+  public override initService(_context: Context): Promise<void> {
     return Promise.resolve();
   }
 }

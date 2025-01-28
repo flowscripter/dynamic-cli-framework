@@ -1,7 +1,9 @@
-import GlobalCommand from "../../api/command/GlobalCommand.ts";
-import { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
+import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import {
   ArgumentValueTypeName,
+} from "../../api/argument/ArgumentValueTypes.ts";
+import type {
   PopulatedArgumentSingleValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
 import getLogger from "../../util/logger.ts";

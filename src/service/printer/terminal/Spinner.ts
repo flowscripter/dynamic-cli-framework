@@ -1,5 +1,5 @@
-import { colors } from "../../../../deps.ts";
-import Terminal from "./Terminal.ts";
+import * as colors from "@std/fmt/colors";
+import type Terminal from "./Terminal.ts";
 
 const FRAMES = [
   "⠋",

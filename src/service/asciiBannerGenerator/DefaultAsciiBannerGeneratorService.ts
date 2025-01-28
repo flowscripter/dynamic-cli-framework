@@ -1,6 +1,5 @@
-import AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import { figlet_factory, figlet_serializer } from "../../../deps.ts";
-
+import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import figlet from "figlet";
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
 import standardFont from "./standard.flf.json" with { type: "json" };
 
@@ -10,14 +9,13 @@ import standardFont from "./standard.flf.json" with { type: "json" };
  */
 export default class DefaultAsciiBannerGeneratorService
   implements AsciiBannerGeneratorService {
-  #fontDefinitionsByName: Map<string, string> = new Map();
-  #fontDictionariesByName: Map<string, string> = new Map();
+  #registeredFontNames: Array<string> = [];
 
   constructor() {
     this.registerFont("standard", standardFont.font);
   }
   getRegisteredFonts(): ReadonlyArray<string> {
-    return Array.from(this.#fontDefinitionsByName.keys());
+    return this.#registeredFontNames;
   }
 
   registerFont(fontName: string, fontDefinition: string): void {
@@ -25,22 +23,16 @@ export default class DefaultAsciiBannerGeneratorService
     if (this.getRegisteredFonts().includes(name)) {
       throw new Error(`Font name already registered: ${name}`);
     }
-    this.#fontDefinitionsByName.set(name, fontDefinition);
+    this.#registeredFontNames.push(name);
+    figlet.parseFont(fontName, fontDefinition);
   }
 
   async generate(message: string, fontName: string): Promise<string> {
     const name = fontName.toLowerCase();
     if (!this.getRegisteredFonts().includes(name)) {
-      throw new Error(`Syntax name is not registered: ${name}`);
+      throw new Error(`Font name is not registered: ${name}`);
     }
 
-    let dictionary = this.#fontDictionariesByName.get(name);
-    if (!dictionary) {
-      dictionary = await figlet_serializer(
-        this.#fontDefinitionsByName.get(name),
-      );
-      this.#fontDictionariesByName.set(name, dictionary as string);
-    }
-    return await figlet_factory(message, dictionary);
+    return "\n" + await figlet.text(message, { font: name }) + "\n";
   }
 }

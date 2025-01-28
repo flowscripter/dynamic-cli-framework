@@ -1,11 +1,11 @@
-import { assertEquals } from "../../test_deps.ts";
-import {
+import { assertEquals } from "@std/assert";
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../../src/api/service/ServiceProvider.ts";
 import DefaultServiceProviderRegistry from "../../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
-import Context from "../../../src/api/Context.ts";
-import CLIConfig from "../../../src/api/CLIConfig.ts";
+import type Context from "../../../src/api/Context.ts";
+import type CLIConfig from "../../../src/api/CLIConfig.ts";
 
 function getServiceProvider(
   serviceId: string,

@@ -1,4 +1,4 @@
-import { assertEquals } from "../test_deps.ts";
+import { assertEquals } from "@std/assert";
 import {
   getGlobalCommand,
   getGlobalModifierCommand,
@@ -7,18 +7,18 @@ import {
 } from "../fixtures/Command.ts";
 import {
   parseGlobalCommandClause,
-  ParseResult,
+  type ParseResult,
   parseSubCommandClause,
 } from "../../src/runtime/parser.ts";
 import { InvalidArgumentReason } from "../../src/api/RunResult.ts";
-import ComplexOption from "../../src/api/argument/ComplexOption.ts";
+import type ComplexOption from "../../src/api/argument/ComplexOption.ts";
 import {
-  ArgumentValueType,
+  type ArgumentValueType,
   ArgumentValueTypeName,
   ComplexValueTypeName,
-  PopulatedArgumentValues,
+  type PopulatedArgumentValues,
 } from "../../src/api/argument/ArgumentValueTypes.ts";
-import SubCommand from "../../src/api/command/SubCommand.ts";
+import type SubCommand from "../../src/api/command/SubCommand.ts";
 
 function expectParseResult(result: ParseResult, expected: ParseResult) {
   assertEquals(

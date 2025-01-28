@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "../../test_deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import DefaultKeyValueService from "../../../src/service/configuration/DefaultKeyValueService.ts";
 
 Deno.test("Setting data works", () => {

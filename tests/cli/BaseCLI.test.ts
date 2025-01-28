@@ -3,22 +3,24 @@ import {
   getSubCommand,
   getSubCommandWithOptionAndPositional,
 } from "../fixtures/Command.ts";
-import { assertEquals, Buffer } from "../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals } from "@std/assert";
+import * as path from "@std/path";
 import { expectBufferStringIncludes } from "../fixtures/util.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { RunState } from "../../src/api/RunResult.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
-import KeyValueService, {
+import type KeyValueService from "../../src/api/service/core/KeyValueService.ts";
+import {
   KEY_VALUE_SERVICE_ID,
 } from "../../src/api/service/core/KeyValueService.ts";
-import {
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../src/api/service/ServiceProvider.ts";
-import Context from "../../src/api/Context.ts";
-import CLIConfig from "../../src/api/CLIConfig.ts";
-import { path } from "../../deps.ts";
+import type Context from "../../src/api/Context.ts";
+import type CLIConfig from "../../src/api/CLIConfig.ts";
 
 Deno.test("BaseCLI no command specified works", async () => {
   const config = getCLIConfig();

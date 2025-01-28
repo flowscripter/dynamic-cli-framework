@@ -1,4 +1,4 @@
-import { assertEquals } from "../../test_deps.ts";
+import { assertEquals } from "@std/assert";
 import ShutdownServiceProvider from "../../../src/service/shutdown/ShutdownServiceProvider.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 

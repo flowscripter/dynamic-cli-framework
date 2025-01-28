@@ -1,6 +1,6 @@
-import Context from "../../api/Context.ts";
+import type Context from "../../api/Context.ts";
 import LogLevelCommand from "./command/LogLevelCommand.ts";
-import {
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
@@ -8,7 +8,7 @@ import DefaultPrinterService from "./DefaultPrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import DarkModeCommand from "./command/DarkModeCommand.ts";
 import NoColorCommand from "./command/NoColorCommand.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 
 /**
  * Provides a {@link PrinterService}.

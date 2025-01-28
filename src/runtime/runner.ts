@@ -1,8 +1,9 @@
-import Context from "../api/Context.ts";
-import RunResult, { RunState } from "../api/RunResult.ts";
-import CommandRegistry from "./registry/CommandRegistry.ts";
+import type Context from "../api/Context.ts";
+import type RunResult from "../api/RunResult.ts";
+import { RunState } from "../api/RunResult.ts";
+import type CommandRegistry from "./registry/CommandRegistry.ts";
 import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
-import {
+import type {
   ArgumentSingleValueType,
   ArgumentValues,
   PopulatedArgumentSingleValueType,
@@ -19,18 +20,18 @@ import {
   scanForGlobalModifierCommandClauses,
   scanForNonModifierCommandClause,
 } from "./scanner.ts";
-import ServiceProviderRegistry from "./registry/ServiceProviderRegistry.ts";
+import type ServiceProviderRegistry from "./registry/ServiceProviderRegistry.ts";
 import {
   parseGlobalCommandClause,
-  ParseResult,
+  type ParseResult,
   parseSubCommandClause,
 } from "./parser.ts";
-import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import Command from "../api/command/Command.ts";
+import type ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
+import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type Command from "../api/command/Command.ts";
 
 const logger = getLogger("runner");
 
@@ -94,13 +95,13 @@ async function executeParsedCommand(
     await printCommandExecutionError(
       context,
       parseResult,
-      err,
+      err as Error,
       isDefaultCommand,
     );
     return {
       runState: RunState.EXECUTION_ERROR,
       command: parseResult.command,
-      error: err,
+      error: err as Error,
     };
   }
 

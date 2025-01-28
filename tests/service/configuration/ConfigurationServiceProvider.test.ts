@@ -1,10 +1,10 @@
-import { assertEquals, assertThrows } from "../../test_deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import { ArgumentValueTypeName } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import KeyValueService from "../../../src/api/service/core/KeyValueService.ts";
-import SubCommand from "../../../src/api/command/SubCommand.ts";
+import type KeyValueService from "../../../src/api/service/core/KeyValueService.ts";
+import type SubCommand from "../../../src/api/command/SubCommand.ts";
 
 function getConfig() {
   return {

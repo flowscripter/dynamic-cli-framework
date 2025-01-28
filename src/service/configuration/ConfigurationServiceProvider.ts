@@ -1,32 +1,32 @@
-import {
+import * as path from "@std/path";
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import ConfigCommand from "./command/ConfigCommand.ts";
-import {
+import type {
   ArgumentSingleValueType,
   ArgumentValues,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
 } from "../../api/argument/ArgumentValueTypes.ts";
 import getLogger from "../../util/logger.ts";
-import Context from "../../api/Context.ts";
+import type Context from "../../api/Context.ts";
 import DumpConfigCommand from "./command/DumpConfigCommand.ts";
 import { KEY_VALUE_SERVICE_ID } from "../../api/service/core/KeyValueService.ts";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
-import Command from "../../api/command/Command.ts";
+import type Command from "../../api/command/Command.ts";
 import argumentValueMerge from "../../runtime/values/argumentValueMerge.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
   isSubCommand,
 } from "../../runtime/command/CommandTypeGuards.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,
 } from "../../util/envVarHelper.ts";
-import { path } from "../../../deps.ts";
 
 const logger = getLogger("ConfigurationServiceProvider");
 
@@ -161,10 +161,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   // the configuration data to be used by the CLI runner implementation when setting command defaults.
   // ArgumentSingleValueType is for GlobalCommandArgument values, ArgumentValues is for
   // SubCommandArgument values.
-  public defaultsData = new Map<
+  public defaultsData: Map<
     string,
     ArgumentValues | ArgumentSingleValueType
-  >();
+  > = new Map();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
@@ -424,16 +424,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     try {
       fileInfo = await Deno.lstat(this.configLocation);
     } catch (err) {
+      const error = err as Error;
       if (isDefault) {
         logger.debug(
           "Default config file location: %s does not exist or is not visible - ignoring: %s",
           this.configLocation,
-          err.message,
+          error.message,
         );
         return;
       } else {
         throw new Error(
-          `Config file location: '${this.configLocation}' doesn't exist or not visible: ${err.message}`,
+          `Config file location: '${this.configLocation}' doesn't exist or not visible: ${error.message}`,
         );
       }
     }

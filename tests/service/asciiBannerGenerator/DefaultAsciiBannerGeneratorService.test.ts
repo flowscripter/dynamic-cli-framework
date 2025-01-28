@@ -1,9 +1,5 @@
-import {
-  assertEquals,
-  assertRejects,
-  assertSnapshot,
-  assertThrows,
-} from "../../test_deps.ts";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import DefaultAsciiBannerGeneratorService from "../../../src/service/asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
