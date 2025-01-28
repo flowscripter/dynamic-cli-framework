@@ -18,6 +18,8 @@ NOTE: The dynamic aspect is still in development as it relies upon:
   dependency.
 - a workaround solution for https://github.com/denoland/deno/issues/18327.
 
+So it isn't really dynamic at the moment! 😜
+
 ## Key Features
 
 - Flexible CLI definitions:
