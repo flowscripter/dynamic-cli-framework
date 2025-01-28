@@ -1,10 +1,10 @@
-import { assertEquals, assertFalse } from "../../test_deps.ts";
-import { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
+import { assertEquals, assertFalse } from "@std/assert";
+import type { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
 import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
 import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
-import GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
+import type GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
 import {
-  ArgumentSingleValueType,
+  type ArgumentSingleValueType,
   ArgumentValueTypeName,
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
 

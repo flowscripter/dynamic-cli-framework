@@ -1,4 +1,5 @@
-import { assertEquals, assertRejects, Buffer } from "../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals, assertRejects } from "@std/assert";
 import DefaultCommandRegistry from "../../src/runtime/registry/DefaultCommandRegistry.ts";
 import {
   getGlobalCommandWithShortAlias,
@@ -13,10 +14,10 @@ import { getContext } from "../fixtures/Context.ts";
 import { getServiceProviderRegistry } from "../fixtures/ServiceProviderRegistry.ts";
 import { expectBufferStringIncludes } from "../fixtures/util.ts";
 import { getConfigurationServiceProvider } from "../fixtures/ConfigurationServiceProvider.ts";
-import GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
+import type GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
 import {
-  ArgumentSingleValueType,
-  ArgumentValues,
+  type ArgumentSingleValueType,
+  type ArgumentValues,
   ArgumentValueTypeName,
   ComplexValueTypeName,
 } from "../../src/api/argument/ArgumentValueTypes.ts";

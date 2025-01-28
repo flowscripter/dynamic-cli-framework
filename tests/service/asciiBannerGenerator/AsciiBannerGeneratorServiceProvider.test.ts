@@ -1,4 +1,4 @@
-import { assertEquals } from "../../test_deps.ts";
+import { assertEquals } from "@std/assert";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import AsciiBannerGeneratorServiceProvider from "../../../src/service/asciiBannerGenerator/AsciiBannerGeneratorServiceProvider.ts";

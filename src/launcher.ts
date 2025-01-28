@@ -1,10 +1,10 @@
-import { path } from "../deps.ts";
-import CLIConfig from "./api/CLIConfig.ts";
-import SubCommand from "./api/command/SubCommand.ts";
+import * as path from "@std/path";
+import type CLIConfig from "./api/CLIConfig.ts";
+import type SubCommand from "./api/command/SubCommand.ts";
 import DenoRuntimeCLI from "./cli/DenoRuntimeCLI.ts";
-import Command from "./api/command/Command.ts";
-import RunResult from "./api/RunResult.ts";
-import { ServiceProvider } from "./api/service/ServiceProvider.ts";
+import type Command from "./api/command/Command.ts";
+import type RunResult from "./api/RunResult.ts";
+import type { ServiceProvider } from "./api/service/ServiceProvider.ts";
 import { getEnvVarIfPermitted } from "./util/envVarHelper.ts";
 
 function parseVersion(moduleUrl?: string): string | undefined {

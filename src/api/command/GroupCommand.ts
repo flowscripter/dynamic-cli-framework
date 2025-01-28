@@ -1,6 +1,6 @@
-import SubCommand from "./SubCommand.ts";
-import Command from "./Command.ts";
-import Context from "../Context.ts";
+import type SubCommand from "./SubCommand.ts";
+import type Command from "./Command.ts";
+import type Context from "../Context.ts";
 
 /**
  * Interface for a group command.

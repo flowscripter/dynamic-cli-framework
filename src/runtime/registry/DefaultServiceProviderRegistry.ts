@@ -1,5 +1,5 @@
-import ServiceProviderRegistry from "./ServiceProviderRegistry.ts";
-import { ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type ServiceProviderRegistry from "./ServiceProviderRegistry.ts";
+import type { ServiceProvider } from "../../api/service/ServiceProvider.ts";
 
 /**
  * Default implementation of a {@link ServiceProviderRegistry}.

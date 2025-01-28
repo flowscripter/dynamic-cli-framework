@@ -1,14 +1,14 @@
-import { assertEquals, assertFalse } from "../../test_deps.ts";
+import { assertEquals, assertFalse } from "@std/assert";
 import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-  PopulatedArgumentValues,
+  type PopulatedArgumentValues,
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
+import type { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
 import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
-import SubCommand from "../../../src/api/command/SubCommand.ts";
-import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import type SubCommand from "../../../src/api/command/SubCommand.ts";
+import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 
 function expectExtractResult(
   result: SubCommandValuePopulationResult,

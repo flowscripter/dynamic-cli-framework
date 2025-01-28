@@ -1,4 +1,4 @@
-import Argument from "./Argument.ts";
+import type Argument from "./Argument.ts";
 
 export const MAXIMUM_ARGUMENT_ARRAY_SIZE = 255;
 

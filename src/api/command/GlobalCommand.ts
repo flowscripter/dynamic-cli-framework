@@ -1,7 +1,7 @@
-import Command from "./Command.ts";
-import GlobalCommandArgument from "../argument/GlobalCommandArgument.ts";
-import Context from "../Context.ts";
-import { ArgumentSingleValueType } from "../argument/ArgumentValueTypes.ts";
+import type Command from "./Command.ts";
+import type GlobalCommandArgument from "../argument/GlobalCommandArgument.ts";
+import type Context from "../Context.ts";
+import type { ArgumentSingleValueType } from "../argument/ArgumentValueTypes.ts";
 
 /**
  * Interface for a global command.

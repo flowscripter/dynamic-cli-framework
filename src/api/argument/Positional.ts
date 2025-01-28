@@ -1,4 +1,4 @@
-import SubCommandArgument from "./SubCommandArgument.ts";
+import type SubCommandArgument from "./SubCommandArgument.ts";
 
 /**
  * Interface for {@link SubCommand} positional arguments.

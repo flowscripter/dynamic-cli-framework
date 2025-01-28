@@ -1,9 +1,8 @@
-import Context from "../api/Context.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import Command from "../api/command/Command.ts";
-import PrinterService, {
-  PRINTER_SERVICE_ID,
-} from "../api/service/core/PrinterService.ts";
+import type Context from "../api/Context.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type Command from "../api/command/Command.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
 
 /**
  * Command printing basic CLI usage.

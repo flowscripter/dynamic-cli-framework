@@ -1,5 +1,5 @@
-import Terminal from "./Terminal.ts";
-import { colors } from "../../../../deps.ts";
+import type Terminal from "./Terminal.ts";
+import * as colors from "@std/fmt/colors";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 

@@ -1,10 +1,6 @@
-import {
-  assert,
-  assertEquals,
-  assertFalse,
-  Buffer,
-  colors,
-} from "../test_deps.ts";
+import { assert, assertEquals, assertFalse } from "@std/assert";
+import type { Buffer } from "@std/streams";
+import * as colors from "@std/fmt/colors";
 
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();

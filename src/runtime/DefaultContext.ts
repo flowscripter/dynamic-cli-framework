@@ -1,5 +1,5 @@
-import Context from "../api/Context.ts";
-import CLIConfig from "../api/CLIConfig.ts";
+import type Context from "../api/Context.ts";
+import type CLIConfig from "../api/CLIConfig.ts";
 
 /**
  * Default implementation of a {@link Context}.

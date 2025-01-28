@@ -1,23 +1,23 @@
-import { assertEquals } from "../../test_deps.ts";
+import { assertEquals } from "@std/assert";
 import {
   validateGlobalCommandArgumentValue,
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
 import {
-  InvalidArgument,
+  type InvalidArgument,
   InvalidArgumentReason,
 } from "../../../src/api/RunResult.ts";
 import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-  PopulatedArgumentValues,
+  type PopulatedArgumentValues,
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
-import Positional from "../../../src/api/argument/Positional.ts";
-import GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
-import Option from "../../../src/api/argument/Option.ts";
+import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import type Positional from "../../../src/api/argument/Positional.ts";
+import type GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
+import type Option from "../../../src/api/argument/Option.ts";
 
 Deno.test("Option types", () => {
   let option: Option = {

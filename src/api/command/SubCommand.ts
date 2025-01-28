@@ -1,10 +1,10 @@
-import Command from "./Command.ts";
-import Option from "../argument/Option.ts";
-import Positional from "../argument/Positional.ts";
-import UsageExample from "./UsageExample.ts";
-import ComplexOption from "../argument/ComplexOption.ts";
-import { ArgumentValues } from "../argument/ArgumentValueTypes.ts";
-import Context from "../Context.ts";
+import type Command from "./Command.ts";
+import type Option from "../argument/Option.ts";
+import type Positional from "../argument/Positional.ts";
+import type UsageExample from "./UsageExample.ts";
+import type ComplexOption from "../argument/ComplexOption.ts";
+import type { ArgumentValues } from "../argument/ArgumentValueTypes.ts";
+import type Context from "../Context.ts";
 
 /**
  * Interface for a sub-command.

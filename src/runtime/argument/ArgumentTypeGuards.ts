@@ -1,5 +1,5 @@
-import Argument from "../../api/argument/Argument.ts";
-import ComplexOption from "../../api/argument/ComplexOption.ts";
+import type Argument from "../../api/argument/Argument.ts";
+import type ComplexOption from "../../api/argument/ComplexOption.ts";
 
 export function isComplexOption(
   argument: Argument | ComplexOption,

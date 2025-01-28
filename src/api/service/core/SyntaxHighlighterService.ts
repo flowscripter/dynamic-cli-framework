@@ -1,4 +1,4 @@
-import { HighlightSyntax } from "../../../../deps.ts";
+import type { LanguageFn as HighlightSyntax } from "highlight.js";
 
 export const SYNTAX_HIGHLIGHTER_SERVICE_ID =
   "@flowscripter/dynamic-cli-framework/highlighter-service";

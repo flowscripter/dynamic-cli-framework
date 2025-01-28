@@ -1,4 +1,4 @@
-import {
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
@@ -6,11 +6,10 @@ import DefaultSyntaxHighlighterService from "./DefaultSyntaxHighlighterService.t
 import {
   SYNTAX_HIGHLIGHTER_SERVICE_ID,
 } from "../../api/service/core/SyntaxHighlighterService.ts";
-import Context from "../../api/Context.ts";
-import PrinterService, {
-  PRINTER_SERVICE_ID,
-} from "../../api/service/core/PrinterService.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type Context from "../../api/Context.ts";
+import type PrinterService from "../../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 
 /**
  * Provides a {@link SyntaxHighlighterService}.

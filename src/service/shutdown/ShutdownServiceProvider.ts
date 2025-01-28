@@ -1,14 +1,13 @@
-import {
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
 import DefaultShutdownService from "./DefaultShutdownService.ts";
-import ShutdownService, {
-  SHUTDOWN_SERVICE_ID,
-} from "../../api/service/core/ShutdownService.ts";
-import Context from "../../api/Context.ts";
+import type ShutdownService from "../../api/service/core/ShutdownService.ts";
+import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
+import type Context from "../../api/Context.ts";
 import getLogger from "../../util/logger.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 
 const logger = getLogger("ShutdownServiceProvider");
 
@@ -51,7 +50,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
         await callback();
       }
     } catch (error) {
-      logger.error("shutdown error: %s", error.message);
+      logger.error("shutdown error: %s", (error as Error).message);
     }
   }
 }

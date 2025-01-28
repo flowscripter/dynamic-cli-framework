@@ -1,8 +1,8 @@
 /**
  * Interface to be implemented by a CLI application.
  */
-import RunResult from "./RunResult.ts";
-import CLIConfig from "./CLIConfig.ts";
+import type RunResult from "./RunResult.ts";
+import type CLIConfig from "./CLIConfig.ts";
 
 export default interface CLI {
   /**

@@ -1,13 +1,14 @@
-import {
+import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
-import Context from "../../api/Context.ts";
-import AsciiBannerGeneratorService, {
+import type Context from "../../api/Context.ts";
+import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import {
   ASCII_BANNER_GENERATOR_SERVICE_ID,
 } from "../../api/service/core/AsciiBannerGeneratorService.ts";
 import DefaultAsciiBannerGeneratorService from "./DefaultAsciiBannerGeneratorService.ts";
-import CLIConfig from "../../api/CLIConfig.ts";
+import type CLIConfig from "../../api/CLIConfig.ts";
 
 /**
  * Provides an {@link AsciiBannerGeneratorService}.

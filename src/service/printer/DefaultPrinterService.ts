@@ -1,15 +1,12 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
-import { colors } from "../../../deps.ts";
+import * as colors from "@std/fmt/colors";
 import { ITALIC_END, ITALIC_START } from "./terminal/Ansi.ts";
-import PrinterService, {
-  Icon,
-  Level,
-} from "../../api/service/core/PrinterService.ts";
-import ShutdownService, {
-  SHUTDOWN_SERVICE_ID,
-} from "../../api/service/core/ShutdownService.ts";
-import Context from "../../api/Context.ts";
+import type PrinterService from "../../api/service/core/PrinterService.ts";
+import { type Icon, Level } from "../../api/service/core/PrinterService.ts";
+import type ShutdownService from "../../api/service/core/ShutdownService.ts";
+import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
+import type Context from "../../api/Context.ts";
 import Terminal from "./terminal/Terminal.ts";
 
 enum Color {

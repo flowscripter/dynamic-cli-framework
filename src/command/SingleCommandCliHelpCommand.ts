@@ -1,23 +1,22 @@
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import SubCommand from "../api/command/SubCommand.ts";
-import Option from "../api/argument/Option.ts";
-import Positional from "../api/argument/Positional.ts";
-import Context from "../api/Context.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type SubCommand from "../api/command/SubCommand.ts";
+import type Option from "../api/argument/Option.ts";
+import type Positional from "../api/argument/Positional.ts";
+import type Context from "../api/Context.ts";
 import {
   getCommandArgsHelpSections,
   getCommandExamplesHelpSections,
   getGlobalArgumentHelpEntry,
   getSubCommandArgumentsSyntax,
-  HelpEntry,
-  HelpSection,
+  type HelpEntry,
+  type HelpSection,
   printHelpSections,
 } from "../util/helpHelper.ts";
-import GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../api/command/GroupCommand.ts";
-import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
-import PrinterService, {
-  PRINTER_SERVICE_ID,
-} from "../api/service/core/PrinterService.ts";
+import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../api/command/GroupCommand.ts";
+import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
 
 /**
  * Provides common implementation for both {@link SingleCommandCliHelpGlobalCommand} and {@link SingleCommandCliHelpSubCommand}.

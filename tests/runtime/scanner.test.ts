@@ -1,4 +1,4 @@
-import { assertEquals } from "../test_deps.ts";
+import { assertEquals } from "@std/assert";
 import {
   getGlobalCommandWithShortAlias,
   getGlobalModifierCommand,
@@ -9,13 +9,13 @@ import {
 import {
   scanForGlobalModifierCommandClauses,
   scanForNonModifierCommandClause,
-  ScanResult,
+  type ScanResult,
 } from "../../src/runtime/scanner.ts";
-import GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
-import GroupCommand from "../../src/api/command/GroupCommand.ts";
-import SubCommand from "../../src/api/command/SubCommand.ts";
-import GlobalCommand from "../../src/api/command/GlobalCommand.ts";
-import Command from "../../src/api/command/Command.ts";
+import type GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
+import type GroupCommand from "../../src/api/command/GroupCommand.ts";
+import type SubCommand from "../../src/api/command/SubCommand.ts";
+import type GlobalCommand from "../../src/api/command/GlobalCommand.ts";
+import type Command from "../../src/api/command/Command.ts";
 
 function expectScanResult(result: ScanResult, expected: ScanResult) {
   assertEquals(result.unusedArgSequences, expected.unusedArgSequences);

@@ -1,14 +1,14 @@
 import DefaultCommandRegistry from "../../../src/runtime/registry/DefaultCommandRegistry.ts";
-import { assertEquals, assertThrows } from "../../test_deps.ts";
+import { assertEquals, assertThrows } from "@std/assert";
 import {
   getGlobalCommand,
   getGlobalCommandWithShortAlias,
   getGlobalModifierCommand,
   getGroupCommand,
 } from "../../fixtures/Command.ts";
-import SubCommand from "../../../src/api/command/SubCommand.ts";
-import Positional from "../../../src/api/argument/Positional.ts";
-import Option from "../../../src/api/argument/Option.ts";
+import type SubCommand from "../../../src/api/command/SubCommand.ts";
+import type Positional from "../../../src/api/argument/Positional.ts";
+import type Option from "../../../src/api/argument/Option.ts";
 
 function getSubCommand(
   name: string,

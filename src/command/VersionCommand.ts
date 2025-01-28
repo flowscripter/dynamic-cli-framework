@@ -1,8 +1,7 @@
-import Context from "../api/Context.ts";
-import GlobalCommand from "../api/command/GlobalCommand.ts";
-import PrinterService, {
-  PRINTER_SERVICE_ID,
-} from "../api/service/core/PrinterService.ts";
+import type Context from "../api/Context.ts";
+import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
 
 /**
  * Implementation of a {@link GlobalCommand} which outputs the version of the CLI.

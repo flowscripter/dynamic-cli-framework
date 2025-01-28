@@ -1,5 +1,5 @@
-import { ArgumentValueType } from "./ArgumentValueTypes.ts";
-import SubCommandArgument from "./SubCommandArgument.ts";
+import type { ArgumentValueType } from "./ArgumentValueTypes.ts";
+import type SubCommandArgument from "./SubCommandArgument.ts";
 
 /**
  * Interface for {@link SubCommand} option arguments.

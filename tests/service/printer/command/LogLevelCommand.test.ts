@@ -1,4 +1,5 @@
-import { assertEquals, Buffer } from "../../../test_deps.ts";
+import { Buffer } from "@std/streams";
+import { assertEquals } from "@std/assert";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import LogLevelCommand from "../../../../src/service/printer/command/LogLevelCommand.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";

@@ -1,13 +1,13 @@
-import { assertEquals } from "../../test_deps.ts";
-import ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import { assertEquals } from "@std/assert";
+import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
 } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import Positional from "../../../src/api/argument/Positional.ts";
-import GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
+import type Positional from "../../../src/api/argument/Positional.ts";
+import type GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
 import { isComplexOption } from "../../../src/runtime/argument/ArgumentTypeGuards.ts";
-import Option from "../../../src/api/argument/Option.ts";
+import type Option from "../../../src/api/argument/Option.ts";
 
 function getComplexOption(): ComplexOption {
   return {

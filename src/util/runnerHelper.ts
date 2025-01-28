@@ -1,13 +1,14 @@
-import PrinterService, {
+import type PrinterService from "../api/service/core/PrinterService.ts";
+import {
   Icon,
   PRINTER_SERVICE_ID,
 } from "../api/service/core/PrinterService.ts";
-import { ParseResult } from "../runtime/parser.ts";
+import type { ParseResult } from "../runtime/parser.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
 } from "../runtime/command/CommandTypeGuards.ts";
-import Context from "../api/Context.ts";
+import type Context from "../api/Context.ts";
 import { getInvalidArgumentString } from "../runtime/values/argumentValueValidation.ts";
 
 function getCommandString(

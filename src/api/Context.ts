@@ -1,7 +1,7 @@
 /**
  * Interface allowing a {@link CLI} to pass context to a {@link Command} instance.
  */
-import CLIConfig from "./CLIConfig.ts";
+import type CLIConfig from "./CLIConfig.ts";
 
 export default interface Context {
   /**

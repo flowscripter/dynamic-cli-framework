@@ -1,9 +1,7 @@
-import SyntaxHighlighterService from "../../api/service/core/SyntaxHighlighterService.ts";
-import {
-  createEmphasize,
-  HighlightSyntax,
-  jsonSyntaxDefinition,
-} from "../../../deps.ts";
+import type SyntaxHighlighterService from "../../api/service/core/SyntaxHighlighterService.ts";
+import type { LanguageFn as HighlightSyntax } from "highlight.js";
+import { createEmphasize } from "emphasize";
+import json from "highlight.js/lib/languages/json";
 
 /**
  * Default implementation of {@link SyntaxHighlighterService} which has a syntax definition
@@ -17,7 +15,7 @@ export default class DefaultSyntaxHighlighterService
 
   constructor() {
     this.emphasize = createEmphasize();
-    this.registerSyntax("json", jsonSyntaxDefinition);
+    this.registerSyntax("json", json);
   }
 
   getRegisteredSyntaxes(): ReadonlyArray<string> {
