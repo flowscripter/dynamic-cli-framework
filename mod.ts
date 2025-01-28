@@ -52,9 +52,8 @@ export { default as ConfigurationServiceProvider } from "./src/service/configura
 export { PRINTER_SERVICE_ID } from "./src/api/service/core/PrinterService.ts";
 export type {
   default as PrinterService,
-  Icon,
-  Level,
 } from "./src/api/service/core/PrinterService.ts";
+export { Icon, Level } from "./src/api/service/core/PrinterService.ts";
 export { default as DefaultPrinterService } from "./src/service/printer/DefaultPrinterService.ts";
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
