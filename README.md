@@ -7,7 +7,7 @@
 [![license: MIT](https://img.shields.io/github/license/flowscripter/dynamic-cli-framework)](https://github.com/flowscripter/dynamic-cli-framework/blob/main/LICENSE)
 
 > A framework for developing CLI applications which supports dynamic discovery
-> and installation of new commands.
+> and installation of new commands
 
 [//]: # (TODO: Remove this when plugin support and compiled binaries available.)
 
