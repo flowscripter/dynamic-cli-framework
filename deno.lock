@@ -4,17 +4,16 @@
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/async@^1.0.9": "1.0.10",
-    "jsr:@std/bytes@^1.0.3": "1.0.4",
-    "jsr:@std/bytes@^1.0.4": "1.0.4",
+    "jsr:@std/bytes@^1.0.5": "1.0.5",
     "jsr:@std/data-structures@^1.0.6": "1.0.6",
-    "jsr:@std/fmt@^1.0.4": "1.0.4",
+    "jsr:@std/fmt@^1.0.5": "1.0.5",
+    "jsr:@std/fs@^1.0.11": "1.0.11",
     "jsr:@std/fs@^1.0.9": "1.0.9",
     "jsr:@std/internal@^1.0.5": "1.0.5",
-    "jsr:@std/io@0.225": "0.225.1",
-    "jsr:@std/io@~0.225.1": "0.225.1",
-    "jsr:@std/log@~0.224.13": "0.224.13",
+    "jsr:@std/io@~0.225.2": "0.225.2",
+    "jsr:@std/log@~0.224.14": "0.224.14",
     "jsr:@std/path@^1.0.8": "1.0.8",
-    "jsr:@std/streams@^1.0.8": "1.0.8",
+    "jsr:@std/streams@^1.0.9": "1.0.9",
     "jsr:@std/testing@^1.0.9": "1.0.9",
     "npm:emphasize@7": "7.0.0",
     "npm:fastest-levenshtein@^1.0.16": "1.0.16",
@@ -31,17 +30,23 @@
     "@std/async@1.0.10": {
       "integrity": "2ff1b1c7d33d1416159989b0f69e59ec7ee8cb58510df01e454def2108b3dbec"
     },
-    "@std/bytes@1.0.4": {
-      "integrity": "11a0debe522707c95c7b7ef89b478c13fb1583a7cfb9a85674cd2cc2e3a28abc"
+    "@std/bytes@1.0.5": {
+      "integrity": "4465dd739d7963d964c809202ebea6d5c6b8e3829ef25c6a224290fbb8a1021e"
     },
     "@std/data-structures@1.0.6": {
       "integrity": "76a7fd8080c66604c0496220a791860492ab21a04a63a969c0b9a0609bbbb760"
     },
-    "@std/fmt@1.0.4": {
-      "integrity": "e14fe5bedee26f80877e6705a97a79c7eed599e81bb1669127ef9e8bc1e29a74"
+    "@std/fmt@1.0.5": {
+      "integrity": "0cfab43364bc36650d83c425cd6d99910fc20c4576631149f0f987eddede1a4d"
     },
     "@std/fs@1.0.9": {
       "integrity": "3eef7e3ed3d317b29432c7dcb3b20122820dbc574263f721cb0248ad91bad890",
+      "dependencies": [
+        "jsr:@std/path"
+      ]
+    },
+    "@std/fs@1.0.11": {
+      "integrity": "ba674672693340c5ebdd018b4fe1af46cb08741f42b4c538154e97d217b55bdd",
       "dependencies": [
         "jsr:@std/path"
       ]
@@ -52,27 +57,27 @@
     "@std/io@0.225.0": {
       "integrity": "c1db7c5e5a231629b32d64b9a53139445b2ca640d828c26bf23e1c55f8c079b3"
     },
-    "@std/io@0.225.1": {
-      "integrity": "0a055fa523288d596f09ba11af5e006f17cecc75bab949b233ceba7eba40293e",
+    "@std/io@0.225.2": {
+      "integrity": "3c740cd4ee4c082e6cfc86458f47e2ab7cb353dc6234d5e9b1f91a2de5f4d6c7",
       "dependencies": [
-        "jsr:@std/bytes@^1.0.4"
+        "jsr:@std/bytes"
       ]
     },
-    "@std/log@0.224.13": {
-      "integrity": "f04d82f676c9eb4306194ca166d296d9f1456fe4b7edf2a404a0d55c94d31df7",
+    "@std/log@0.224.14": {
+      "integrity": "257f7adceee3b53bb2bc86c7242e7d1bc59729e57d4981c4a7e5b876c808f05e",
       "dependencies": [
         "jsr:@std/fmt",
-        "jsr:@std/fs",
-        "jsr:@std/io@0.225"
+        "jsr:@std/fs@^1.0.11",
+        "jsr:@std/io"
       ]
     },
     "@std/path@1.0.8": {
       "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
     },
-    "@std/streams@1.0.8": {
-      "integrity": "b41332d93d2cf6a82fe4ac2153b930adf1a859392931e2a19d9fabfb6f154fb3",
+    "@std/streams@1.0.9": {
+      "integrity": "a9d26b1988cdd7aa7b1f4b51e1c36c1557f3f252880fa6cc5b9f37078b1a5035",
       "dependencies": [
-        "jsr:@std/bytes@^1.0.3"
+        "jsr:@std/bytes"
       ]
     },
     "@std/testing@1.0.9": {
@@ -81,7 +86,7 @@
         "jsr:@std/assert@^1.0.10",
         "jsr:@std/async",
         "jsr:@std/data-structures",
-        "jsr:@std/fs",
+        "jsr:@std/fs@^1.0.9",
         "jsr:@std/internal",
         "jsr:@std/path"
       ]
@@ -147,11 +152,11 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@^1.0.11",
-      "jsr:@std/fmt@^1.0.4",
-      "jsr:@std/io@~0.225.1",
-      "jsr:@std/log@~0.224.13",
+      "jsr:@std/fmt@^1.0.5",
+      "jsr:@std/io@~0.225.2",
+      "jsr:@std/log@~0.224.14",
       "jsr:@std/path@^1.0.8",
-      "jsr:@std/streams@^1.0.8",
+      "jsr:@std/streams@^1.0.9",
       "jsr:@std/testing@^1.0.9",
       "npm:emphasize@7",
       "npm:fastest-levenshtein@^1.0.16",
