@@ -1,0 +1,22 @@
+export const snapshot = {};
+
+snapshot[`Can generate with standard font 1`] = `
+"
+   __             
+  / _| ___   ___  
+ | |_ / _ \\\\ / _ \\\\ 
+ |  _| (_) | (_) |
+ |_|  \\\\___/ \\\\___/ 
+                  
+"
+`;
+
+snapshot[`Can generate with newly registered font 1`] = `
+"
+   __          
+  / _|___  ___ 
+ |  _/ _ \\\\/ _ \\\\
+ |_| \\\\___/\\\\___/
+               
+"
+`;

@@ -1,0 +1,15 @@
+export const snapshot = {};
+
+snapshot[`BannerServiceProvider initService works 1`] = `
+"
+  _____ ___   ___  
+ |  ___/ _ \\\\ / _ \\\\ 
+ | |_ | | | | | | |
+ |  _|| |_| | |_| |
+ |_|   \\\\___/ \\\\___/ 
+                   
+  bar
+  version: foobar
+
+"
+`;
