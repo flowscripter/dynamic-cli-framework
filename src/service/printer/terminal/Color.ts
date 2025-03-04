@@ -1,0 +1,14 @@
+export enum Color {
+  PRIMARY,
+  SECONDARY,
+  EMPHASISED,
+  SELECTED,
+  YELLOW,
+  ORANGE,
+  RED,
+  MAGENTA,
+  VIOLET,
+  BLUE,
+  CYAN,
+  GREEN,
+}
