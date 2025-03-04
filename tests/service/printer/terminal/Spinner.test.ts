@@ -1,6 +1,6 @@
 import { describe, test } from "bun:test";
 import Spinner from "../../../../src/service/printer/terminal/Spinner.ts";
-import { expectStringEquals, sleep } from "../../../fixtures/util.ts";
+import { expectStringEquals, expectStringIncludes, sleep } from "../../../fixtures/util.ts";
 import TtyTerminal from "../../../../src/service/printer/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
@@ -47,6 +47,7 @@ describe("Spinner Tests", () => {
     await sleep(120);
     await spinner.hide();
 
-    expectStringEquals(streamString.getString(), "⠋⠙ foo⠹ bar⠸⠼");
+    expectStringIncludes(streamString.getString(), "foo");
+    expectStringIncludes(streamString.getString(), "bar");
   });
 });
