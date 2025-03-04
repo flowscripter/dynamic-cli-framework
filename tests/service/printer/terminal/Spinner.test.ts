@@ -9,7 +9,7 @@ describe("Spinner Tests", () => {
   test("Spinner works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
-    const spinner = new Spinner(terminal, new TtyStyler());
+    const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
     await sleep(250);
@@ -21,7 +21,7 @@ describe("Spinner Tests", () => {
   test("Calling show and hide multiple times works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
-    const spinner = new Spinner(terminal, new TtyStyler());
+    const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
     await sleep(50);
@@ -35,7 +35,7 @@ describe("Spinner Tests", () => {
   test("Updating the spinner message works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
-    const spinner = new Spinner(terminal, new TtyStyler());
+    const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
     await sleep(150);

@@ -20,7 +20,7 @@ describe("LogLevelCommand Tests", () => {
       true,
       true,
       new TtyTerminal(streamString.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     const printerServiceProvider = new PrinterServiceProvider(
       100,

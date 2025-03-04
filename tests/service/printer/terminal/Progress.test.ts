@@ -9,7 +9,7 @@ describe("Progress Tests", () => {
   test("Progress works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
-    const progress = new Progress(terminal, new TtyStyler());
+    const progress = new Progress(terminal, new TtyStyler(3));
 
     const handle = progress.add("foo", "bar", 100, 0);
     await sleep(150);
@@ -23,7 +23,7 @@ describe("Progress Tests", () => {
   test("Multiple progress works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
-    const progress = new Progress(terminal, new TtyStyler());
+    const progress = new Progress(terminal, new TtyStyler(3));
 
     const handle1 = progress.add("foo1", "bar2", 100, 0);
     const handle2 = progress.add("foo2", "bar2", 200, 0);

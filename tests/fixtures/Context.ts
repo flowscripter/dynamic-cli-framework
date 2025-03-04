@@ -19,7 +19,7 @@ export function getContext(
     false,
     false,
     new TtyTerminal(streamString.writeStream),
-    new TtyStyler(),
+    new TtyStyler(3),
   );
 
   defaultPrinterService.colorEnabled = false;

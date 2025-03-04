@@ -22,7 +22,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -40,73 +40,15 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = true;
     printerService.darkMode = true;
     await printerService.info(`hello ${printerService.blue("world")}`);
-
     expectBytesEquals(
       dummyStderr.getString(),
       new Uint8Array([
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        49,
-        51,
-        49,
-        59,
-        49,
-        52,
-        56,
-        59,
-        49,
-        53,
-        48,
-        109,
-        104,
-        101,
-        108,
-        108,
-        111,
-        32,
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        51,
-        56,
-        59,
-        49,
-        51,
-        57,
-        59,
-        50,
-        49,
-        48,
-        109,
-        119,
-        111,
-        114,
-        108,
-        100,
-        27,
-        91,
-        51,
-        57,
-        109,
-        27,
-        91,
-        51,
-        57,
-        109,
+        27, 91, 51, 56, 59, 50, 59, 49, 51, 49, 59, 49, 52, 56, 59, 49, 53, 48, 109, 104, 101, 108, 108, 111, 32, 27, 91, 51, 56, 59, 50, 59, 51, 56, 59, 49, 51, 57, 59, 50, 49, 48, 109, 119, 111, 114, 108, 100, 27, 91, 51, 57, 109, 27, 91, 51, 57, 109
       ]),
     );
   });
@@ -120,7 +62,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -138,7 +80,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -156,7 +98,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -182,7 +124,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -227,7 +169,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -255,7 +197,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -283,7 +225,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -348,7 +290,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
@@ -376,7 +318,7 @@ describe("DefaultPrinterService Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 

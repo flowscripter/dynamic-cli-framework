@@ -30,7 +30,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       supportsColor.stdout !== false,
       supportsColor.stderr !== false,
       new TtyTerminal(process.stderr),
-      new TtyStyler(),
+      new TtyStyler(supportsColor.stderr === false ? 1 : supportsColor.stderr.level),
       envVarsEnabled,
       configEnabled,
       keyValueServiceEnabled,

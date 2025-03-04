@@ -19,7 +19,7 @@ describe("VersionCommand Tests", () => {
       true,
       true,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
     );
     printer.colorEnabled = false;
 

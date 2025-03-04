@@ -39,7 +39,7 @@ describe("BaseCLI Tests", () => {
       false,
       false,
       terminal,
-      new TtyStyler(),
+      new TtyStyler(3),
       false,
     );
 
@@ -62,7 +62,7 @@ describe("BaseCLI Tests", () => {
       false,
       false,
       terminal,
-      new TtyStyler(),
+      new TtyStyler(3),
       false,
     );
 
@@ -123,7 +123,7 @@ describe("BaseCLI Tests", () => {
       false,
       false,
       new TtyTerminal(dummyStderr.writeStream),
-      new TtyStyler(),
+      new TtyStyler(3),
       false,
       true,
       true,
