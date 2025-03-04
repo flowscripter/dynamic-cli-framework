@@ -19,6 +19,10 @@ import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type ComplexOption from "../api/argument/ComplexOption.ts";
 
+function safelySetKeyBasedValue(target: PopulatedArgumentValues, key: string, value) {
+  target[key] = value;
+}
+
 function getKeySegment(segment: string) {
   let keySegment = segment.replace("-", "_").toUpperCase();
   if (keySegment[0].match(/[0-9]/)) {
@@ -91,6 +95,11 @@ function getOptionValuesFromEnvVars(
   if (potentialEnvVarNames.length === 0) {
     return;
   }
+
+  if (option.name === '__proto__' || option.name === 'constructor' || option.name === 'prototype') {
+    throw new Error(`Unsafe key name in use: ${option.name}, CodeQL Rule ID: js/prototype-polluting-assignment`);
+  }
+
   if (option.isArray) {
     envVarNamePrefix = `${envVarNamePrefix}_`;
 
