@@ -1,3 +1,4 @@
+import process from "node:process";
 import type {
   ServiceInfo,
   ServiceProvider,
@@ -16,8 +17,7 @@ const logger = getLogger("ShutdownServiceProvider");
  */
 export default class ShutdownServiceProvider implements ServiceProvider {
   readonly serviceId: string = SHUTDOWN_SERVICE_ID;
-  readonly servicePriority: number;
-  readonly shutdownService: ShutdownService;
+  readonly #shutdownService: ShutdownService;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -25,16 +25,15 @@ export default class ShutdownServiceProvider implements ServiceProvider {
    * @param servicePriority the priority of the service.
    */
   public constructor(
-    servicePriority: number,
+    readonly servicePriority: number,
   ) {
-    this.servicePriority = servicePriority;
-    this.shutdownService = new DefaultShutdownService();
-    Deno.addSignalListener("SIGINT", ShutdownServiceProvider.shutdown);
+    this.#shutdownService = new DefaultShutdownService();
+    process.on("beforeExit", ShutdownServiceProvider.shutdown);
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
-      service: this.shutdownService,
+      service: this.#shutdownService,
       commands: [],
     });
   }
@@ -45,7 +44,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
 
   static async shutdown() {
     try {
-      Deno.removeSignalListener("SIGINT", ShutdownServiceProvider.shutdown);
+      process.removeListener("beforeExit", ShutdownServiceProvider.shutdown);
       for await (const callback of DefaultShutdownService.callbacks) {
         await callback();
       }

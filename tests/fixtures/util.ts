@@ -1,31 +1,30 @@
-import { assert, assertEquals, assertFalse } from "@std/assert";
-import type { Buffer } from "@std/streams";
-import * as colors from "@std/fmt/colors";
+import { expect } from "bun:test";
+import { stripVTControlCharacters } from "node:util";
+import { WritableStream } from "node:stream/web";
 
-const decoder = new TextDecoder();
 const encoder = new TextEncoder();
 
-export function expectBufferStringIncludes(actual: Buffer, expected: string) {
-  assert(decoder.decode(actual.bytes()).includes(expected));
+export function expectStringIncludes(actual: string, expected: string) {
+  expect(stripVTControlCharacters(actual).includes(expected)).toBeTrue();
 }
 
-export function expectBufferStringNotIncludes(
-  actual: Buffer,
+export function expectStringNotIncludes(
+  actual: string,
   expected: string,
 ) {
-  assertFalse(decoder.decode(actual.bytes()).includes(expected));
+  expect(stripVTControlCharacters(actual).includes(expected)).toBeFalse();
+}
+
+export function expectStringEquals(actual: string, expected: string) {
+  expect(stripVTControlCharacters(actual)).toEqual(expected);
+}
+
+export function expectBytesEquals(actual: string, expected: Uint8Array) {
+  expect(encoder.encode(actual)).toEqual(expected);
 }
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function expectBufferStringEquals(actual: Buffer, expected: string) {
-  assertEquals(colors.stripAnsiCode(decoder.decode(actual.bytes())), expected);
-}
-
-export function expectBufferBytesEquals(actual: Buffer, expected: Uint8Array) {
-  assertEquals(actual.bytes(), expected);
 }
 
 export async function write(

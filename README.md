@@ -1,9 +1,9 @@
 # dynamic-cli-framework
 
 [![version](https://img.shields.io/github/v/release/flowscripter/dynamic-cli-framework?sort=semver)](https://github.com/flowscripter/dynamic-cli-framework/releases)
-[![build](https://img.shields.io/github/actions/workflow/status/flowscripter/dynamic-cli-framework/release-deno-library.yml)](https://github.com/flowscripter/dynamic-cli-framework/actions/workflows/release-deno-library.yml)
+[![build](https://img.shields.io/github/actions/workflow/status/flowscripter/dynamic-cli-framework/release-bun-library.yml)](https://github.com/flowscripter/dynamic-cli-framework/actions/workflows/release-bun-library.yml)
 [![coverage](https://codecov.io/gh/flowscripter/dynamic-cli-framework/branch/main/graph/badge.svg?token=EMFT2938ZF)](https://codecov.io/gh/flowscripter/dynamic-cli-framework)
-[![deno doc](https://doc.deno.land/badge.svg)](https://jsr.io/@flowscripter/dynamic-cli-framework/doc)
+[![docs](https://img.shields.io/badge/docs-API-blue)](https://flowscripter.github.io/dynamic-cli-framework/index.html)
 [![license: MIT](https://img.shields.io/github/license/flowscripter/dynamic-cli-framework)](https://github.com/flowscripter/dynamic-cli-framework/blob/main/LICENSE)
 
 > A framework for developing CLI applications which supports dynamic discovery
@@ -16,7 +16,6 @@ NOTE: The dynamic aspect is still in development as it relies upon:
 - some outstanding work on the
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
   dependency.
-- a workaround solution for https://github.com/denoland/deno/issues/18327.
 
 So it isn't really dynamic at the moment! 😜
 
@@ -52,10 +51,10 @@ So it isn't really dynamic at the moment! 😜
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
 - Minimal dependencies.
-- Deno based.
+- Bun based.
 - Based on native JavaScript modules.
 - Written in Typescript.
-- Compiled to a binary executable using a Deno runtime.
+- Compiled to a binary executable using a Bun runtime.
 
 ## Usage Examples
 
@@ -878,11 +877,11 @@ documented in further detail below):
 - commands provided by the `PrinterServiceProvider`.
 - `VersionCommand`
 
-#### `DenoRuntimeCLI`
+#### `DefaultRuntimeCLI`
 
-`DenoRuntimeCLI` is a simple extension to `BaseCLI` which uses Deno specific
-APIs to access the command line arguments, stdout and stderr streams and to exit
-the process.
+`DefaultRuntimeCLI` is a simple extension to `BaseCLI` which uses NodeJS
+specific APIs to access the command line arguments, stdout and stderr streams
+and to exit the process.
 
 ### `runner`
 
@@ -1309,9 +1308,24 @@ API docs for the library:
 
 ## Development
 
-Test: `deno test -A`
+Test:
 
-Lint: `deno fmt && deno lint`
+`bun test`
+
+**NOTE**: The following tasks use Deno as it excels at these and Bun does not
+currently provide such functionality:
+
+Format:
+
+`deno fmt`
+
+Lint:
+
+`deno lint index.ts src/ tests/`
+
+Generate HTML API Documentation:
+
+`deno doc --html --name=template-bun-library index.ts`
 
 The following diagram provides an overview of the main internal modules and
 classes:
@@ -1367,7 +1381,7 @@ classDiagram
         <<interface>>
     }
 
-    class DenoRuntimeCLI {
+    class DefaultRuntimeCLI {
     }
 
     class CLIConfig {
@@ -1382,7 +1396,7 @@ classDiagram
 
     CLI <|.. BaseCLI
 
-    BaseCLI <|-- DenoRuntimeCLI
+    BaseCLI <|-- DefaultRuntimeCLI
 
     runner --> Context
 
@@ -1418,18 +1432,17 @@ classDiagram
 
     Context --> ServiceXYZ : access to
         
-    DenoRuntimeCLI <-- launcher
+    DefaultRuntimeCLI <-- launcher
 ```
 
 ### Debug Logging
 
 Internal framework logging can be enabled by setting the `CLI_DEBUG` environment
-variable. (Permission will need to be granted to the CLI to access the
-environment to look for this environment variable i.e. `--allow-env`.)
+variable.
 
-The `logger` implementation will detect this and define a default Deno
-`ConsoleHandler` logger with `DEBUG` level which is used by internal
-implementation classes such as the `runner` and `parser`.
+The logging implementation will look for an object conforming to the `Logger`
+interface and use it if found. If not found, a simple logging implementation
+using the `console` object will be used.
 
 ### Command and Service Validation
 
@@ -1439,9 +1452,7 @@ validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
 When using `launcher.ts` runtime validation of all commands and services can be
-forced by defining the `CLI_VALIDATE_ALL` environment variable. (Permission will
-need to be granted to the CLI to access the environment to look for this
-environment variable i.e. `--allow-env`.)
+forced by defining the `CLI_VALIDATE_ALL` environment variable.
 
 Command validation includes:
 

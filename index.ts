@@ -80,7 +80,7 @@ export type { default as CLI } from "./src/api/CLI.ts";
 
 // Core CLI
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
-export { default as DenoRuntimeCLI } from "./src/cli/DenoRuntimeCLI.ts";
+export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
 
 // Convenience functions
 export {

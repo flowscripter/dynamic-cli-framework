@@ -7,10 +7,7 @@ import type CLIConfig from "../api/CLIConfig.ts";
 export default class DefaultContext implements Context {
   readonly #serviceInstancesById: Map<string, unknown> = new Map();
 
-  readonly cliConfig: CLIConfig;
-
-  public constructor(cliConfig: CLIConfig) {
-    this.cliConfig = cliConfig;
+  public constructor(readonly cliConfig: CLIConfig) {
   }
 
   public addServiceInstance(id: string, serviceInstance: unknown) {

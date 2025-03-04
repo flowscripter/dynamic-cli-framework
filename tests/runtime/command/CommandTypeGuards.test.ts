@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import {
   getGlobalCommand,
   getGlobalModifierCommand,
@@ -12,30 +12,32 @@ import {
   isSubCommand,
 } from "../../../src/runtime/command/CommandTypeGuards.ts";
 
-Deno.test("isSubCommand works", () => {
-  assertEquals(isSubCommand(getSubCommandWithOption()), true);
-  assertEquals(isSubCommand(getGroupCommand()), false);
-  assertEquals(isSubCommand(getGlobalCommand()), false);
-  assertEquals(isSubCommand(getGlobalModifierCommand()), false);
-});
+describe("CommandTypeGuards Tests", () => {
+  test("isSubCommand works", () => {
+    expect(isSubCommand(getSubCommandWithOption())).toBeTrue();
+    expect(isSubCommand(getGroupCommand())).toBeFalse();
+    expect(isSubCommand(getGlobalCommand())).toBeFalse();
+    expect(isSubCommand(getGlobalModifierCommand())).toBeFalse();
+  });
 
-Deno.test("isGroupCommand works", () => {
-  assertEquals(isGroupCommand(getSubCommandWithOption()), false);
-  assertEquals(isGroupCommand(getGroupCommand()), true);
-  assertEquals(isGroupCommand(getGlobalCommand()), false);
-  assertEquals(isGroupCommand(getGlobalModifierCommand()), false);
-});
+  test("isGroupCommand works", () => {
+    expect(isGroupCommand(getSubCommandWithOption())).toBeFalse();
+    expect(isGroupCommand(getGroupCommand())).toBeTrue();
+    expect(isGroupCommand(getGlobalCommand())).toBeFalse();
+    expect(isGroupCommand(getGlobalModifierCommand())).toBeFalse();
+  });
 
-Deno.test("isGlobalCommand works", () => {
-  assertEquals(isGlobalCommand(getSubCommandWithOption()), false);
-  assertEquals(isGlobalCommand(getGroupCommand()), false);
-  assertEquals(isGlobalCommand(getGlobalCommand()), true);
-  assertEquals(isGlobalCommand(getGlobalModifierCommand()), false);
-});
+  test("isGlobalCommand works", () => {
+    expect(isGlobalCommand(getSubCommandWithOption())).toBeFalse();
+    expect(isGlobalCommand(getGroupCommand())).toBeFalse();
+    expect(isGlobalCommand(getGlobalCommand())).toBeTrue();
+    expect(isGlobalCommand(getGlobalModifierCommand())).toBeFalse();
+  });
 
-Deno.test("isGlobalModifierCommand works", () => {
-  assertEquals(isGlobalModifierCommand(getSubCommandWithOption()), false);
-  assertEquals(isGlobalModifierCommand(getGroupCommand()), false);
-  assertEquals(isGlobalModifierCommand(getGlobalCommand()), false);
-  assertEquals(isGlobalModifierCommand(getGlobalModifierCommand()), true);
+  test("isGlobalModifierCommand works", () => {
+    expect(isGlobalModifierCommand(getSubCommandWithOption())).toBeFalse();
+    expect(isGlobalModifierCommand(getGroupCommand())).toBeFalse();
+    expect(isGlobalModifierCommand(getGlobalCommand())).toBeFalse();
+    expect(isGlobalModifierCommand(getGlobalModifierCommand())).toBeTrue();
+  });
 });

@@ -17,8 +17,7 @@ import type CLIConfig from "../../api/CLIConfig.ts";
 export default class SyntaxHighlighterServiceProvider
   implements ServiceProvider {
   readonly serviceId: string = SYNTAX_HIGHLIGHTER_SERVICE_ID;
-  readonly servicePriority: number;
-  readonly defaultSyntaxHighlighterService: DefaultSyntaxHighlighterService;
+  readonly #defaultSyntaxHighlighterService: DefaultSyntaxHighlighterService;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -26,16 +25,15 @@ export default class SyntaxHighlighterServiceProvider
    * @param servicePriority the priority of the service.
    */
   public constructor(
-    servicePriority: number,
+    readonly servicePriority: number,
   ) {
-    this.servicePriority = servicePriority;
-    this.defaultSyntaxHighlighterService =
+    this.#defaultSyntaxHighlighterService =
       new DefaultSyntaxHighlighterService();
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
-      service: this.defaultSyntaxHighlighterService,
+      service: this.#defaultSyntaxHighlighterService,
       commands: [],
     });
   }
@@ -45,7 +43,7 @@ export default class SyntaxHighlighterServiceProvider
       PRINTER_SERVICE_ID,
     ) as PrinterService;
 
-    this.defaultSyntaxHighlighterService.colorEnabled =
+    this.#defaultSyntaxHighlighterService.colorEnabled =
       printerService.colorEnabled;
 
     return Promise.resolve(undefined);

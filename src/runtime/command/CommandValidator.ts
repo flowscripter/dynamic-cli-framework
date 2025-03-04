@@ -128,11 +128,11 @@ function validateSubCommandArgument(
 }
 
 export default class CommandValidator {
-  readonly cliConfig: CLIConfig;
-  readonly configurationKeys: Array<string> = [];
+  readonly #cliConfig: CLIConfig;
+  readonly #configurationKeys: Array<string> = [];
 
   public constructor(cliConfig: CLIConfig) {
-    this.cliConfig = cliConfig;
+    this.#cliConfig = cliConfig;
   }
 
   /**
@@ -343,18 +343,18 @@ export default class CommandValidator {
         );
       }
       const configurationKey = getSubCommandArgumentConfigurationKey(
-        this.cliConfig,
+        this.#cliConfig,
         command,
         argumentAncestry,
       );
 
       if (configurationKey !== undefined) {
-        if (this.configurationKeys.includes(configurationKey)) {
+        if (this.#configurationKeys.includes(configurationKey)) {
           throw new Error(
             `Command: '${command.name}' contains arguments with the same configuration key: '${configurationKey}'`,
           );
         }
-        this.configurationKeys.push(configurationKey);
+        this.#configurationKeys.push(configurationKey);
       }
     } else if (argument.configurationKey !== undefined) {
       throw new Error(
@@ -377,18 +377,18 @@ export default class CommandValidator {
         );
       }
       const configurationKey = getGlobalCommandArgumentConfigurationKey(
-        this.cliConfig,
+        this.#cliConfig,
         command,
         globalCommandArgument,
       );
 
       if (configurationKey !== undefined) {
-        if (this.configurationKeys.includes(configurationKey)) {
+        if (this.#configurationKeys.includes(configurationKey)) {
           throw new Error(
             `Command: '${command.name}' contains arguments with the same configuration key: '${configurationKey}'`,
           );
         }
-        this.configurationKeys.push(configurationKey);
+        this.#configurationKeys.push(configurationKey);
       }
     } else if (globalCommandArgument.configurationKey !== undefined) {
       throw new Error(

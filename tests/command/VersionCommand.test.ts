@@ -1,35 +1,36 @@
-import { Buffer } from "@std/streams";
-import { assertEquals } from "@std/assert";
+import { describe, test } from "bun:test";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import VersionCommand from "../../src/command/VersionCommand.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { PRINTER_SERVICE_ID } from "../../src/api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../../src/service/printer/DefaultPrinterService.ts";
+import StreamString from "../fixtures/StreamString.ts";
+import { expectStringEquals } from "../fixtures/util.ts";
+import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
 
-const decoder = new TextDecoder();
+describe("VersionCommand Tests", () => {
+  test("Version works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printer = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printer.colorEnabled = false;
 
-function expectBufferString(actual: Buffer, expected: string) {
-  assertEquals(decoder.decode(actual.bytes()), expected);
-}
+    const context = new DefaultContext(getCLIConfig());
 
-Deno.test("Version works", async () => {
-  const buffer = new Buffer();
-  const printer = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printer.colorEnabled = false;
+    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
 
-  const context = new DefaultContext(getCLIConfig());
+    const versionCommand = new VersionCommand();
 
-  context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+    await versionCommand.execute(context);
 
-  const versionCommand = new VersionCommand();
-
-  await versionCommand.execute(context);
-
-  expectBufferString(
-    buffer,
-    "foobar\n",
-  );
+    expectStringEquals(dummyStdout.getString(), "foobar\n");
+  });
 });

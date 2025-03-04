@@ -21,7 +21,7 @@ export const BANNER_SERVICE_ID =
 export default class BannerServiceProvider implements ServiceProvider {
   readonly serviceId: string = BANNER_SERVICE_ID;
   readonly servicePriority: number;
-  readonly configurationServiceProvider:
+  readonly #configurationServiceProvider:
     | ConfigurationServiceProvider
     | undefined;
 
@@ -41,7 +41,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     configurationServiceProvider?: ConfigurationServiceProvider,
   ) {
     this.servicePriority = servicePriority;
-    this.configurationServiceProvider = configurationServiceProvider;
+    this.#configurationServiceProvider = configurationServiceProvider;
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
@@ -82,8 +82,8 @@ export default class BannerServiceProvider implements ServiceProvider {
         `  ${printerService.secondary("version: " + cliConfig.version)}\n`,
       );
     }
-    if (this.configurationServiceProvider) {
-      const configLocation = this.configurationServiceProvider.configLocation;
+    if (this.#configurationServiceProvider) {
+      const configLocation = this.#configurationServiceProvider.configLocation;
       if (configLocation && configLocation.length > 0) {
         await printerService.info(
           `  ${

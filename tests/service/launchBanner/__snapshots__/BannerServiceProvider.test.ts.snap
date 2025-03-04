@@ -1,15 +1,3 @@
-export const snapshot = {};
+// Bun Snapshot v1, https://goo.gl/fbAQLP
 
-snapshot[`BannerServiceProvider initService works 1`] = `
-"
-  _____ ___   ___  
- |  ___/ _ \\\\ / _ \\\\ 
- | |_ | | | | | | |
- |  _|| |_| | |_| |
- |_|   \\\\___/ \\\\___/ 
-                   
-  bar
-  version: foobar
-
-"
-`;
+exports[`BannerServiceProvider Tests BannerServiceProvider initService works 1`] = `""`;

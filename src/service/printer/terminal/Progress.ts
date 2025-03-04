@@ -1,5 +1,5 @@
+import Styler from "./Styler.ts";
 import type Terminal from "./Terminal.ts";
-import * as colors from "@std/fmt/colors";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 
@@ -15,9 +15,10 @@ interface Bar {
 }
 
 export default class Progress {
-  readonly #term: Terminal;
+  readonly #terminal: Terminal;
+  readonly #styler: Styler;
   readonly #bars: Map<number, Bar> = new Map();
-  #intervalId: number | undefined;
+  #timer: Timer | undefined;
   #isDirty = false;
   #currentRenderedBarCount = 0;
   #lastRenderTime = 0;
@@ -26,8 +27,9 @@ export default class Progress {
   #labColor = 0x585858;
   #valColor = 0x808080;
 
-  public constructor(terminal: Terminal) {
-    this.#term = terminal;
+  public constructor(terminal: Terminal, styler: Styler) {
+    this.#terminal = terminal;
+    this.#styler = styler;
   }
 
   public add(
@@ -58,8 +60,8 @@ export default class Progress {
     this.#isDirty = true;
 
     // start rendering timer
-    if (this.#intervalId === undefined) {
-      this.#intervalId = setInterval(async () => {
+    if (this.#timer === undefined) {
+      this.#timer = setInterval(async () => {
         await this.#renderBars();
       }, 100);
     }
@@ -135,23 +137,23 @@ export default class Progress {
   }
 
   public async pause(): Promise<void> {
-    if (this.#intervalId === undefined) {
+    if (this.#timer === undefined) {
       return;
     }
 
     this.#isDirty = false;
 
     // stop rendering timer
-    clearInterval(this.#intervalId);
-    this.#intervalId = undefined;
+    clearInterval(this.#timer);
+    this.#timer = undefined;
 
     // clear the previously rendered bars
-    await this.#term.clearUpLines(this.#currentRenderedBarCount * 2);
+    await this.#terminal.clearUpLines(this.#currentRenderedBarCount * 2);
 
     this.#currentRenderedBarCount = 0;
 
     // restore the cursor
-    await this.#term.showCursor();
+    await this.#terminal.showCursor();
   }
 
   public resume(): void {
@@ -164,8 +166,8 @@ export default class Progress {
     this.#isDirty = true;
 
     // start rendering timer
-    if (this.#intervalId === undefined) {
-      this.#intervalId = setInterval(async () => {
+    if (this.#timer === undefined) {
+      this.#timer = setInterval(async () => {
         await this.#renderBars();
       }, 100);
     }
@@ -187,7 +189,7 @@ export default class Progress {
 
     this.#lastRenderTime = now;
 
-    const consoleWidth = this.#term.columns();
+    const consoleWidth = this.#terminal.columns();
     const lines: Array<string> = [];
 
     const barInfo: Array<
@@ -201,44 +203,61 @@ export default class Progress {
     > = [];
 
     this.#bars.forEach((bar) => {
-      const name = `${colors.rgb24(bar.name, this.#valColor)}${
-        colors.rgb24(":", this.#labColor)
+      const name = `${this.#styler.colorText(bar.name, this.#valColor)}${
+        this.#styler.colorText(":", this.#labColor)
       }`;
-      const prefix = `${colors.rgb24("[", this.#labColor)}`;
-      const percent = colors.rgb24(
-        ((bar.current / bar.total) * 100).toFixed(2),
+      const prefix = `${this.#styler.colorText("[", this.#labColor)}`;
+      let visibleWidth = 1;
+      const percentString = ((bar.current / bar.total) * 100).toFixed(2);
+      const percent = this.#styler.colorText(
+        percentString,
         this.#valColor,
-      ) + colors.rgb24("%,", this.#labColor);
+      ) + this.#styler.colorText("%,", this.#labColor);
+      visibleWidth += percentString.length + 1;
 
       const rate = `${
-        colors.rgb24(
+        this.#styler.colorText(
           (bar.rate === undefined) ? "-" : bar.rate.toFixed(2) + "",
           this.#valColor,
         )
       }`;
 
-      let suffix = `${colors.rgb24("]", this.#labColor)} ${percent} `;
+      let suffix = `${this.#styler.colorText("]", this.#labColor)} ${percent} `;
+      visibleWidth += 3;
       if (bar.current === bar.total) {
         const taken = this.#formatTime(bar.endMillis! - bar.startMillis!);
-        suffix += `${colors.rgb24(bar.total + "", this.#valColor)}${
-          colors.rgb24(bar.units + ", rate:", this.#labColor)
+        const totalString = bar.total + "";
+        suffix += `${this.#styler.colorText(totalString, this.#valColor)}${
+          this.#styler.colorText(bar.units + ", rate:", this.#labColor)
         } ${rate}${
-          colors.rgb24(bar.units + "/s, time taken:", this.#labColor)
+          this.#styler.colorText(
+            bar.units + "/s, time taken:",
+            this.#labColor,
+          )
         } ${taken}`;
+        visibleWidth + totalString.length + bar.units.length + 7 + 1 +
+          rate.length + bar.units.length + 15 + 1 + taken.length;
       } else {
         const remaining = ((bar.rate === undefined) || (bar.rate === 0))
           ? "-"
           : this.#formatTime(((bar.total - bar.current) / bar.rate) * 1000);
-        suffix += `${colors.rgb24(bar.current + "", this.#valColor)}${
-          colors.rgb24("/", this.#labColor)
-        }${colors.rgb24(bar.total + "", this.#valColor)}${
-          colors.rgb24(bar.units + ", rate:", this.#labColor)
+        const currentString = bar.current + "";
+        const totalString = bar.total + "";
+        suffix += `${this.#styler.colorText(currentString, this.#valColor)}${
+          this.#styler.colorText("/", this.#labColor)
+        }${this.#styler.colorText(totalString, this.#valColor)}${
+          this.#styler.colorText(bar.units + ", rate:", this.#labColor)
         } ${rate}${
-          colors.rgb24(bar.units + "/s, time remaining:", this.#labColor)
+          this.#styler.colorText(
+            bar.units + "/s, time remaining:",
+            this.#labColor,
+          )
         } ${remaining}`;
+        visibleWidth + currentString.length + 1 + totalString.length +
+          bar.units.length + 7 + 1 + rate.length + bar.units.length + 19 + 1 +
+          remaining.length;
       }
-      let available = consoleWidth - colors.stripAnsiCode(prefix).length -
-        colors.stripAnsiCode(suffix).length;
+      let available = consoleWidth - visibleWidth;
       if (available < 0) {
         available = 0;
       }
@@ -263,8 +282,11 @@ export default class Progress {
       const completeLength = Math.floor(
         totalLength * barInfo.bar.current / barInfo.bar.total,
       );
-      const complete = colors.rgb24("=".repeat(completeLength), this.#comColor);
-      const remaining = colors.rgb24(
+      const complete = this.#styler.colorText(
+        "=".repeat(completeLength),
+        this.#comColor,
+      );
+      const remaining = this.#styler.colorText(
         "-".repeat(totalLength - completeLength),
         this.#remColor,
       );
@@ -274,20 +296,20 @@ export default class Progress {
     });
 
     // hide the cursor before rendering
-    await this.#term.hideCursor();
+    await this.#terminal.hideCursor();
 
     // clear the previously rendered bars
-    await this.#term.clearUpLines(this.#currentRenderedBarCount * 2);
+    await this.#terminal.clearUpLines(this.#currentRenderedBarCount * 2);
 
     // rendere the new bars
-    await this.#term.write(lines.join("\n") + "\n");
+    await this.#terminal.write(lines.join("\n") + "\n");
 
     // save count rendered bars so we can clear on the next render cycle
     this.#currentRenderedBarCount = barInfo.length;
 
     // show the cursor if there are no bars or the timer is not running
-    if (this.#bars.size === 0 || this.#intervalId === undefined) {
-      await this.#term.showCursor();
+    if (this.#bars.size === 0 || this.#timer === undefined) {
+      await this.#terminal.showCursor();
     }
 
     this.#isDirty = false;
@@ -312,40 +334,40 @@ export default class Progress {
   #formatTime(millis: number): string {
     let sec = millis / 1000;
     if (sec < 60) {
-      return `${colors.rgb24(sec.toFixed(0), this.#valColor)}${
-        colors.rgb24("s", this.#labColor)
+      return `${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("s", this.#labColor)
       }`;
     }
     let min = Math.floor(sec / 60);
     sec %= 60;
     if (min < 60) {
-      return `${colors.rgb24(min.toFixed(0), this.#valColor)}${
-        colors.rgb24("m", this.#labColor)
-      } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
-        colors.rgb24("s", this.#labColor)
+      return `${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("m", this.#labColor)
+      } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("s", this.#labColor)
       }`;
     }
     let hour = Math.floor(min / 60);
     min %= 60;
     if (hour < 24) {
-      return `${colors.rgb24(hour.toFixed(0), this.#valColor)}${
-        colors.rgb24("h", this.#labColor)
-      } ${colors.rgb24(min.toFixed(0), this.#valColor)}${
-        colors.rgb24("m", this.#labColor)
-      } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
-        colors.rgb24("s", this.#labColor)
+      return `${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("h", this.#labColor)
+      } ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("m", this.#labColor)
+      } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
+        this.#styler.colorText("s", this.#labColor)
       }`;
     }
     const day = Math.floor(hour / 24);
     hour %= 24;
-    return `${colors.rgb24(day.toFixed(0), this.#valColor)}${
-      colors.rgb24("d", this.#labColor)
-    } ${colors.rgb24(hour.toFixed(0), this.#valColor)}${
-      colors.rgb24("h", this.#labColor)
-    } ${colors.rgb24(min.toFixed(0), this.#valColor)}${
-      colors.rgb24("m", this.#labColor)
-    } ${colors.rgb24(sec.toFixed(0), this.#valColor)}${
-      colors.rgb24("s", this.#labColor)
+    return `${this.#styler.colorText(day.toFixed(0), this.#valColor)}${
+      this.#styler.colorText("d", this.#labColor)
+    } ${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${
+      this.#styler.colorText("h", this.#labColor)
+    } ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
+      this.#styler.colorText("m", this.#labColor)
+    } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
+      this.#styler.colorText("s", this.#labColor)
     }`;
   }
 }

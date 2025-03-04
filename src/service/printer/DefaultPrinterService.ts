@@ -1,32 +1,19 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
-import * as colors from "@std/fmt/colors";
-import { ITALIC_END, ITALIC_START } from "./terminal/Ansi.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import { type Icon, Level } from "../../api/service/core/PrinterService.ts";
-import type ShutdownService from "../../api/service/core/ShutdownService.ts";
-import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
-import type Context from "../../api/Context.ts";
 import Terminal from "./terminal/Terminal.ts";
-
-enum Color {
-  PRIMARY = 0,
-  SECONDARY = 1,
-  EMPHASISED = 2,
-  SELECTED = 3,
-  YELLOW = 4,
-  ORANGE = 5,
-  RED = 6,
-  MAGENTA = 7,
-  VIOLET = 8,
-  BLUE = 9,
-  CYAN = 10,
-  GREEN = 11,
-}
+import { Color } from "./terminal/Color.ts";
+import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
+import { WritableStream } from "node:stream/web";
+import Styler from "./terminal/Styler.ts";
 
 export default class DefaultPrinterService implements PrinterService {
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;
+  #stdoutIsColor: boolean;
+  #stderrTerminal: Terminal;
+  #styler: Styler;
   #isDarkMode = true;
   #threshold = Level.INFO;
   #iconDefinitions: Array<string> = [];
@@ -34,7 +21,6 @@ export default class DefaultPrinterService implements PrinterService {
   #encoder = new TextEncoder();
   #spinner: Spinner;
   #progress: Progress;
-  #terminal: Terminal;
 
   async #log(
     level: number,
@@ -46,7 +32,7 @@ export default class DefaultPrinterService implements PrinterService {
     }
     await this.#spinner.pause();
     await this.#progress.pause();
-    await this.#terminal.write(
+    await this.#stderrTerminal.write(
       `${
         (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
       }${message}`,
@@ -58,43 +44,31 @@ export default class DefaultPrinterService implements PrinterService {
   public constructor(
     stdoutWritableStream: WritableStream,
     stderrWritableStream: WritableStream,
+    stdoutIsColor: boolean,
+    stderrIsColor: boolean,
+    stderrTerminal: Terminal,
+    styler: Styler,
   ) {
     this.stdoutWritable = stdoutWritableStream;
     this.stderrWritable = stderrWritableStream;
-    this.#terminal = new Terminal(this.stderrWritable);
-    this.#spinner = new Spinner(this.#terminal);
-    this.#progress = new Progress(this.#terminal);
-    this.#theme[Color.YELLOW] = 0xb58900;
-    this.#theme[Color.ORANGE] = 0xcb4b16;
-    this.#theme[Color.RED] = 0xdc322f;
-    this.#theme[Color.MAGENTA] = 0xd33682;
-    this.#theme[Color.VIOLET] = 0x6c71c4;
-    this.#theme[Color.BLUE] = 0x268bd2;
-    this.#theme[Color.CYAN] = 0x2aa198;
-    this.#theme[Color.GREEN] = 0x859900;
+    this.#stdoutIsColor = stdoutIsColor;
+    this.#stderrTerminal = stderrTerminal;
+    this.#styler = styler;
+    this.#styler.colorEnabled = stderrIsColor;
+    this.#spinner = new Spinner(this.#stderrTerminal, this.#styler);
+    this.#progress = new Progress(this.#stderrTerminal, this.#styler);
+    this.darkMode = false;
     this.#iconDefinitions = [
       this.green("✔"),
       this.red("✖"),
       this.yellow("‼"),
       this.blue("ℹ"),
     ];
-    this.darkMode = false;
-  }
-
-  init(context: Context) {
-    const shutdownService = context.getServiceById(
-      SHUTDOWN_SERVICE_ID,
-    ) as ShutdownService;
-    shutdownService.addShutdownListener(async () => {
-      await this.#spinner.hide();
-    });
-    shutdownService.addShutdownListener(async () => {
-      await this.#progress.hideAll();
-    });
   }
 
   set colorEnabled(enabled: boolean) {
-    colors.setColorEnabled(enabled);
+    this.#styler.colorEnabled = enabled;
+    this.#stdoutIsColor = enabled;
     if (enabled) {
       this.#iconDefinitions = [
         this.green("✔"),
@@ -113,21 +87,15 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   get colorEnabled(): boolean {
-    return colors.getColorEnabled();
+    return this.#styler.colorEnabled;
   }
 
   set darkMode(isDarkMode: boolean) {
     this.#isDarkMode = isDarkMode;
     if (isDarkMode) {
-      this.#theme[Color.PRIMARY] = 0x839496;
-      this.#theme[Color.SECONDARY] = 0x586e75;
-      this.#theme[Color.EMPHASISED] = 0x93a1a1;
-      this.#theme[Color.SELECTED] = 0x073642;
+      this.#theme = getDarkModeTheme();
     } else {
-      this.#theme[Color.PRIMARY] = 0x657b83;
-      this.#theme[Color.SECONDARY] = 0x93a1a1;
-      this.#theme[Color.EMPHASISED] = 0x586e75;
-      this.#theme[Color.SELECTED] = 0xeee8d5;
+      this.#theme = getLightModeTheme();
     }
     this.#spinner.spinnerColor = this.#theme[Color.EMPHASISED];
     this.#spinner.messageColor = this.#theme[Color.PRIMARY];
@@ -142,55 +110,55 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public primary(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.PRIMARY]);
+    return this.#styler.colorText(message, this.#theme[Color.PRIMARY]);
   }
 
   public secondary(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.SECONDARY]);
+    return this.#styler.colorText(message, this.#theme[Color.SECONDARY]);
   }
 
   public emphasised(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.EMPHASISED]);
+    return this.#styler.colorText(message, this.#theme[Color.EMPHASISED]);
   }
 
   public selected(message: string): string {
-    return colors.bgRgb24(message, this.#theme[Color.SELECTED]);
+    return this.#styler.colorText(message, this.#theme[Color.SELECTED]);
   }
 
   public italic(message: string): string {
-    return ITALIC_START + message + ITALIC_END;
+    return this.#styler.italicText(message);
   }
 
   public yellow(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.YELLOW]);
+    return this.#styler.colorText(message, this.#theme[Color.YELLOW]);
   }
 
   public orange(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.ORANGE]);
+    return this.#styler.colorText(message, this.#theme[Color.ORANGE]);
   }
 
   public red(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.RED]);
+    return this.#styler.colorText(message, this.#theme[Color.RED]);
   }
 
   public magenta(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.MAGENTA]);
+    return this.#styler.colorText(message, this.#theme[Color.MAGENTA]);
   }
 
   public violet(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.VIOLET]);
+    return this.#styler.colorText(message, this.#theme[Color.VIOLET]);
   }
 
   public blue(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.BLUE]);
+    return this.#styler.colorText(message, this.#theme[Color.BLUE]);
   }
 
   public cyan(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.CYAN]);
+    return this.#styler.colorText(message, this.#theme[Color.CYAN]);
   }
 
   public green(message: string): string {
-    return colors.rgb24(message, this.#theme[Color.GREEN]);
+    return this.#styler.colorText(message, this.#theme[Color.GREEN]);
   }
 
   public async debug(message: string, icon?: Icon): Promise<void> {
@@ -212,12 +180,13 @@ export default class DefaultPrinterService implements PrinterService {
   public async print(message: string, icon?: Icon): Promise<void> {
     await this.#spinner.pause();
     await this.#progress.pause();
-
     const writer = this.stdoutWritable.getWriter();
+    const colorMessage = this.#stdoutIsColor ? this.primary(message) : message;
+
     const encoded = this.#encoder.encode(
       `${
         (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
-      }${message}`,
+      }${colorMessage}`,
     );
 
     await writer.ready;
@@ -268,6 +237,10 @@ export default class DefaultPrinterService implements PrinterService {
 
   public async hideProgressBar(handle: number): Promise<void> {
     await this.#progress.hide(handle);
+  }
+
+  public async hideAllProgressBars(): Promise<void> {
+    await this.#progress.hideAll();
   }
 
   public updateProgressBar(

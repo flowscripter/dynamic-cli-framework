@@ -3,6 +3,13 @@ import type { LanguageFn as HighlightSyntax } from "highlight.js";
 import { createEmphasize } from "emphasize";
 import json from "highlight.js/lib/languages/json";
 
+interface Emphasize {
+  listLanguages(): ReadonlyArray<string>;
+  registered(name: string): boolean;
+  highlight(name: string, text: string): { value: string };
+  register(name: string, syntax: HighlightSyntax): void;
+}
+
 /**
  * Default implementation of {@link SyntaxHighlighterService} which has a syntax definition
  * for JSON already registered.
@@ -10,8 +17,7 @@ import json from "highlight.js/lib/languages/json";
 export default class DefaultSyntaxHighlighterService
   implements SyntaxHighlighterService {
   colorEnabled = true;
-  // deno-lint-ignore no-explicit-any
-  emphasize: any;
+  emphasize: Emphasize;
 
   constructor() {
     this.emphasize = createEmphasize();

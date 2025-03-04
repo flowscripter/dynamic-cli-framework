@@ -1,5 +1,4 @@
-import { Buffer } from "@std/streams";
-import { assertEquals } from "@std/assert";
+import { describe, test } from "bun:test";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import UsageCommand from "../../src/command/UsageCommand.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
@@ -8,42 +7,47 @@ import DefaultPrinterService from "../../src/service/printer/DefaultPrinterServi
 import type { ArgumentValues } from "../../src/api/argument/ArgumentValueTypes.ts";
 import type Context from "../../src/api/Context.ts";
 import type Command from "../../src/api/command/Command.ts";
+import StreamString from "../fixtures/StreamString.ts";
+import { expectStringEquals } from "../fixtures/util.ts";
+import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
 
-const decoder = new TextDecoder();
+describe("UsageCommand Tests", () => {
+  test("Usage works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printer = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printer.colorEnabled = false;
 
-function expectBufferString(actual: Buffer, expected: string) {
-  assertEquals(decoder.decode(actual.bytes()), expected);
-}
+    const context = new DefaultContext(getCLIConfig());
 
-Deno.test("Usage works", async () => {
-  const buffer = new Buffer();
-  const printer = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printer.colorEnabled = false;
+    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
 
-  const context = new DefaultContext(getCLIConfig());
+    const usageCommand = new UsageCommand(
+      new class implements Command {
+        readonly name = "help";
 
-  context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+        execute(
+          _argumentValues: ArgumentValues,
+          _context: Context,
+        ): Promise<void> {
+          return Promise.resolve(undefined);
+        }
+      }(),
+    );
 
-  const usageCommand = new UsageCommand(
-    new class implements Command {
-      readonly name = "help";
+    await usageCommand.execute(context);
 
-      execute(
-        _argumentValues: ArgumentValues,
-        _context: Context,
-      ): Promise<void> {
-        return Promise.resolve(undefined);
-      }
-    }(),
-  );
-
-  await usageCommand.execute(context);
-
-  expectBufferString(
-    buffer,
-    "Try running:\n\n  foo --help\n\n",
-  );
+    expectStringEquals(
+      dummyStdout.getString(),
+      "Try running:\n\n  foo --help\n\n",
+    );
+  });
 });

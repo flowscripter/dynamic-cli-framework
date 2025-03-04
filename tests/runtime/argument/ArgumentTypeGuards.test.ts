@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
 import {
   ArgumentValueTypeName,
@@ -39,9 +39,11 @@ function getGlobalCommandArgument(): GlobalCommandArgument {
   };
 }
 
-Deno.test("isComplexOption works", () => {
-  assertEquals(isComplexOption(getComplexOption()), true);
-  assertEquals(isComplexOption(getOption()), false);
-  assertEquals(isComplexOption(getPositional()), false);
-  assertEquals(isComplexOption(getGlobalCommandArgument()), false);
+describe("ArgumentTypeGuards Tests", () => {
+  test("isComplexOption works", () => {
+    expect(isComplexOption(getComplexOption())).toBeTrue();
+    expect(isComplexOption(getOption())).toBeFalse();
+    expect(isComplexOption(getPositional())).toBeFalse();
+    expect(isComplexOption(getGlobalCommandArgument())).toBeFalse();
+  });
 });

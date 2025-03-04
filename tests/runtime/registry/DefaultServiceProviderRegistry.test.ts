@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import type {
   ServiceInfo,
   ServiceProvider,
@@ -26,15 +26,17 @@ function getServiceProvider(
   };
 }
 
-Deno.test("Check for ordering of service providers", () => {
-  const serviceProvider1 = getServiceProvider("foo1", 1);
-  const serviceProvider2 = getServiceProvider("foo2", 2);
-  const serviceProviderRegistry = new DefaultServiceProviderRegistry();
+describe("DefaultServiceProviderRegistry Tests", () => {
+  test("Check for ordering of service providers", () => {
+    const serviceProvider1 = getServiceProvider("foo1", 1);
+    const serviceProvider2 = getServiceProvider("foo2", 2);
+    const serviceProviderRegistry = new DefaultServiceProviderRegistry();
 
-  serviceProviderRegistry.addServiceProvider(serviceProvider1);
-  serviceProviderRegistry.addServiceProvider(serviceProvider2);
+    serviceProviderRegistry.addServiceProvider(serviceProvider1);
+    serviceProviderRegistry.addServiceProvider(serviceProvider2);
 
-  const orderedServices = serviceProviderRegistry.getServiceProviders();
-  assertEquals(orderedServices[0].servicePriority, 2);
-  assertEquals(orderedServices[1].servicePriority, 1);
+    const orderedServices = serviceProviderRegistry.getServiceProviders();
+    expect(orderedServices[0].servicePriority).toEqual(2);
+    expect(orderedServices[1].servicePriority).toEqual(1);
+  });
 });

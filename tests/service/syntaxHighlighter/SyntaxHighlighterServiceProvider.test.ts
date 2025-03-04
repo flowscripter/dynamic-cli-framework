@@ -1,31 +1,41 @@
-import { Buffer } from "@std/streams";
-import { assertEquals } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import SyntaxHighlighterServiceProvider from "../../../src/service/syntaxHighlighter/SyntaxHighlighterServiceProvider.ts";
 import { PRINTER_SERVICE_ID } from "../../../src/api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
+import StreamString from "../../fixtures/StreamString.ts";
+import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
 
-Deno.test("SyntaxHighlighterServiceProvider provide and initService works", async () => {
-  const buffer = new Buffer();
-  const syntaxHighlighterServiceProvider = new SyntaxHighlighterServiceProvider(
-    100,
-  );
-  const cliConfig = getCLIConfig();
-  const context = new DefaultContext(cliConfig);
+describe("SyntaxHighlighterServiceProvider Tests", () => {
+  test("SyntaxHighlighterServiceProvider provide and initService works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const syntaxHighlighterServiceProvider =
+      new SyntaxHighlighterServiceProvider(
+        100,
+      );
+    const cliConfig = getCLIConfig();
+    const context = new DefaultContext(cliConfig);
 
-  context.addServiceInstance(
-    PRINTER_SERVICE_ID,
-    new DefaultPrinterService(
-      buffer.writable,
-      buffer.writable,
-    ),
-  );
+    context.addServiceInstance(
+      PRINTER_SERVICE_ID,
+      new DefaultPrinterService(
+        dummyStdout.writableStream,
+        dummyStderr.writableStream,
+        true,
+        true,
+        new TtyTerminal(dummyStderr.writeStream),
+        new TtyStyler(),
+      ),
+    );
 
-  const serviceInfo = await syntaxHighlighterServiceProvider.provide(
-    cliConfig,
-  );
-  assertEquals(serviceInfo.commands.length, 0);
+    const serviceInfo = await syntaxHighlighterServiceProvider.provide(
+      cliConfig,
+    );
+    expect(serviceInfo.commands.length).toEqual(0);
 
-  await syntaxHighlighterServiceProvider.initService(context);
+    await syntaxHighlighterServiceProvider.initService(context);
+  });
 });

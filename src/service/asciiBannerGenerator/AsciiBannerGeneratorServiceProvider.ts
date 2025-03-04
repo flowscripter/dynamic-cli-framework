@@ -17,7 +17,7 @@ export default class AsciiBannerGeneratorServiceProvider
   implements ServiceProvider {
   readonly serviceId: string = ASCII_BANNER_GENERATOR_SERVICE_ID;
   readonly servicePriority: number;
-  readonly asciiBannerGeneratorService: AsciiBannerGeneratorService;
+  readonly #asciiBannerGeneratorService: AsciiBannerGeneratorService;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -28,12 +28,13 @@ export default class AsciiBannerGeneratorServiceProvider
     servicePriority: number,
   ) {
     this.servicePriority = servicePriority;
-    this.asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
+    this.#asciiBannerGeneratorService =
+      new DefaultAsciiBannerGeneratorService();
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
-      service: this.asciiBannerGeneratorService,
+      service: this.#asciiBannerGeneratorService,
       commands: [],
     });
   }

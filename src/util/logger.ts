@@ -1,46 +1,84 @@
-import * as log from "@std/log";
-import { sprintf } from "@std/fmt/printf";
-import { getEnvVarIfPermitted } from "./envVarHelper.ts";
+import process from "node:process";
+type LoggerFunction = (
+  message: object | (() => string) | string,
+  ...optionalParams: unknown[]
+) => void;
 
-let defaultLogger: log.Logger | undefined;
-
-if (defaultLogger === undefined) {
-  defaultLogger = await setupLogger();
+export interface Logger {
+  trace: LoggerFunction;
+  debug: LoggerFunction;
+  info: LoggerFunction;
+  warn: LoggerFunction;
+  error: LoggerFunction;
 }
 
-async function setupLogger() {
-  log.setup({
-    handlers: {
-      console: new log.ConsoleHandler(
-        (await getEnvVarIfPermitted("CLI_DEBUG") !== undefined)
-          ? "DEBUG"
-          : "ERROR",
-        {
-          formatter: (logRecord) => {
-            const { msg, args, levelName, loggerName } = logRecord;
-            if (args.length === 0) {
-              return `${levelName} [${loggerName}] ${msg}`;
-            }
-            return `${levelName} [${loggerName}] ${sprintf(msg, ...args)}`;
-          },
-        },
-      ),
-    },
+const debugEnabled = process.env["CLI_DEBUG"] !== undefined;
 
-    loggers: {
-      default: {
-        handlers: ["console"],
+function getDefaultLogger(): Logger {
+  if (debugEnabled) {
+    return {
+      trace: () => {},
+      debug: (message, ...optionalParams) => {
+        console.debug(message, optionalParams);
       },
+      info: (message, ...optionalParams) => {
+        console.info(message, optionalParams);
+      },
+      warn: (message, ...optionalParams) => {
+        console.warn(message, optionalParams);
+      },
+      error: (message, ...optionalParams) => {
+        console.error(message, optionalParams);
+      },
+    };
+  }
+  return {
+    trace: () => {},
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: (message, ...optionalParams) => {
+      console.error(message, optionalParams);
     },
-  });
-
-  return log.getLogger();
+  };
 }
 
-export default function getLogger(name: string): log.Logger {
-  const logger = log.getLogger(name);
-  logger.level = log.LogLevels.DEBUG;
-  logger.handlers.push(...log.getLogger().handlers);
+function wrapWithLoggerName(
+  loggerName: string,
+  loggerFunction: LoggerFunction,
+): LoggerFunction {
+  return (message, ...optionalParams) => {
+    if (message instanceof Object) {
+      message.loggerName = loggerName;
+      loggerFunction(message, optionalParams);
+      return;
+    }
+    if (message instanceof Function) {
+      loggerFunction(`${loggerName} ${message()}`, optionalParams);
+      return;
+    }
+    loggerFunction(`${loggerName} ${message}`, optionalParams);
+  };
+}
 
-  return logger;
+export default function getLogger(loggerName: string): Logger {
+  if (globalThis.defaultLogger === undefined) {
+    globalThis.defaultLogger = getDefaultLogger();
+  }
+  if (debugEnabled) {
+    return {
+      trace: () => {},
+      debug: wrapWithLoggerName(loggerName, globalThis.defaultLogger.debug),
+      info: wrapWithLoggerName(loggerName, globalThis.defaultLogger.info),
+      warn: wrapWithLoggerName(loggerName, globalThis.defaultLogger.warn),
+      error: wrapWithLoggerName(loggerName, globalThis.defaultLogger.error),
+    };
+  }
+  return {
+    trace: () => {},
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: wrapWithLoggerName(loggerName, globalThis.defaultLogger.error),
+  };
 }

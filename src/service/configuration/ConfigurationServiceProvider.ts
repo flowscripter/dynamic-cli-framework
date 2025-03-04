@@ -1,4 +1,7 @@
-import * as path from "@std/path";
+import process from "node:process";
+import path from "node:path";
+import fs from "node:fs/promises";
+import { Stats } from "node:fs";
 import type {
   ServiceInfo,
   ServiceProvider,
@@ -408,7 +411,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     if (this.configLocation === undefined) {
       isDefault = true;
       // default to `$HOME/.<application_name>.json`
-      const home = Deno.env.get("HOME");
+      const home = process.env["HOME"];
       if (home) {
         this.configLocation = path.join(
           home,
@@ -419,10 +422,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     if (this.configLocation === undefined) {
       return;
     }
-
-    let fileInfo: Deno.FileInfo | undefined;
+    let fileInfo: Stats;
     try {
-      fileInfo = await Deno.lstat(this.configLocation);
+      fileInfo = await fs.lstat(this.configLocation);
     } catch (err) {
       const error = err as Error;
       if (isDefault) {
@@ -438,7 +440,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         );
       }
     }
-    if (fileInfo.isDirectory) {
+    if (fileInfo.isDirectory()) {
       throw new Error(
         `Config file location: '${this.configLocation}' is a directory and not a file!`,
       );
@@ -451,8 +453,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     try {
       logger.debug("Reading config from: %s", location);
 
-      const data = await Deno.readTextFile(location);
-      const config = JSON.parse(data);
+      const data = await fs.readFile(location);
+      const config = JSON.parse(data.toString());
 
       if (config === undefined) {
         return;
@@ -513,7 +515,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     logger.debug("Writing config to: %s", location);
 
     try {
-      await Deno.writeTextFile(location, this.getConfigString());
+      await fs.writeFile(location, this.getConfigString());
     } catch (err) {
       throw new Error(
         `Failed to write config at location: '${this.configLocation}': ${err}`,

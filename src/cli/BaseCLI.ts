@@ -31,6 +31,11 @@ import ConfigurationServiceProvider from "../service/configuration/Configuration
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
 
+import { WritableStream } from "node:stream/web";
+import Terminal from "../service/printer/terminal/Terminal.ts";
+import PrinterService from "../api/service/core/PrinterService.ts";
+import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
+import Styler from "../service/printer/terminal/Styler.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -54,8 +59,6 @@ const logger = getLogger("BaseCLI");
  */
 export default class BaseCLI implements CLI {
   readonly #cliConfig: CLIConfig;
-  readonly #stdoutWritable: WritableStream;
-  readonly #stderrWritable: WritableStream;
   readonly #envVarsEnabled: boolean;
   readonly #configEnabled: boolean;
   readonly #keyValueServiceEnabled: boolean;
@@ -63,13 +66,18 @@ export default class BaseCLI implements CLI {
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
   readonly #commandRegistry: DefaultCommandRegistry;
   readonly #context: DefaultContext;
+  readonly #printerService: PrinterService;
 
   /**
    * Constructor configures the instance with the specified CLI application details and WritableStream instances.
    *
    * @param cliConfig the {@link CLIConfig} for the CLI application.
-   * @param stdoutWritableStream the WritableStream to use for stdout output.
+   * @param stdoutWritableStream the WritableStream to use for stderr output.
    * @param stderrWritableStream the WritableStream to use for stderr output.
+   * @param stdoutIsColor true if stdout supports color.
+   * @param stderrIsColor true if stderr supports color.
+   * @param terminal the Terminal implementation to use.
+   * @param styler the Styler implementation to use.
    * @param envVarsEnabled optionally support checking env variables for default argument values.
    * @param configEnabled optionally enable configuration file support for default argument values.
    * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
@@ -79,6 +87,10 @@ export default class BaseCLI implements CLI {
     cliConfig: CLIConfig,
     stdoutWritableStream: WritableStream,
     stderrWritableStream: WritableStream,
+    stdoutIsColor: boolean,
+    stderrIsColor: boolean,
+    stderrTerminal: Terminal,
+    styler: Styler,
     envVarsEnabled = false,
     configEnabled = false,
     keyValueServiceEnabled = false,
@@ -102,8 +114,6 @@ export default class BaseCLI implements CLI {
       throw new Error("Invalid empty CLI version provided");
     }
     this.#cliConfig = cliConfig;
-    this.#stdoutWritable = stdoutWritableStream;
-    this.#stderrWritable = stderrWritableStream;
     this.#envVarsEnabled = envVarsEnabled;
     this.#configEnabled = configEnabled;
     this.#keyValueServiceEnabled = keyValueServiceEnabled;
@@ -123,6 +133,15 @@ export default class BaseCLI implements CLI {
 
     // create a context
     this.#context = new DefaultContext(this.#cliConfig);
+
+    this.#printerService = new DefaultPrinterService(
+      stdoutWritableStream,
+      stderrWritableStream,
+      stdoutIsColor,
+      stderrIsColor,
+      stderrTerminal,
+      styler,
+    );
   }
 
   /**
@@ -178,8 +197,7 @@ export default class BaseCLI implements CLI {
     this.addServiceProvider(
       new PrinterServiceProvider(
         80,
-        this.#stdoutWritable,
-        this.#stderrWritable,
+        this.#printerService,
       ),
     );
 

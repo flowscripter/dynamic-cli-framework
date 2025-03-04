@@ -1,63 +1,65 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import DefaultKeyValueService from "../../../src/service/configuration/DefaultKeyValueService.ts";
 
-Deno.test("Setting data works", () => {
-  const keyValueService = new DefaultKeyValueService();
+describe("DefaultKeyValueService Tests", () => {
+  test("Setting data works", () => {
+    const keyValueService = new DefaultKeyValueService();
 
-  keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
+    keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
 
-  assertEquals(keyValueService.hasKey("foo"), true);
-  assertEquals(keyValueService.getKey("foo"), "bar");
-});
+    expect(keyValueService.hasKey("foo")).toBeTrue();
+    expect(keyValueService.getKey("foo")).toEqual("bar");
+  });
 
-Deno.test("Cannot set data without clearing", () => {
-  const keyValueService = new DefaultKeyValueService();
+  test("Cannot set data without clearing", () => {
+    const keyValueService = new DefaultKeyValueService();
 
-  keyValueService.setKeyValueData(new Map());
-  assertThrows(() => keyValueService.setKeyValueData(new Map()));
+    keyValueService.setKeyValueData(new Map());
+    expect(() => keyValueService.setKeyValueData(new Map())).toThrow();
 
-  keyValueService.clearKeyValueData();
-  keyValueService.setKeyValueData(new Map());
-});
+    keyValueService.clearKeyValueData();
+    keyValueService.setKeyValueData(new Map());
+  });
 
-Deno.test("Cannot modify data before setting it", () => {
-  const keyValueService = new DefaultKeyValueService();
+  test("Cannot modify data before setting it", () => {
+    const keyValueService = new DefaultKeyValueService();
 
-  assertThrows(() => keyValueService.setKey("foo", "bar"));
-  assertThrows(() => keyValueService.hasKey("foo"));
-  assertThrows(() => keyValueService.getKey("foo"));
-  assertThrows(() => keyValueService.deleteKey("foo"));
+    expect(() => keyValueService.setKey("foo", "bar")).toThrow();
+    expect(() => keyValueService.hasKey("foo")).toThrow();
+    expect(() => keyValueService.getKey("foo")).toThrow();
+    expect(() => keyValueService.deleteKey("foo")).toThrow();
 
-  keyValueService.setKeyValueData(new Map());
+    keyValueService.setKeyValueData(new Map());
 
-  keyValueService.setKey("foo", "bar");
-  assertEquals(keyValueService.hasKey("foo"), true);
-  assertEquals(keyValueService.getKey("foo"), "bar");
-  keyValueService.deleteKey("foo");
-});
+    keyValueService.setKey("foo", "bar");
+    expect(keyValueService.hasKey("foo")).toBeTrue();
+    expect(keyValueService.getKey("foo")).toEqual("bar");
+    keyValueService.deleteKey("foo");
+  });
 
-Deno.test("Dirty state is managed correctly", () => {
-  const keyValueService = new DefaultKeyValueService();
+  test("Dirty state is managed correctly", () => {
+    const keyValueService = new DefaultKeyValueService();
 
-  assertEquals(keyValueService.isDirty(), false);
+    expect(keyValueService.isDirty()).toBeFalse();
 
-  keyValueService.setKeyValueData(new Map());
+    keyValueService.setKeyValueData(new Map());
 
-  assertEquals(keyValueService.isDirty(), false);
+    expect(keyValueService.isDirty()).toBeFalse();
 
-  keyValueService.setKey("foo", "bar");
+    keyValueService.setKey("foo", "bar");
 
-  assertEquals(keyValueService.isDirty(), true);
+    expect(keyValueService.isDirty()).toBeTrue();
 
-  keyValueService.clearKeyValueData();
+    keyValueService.clearKeyValueData();
 
-  assertEquals(keyValueService.isDirty(), false);
+    expect(keyValueService.isDirty()).toBeFalse();
 
-  keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
+    keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
 
-  assertEquals(keyValueService.isDirty(), false);
+    expect(keyValueService.isDirty()).toBeFalse();
 
-  keyValueService.deleteKey("foo");
+    keyValueService.deleteKey("foo");
 
-  assertEquals(keyValueService.isDirty(), true);
+    expect(keyValueService.isDirty()).toBeTrue();
+  });
 });

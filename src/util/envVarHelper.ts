@@ -1,3 +1,4 @@
+import process from "node:process";
 import type Command from "../api/command/Command.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
 import {
@@ -6,6 +7,8 @@ import {
   type PopulatedArgumentSingleValueType,
   type PopulatedArgumentValues,
 } from "../api/argument/ArgumentValueTypes.ts";
+type ProcessEnv = NodeJS.ProcessEnv;
+
 import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
 import {
   MAXIMUM_ARGUMENT_ARRAY_SIZE,
@@ -49,27 +52,6 @@ function getGlobalArgumentKeyPrefix(
 }
 
 /**
- * Get the value of the specified environment variable if permitted.
- *
- * If permissions is not yet granted do not ask for it and do not access the environment.
- *
- * If permission is not granted or the environment variable is not defined, `undefined` is returned.
- *
- * @param envVar the environment variable name to access.
- */
-export async function getEnvVarIfPermitted(
-  envVar: string,
-): Promise<string | undefined> {
-  const permissionDescriptor = { name: "env", path: envVar } as const;
-  const status = await Deno.permissions.query(permissionDescriptor);
-
-  if (status.state !== "granted") {
-    return undefined;
-  }
-  return Deno.env.get(envVar);
-}
-
-/**
  * Get configured argument value for the specified {@link GlobalCommandArgument} from environment variables.
  *
  * @param cliConfig the {@link CLIConfig} to use for determining the default configuration key.
@@ -86,9 +68,9 @@ export function getGlobalCommandValueFromEnvVars(
   }
 
   // simple check for a specific env var name
-  let envVarValue = Deno.env.get(
-    getGlobalArgumentKeyPrefix(cliConfig, command, argument),
-  );
+  let envVarValue = process.env[
+    getGlobalArgumentKeyPrefix(cliConfig, command, argument)
+  ];
   if (
     (envVarValue != undefined) &&
     (argument.type === ArgumentValueTypeName.BOOLEAN)
@@ -102,7 +84,7 @@ export function getGlobalCommandValueFromEnvVars(
 function getOptionValuesFromEnvVars(
   envVarValues: PopulatedArgumentValues,
   potentialEnvVarNames: Array<string>,
-  env: { [index: string]: string },
+  env: ProcessEnv,
   option: Option | ComplexOption,
   envVarNamePrefix: string,
 ) {
@@ -237,7 +219,7 @@ function getOptionValuesFromEnvVars(
     });
   } else {
     // simple check for a specific env var name
-    let value = Deno.env.get(envVarNamePrefix);
+    let value = process.env[envVarNamePrefix];
     if (value === undefined) {
       return undefined;
     }
@@ -261,10 +243,9 @@ export function getSubCommandValuesFromEnvVars(
   command: SubCommand,
 ): PopulatedArgumentValues | undefined {
   const envVarValues: PopulatedArgumentValues = {};
-  const env = Deno.env.toObject();
   if (command.options) {
     for (const option of command.options) {
-      const potentialEnvVarNames = Object.keys(env);
+      const potentialEnvVarNames = Object.keys(process.env);
       const optionPrefix = getSubCommandArgumentKeyPrefix(
         cliConfig,
         command,
@@ -273,7 +254,7 @@ export function getSubCommandValuesFromEnvVars(
       getOptionValuesFromEnvVars(
         envVarValues,
         potentialEnvVarNames,
-        env,
+        process.env ?? {},
         option,
         optionPrefix,
       );
@@ -290,7 +271,7 @@ export function getSubCommandValuesFromEnvVars(
       if (positional.isVarargMultiple) {
         envVarNamePrefix = `${envVarNamePrefix}_`;
 
-        const matches = Object.keys(env).filter((envVarName) =>
+        const matches = Object.keys(process.env).filter((envVarName) =>
           envVarName.startsWith(envVarNamePrefix)
         );
         matches.forEach((match) => {
@@ -312,7 +293,7 @@ export function getSubCommandValuesFromEnvVars(
               envVarValues[positional.name] = [];
             }
             // set primitive value
-            let envVarValue = env[match];
+            let envVarValue = process.env[match];
             if (
               (envVarValue != undefined) &&
               (positional.type === ArgumentValueTypeName.BOOLEAN)
@@ -326,7 +307,7 @@ export function getSubCommandValuesFromEnvVars(
         });
       } else {
         // simple check for a specific env var name
-        let value = Deno.env.get(envVarNamePrefix);
+        let value = process.env[envVarNamePrefix];
         if (value === undefined) {
           return undefined;
         }

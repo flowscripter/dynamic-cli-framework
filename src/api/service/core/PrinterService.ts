@@ -1,5 +1,6 @@
 export const PRINTER_SERVICE_ID =
   "@flowscripter/dynamic-cli-framework/printer-service";
+import { WritableStream } from "node:stream/web";
 
 /**
  * Enum of message importance level.
@@ -246,6 +247,13 @@ export default interface PrinterService {
    * @param handle the handle referring to the progress bar to be hidden.
    */
   hideProgressBar(handle: number): Promise<void>;
+
+  /**
+   * Hides all progress bars.
+   *
+   * NOTE: Showing the spinner will also hide ALL progress bars.
+   */
+  hideAllProgressBars(): Promise<void>;
 
   /**
    * Update a specific progress bar.

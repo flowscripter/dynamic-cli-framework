@@ -1,4 +1,4 @@
-import * as colors from "@std/fmt/colors";
+import Styler from "./Styler.ts";
 import type Terminal from "./Terminal.ts";
 
 const FRAMES = [
@@ -18,29 +18,31 @@ export default class Spinner {
   #isShown = false;
   #message: string | undefined;
   #frameIndex = 0;
-  #intervalId: number | undefined;
+  #timer: Timer | undefined;
   #spinColor = 0x8a8a8a;
   #msgColor = 0x808080;
-  readonly #term: Terminal;
+  readonly #terminal: Terminal;
+  readonly #styler: Styler;
 
-  public constructor(terminal: Terminal) {
-    this.#term = terminal;
+  public constructor(terminal: Terminal, styler: Styler) {
+    this.#terminal = terminal;
+    this.#styler = styler;
   }
 
   async #nextFrame(): Promise<void> {
     if (!this.#isShown) {
       return;
     }
-    await this.#term.clearLine();
+    await this.#terminal.clearLine();
     if (this.#message) {
-      await this.#term.write(
-        `${colors.rgb24(FRAMES[this.#frameIndex], this.#spinColor)} ${
-          colors.rgb24(this.#message!, this.#msgColor)
+      await this.#terminal.write(
+        `${this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor)} ${
+          this.#styler.colorText(this.#message!, this.#msgColor)
         }`,
       );
     } else {
-      await this.#term.write(
-        colors.rgb24(FRAMES[this.#frameIndex], this.#spinColor),
+      await this.#terminal.write(
+        this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor),
       );
     }
     this.#frameIndex = (this.#frameIndex + 1) % FRAMES.length;
@@ -53,10 +55,10 @@ export default class Spinner {
     }
     this.#isShown = true;
     this.#frameIndex = 0;
-    this.#intervalId = setInterval(async () => {
+    this.#timer = setInterval(async () => {
       await this.#nextFrame();
     }, 100);
-    await this.#term.hideCursor();
+    await this.#terminal.hideCursor();
   }
 
   public async hide(): Promise<void> {
@@ -64,9 +66,9 @@ export default class Spinner {
       return Promise.resolve();
     }
     this.#isShown = false;
-    clearInterval(this.#intervalId);
-    await this.#term.clearLine();
-    await this.#term.showCursor();
+    clearInterval(this.#timer);
+    await this.#terminal.clearLine();
+    await this.#terminal.showCursor();
     this.#message = undefined;
   }
 
@@ -74,16 +76,16 @@ export default class Spinner {
     if (!this.#isShown) {
       return Promise.resolve();
     }
-    clearInterval(this.#intervalId);
-    this.#intervalId = undefined;
-    await this.#term.clearLine();
+    clearInterval(this.#timer);
+    this.#timer = undefined;
+    await this.#terminal.clearLine();
   }
 
   public resume(): void {
-    if ((!this.#isShown) || (this.#intervalId !== undefined)) {
+    if ((!this.#isShown) || (this.#timer !== undefined)) {
       return;
     }
-    this.#intervalId = setInterval(async () => {
+    this.#timer = setInterval(async () => {
       await this.#nextFrame();
     }, 100);
   }

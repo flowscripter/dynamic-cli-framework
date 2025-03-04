@@ -1,20 +1,22 @@
-import { assertEquals } from "@std/assert";
+import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import AsciiBannerGeneratorServiceProvider from "../../../src/service/asciiBannerGenerator/AsciiBannerGeneratorServiceProvider.ts";
 
-Deno.test("AsciiBannerGeneratorServiceProvider provide and initService works", async () => {
-  const asciiBannerGeneratorServiceProvider =
-    new AsciiBannerGeneratorServiceProvider(
-      100,
+describe("AsciiBannerGeneratorServiceProvider Tests", () => {
+  test("AsciiBannerGeneratorServiceProvider provide and initService works", async () => {
+    const asciiBannerGeneratorServiceProvider =
+      new AsciiBannerGeneratorServiceProvider(
+        100,
+      );
+    const cliConfig = getCLIConfig();
+    const context = new DefaultContext(cliConfig);
+
+    const serviceInfo = await asciiBannerGeneratorServiceProvider.provide(
+      cliConfig,
     );
-  const cliConfig = getCLIConfig();
-  const context = new DefaultContext(cliConfig);
+    expect(serviceInfo.commands.length).toEqual(0);
 
-  const serviceInfo = await asciiBannerGeneratorServiceProvider.provide(
-    cliConfig,
-  );
-  assertEquals(serviceInfo.commands.length, 0);
-
-  await asciiBannerGeneratorServiceProvider.initService(context);
+    await asciiBannerGeneratorServiceProvider.initService(context);
+  });
 });

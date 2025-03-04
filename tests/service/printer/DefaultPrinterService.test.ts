@@ -1,356 +1,410 @@
-import { Buffer } from "@std/streams";
+import { describe, test } from "bun:test";
 import {
-  expectBufferBytesEquals,
-  expectBufferStringEquals,
-  expectBufferStringIncludes,
+  expectBytesEquals,
+  expectStringEquals,
+  expectStringIncludes,
   sleep,
   write,
 } from "../../fixtures/util.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import { Icon, Level } from "../../../src/api/service/core/PrinterService.ts";
+import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import StreamString from "../../fixtures/StreamString.ts";
 
-Deno.test("Color disabled works", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+describe("DefaultPrinterService Tests", () => {
+  test("Color disabled works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.info(`hello ${printerService.blue("world")}`);
+    await printerService.info(`hello ${printerService.blue("world")}`);
 
-  expectBufferStringEquals(buffer, "hello world");
-});
+    expectStringEquals(dummyStderr.getString(), "hello world");
+  });
 
-Deno.test("Color enabled works", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = true;
-  printerService.darkMode = true;
-  await printerService.info(`hello ${printerService.blue("world")}`);
+  test("Color enabled works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = true;
+    printerService.darkMode = true;
+    await printerService.info(`hello ${printerService.blue("world")}`);
 
-  expectBufferBytesEquals(
-    buffer,
-    new Uint8Array([
-      27,
-      91,
-      51,
-      56,
-      59,
-      50,
-      59,
-      49,
-      51,
-      49,
-      59,
-      49,
-      52,
-      56,
-      59,
-      49,
-      53,
-      48,
-      109,
-      104,
-      101,
-      108,
-      108,
-      111,
-      32,
-      27,
-      91,
-      51,
-      56,
-      59,
-      50,
-      59,
-      51,
-      56,
-      59,
-      49,
-      51,
-      57,
-      59,
-      50,
-      49,
-      48,
-      109,
-      119,
-      111,
-      114,
-      108,
-      100,
-      27,
-      91,
-      51,
-      56,
-      59,
-      50,
-      59,
-      49,
-      51,
-      49,
-      59,
-      49,
-      52,
-      56,
-      59,
-      49,
-      53,
-      48,
-      109,
-      27,
-      91,
-      51,
-      57,
-      109,
-    ]),
-  );
-});
+    expectBytesEquals(
+      dummyStderr.getString(),
+      new Uint8Array([
+        27,
+        91,
+        51,
+        56,
+        59,
+        50,
+        59,
+        49,
+        51,
+        49,
+        59,
+        49,
+        52,
+        56,
+        59,
+        49,
+        53,
+        48,
+        109,
+        104,
+        101,
+        108,
+        108,
+        111,
+        32,
+        27,
+        91,
+        51,
+        56,
+        59,
+        50,
+        59,
+        51,
+        56,
+        59,
+        49,
+        51,
+        57,
+        59,
+        50,
+        49,
+        48,
+        109,
+        119,
+        111,
+        114,
+        108,
+        100,
+        27,
+        91,
+        51,
+        57,
+        109,
+        27,
+        91,
+        51,
+        57,
+        109,
+      ]),
+    );
+  });
 
-Deno.test("stdout writable accessible", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("stdout writable accessible", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await write(printerService.stdoutWritable, "hello world");
+    await write(printerService.stdoutWritable, "hello world");
 
-  expectBufferStringEquals(buffer, "hello world");
-});
+    expectStringEquals(dummyStdout.getString(), "hello world");
+  });
 
-Deno.test("stderr writable accessible", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("stderr writable accessible", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await write(printerService.stderrWritable, "hello world");
+    await write(printerService.stderrWritable, "hello world");
 
-  expectBufferStringEquals(buffer, "hello world");
-});
+    expectStringEquals(dummyStderr.getString(), "hello world");
+  });
 
-Deno.test("Printing to stdout and stderr works", async () => {
-  const stdoutBuffer = new Buffer();
-  const stderrBuffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    stdoutBuffer.writable,
-    stderrBuffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Printing to stdout and stderr works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.print("hello stdout\n");
-  await printerService.info("hello stderr\n");
+    await printerService.print("hello stdout\n");
+    await printerService.info("hello stderr\n");
 
-  expectBufferStringEquals(stdoutBuffer, "hello stdout\n");
-  expectBufferStringEquals(stderrBuffer, "hello stderr\n");
-});
+    expectStringEquals(
+      dummyStdout.getString(),
+      "hello stdout\n",
+    );
+    expectStringEquals(
+      dummyStderr.getString(),
+      "hello stderr\n",
+    );
+  });
 
-Deno.test("Level filtering works", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Level filtering works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.debug("hello debug 1\n");
-  await printerService.info("hello info 1\n");
-  await printerService.warn("hello warn 1\n");
+    await printerService.debug("hello debug 1\n");
+    await printerService.info("hello info 1\n");
+    await printerService.warn("hello warn 1\n");
 
-  expectBufferStringEquals(buffer, "hello info 1\nhello warn 1\n");
+    expectStringEquals(
+      dummyStderr.getString(),
+      "hello info 1\nhello warn 1\n",
+    );
 
-  await printerService.setLevel(Level.WARN);
+    await printerService.setLevel(Level.WARN);
 
-  await printerService.debug("hello debug 2\n");
-  await printerService.info("hello info 2\n");
-  await printerService.warn("hello warn 2\n");
+    await printerService.debug("hello debug 2\n");
+    await printerService.info("hello info 2\n");
+    await printerService.warn("hello warn 2\n");
 
-  expectBufferStringEquals(
-    buffer,
-    "hello info 1\nhello warn 1\nhello warn 2\n",
-  );
+    expectStringEquals(
+      dummyStderr.getString(),
+      "hello info 1\nhello warn 1\nhello warn 2\n",
+    );
 
-  await printerService.setLevel(Level.DEBUG);
+    await printerService.setLevel(Level.DEBUG);
 
-  await printerService.debug("hello debug 3\n");
-  await printerService.info("hello info 3\n");
-  await printerService.warn("hello warn 3\n");
+    await printerService.debug("hello debug 3\n");
+    await printerService.info("hello info 3\n");
+    await printerService.warn("hello warn 3\n");
 
-  expectBufferStringEquals(
-    buffer,
-    "hello info 1\nhello warn 1\nhello warn 2\nhello debug 3\nhello info 3\nhello warn 3\n",
-  );
-});
+    expectStringEquals(
+      dummyStderr.getString(),
+      "hello info 1\nhello warn 1\nhello warn 2\nhello debug 3\nhello info 3\nhello warn 3\n",
+    );
+  });
 
-Deno.test("Icons work on stderr", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Icons work on stderr", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.info("hello info", Icon.INFORMATION);
+    await printerService.info("hello info", Icon.INFORMATION);
 
-  expectBufferStringEquals(
-    buffer,
-    "ℹ hello info",
-  );
+    expectStringEquals(
+      dummyStderr.getString(),
+      "ℹ hello info",
+    );
 
-  await printerService.info("hello success", Icon.SUCCESS);
+    await printerService.info("hello success", Icon.SUCCESS);
 
-  expectBufferStringEquals(
-    buffer,
-    "ℹ hello info✔ hello success",
-  );
-});
+    expectStringEquals(
+      dummyStderr.getString(),
+      "ℹ hello info✔ hello success",
+    );
+  });
 
-Deno.test("Icons work on stdout", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Icons work on stdout", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.print("hello info", Icon.INFORMATION);
+    await printerService.print("hello info", Icon.INFORMATION);
 
-  expectBufferStringEquals(
-    buffer,
-    "ℹ hello info",
-  );
+    expectStringEquals(
+      dummyStdout.getString(),
+      "ℹ hello info",
+    );
 
-  await printerService.print("hello success", Icon.SUCCESS);
+    await printerService.print("hello success", Icon.SUCCESS);
 
-  expectBufferStringEquals(
-    buffer,
-    "ℹ hello info✔ hello success",
-  );
-});
+    expectStringEquals(
+      dummyStdout.getString(),
+      "ℹ hello info✔ hello success",
+    );
+  });
 
-Deno.test("Spinner works", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Spinner works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  await printerService.showSpinner("hello world");
-  await sleep(150);
-  await printerService.hideSpinner();
+    await printerService.showSpinner("hello world");
+    await sleep(150);
+    await printerService.hideSpinner();
 
-  expectBufferBytesEquals(
-    buffer,
-    new Uint8Array([
-      27,
-      91,
-      63,
-      50,
-      53,
-      108,
-      27,
-      91,
-      50,
-      75,
-      27,
-      91,
-      71,
-      226,
-      160,
-      139,
-      32,
-      104,
-      101,
-      108,
-      108,
-      111,
-      32,
-      119,
-      111,
-      114,
-      108,
-      100,
-      27,
-      91,
-      50,
-      75,
-      27,
-      91,
-      71,
-      27,
-      91,
-      63,
-      50,
-      53,
-      104,
-    ]),
-  );
-});
+    expectBytesEquals(
+      dummyStderr.getString(),
+      new Uint8Array([
+        27,
+        91,
+        63,
+        50,
+        53,
+        108,
+        27,
+        91,
+        50,
+        75,
+        27,
+        91,
+        71,
+        226,
+        160,
+        139,
+        32,
+        104,
+        101,
+        108,
+        108,
+        111,
+        32,
+        119,
+        111,
+        114,
+        108,
+        100,
+        27,
+        91,
+        50,
+        75,
+        27,
+        91,
+        71,
+        27,
+        91,
+        63,
+        50,
+        53,
+        104,
+      ]),
+    );
+  });
 
-Deno.test("Progress bar works", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Progress bar works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  const handle = await printerService.showProgressBar("bits", "foo", 150, 35);
-  await sleep(50);
-  printerService.updateProgressBar(handle, 50);
-  await sleep(50);
-  await printerService.hideProgressBar(handle);
-  expectBufferStringIncludes(
-    buffer,
-    "foo",
-  );
-  expectBufferStringIncludes(
-    buffer,
-    "bits",
-  );
-});
+    const handle = await printerService.showProgressBar("bits", "foo", 150, 35);
+    await sleep(50);
+    printerService.updateProgressBar(handle, 50);
+    await sleep(50);
+    await printerService.hideProgressBar(handle);
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "foo",
+    );
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "bits",
+    );
+  });
 
-Deno.test("Multiple progress bars work", async () => {
-  const buffer = new Buffer();
-  const printerService = new DefaultPrinterService(
-    buffer.writable,
-    buffer.writable,
-  );
-  printerService.colorEnabled = false;
+  test("Multiple progress bars work", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(),
+    );
+    printerService.colorEnabled = false;
 
-  const handle1 = await printerService.showProgressBar("bits", "foo");
-  await sleep(50);
-  const handle2 = await printerService.showProgressBar("megaflops", "bar");
-  await sleep(50);
-  printerService.updateProgressBar(handle1, 25, "foo1");
-  await sleep(50);
-  printerService.updateProgressBar(handle2, 50, "bar1");
-  await sleep(50);
-  await printerService.hideProgressBar(handle1);
-  await printerService.hideProgressBar(handle2);
-  expectBufferStringIncludes(
-    buffer,
-    "bits",
-  );
-  expectBufferStringIncludes(
-    buffer,
-    "megaflops",
-  );
-  expectBufferStringIncludes(
-    buffer,
-    "foo1",
-  );
-  expectBufferStringIncludes(
-    buffer,
-    "bar1",
-  );
+    const handle1 = await printerService.showProgressBar("bits", "foo");
+    await sleep(50);
+    const handle2 = await printerService.showProgressBar("megaflops", "bar");
+    await sleep(50);
+    printerService.updateProgressBar(handle1, 25, "foo1");
+    await sleep(50);
+    printerService.updateProgressBar(handle2, 50, "bar1");
+    await sleep(50);
+    await printerService.hideProgressBar(handle1);
+    await printerService.hideProgressBar(handle2);
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "bits",
+    );
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "megaflops",
+    );
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "foo1",
+    );
+    expectStringIncludes(
+      dummyStderr.getString(),
+      "bar1",
+    );
+  });
 });
