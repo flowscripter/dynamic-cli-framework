@@ -1308,6 +1308,10 @@ API docs for the library:
 
 ## Development
 
+Install dependencies:
+
+`bun install`
+
 Test:
 
 `bun test`
