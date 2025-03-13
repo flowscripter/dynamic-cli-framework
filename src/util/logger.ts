@@ -53,7 +53,7 @@ function wrapDefaultLogger(
       return;
     }
     if (message instanceof Object) {
-      message.loggerName = loggerName;
+      (message as { loggerName?: string }).loggerName = loggerName;
       loggerFunction(message, ...optionalParams);
       return;
     }
