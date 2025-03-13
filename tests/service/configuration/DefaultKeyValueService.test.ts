@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import DefaultKeyValueService from "../../../src/service/configuration/DefaultKeyValueService.ts";
 
-describe("DefaultKeyValueService Tests", () => {
+describe("DefaultKeyValueService tests", () => {
   test("Setting data works", () => {
     const keyValueService = new DefaultKeyValueService();
 

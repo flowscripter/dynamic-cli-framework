@@ -16,7 +16,7 @@ import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleComma
 import type SubCommand from "../../src/api/command/SubCommand.ts";
 import StreamString from "../fixtures/StreamString.ts";
 
-describe("SingleCommandCliHelpCommand Tests", () => {
+describe("SingleCommandCliHelpCommand tests", () => {
   test("Ensure single command CLI with simple default command help is rendered correctly: simple default command", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);

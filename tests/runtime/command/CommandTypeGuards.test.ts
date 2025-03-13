@@ -12,7 +12,7 @@ import {
   isSubCommand,
 } from "../../../src/runtime/command/CommandTypeGuards.ts";
 
-describe("CommandTypeGuards Tests", () => {
+describe("CommandTypeGuards tests", () => {
   test("isSubCommand works", () => {
     expect(isSubCommand(getSubCommandWithOption())).toBeTrue();
     expect(isSubCommand(getGroupCommand())).toBeFalse();

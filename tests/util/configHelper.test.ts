@@ -15,7 +15,7 @@ import type ComplexOption from "../../src/api/argument/ComplexOption.ts";
 import type Option from "../../src/api/argument/Option.ts";
 import type SubCommandArgument from "../../src/api/argument/SubCommandArgument.ts";
 
-describe("configHelper Tests", () => {
+describe("configHelper tests", () => {
   test("getConfigurationKey works for global argument", () => {
     let command = getGlobalCommand("blah", true);
 

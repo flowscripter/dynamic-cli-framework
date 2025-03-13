@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import ShutdownServiceProvider from "../../../src/service/shutdown/ShutdownServiceProvider.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 
-describe("ShutdownServiceProvider Tests", () => {
+describe("ShutdownServiceProvider tests", () => {
   test("ShutdownServiceProvider provide works", async () => {
     const shutdownServiceProvider = new ShutdownServiceProvider(100);
     const serviceInfo = await shutdownServiceProvider.provide(getCLIConfig());

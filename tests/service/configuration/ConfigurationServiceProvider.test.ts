@@ -60,7 +60,7 @@ function getSubCommand(): SubCommand {
     execute: async (): Promise<void> => {},
   };
 }
-describe("ConfigurationServiceProvider Tests", () => {
+describe("ConfigurationServiceProvider tests", () => {
   test("ConfigurationServiceProvider provide works", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(
       100,

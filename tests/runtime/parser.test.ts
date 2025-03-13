@@ -30,7 +30,7 @@ function expectParseResult(result: ParseResult, expected: ParseResult) {
   expect(result.invalidArguments).toEqual(expected.invalidArguments);
 }
 
-describe("parser Tests", () => {
+describe("parser tests", () => {
   test("Arguments parsed for sub-command", () => {
     const subCommand = getSubCommandWithOptionAndPositional();
 

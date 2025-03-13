@@ -12,7 +12,7 @@ import { expectStringEquals } from "../fixtures/util.ts";
 import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
 import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("UsageCommand Tests", () => {
+describe("UsageCommand tests", () => {
   test("Usage works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();

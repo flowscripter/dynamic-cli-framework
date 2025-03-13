@@ -14,7 +14,7 @@ import {
 } from "../../src/util/envVarHelper.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 
-describe("envVarHelper Tests", () => {
+describe("envVarHelper tests", () => {
   test("getGlobalCommandValuesFromEnvVars works", () => {
     try {
       let command = getGlobalCommand("blah", true);

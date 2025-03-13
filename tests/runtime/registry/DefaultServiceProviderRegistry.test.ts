@@ -26,7 +26,7 @@ function getServiceProvider(
   };
 }
 
-describe("DefaultServiceProviderRegistry Tests", () => {
+describe("DefaultServiceProviderRegistry tests", () => {
   test("Check for ordering of service providers", () => {
     const serviceProvider1 = getServiceProvider("foo1", 1);
     const serviceProvider2 = getServiceProvider("foo2", 2);

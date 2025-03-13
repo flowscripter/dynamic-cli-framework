@@ -19,7 +19,7 @@ import type Positional from "../../../src/api/argument/Positional.ts";
 import type GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
 import type Option from "../../../src/api/argument/Option.ts";
 
-describe("argumentValueValidation Tests", () => {
+describe("argumentValueValidation tests", () => {
   test("Option types", () => {
     let option: Option = {
       name: "foo",

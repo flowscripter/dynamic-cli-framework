@@ -3,7 +3,7 @@ import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import AsciiBannerGeneratorServiceProvider from "../../../src/service/asciiBannerGenerator/AsciiBannerGeneratorServiceProvider.ts";
 
-describe("AsciiBannerGeneratorServiceProvider Tests", () => {
+describe("AsciiBannerGeneratorServiceProvider tests", () => {
   test("AsciiBannerGeneratorServiceProvider provide and initService works", async () => {
     const asciiBannerGeneratorServiceProvider =
       new AsciiBannerGeneratorServiceProvider(

@@ -11,7 +11,7 @@ import StreamString from "../../../fixtures/StreamString.ts";
 import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
 import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("LogLevelCommand Tests", () => {
+describe("LogLevelCommand tests", () => {
   test("LogLevelCommand works", async () => {
     const streamString = new StreamString();
     const printerService = new DefaultPrinterService(

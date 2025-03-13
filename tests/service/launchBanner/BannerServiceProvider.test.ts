@@ -10,7 +10,7 @@ import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("BannerServiceProvider Tests", () => {
+describe("BannerServiceProvider tests", () => {
   test("BannerServiceProvider provide works", async () => {
     const bannerServiceProvider = new BannerServiceProvider(100);
     const serviceInfo = await bannerServiceProvider.provide(getCLIConfig());

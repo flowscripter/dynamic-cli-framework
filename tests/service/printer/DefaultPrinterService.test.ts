@@ -12,7 +12,7 @@ import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 
-describe("DefaultPrinterService Tests", () => {
+describe("DefaultPrinterService tests", () => {
   test("Color disabled works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();

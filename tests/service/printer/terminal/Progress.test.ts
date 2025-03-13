@@ -5,7 +5,7 @@ import TtyTerminal from "../../../../src/service/printer/terminal/TtyTerminal.ts
 import StreamString from "../../../fixtures/StreamString.ts";
 import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("Progress Tests", () => {
+describe("Progress tests", () => {
   test("Progress works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);

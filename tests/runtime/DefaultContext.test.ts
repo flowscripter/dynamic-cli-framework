@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 
-describe("DefaultContext Tests", () => {
+describe("DefaultContext tests", () => {
   test("Check for duplicate service ID", () => {
     const context = new DefaultContext(getCLIConfig());
 

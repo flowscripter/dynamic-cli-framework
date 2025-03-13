@@ -3,7 +3,7 @@ import DefaultAsciiBannerGeneratorService from "../../../src/service/asciiBanner
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
 import smallFont from "./small.flf.json" with { type: "json" };
-describe("DefaultAsciiBannerGeneratorService Tests", () => {
+describe("DefaultAsciiBannerGeneratorService tests", () => {
   test("standard font registered by default", () => {
     const asciiBannerGeneratorService =
       new DefaultAsciiBannerGeneratorService();
