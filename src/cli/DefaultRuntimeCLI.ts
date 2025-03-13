@@ -9,7 +9,7 @@ import TtyStyler from "../service/printer/terminal/TtyStyler.ts";
 import supportsColor from "supports-color";
 
 /**
- * Default Bun and NodeJS implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
+ * Default Bun implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
  */
 export default class DefaultRuntimeCLI extends BaseCLI {
   /**
@@ -45,7 +45,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
    * {@link RunState} value resulting from the invocation.
    */
   override async run(): Promise<RunResult> {
-    const runResult = await super.run(process.argv);
+    const runResult = await super.run(process.argv.slice(2));
     if (runResult.runState === RunState.RUNTIME_ERROR) {
       console.error(runResult.error);
     }
