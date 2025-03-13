@@ -1,5 +1,8 @@
 import type ServiceProviderRegistry from "./ServiceProviderRegistry.ts";
 import type { ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import getLogger from "../../util/logger.ts";
+
+const logger = getLogger("DefaultServiceProviderRegistry");
 
 /**
  * Default implementation of a {@link ServiceProviderRegistry}.
@@ -15,6 +18,10 @@ export default class DefaultServiceProviderRegistry
   }
 
   public addServiceProvider(serviceProvider: ServiceProvider): void {
+    logger.debug(
+      "Adding service provider for service ID: %s",
+      serviceProvider.serviceId,
+    );
     this.#serviceProviders.push(serviceProvider);
   }
 

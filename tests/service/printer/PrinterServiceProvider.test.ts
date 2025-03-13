@@ -7,7 +7,7 @@ import DefaultShutdownService from "../../../src/service/shutdown/DefaultShutdow
 import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 
-describe("PrinterServiceProvider Tests", () => {
+describe("PrinterServiceProvider tests", () => {
   test("PrinterServiceProvider provide works", async () => {
     const streamString = new StreamString();
     const printerServiceProvider = new PrinterServiceProvider(

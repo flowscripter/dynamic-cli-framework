@@ -18,7 +18,7 @@ function expectExtractResult(
   expect(result.populatedArgumentValues).toEqual(values);
   expect(result.unusedArgs).toEqual(unusedArgs);
 }
-describe("subCommandValuePopulation Tests", () => {
+describe("subCommandValuePopulation tests", () => {
   test("Option argument", () => {
     const command: SubCommand = {
       name: "command",

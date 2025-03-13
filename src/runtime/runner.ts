@@ -67,7 +67,7 @@ async function executeParsedCommand(
     }
 
     logger.debug(
-      "Executing command with name: %s and args: %j",
+      "Executing command with name: %s and args: %O",
       parseResult!.command.name,
       parseResult!.populatedArgumentValues,
     );

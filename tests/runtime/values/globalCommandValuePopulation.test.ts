@@ -17,7 +17,7 @@ function expectExtractResult(
   expect(result.unusedArgs).toEqual(unusedArgs);
 }
 
-describe("globalCommandValuePopulation Tests", () => {
+describe("globalCommandValuePopulation tests", () => {
   test("Global command argument", () => {
     const command: GlobalCommand = {
       name: "foo",

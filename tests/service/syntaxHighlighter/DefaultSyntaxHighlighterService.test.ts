@@ -3,7 +3,7 @@ import { expectBytesEquals } from "../../fixtures/util.ts";
 import DefaultSyntaxHighlighterService from "../../../src/service/syntaxHighlighter/DefaultSyntaxHighlighterService.ts";
 import yaml from "highlight.js/lib/languages/yaml";
 
-describe("DefaultSyntaxHighlighterService Tests", () => {
+describe("DefaultSyntaxHighlighterService tests", () => {
   test("JSON registered by default", () => {
     const syntaxHighlighterService = new DefaultSyntaxHighlighterService();
 

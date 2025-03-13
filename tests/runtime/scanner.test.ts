@@ -30,7 +30,7 @@ function expectScanResult(result: ScanResult, expected: ScanResult) {
     expected.globalModifierCommandClauses!,
   );
 }
-describe("scanner Tests", () => {
+describe("scanner tests", () => {
   test("Global modifier command scanned", () => {
     const globalModifierCommand = getGlobalModifierCommand(
       "modifier",

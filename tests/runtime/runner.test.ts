@@ -22,7 +22,7 @@ import {
 } from "../../src/api/argument/ArgumentValueTypes.ts";
 import WritableStreamString from "../fixtures/StreamString.ts";
 import StreamString from "../fixtures/StreamString.ts";
-describe("runner Tests", () => {
+describe("runner tests", () => {
   test("Sub-Command run", async () => {
     let hasRun = false;
 

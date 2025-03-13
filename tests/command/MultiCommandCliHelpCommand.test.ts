@@ -19,7 +19,7 @@ import type GroupCommand from "../../src/api/command/GroupCommand.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 import StreamString from "../fixtures/StreamString.ts";
 
-describe("MultiCommandCliHelpCommand Tests", () => {
+describe("MultiCommandCliHelpCommand tests", () => {
   test("MultiCommandCliHelpGlobalCommand works", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);

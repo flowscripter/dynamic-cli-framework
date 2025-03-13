@@ -8,7 +8,7 @@ import StreamString from "../../fixtures/StreamString.ts";
 import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("SyntaxHighlighterServiceProvider Tests", () => {
+describe("SyntaxHighlighterServiceProvider tests", () => {
   test("SyntaxHighlighterServiceProvider provide and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();

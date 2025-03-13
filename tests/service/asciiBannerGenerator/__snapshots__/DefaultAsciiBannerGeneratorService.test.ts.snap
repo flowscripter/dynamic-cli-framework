@@ -20,3 +20,24 @@ exports[`DefaultAsciiBannerGeneratorService Tests Can generate with newly regist
                
 "
 `;
+
+exports[`DefaultAsciiBannerGeneratorService tests Can generate with standard font 1`] = `
+"
+   __             
+  / _| ___   ___  
+ | |_ / _ \\ / _ \\ 
+ |  _| (_) | (_) |
+ |_|  \\___/ \\___/ 
+                  
+"
+`;
+
+exports[`DefaultAsciiBannerGeneratorService tests Can generate with newly registered font 1`] = `
+"
+   __          
+  / _|___  ___ 
+ |  _/ _ \\/ _ \\
+ |_| \\___/\\___/
+               
+"
+`;

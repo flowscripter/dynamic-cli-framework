@@ -22,7 +22,7 @@ function getSubCommand(
     execute: async (): Promise<void> => {},
   };
 }
-describe("DefaultCommandRegistry Tests", () => {
+describe("DefaultCommandRegistry tests", () => {
   test("Check for duplicate non-global command name", () => {
     const command1 = getSubCommand("c1", [], []);
     const command2 = getSubCommand("c1", [], []);

@@ -107,7 +107,7 @@ export function parseSubCommandClause(
     });
 
     logger.debug(
-      "Command arguments after options validated: %j with invalid args: %j",
+      "Command arguments after options validated: %O with invalid args: %O",
       populatedArgumentValues,
       invalidArguments,
     );
@@ -125,7 +125,7 @@ export function parseSubCommandClause(
         }
       });
       logger.debug(
-        "Command arguments after positionals validated: %j with invalid args: %j",
+        "Command arguments after positionals validated: %O with invalid args: %O",
         populatedArgumentValues,
         invalidArguments,
       );
@@ -184,7 +184,7 @@ export function parseGlobalCommandClause(
   }
 
   logger.debug(
-    "Command arguments for command: %s after value population: %j with invalid args: %j and unused args: %j",
+    "Command arguments for command: %s after value population: %O with invalid args: %O and unused args: %O",
     command.name,
     populatedArgumentValue,
     invalidArguments,
@@ -204,7 +204,7 @@ export function parseGlobalCommandClause(
   }
 
   logger.debug(
-    "Command arguments for command: %s after value validation: %j with invalid args: %j",
+    "Command arguments for command: %s after value validation: %O with invalid args: %O",
     command.name,
     populatedArgumentValue,
     invalidArguments,

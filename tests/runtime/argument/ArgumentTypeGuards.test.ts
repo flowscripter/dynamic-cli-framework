@@ -39,7 +39,7 @@ function getGlobalCommandArgument(): GlobalCommandArgument {
   };
 }
 
-describe("ArgumentTypeGuards Tests", () => {
+describe("ArgumentTypeGuards tests", () => {
   test("isComplexOption works", () => {
     expect(isComplexOption(getComplexOption())).toBeTrue();
     expect(isComplexOption(getOption())).toBeFalse();

@@ -29,7 +29,7 @@ function getSubCommand(
     execute: async (): Promise<void> => {},
   };
 }
-describe("CommandValidator Tests", () => {
+describe("CommandValidator tests", () => {
   test("SubCommand validation fails due to duplicate argument names", () => {
     let command = getSubCommand("command", [{
       name: "foo",

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import argumentValueMerge from "../../../src/runtime/values/argumentValueMerge.ts";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../../src/api/argument/SubCommandArgument.ts";
 
-describe("argumentValueMerge Tests", () => {
+describe("argumentValueMerge tests", () => {
   test("One layer merge", () => {
     let result = argumentValueMerge({ a: 1 }, { b: 2 });
     expect(result).toEqual({ a: 1, b: 2 });

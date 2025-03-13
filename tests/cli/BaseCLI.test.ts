@@ -26,7 +26,7 @@ import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
 import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
 import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
 
-describe("BaseCLI Tests", () => {
+describe("BaseCLI tests", () => {
   test("BaseCLI no command specified works", async () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();

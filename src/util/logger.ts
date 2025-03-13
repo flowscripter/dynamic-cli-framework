@@ -19,16 +19,16 @@ function getDefaultLogger(): Logger {
     return {
       trace: () => {},
       debug: (message, ...optionalParams) => {
-        console.debug(message, optionalParams);
+        console.debug(message, ...optionalParams);
       },
       info: (message, ...optionalParams) => {
-        console.info(message, optionalParams);
+        console.info(message, ...optionalParams);
       },
       warn: (message, ...optionalParams) => {
-        console.warn(message, optionalParams);
+        console.warn(message, ...optionalParams);
       },
       error: (message, ...optionalParams) => {
-        console.error(message, optionalParams);
+        console.error(message, ...optionalParams);
       },
     };
   }
@@ -38,26 +38,26 @@ function getDefaultLogger(): Logger {
     info: () => {},
     warn: () => {},
     error: (message, ...optionalParams) => {
-      console.error(message, optionalParams);
+      console.error(message, ...optionalParams);
     },
   };
 }
 
-function wrapWithLoggerName(
+function wrapDefaultLogger(
   loggerName: string,
   loggerFunction: LoggerFunction,
 ): LoggerFunction {
   return (message, ...optionalParams) => {
-    if (message instanceof Object) {
-      message.loggerName = loggerName;
-      loggerFunction(message, optionalParams);
-      return;
-    }
     if (message instanceof Function) {
-      loggerFunction(`${loggerName} ${message()}`, optionalParams);
+      loggerFunction(`${loggerName} : ${message()}`, ...optionalParams);
       return;
     }
-    loggerFunction(`${loggerName} ${message}`, optionalParams);
+    if (message instanceof Object) {
+      (message as { loggerName?: string }).loggerName = loggerName;
+      loggerFunction(message, ...optionalParams);
+      return;
+    }
+    loggerFunction(`${loggerName} : ${message}`, ...optionalParams);
   };
 }
 
@@ -68,10 +68,10 @@ export default function getLogger(loggerName: string): Logger {
   if (debugEnabled) {
     return {
       trace: () => {},
-      debug: wrapWithLoggerName(loggerName, globalThis.defaultLogger.debug),
-      info: wrapWithLoggerName(loggerName, globalThis.defaultLogger.info),
-      warn: wrapWithLoggerName(loggerName, globalThis.defaultLogger.warn),
-      error: wrapWithLoggerName(loggerName, globalThis.defaultLogger.error),
+      debug: wrapDefaultLogger(loggerName, globalThis.defaultLogger.debug),
+      info: wrapDefaultLogger(loggerName, globalThis.defaultLogger.info),
+      warn: wrapDefaultLogger(loggerName, globalThis.defaultLogger.warn),
+      error: wrapDefaultLogger(loggerName, globalThis.defaultLogger.error),
     };
   }
   return {
@@ -79,6 +79,6 @@ export default function getLogger(loggerName: string): Logger {
     debug: () => {},
     info: () => {},
     warn: () => {},
-    error: wrapWithLoggerName(loggerName, globalThis.defaultLogger.error),
+    error: wrapDefaultLogger(loggerName, globalThis.defaultLogger.error),
   };
 }
