@@ -349,7 +349,7 @@ export function scanForGlobalModifierCommandClauses(
     scanResult.globalModifierCommandClauses = commandClauses;
   }
 
-  logger.debug("scan result: %j", scanResult);
+  logger.debug("scan result: %O", scanResult);
 
   return scanResult;
 }
@@ -411,7 +411,7 @@ export function scanForNonModifierCommandClause(
     }
   }
 
-  logger.debug("scan result: %j", scanResult);
+  logger.debug("scan result: %O", scanResult);
 
   return scanResult;
 }
