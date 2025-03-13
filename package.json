@@ -1,5 +1,17 @@
 {
   "name": "@flowscripter/dynamic-cli-framework",
+  "description": "A framework for developing CLI applications which supports dynamic discovery and installation of new commands",
+  "repository": "@flowscripter/dynamic-cli-framework",
+  "license": "MIT",
+  "keywords": [
+    "bun",
+    "plugin",
+    "framework",
+    "dynamic",
+    "import",
+    "executable",
+    "cli"
+  ],
   "module": "index.ts",
   "type": "module",
   "version": "1.0.8",
