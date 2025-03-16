@@ -1,7 +1,11 @@
 {
   "name": "@flowscripter/dynamic-cli-framework",
   "description": "A framework for developing CLI applications which supports dynamic discovery and installation of new commands",
-  "repository": "@flowscripter/dynamic-cli-framework",
+  "homepage": "https://github.com/flowscripter/dynamic-cli-framework#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flowscripter/dynamic-cli-framework.git"
+  },
   "license": "MIT",
   "keywords": [
     "bun",
