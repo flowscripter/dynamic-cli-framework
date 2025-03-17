@@ -1441,8 +1441,8 @@ classDiagram
 
 ### Debug Logging
 
-Internal framework logging can be enabled by setting the `DYNAMIC_CLI_FRAMEWORK_DEBUG` environment
-variable.
+Internal framework logging can be enabled by setting the
+`DYNAMIC_CLI_FRAMEWORK_DEBUG` environment variable.
 
 The logging implementation will look for an object conforming to the `Logger`
 interface and use it if found. If not found, a simple logging implementation
@@ -1456,7 +1456,8 @@ validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
 When using `launcher.ts` runtime validation of all commands and services can be
-forced by defining the `DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL` environment variable.
+forced by defining the `DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL` environment
+variable.
 
 Command validation includes:
 
