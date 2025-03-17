@@ -43,7 +43,8 @@ export async function launchSingleCommandCLI(
       "configEnabled must be true if keyValueServiceEnabled is true",
     );
   }
-  const validateAllCommands = process.env.CLI_VALIDATE_ALL !== undefined;
+  const validateAllCommands =
+    process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
     cliConfig,
     envVarsEnabled,
@@ -94,7 +95,8 @@ export async function launchMultiCommandCLI(
       "configEnabled must be true if keyValueServiceEnabled is true",
     );
   }
-  const validateAllCommands = process.env.CLI_VALIDATE_ALL !== undefined;
+  const validateAllCommands =
+    process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
     cliConfig,
     envVarsEnabled,
