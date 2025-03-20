@@ -4,12 +4,13 @@
     "": {
       "name": "@flowscripter/dynamic-plugin-framework",
       "dependencies": {
-        "emphasize": "latest",
-        "fastest-levenshtein": "latest",
-        "figlet": "latest",
-        "highlight.js": "latest",
-        "supports-color": "latest",
-        "ts-log": "latest",
+        "emphasize": "^7.0.0",
+        "fastest-levenshtein": "^1.0.16",
+        "figlet": "^1.8.0",
+        "highlight.js": "^11.11.1",
+        "prettier": "^3.5.3",
+        "supports-color": "^10.0.0",
+        "ts-log": "^2.2.7",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -47,6 +48,8 @@
     "highlight.js": ["highlight.js@11.11.1", "", {}, "sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w=="],
 
     "lowlight": ["lowlight@3.1.0", "", { "dependencies": { "@types/hast": "^3.0.0", "devlop": "^1.0.0", "highlight.js": "~11.9.0" } }, "sha512-CEbNVoSikAxwDMDPjXlqlFYiZLkDJHwyGu/MfOsJnF3d7f3tds5J3z8s/l9TMXhzfsJCCJEAsD78842mwmg0PQ=="],
+
+    "prettier": ["prettier@3.5.3", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw=="],
 
     "supports-color": ["supports-color@10.0.0", "", {}, "sha512-HRVVSbCCMbj7/kdWF9Q+bbckjBHLtHMEoJWlkmYzzdwhYMkjkOwubLM6t7NbWKjgKamGDrWL1++KrjUO1t9oAQ=="],
 

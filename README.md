@@ -9,7 +9,7 @@
 > A framework for developing CLI applications which supports dynamic discovery
 > and installation of new commands
 
-[//]: # (TODO: Remove this when plugin support and compiled binaries available.)
+[//]: # (TODO: Remove this when plugin support.)
 
 NOTE: The dynamic aspect is still in development as it relies upon:
 
@@ -45,8 +45,8 @@ So it isn't really dynamic at the moment! 😜
 - Support (optional) for persisted configuration and environment variables to
   specify command argument defaults.
 - Core (but optional) commands for help, logging level and version management.
-- Core (but optional) services for color output to stdout/stderr and
-  configuration management.
+- Core (but optional) services for color output, syntax highlighting and pretty
+  printing to stdout/stderr and configuration management.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
@@ -62,13 +62,12 @@ The following example projects are available:
 
 - [example-cli](https://github.com/flowscripter/example-cli) is an example CLI
   application based on this framework.
+- [mpeg-sdl-tool](https://github.com/flowscripter/mpeg-sdl-tool) is a real world
+  use case CLI application based on this framework.
 
 [//]: # (TODO: Add this when implemented.)
 [//]: # (- [example-cli-plugin]&#40;https://github.com/flowscripter/example-cli-plugin&#41; is an)
 [//]: # (  example command and service plugin based on this framework.)
-[//]: # (TODO: Add this when implemented.)
-[//]: # (- [sdl-tool]&#40;https://github.com/flowscripter/sdl-tool&#41; is a real world use case CLI)
-[//]: # (  application based on this framework.)
 
 ## Key Concepts
 
@@ -1239,6 +1238,14 @@ Provides:
   `--no-color` or the env var `NO_COLOR`.
 - `LogLevelCommand` which allows the log level to be set via the argument
   `--log-level` or the env var `LOG_LEVEL`.
+
+#### `PrettyPrinterServiceProvider`
+
+Provides:
+
+- `PrettyPrinterService` allowing pretty printing of structured data and source
+  code. JSON pretty printing is provided by default and other data or language
+  formats can be added on demand by commands.
 
 #### `SyntaxHighlighterServiceProvider`
 

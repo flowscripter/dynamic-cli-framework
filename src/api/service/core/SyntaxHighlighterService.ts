@@ -1,16 +1,16 @@
 import type { LanguageFn as HighlightSyntax } from "highlight.js";
 
 export const SYNTAX_HIGHLIGHTER_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/highlighter-service";
+  "@flowscripter/dynamic-cli-framework/syntax-highlighter-service";
 
 /**
- * Service providing syntax based color highlighting of text for the CLI using [highlight.js](https://highlightjs.org).
+ * Service providing syntax based color highlighting of text for the CLI using [highlight.js](https://github.com/highlightjs/highlight.js).
  */
 export default interface SyntaxHighlighterService {
   /**
    * Register a new syntax.
    *
-   * The recommended way to define a new language syntax is follow the instructions here:
+   * The recommended way to define a new language syntax is to follow the instructions here:
    *
    * * https://highlightjs.readthedocs.io/en/latest/language-contribution.html
    * * https://highlightjs.readthedocs.io/en/latest/building-testing.html
@@ -22,7 +22,7 @@ export default interface SyntaxHighlighterService {
    *
    * @param syntaxName the name used to refer to the syntax.
    * @param syntaxDefinition the definition for the syntax conforming to the Highlight JS
-   * [language definition syntax]().
+   * language definition syntax.
    */
   registerSyntax(syntaxName: string, syntaxDefinition: HighlightSyntax): void;
 
@@ -33,7 +33,7 @@ export default interface SyntaxHighlighterService {
 
   /**
    * Return a syntactically highlighted version of the provided text using the specified syntax.
-   * The returned text will include appropriate ASCII color codes.
+   * The returned text will include appropriate terminal color codes.
    *
    * @param text the text to highlight.
    * @param syntaxName the syntax to use.

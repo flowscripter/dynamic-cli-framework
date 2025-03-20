@@ -1224,7 +1224,7 @@ describe("runner tests", () => {
     expect(hasRun).toBeTrue();
   });
 
-  test("Group command as default command is invalid", async () => {
+  test("Group command as default command is invalid", () => {
     const streamString = new StreamString();
     const groupCommand = getGroupCommand();
 
@@ -1232,7 +1232,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    await expect(
+    expect(
       run(
         [],
         new DefaultCommandRegistry([]),

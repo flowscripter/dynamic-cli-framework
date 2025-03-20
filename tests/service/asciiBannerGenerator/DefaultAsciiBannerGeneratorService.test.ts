@@ -34,11 +34,11 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
     ]);
   });
 
-  test("Cannot generate with unknown font", async () => {
+  test("Cannot generate with unknown font", () => {
     const asciiBannerGeneratorService =
       new DefaultAsciiBannerGeneratorService();
 
-    await expect(asciiBannerGeneratorService.generate("foo", "small")).rejects
+    expect(asciiBannerGeneratorService.generate("foo", "small")).rejects
       .toThrow();
   });
 
