@@ -1,3 +1,5 @@
+import type { Plugin } from "prettier";
+
 const languages = [
   {
     name: "foo",
@@ -20,8 +22,10 @@ const printers = {
   },
 };
 
-export default {
+const prettierPluginFoo: Plugin = {
   languages,
   parsers,
   printers,
 };
+
+export default prettierPluginFoo;
