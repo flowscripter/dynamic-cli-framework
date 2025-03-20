@@ -13,7 +13,9 @@ export default class DefaultPrettyPrinterService
 
   async #populateBuiltInSyntaxes(): Promise<void> {
     const languages = (await prettier.getSupportInfo()).languages;
-    this.#registeredSyntaxes = languages.map((language) => language.name.toLowerCase());
+    this.#registeredSyntaxes = languages.map((language) =>
+      language.name.toLowerCase()
+    );
   }
 
   async getRegisteredSyntaxes(): Promise<ReadonlyArray<string>> {
