@@ -13,10 +13,10 @@
         "ts-log": "^2.2.7",
       },
       "devDependencies": {
-        "@types/bun": "^1.2.5",
+        "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5.8.2",
+        "typescript": "latest",
       },
     },
   },
