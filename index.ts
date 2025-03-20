@@ -67,6 +67,11 @@ export type { default as SyntaxHighlighterService } from "./src/api/service/core
 export { default as DefaultSyntaxHighlighterService } from "./src/service/syntaxHighlighter/DefaultSyntaxHighlighterService.ts";
 export { default as SyntaxHighlighterServiceProvider } from "./src/service/syntaxHighlighter/SyntaxHighlighterServiceProvider.ts";
 
+export { PRETTY_PRINTER_SERVICE_ID } from "./src/api/service/core/PrettyPrinterService.ts";
+export type { default as PrettyPrinterService } from "./src/api/service/core/PrettyPrinterService.ts";
+export { default as DefaultPrettyPrinterService } from "./src/service/prettyPrinter/DefaultPrettyPrinterService.ts";
+export { default as PrettyPrinterServiceProvider } from "./src/service/prettyPrinter/PrettyPrinterServiceProvider.ts";
+
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";
 export type { default as Context } from "./src/api/Context.ts";

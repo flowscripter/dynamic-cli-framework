@@ -1,15 +1,15 @@
 import type PrettyPrinterService from "../../api/service/core/PrettyPrinterService.ts";
 import * as prettier from "prettier";
-import type { Plugin as PrettierSyntax } from "prettier";
+import type { Plugin } from "prettier";
 
 /**
- * Default implementation of {@link PrettyPrinterService} which already has syntax definitions
- * for those built into prettier.
+ * Default implementation of {@link PrettyPrinterService} which provides by default the
+ * syntaxes built into prettier.
  */
 export default class DefaultPrettyPrinterService
   implements PrettyPrinterService {
   #registeredSyntaxes = new Array<string>();
-  #syntaxNameToDefinitionMap = new Map<string, PrettierSyntax>();
+  #syntaxNameToPluginnMap = new Map<string, Plugin>();
 
   async #populateBuiltInSyntaxes(): Promise<void> {
     const languages = (await prettier.getSupportInfo()).languages;
@@ -38,11 +38,11 @@ export default class DefaultPrettyPrinterService
 
     const options: prettier.Options = { parser: syntaxName };
 
-    const syntaxDefinition = this.#syntaxNameToDefinitionMap.get(
+    const syntaxPlugin = this.#syntaxNameToPluginnMap.get(
       name,
     );
-    if (syntaxDefinition) {
-      options.plugins = [syntaxDefinition];
+    if (syntaxPlugin) {
+      options.plugins = [syntaxPlugin];
     }
 
     return prettier.format(text, options);
@@ -50,7 +50,7 @@ export default class DefaultPrettyPrinterService
 
   async registerSyntax(
     syntaxName: string,
-    syntaxDefinition: PrettierSyntax,
+    syntaxPlugin: Plugin,
   ): Promise<void> {
     if (this.#registeredSyntaxes.length === 0) {
       await this.#populateBuiltInSyntaxes();
@@ -62,6 +62,6 @@ export default class DefaultPrettyPrinterService
     }
 
     this.#registeredSyntaxes.push(name);
-    this.#syntaxNameToDefinitionMap.set(name, syntaxDefinition);
+    this.#syntaxNameToPluginnMap.set(name, syntaxPlugin);
   }
 }

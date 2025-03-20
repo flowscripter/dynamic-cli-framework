@@ -1,7 +1,7 @@
 export const PRETTY_PRINTER_SERVICE_ID =
   "@flowscripter/dynamic-cli-framework/pretty-printer-service";
 
-import type { Plugin as PrettierSyntax } from "prettier";
+import type { Plugin } from "prettier";
 
 /**
  * Service providing syntax based pretty printing of text for the CLI using [prettier](https://github.com/prettier/prettier).
@@ -20,11 +20,11 @@ export default interface PrettyPrinterService {
    * * https://prettier.io/docs/plugins
    *
    * @param syntaxName the name used to refer to the syntax.
-   * @param syntaxDefinition the definition for the syntax conforming to the Prettier plugin syntax.
+   * @param syntaxDefinition the definition for the syntax conforming to the Prettier plugin interface.
    */
   registerSyntax(
     syntaxName: string,
-    syntaxDefinition: PrettierSyntax<unknown>,
+    syntaxDefinition: Plugin<unknown>,
   ): Promise<void>;
 
   /**
