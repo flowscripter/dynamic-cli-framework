@@ -1,13 +1,13 @@
-import type { Plugin } from "prettier";
+import type { Parser, Plugin, Printer, SupportLanguage } from "prettier";
 
-const languages = [
+const languages: SupportLanguage[] = [
   {
     name: "foo",
     parsers: ["foo"],
   },
 ];
 
-const parsers = {
+const parsers: Record<string, Parser> = {
   foo: {
     astFormat: "foo",
     parse: () => "",
@@ -16,7 +16,7 @@ const parsers = {
   },
 };
 
-const printers = {
+const printers: Record<string, Printer> = {
   "foo": {
     print: () => "foo",
   },
