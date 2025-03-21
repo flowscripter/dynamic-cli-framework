@@ -4,19 +4,19 @@
     "": {
       "name": "@flowscripter/dynamic-plugin-framework",
       "dependencies": {
-        "emphasize": "^7.0.0",
-        "fastest-levenshtein": "^1.0.16",
-        "figlet": "^1.8.0",
-        "highlight.js": "^11.11.1",
-        "prettier": "^3.5.3",
-        "supports-color": "^10.0.0",
-        "ts-log": "^2.2.7",
+        "emphasize": "latest",
+        "fastest-levenshtein": "latest",
+        "figlet": "latest",
+        "highlight.js": "latest",
+        "prettier": "latest",
+        "supports-color": "latest",
+        "ts-log": "latest",
       },
       "devDependencies": {
-        "@types/bun": "^1.2.5",
+        "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^5.8.2",
+        "typescript": "latest",
       },
     },
   },
