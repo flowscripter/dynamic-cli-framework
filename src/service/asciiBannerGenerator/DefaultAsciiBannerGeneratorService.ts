@@ -14,6 +14,7 @@ export default class DefaultAsciiBannerGeneratorService
   constructor() {
     this.registerFont("standard", standardFont.font);
   }
+
   getRegisteredFonts(): ReadonlyArray<string> {
     return this.#registeredFontNames;
   }
