@@ -6,7 +6,11 @@ import json from "highlight.js/lib/languages/json";
 interface Emphasize {
   listLanguages(): ReadonlyArray<string>;
   registered(name: string): boolean;
-  highlight(name: string, text: string): { value: string };
+  highlight(
+    name: string,
+    text: string,
+    sheet: Record<string, (string) => string> | undefined,
+  ): { value: string };
   register(name: string, syntax: HighlightSyntax): void;
 }
 
@@ -17,6 +21,7 @@ interface Emphasize {
 export default class DefaultSyntaxHighlighterService
   implements SyntaxHighlighterService {
   colorEnabled = true;
+  sheet: Record<string, (text: string) => string> | undefined;
   emphasize: Emphasize;
 
   constructor() {
@@ -39,7 +44,7 @@ export default class DefaultSyntaxHighlighterService
       return text;
     }
 
-    return this.emphasize.highlight(name, text).value;
+    return this.emphasize.highlight(name, text, this.sheet).value;
   }
 
   registerSyntax(syntaxName: string, syntaxDefinition: HighlightSyntax): void {

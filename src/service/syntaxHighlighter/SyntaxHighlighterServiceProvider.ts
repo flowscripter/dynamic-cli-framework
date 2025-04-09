@@ -46,6 +46,20 @@ export default class SyntaxHighlighterServiceProvider
     this.#defaultSyntaxHighlighterService.colorEnabled =
       printerService.colorEnabled;
 
+    if (this.#defaultSyntaxHighlighterService.sheet === undefined) {
+      this.#defaultSyntaxHighlighterService.sheet = {
+        comment: printerService.secondary,
+        keyword: printerService.primary,
+        built_in: printerService.primary,
+        type: printerService.emphasised,
+        operator: printerService.blue,
+        punctuation: printerService.green,
+        literal: printerService.selected,
+        string: printerService.selected,
+        number: printerService.selected,
+      };
+    }
+
     return Promise.resolve(undefined);
   }
 }

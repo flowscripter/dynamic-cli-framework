@@ -6,14 +6,24 @@ import { SHUTDOWN_SERVICE_ID } from "../../../src/api/service/core/ShutdownServi
 import DefaultShutdownService from "../../../src/service/shutdown/DefaultShutdownService.ts";
 import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
+import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 
 describe("PrinterServiceProvider tests", () => {
   test("PrinterServiceProvider provide works", async () => {
     const streamString = new StreamString();
+    const printerService = new DefaultPrinterService(
+      streamString.writableStream,
+      streamString.writableStream,
+      true,
+      true,
+      new TtyTerminal(streamString.writeStream),
+      new TtyStyler(3),
+    );
+
     const printerServiceProvider = new PrinterServiceProvider(
       100,
-      streamString.writableStream,
-      new TtyTerminal(streamString.writeStream),
+      printerService,
     );
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
