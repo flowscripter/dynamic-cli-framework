@@ -161,6 +161,23 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#styler.colorText(message, this.#theme[Color.GREEN]);
   }
 
+  public color(message: string, hexFormattedColor: string): string {
+    if (
+      (hexFormattedColor.length !== 8) ||
+      (!hexFormattedColor.toLowerCase().startsWith("0x"))
+    ) {
+      throw new Error(`Invalid color: ${hexFormattedColor}`);
+    }
+
+    const colorValue = parseInt(hexFormattedColor, 16);
+
+    if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
+      throw new Error(`Invalid color: ${hexFormattedColor}`);
+    }
+
+    return this.#styler.colorText(message, colorValue);
+  }
+
   public async debug(message: string, icon?: Icon): Promise<void> {
     await this.#log(Level.DEBUG, this.secondary(message), icon);
   }

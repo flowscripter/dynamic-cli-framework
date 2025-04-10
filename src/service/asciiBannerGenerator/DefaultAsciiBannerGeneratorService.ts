@@ -34,6 +34,16 @@ export default class DefaultAsciiBannerGeneratorService
       throw new Error(`Font name is not registered: ${name}`);
     }
 
-    return "\n" + await figlet.text(message, { font: name }) + "\n";
+    const bannerText = await figlet.text(message, { font: name });
+    const lines = bannerText.split("\n");
+
+    // Remove any whitespace lines from the end
+    while (
+      (lines.length > 0) && (lines[lines.length - 1].trim().length === 0)
+    ) {
+      lines.pop();
+    }
+
+    return "\n" + lines.join("\n") + "\n";
   }
 }

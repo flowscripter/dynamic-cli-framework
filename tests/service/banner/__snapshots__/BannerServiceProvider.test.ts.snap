@@ -1,0 +1,16 @@
+// Bun Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BannerServiceProvider tests BannerServiceProvider initService works 1`] = `
+"
+  _____ ___   ___  
+ |  ___/ _ \\ / _ \\ 
+ | |_ | | | | | | |
+ |  _|| |_| | |_| |
+ |_|   \\___/ \\___/ 
+  bar
+  version: foobar
+
+"
+`;
+
+exports[`BannerServiceProvider tests BannerServiceProvider with configuration service and custom font name works 1`] = `""`;
