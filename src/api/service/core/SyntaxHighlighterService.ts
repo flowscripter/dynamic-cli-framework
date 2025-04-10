@@ -4,6 +4,17 @@ export const SYNTAX_HIGHLIGHTER_SERVICE_ID =
   "@flowscripter/dynamic-cli-framework/syntax-highlighter-service";
 
 /**
+ * Color scheme for syntax highlighting.
+ *
+ * The keys are the names of the defined [highlight.js scopes](https://highlightjs.readthedocs.io/en/latest/css-classes-reference.html).
+ *
+ * The values are colors expressed as a hex formatted string e.g. "0xrrggbb".
+ *
+ * The scheme does not need to list all scopes exhaustively.
+ */
+export type ColorScheme = Record<string, string>;
+
+/**
  * Service providing syntax based color highlighting of text for the CLI using [highlight.js](https://github.com/highlightjs/highlight.js).
  */
 export default interface SyntaxHighlighterService {
@@ -33,10 +44,15 @@ export default interface SyntaxHighlighterService {
 
   /**
    * Return a syntactically highlighted version of the provided text using the specified syntax.
-   * The returned text will include appropriate terminal color codes.
+   * The returned text will include appropriate color styling. An optional {@link ColorScheme} can be provided.
    *
    * @param text the text to highlight.
    * @param syntaxName the syntax to use.
+   * @param colorScheme the color scheme to use.
    */
-  highlight(text: string, syntaxName: string): string;
+  highlight(
+    text: string,
+    syntaxName: string,
+    colorScheme?: ColorScheme,
+  ): string;
 }

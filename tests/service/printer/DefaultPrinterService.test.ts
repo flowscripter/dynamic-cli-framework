@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
   expectBytesEquals,
   expectStringEquals,
@@ -107,6 +107,94 @@ describe("DefaultPrinterService tests", () => {
         57,
         109,
       ]),
+    );
+  });
+
+  test("Custom color works", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    await printerService.info(printerService.color("hello", "0x000000"));
+    expectBytesEquals(
+      dummyStderr.getString(),
+      new Uint8Array([
+        27,
+        91,
+        51,
+        56,
+        59,
+        50,
+        59,
+        49,
+        48,
+        49,
+        59,
+        49,
+        50,
+        51,
+        59,
+        49,
+        51,
+        49,
+        109,
+        27,
+        91,
+        51,
+        56,
+        59,
+        50,
+        59,
+        48,
+        59,
+        48,
+        59,
+        48,
+        109,
+        104,
+        101,
+        108,
+        108,
+        111,
+        27,
+        91,
+        51,
+        57,
+        109,
+        27,
+        91,
+        51,
+        57,
+        109,
+      ]),
+    );
+  });
+
+  test("Custom color validation works", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+
+    expect(() => printerService.color("hello", "foo")).toThrow(
+      "Invalid color: foo",
+    );
+    expect(() => printerService.color("hello", "0x0")).toThrow(
+      "Invalid color: 0x0",
     );
   });
 

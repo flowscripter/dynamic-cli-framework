@@ -129,10 +129,19 @@ export default interface PrinterService {
   cyan(message: string): string;
 
   /**
-   * Return the provided message so that it the foreground is green.
+   * Return the provided message so that the foreground is green.
    * Has no effect if {@link colorEnabled} is `false`.
    */
   green(message: string): string;
+
+  /**
+   * Return the provided message so that the foreground is the specified color.
+   * Has no effect if {@link colorEnabled} is `false`.
+   *
+   * @param message the message to color.
+   * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "0xrrggbb".
+   */
+  color(message: string, hexFormattedColor: string): string;
 
   /**
    * Print a message on `stdout`.

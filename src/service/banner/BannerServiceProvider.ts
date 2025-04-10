@@ -35,10 +35,12 @@ export default class BannerServiceProvider implements ServiceProvider {
    *
    * @param servicePriority the priority of the service.
    * @param configurationServiceProvider an optional {@link ConfigurationServiceProvider} to make use of.
+   * @param fontName an optional [FIGlet](http://www.figlet.org) font name to use for the banner, defaults to "standard".
    */
   public constructor(
     servicePriority: number,
     configurationServiceProvider?: ConfigurationServiceProvider,
+    private readonly fontName: string = "standard",
   ) {
     this.servicePriority = servicePriority;
     this.#configurationServiceProvider = configurationServiceProvider;
@@ -68,7 +70,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     const { cliConfig } = context;
     const bannerText = await asciiBannerGeneratorService.generate(
       cliConfig.name.toUpperCase(),
-      "standard",
+      this.fontName,
     );
 
     await printerService.info(printerService.blue(bannerText));

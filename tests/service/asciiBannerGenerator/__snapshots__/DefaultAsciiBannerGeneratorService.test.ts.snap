@@ -1,26 +1,5 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DefaultAsciiBannerGeneratorService Tests Can generate with standard font 1`] = `
-"
-   __             
-  / _| ___   ___  
- | |_ / _ \\ / _ \\ 
- |  _| (_) | (_) |
- |_|  \\___/ \\___/ 
-                  
-"
-`;
-
-exports[`DefaultAsciiBannerGeneratorService Tests Can generate with newly registered font 1`] = `
-"
-   __          
-  / _|___  ___ 
- |  _/ _ \\/ _ \\
- |_| \\___/\\___/
-               
-"
-`;
-
 exports[`DefaultAsciiBannerGeneratorService tests Can generate with standard font 1`] = `
 "
    __             
@@ -28,7 +7,6 @@ exports[`DefaultAsciiBannerGeneratorService tests Can generate with standard fon
  | |_ / _ \\ / _ \\ 
  |  _| (_) | (_) |
  |_|  \\___/ \\___/ 
-                  
 "
 `;
 
@@ -38,6 +16,5 @@ exports[`DefaultAsciiBannerGeneratorService tests Can generate with newly regist
   / _|___  ___ 
  |  _/ _ \\/ _ \\
  |_| \\___/\\___/
-               
 "
 `;
