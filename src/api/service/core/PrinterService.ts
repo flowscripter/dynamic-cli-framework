@@ -139,7 +139,7 @@ export default interface PrinterService {
    * Has no effect if {@link colorEnabled} is `false`.
    *
    * @param message the message to color.
-   * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "0xrrggbb".
+   * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "#rrggbb".
    */
   color(message: string, hexFormattedColor: string): string;
 

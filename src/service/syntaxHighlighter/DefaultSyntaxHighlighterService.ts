@@ -2,9 +2,9 @@ import type SyntaxHighlighterService from "../../api/service/core/SyntaxHighligh
 import type { LanguageFn as HighlightSyntax } from "highlight.js";
 import { createEmphasize } from "emphasize";
 import json from "highlight.js/lib/languages/json";
-import { ColorScheme } from "../../api/service/core/SyntaxHighlighterService.ts";
+import type { ColorScheme } from "../../api/service/core/SyntaxHighlighterService.ts";
 
-type Sheet = Record<string, (string) => string> | undefined;
+type Sheet = Record<string, (value: string) => string> | undefined;
 
 interface Emphasize {
   listLanguages(): ReadonlyArray<string>;
@@ -24,7 +24,7 @@ interface Emphasize {
 export default class DefaultSyntaxHighlighterService
   implements SyntaxHighlighterService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
 
   emphasize: Emphasize;
 
@@ -58,9 +58,22 @@ export default class DefaultSyntaxHighlighterService
     if (colorScheme && this.colorFunction) {
       sheet = {};
       for (const [key, value] of Object.entries(colorScheme)) {
-        if (value) {
-          sheet[key] = (text: string) => this.colorFunction(text, value);
+        if (!value) {
+          throw new Error(`Invalid color for entry: ${key}`);
         }
+        if (
+          (value.length !== 7) ||
+          (!value.toLowerCase().startsWith("#"))
+        ) {
+          throw new Error(`Invalid color: ${value}`);
+        }
+    
+        const colorValue = parseInt(value.slice(1), 16);
+    
+        if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
+          throw new Error(`Invalid color: ${value}`);
+        }
+        sheet[key] = (text: string) => this.colorFunction(text, value);
       }
     }
 

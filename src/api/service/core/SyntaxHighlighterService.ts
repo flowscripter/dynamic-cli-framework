@@ -8,7 +8,7 @@ export const SYNTAX_HIGHLIGHTER_SERVICE_ID =
  *
  * The keys are the names of the defined [highlight.js scopes](https://highlightjs.readthedocs.io/en/latest/css-classes-reference.html).
  *
- * The values are colors expressed as a hex formatted string e.g. "0xrrggbb".
+ * The values are colors expressed as a hex formatted string e.g. "#rrggbb".
  *
  * The scheme does not need to list all scopes exhaustively.
  */
