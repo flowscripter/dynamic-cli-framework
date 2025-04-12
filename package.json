@@ -31,7 +31,7 @@
   "dependencies": {
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
-    "figlet": "^1.8.0",
+    "figlet": "^1.8.1",
     "highlight.js": "^11.11.1",
     "prettier": "^3.5.3",
     "supports-color": "^10.0.0",
