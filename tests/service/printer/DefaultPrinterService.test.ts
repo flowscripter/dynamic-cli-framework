@@ -122,7 +122,7 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
     printerService.colorEnabled = true;
-    await printerService.info(printerService.color("hello", "0x000000"));
+    await printerService.info(printerService.color("hello", "#000000"));
     expectBytesEquals(
       dummyStderr.getString(),
       new Uint8Array([

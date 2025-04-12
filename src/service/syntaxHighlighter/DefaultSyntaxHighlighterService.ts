@@ -24,7 +24,8 @@ interface Emphasize {
 export default class DefaultSyntaxHighlighterService
   implements SyntaxHighlighterService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) =>
+    text;
 
   emphasize: Emphasize;
 
@@ -67,9 +68,9 @@ export default class DefaultSyntaxHighlighterService
         ) {
           throw new Error(`Invalid color: ${value}`);
         }
-    
+
         const colorValue = parseInt(value.slice(1), 16);
-    
+
         if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
           throw new Error(`Invalid color: ${value}`);
         }
