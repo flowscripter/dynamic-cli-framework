@@ -163,13 +163,13 @@ export default class DefaultPrinterService implements PrinterService {
 
   public color(message: string, hexFormattedColor: string): string {
     if (
-      (hexFormattedColor.length !== 8) ||
-      (!hexFormattedColor.toLowerCase().startsWith("0x"))
+      (hexFormattedColor.length !== 7) ||
+      (!hexFormattedColor.toLowerCase().startsWith("#"))
     ) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);
     }
 
-    const colorValue = parseInt(hexFormattedColor, 16);
+    const colorValue = parseInt(hexFormattedColor.slice(1), 16);
 
     if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);

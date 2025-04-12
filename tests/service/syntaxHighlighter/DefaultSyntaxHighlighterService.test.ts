@@ -93,7 +93,7 @@ describe("DefaultSyntaxHighlighterService tests", () => {
       "{ foo: 1 }",
       "json",
       {
-        "number": "0xFF0000",
+        "number": "#FF0000",
       },
     );
     expectBytesEquals(
