@@ -64,6 +64,7 @@ export { default as ShutdownServiceProvider } from "./src/service/shutdown/Shutd
 
 export { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "./src/api/service/core/SyntaxHighlighterService.ts";
 export type { default as SyntaxHighlighterService } from "./src/api/service/core/SyntaxHighlighterService.ts";
+export type { ColorScheme } from "./src/api/service/core/SyntaxHighlighterService.ts";
 export { default as DefaultSyntaxHighlighterService } from "./src/service/syntaxHighlighter/DefaultSyntaxHighlighterService.ts";
 export { default as SyntaxHighlighterServiceProvider } from "./src/service/syntaxHighlighter/SyntaxHighlighterServiceProvider.ts";
 
