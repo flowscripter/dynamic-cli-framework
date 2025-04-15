@@ -48,7 +48,7 @@ export enum ArgumentValueTypeName {
   NUMBER = 1,
   INTEGER = 2,
   BOOLEAN = 3,
-  SECRET,
+  SECRET = 4,
 }
 
 /**

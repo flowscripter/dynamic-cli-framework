@@ -36,6 +36,7 @@ function validateValueType(
   value: ArgumentSingleValueType,
   argumentName: string,
   isDefaultValue: boolean,
+  isRangeValue: boolean,
 ): void {
   switch (type) {
     case ArgumentValueTypeName.BOOLEAN:
@@ -51,7 +52,7 @@ function validateValueType(
       if ((typeof value !== "number") || !Number.isFinite(value)) {
         throw new Error(
           `Specified ${
-            isDefaultValue ? "default" : "allowable"
+            isDefaultValue ? "default" : isRangeValue ? "range" : "allowable"
           } value: '${value}' for argument: '${argumentName}' should be a finite number`,
         );
       }
@@ -60,7 +61,7 @@ function validateValueType(
       if ((typeof value !== "number") || !Number.isInteger(value)) {
         throw new Error(
           `Specified ${
-            isDefaultValue ? "default" : "allowable"
+            isDefaultValue ? "default" : isRangeValue ? "range" : "allowable"
           } value: '${value}' for argument: '${argumentName}' should be an integer`,
         );
       }
@@ -112,9 +113,72 @@ function validateArgument(argument: Argument, name: string): void {
     );
   }
   if (argument.allowableValues) {
+    if (argument.type === ArgumentValueTypeName.BOOLEAN) {
+      throw new Error(
+        `Illegal type: '${argument.type}' for argument: '${name}' with allowable values specified`,
+      );
+    }
     argument.allowableValues.forEach((value) => {
-      validateValueType(argument.type, value, name, false);
+      validateValueType(argument.type, value, name, false, false);
     });
+  }
+  if (argument.isCaseInsensitive !== undefined) {
+    if (
+      (argument.type === ArgumentValueTypeName.BOOLEAN) &&
+      (argument.isCaseInsensitive === false)
+    ) {
+      throw new Error(
+        `Illegal type: '${argument.type}' for argument: '${name}' must always be case insensitive`,
+      );
+    } else if (argument.type !== ArgumentValueTypeName.STRING) {
+      throw new Error(
+        `Illegal type: '${argument.type}' for argument: '${name}' with case insensitive specified`,
+      );
+    }
+  }
+  if (argument.minValueInclusive !== undefined) {
+    if (
+      (argument.type !== ArgumentValueTypeName.NUMBER) &&
+      (argument.type !== ArgumentValueTypeName.INTEGER)
+    ) {
+      throw new Error(
+        `Illegal type: '${argument.type}' for argument: '${name}' with min value specified`,
+      );
+    }
+    if (argument.allowableValues) {
+      throw new Error(
+        `Illegal combination of allowable values and min value for argument: '${name}'`,
+      );
+    }
+    validateValueType(
+      argument.type,
+      argument.minValueInclusive,
+      name,
+      false,
+      true,
+    );
+  }
+  if (argument.maxValueInclusive !== undefined) {
+    if (
+      (argument.type !== ArgumentValueTypeName.NUMBER) &&
+      (argument.type !== ArgumentValueTypeName.INTEGER)
+    ) {
+      throw new Error(
+        `Illegal type: '${argument.type}' for argument: '${name}' with max value specified`,
+      );
+    }
+    if (argument.allowableValues) {
+      throw new Error(
+        `Illegal combination of allowable values and max value for argument: '${name}'`,
+      );
+    }
+    validateValueType(
+      argument.type,
+      argument.maxValueInclusive,
+      name,
+      false,
+      true,
+    );
   }
 }
 

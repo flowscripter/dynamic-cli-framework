@@ -689,6 +689,42 @@ describe("runner tests", () => {
     expect(hasRun).toBeFalse();
   });
 
+  test("No command recognised", async () => {
+    const streamString = new StreamString();
+    let hasRun = false;
+    const option = {
+      name: "foo",
+      type: ArgumentValueTypeName.STRING,
+      shortAlias: "f",
+    };
+    const subCommand = getSubCommand("command", [option], []);
+
+    subCommand.execute = (): Promise<void> => {
+      hasRun = true;
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([subCommand]);
+    const runResult = await run(
+      ["blah", "comman", "ommand"],
+      commandRegistry,
+      getServiceProviderRegistry(),
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(runResult.runState).toEqual(RunState.NO_COMMAND);
+    expectStringIncludes(
+      streamString.getString(),
+      "No command recognised",
+    );
+    expectStringIncludes(
+      streamString.getString(),
+      "Possible matches: command\n",
+    );
+    expect(hasRun).toBeFalse();
+  });
+
   test("Unknown arg warning in non-global run", async () => {
     const streamString = new StreamString();
     let hasRun = false;

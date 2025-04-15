@@ -111,15 +111,54 @@ function validatePrimitiveValue(
   }
 
   // check if the value is valid
-  if (argument.allowableValues && !argument.allowableValues.includes(value)) {
-    return {
-      invalidArgument: {
-        argument,
-        value,
-        reason: InvalidArgumentReason.ILLEGAL_VALUE,
-      },
-    };
+
+  if (argument.allowableValues) {
+    let searchValue = convertedValue;
+    let allowableValues = argument.allowableValues;
+
+    if (
+      (argument.type === ArgumentValueTypeName.STRING) &&
+      argument.isCaseInsensitive
+    ) {
+      searchValue = convertedValue.toLowerCase();
+      allowableValues = argument.allowableValues.map((v) =>
+        (v as string).toLowerCase()
+      );
+    }
+    if (!allowableValues.includes(searchValue)) {
+      return {
+        invalidArgument: {
+          argument,
+          value,
+          reason: InvalidArgumentReason.ILLEGAL_VALUE,
+        },
+      };
+    }
   }
+  if (argument.minValueInclusive !== undefined) {
+    if (convertedValue < argument.minValueInclusive) {
+      return {
+        invalidArgument: {
+          argument,
+          value,
+          reason: InvalidArgumentReason.ILLEGAL_VALUE,
+        },
+      };
+    }
+  }
+
+  if (argument.maxValueInclusive !== undefined) {
+    if (convertedValue > argument.maxValueInclusive) {
+      return {
+        invalidArgument: {
+          argument,
+          value,
+          reason: InvalidArgumentReason.ILLEGAL_VALUE,
+        },
+      };
+    }
+  }
+
   return { validValue: convertedValue };
 }
 

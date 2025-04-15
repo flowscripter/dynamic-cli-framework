@@ -286,7 +286,7 @@ describe("argumentValueValidation tests", () => {
     }]);
   });
 
-  test("Invalid option argument value", () => {
+  test("Invalid option argument value - not an allowable value", () => {
     let option: Option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -308,6 +308,27 @@ describe("argumentValueValidation tests", () => {
       argument: option,
       name: "foo",
       value: "goo",
+      reason: InvalidArgumentReason.ILLEGAL_VALUE,
+    }]);
+  });
+
+  test("Invalid option argument value - not within range", () => {
+    const option: Option = {
+      name: "foo",
+      type: ArgumentValueTypeName.INTEGER,
+      minValueInclusive: 1,
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, "1", invalidArguments), "1");
+    expect(invalidArguments).toEqual([]);
+
+    expect(
+      validateOptionValue(option, "0", invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: option,
+      name: "foo",
+      value: "0",
       reason: InvalidArgumentReason.ILLEGAL_VALUE,
     }]);
   });

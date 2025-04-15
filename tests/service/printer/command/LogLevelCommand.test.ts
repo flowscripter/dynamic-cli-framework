@@ -45,7 +45,7 @@ describe("LogLevelCommand tests", () => {
       Level.INFO,
     );
 
-    await logLevelCommand.execute(context, "ERROR");
+    await logLevelCommand.execute(context, "eRror");
 
     expect(
       printerServiceProvider.printerService!.getLevel(),

@@ -91,6 +91,77 @@ describe("CommandValidator tests", () => {
   });
 
   test(
+    "SubCommand validation fails due to boolean argument type not supporting allowable values",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        allowableValues: ["goo"],
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation fails due to boolean argument type not supporting case sensitivity",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.BOOLEAN,
+        isCaseInsensitive: true,
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation fails due to number argument type not supporting case insensitivity",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        isCaseInsensitive: false,
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation fails due to string argument type not supporting value range",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        minValueInclusive: 1,
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation fails due to number argument type not supporting value range and allowable values",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.NUMBER,
+        allowableValues: [1],
+        minValueInclusive: 1,
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
     "SubCommand validation fails due to option default value" +
       " not matching any values specified in argument valid values",
     () => {
@@ -103,6 +174,38 @@ describe("CommandValidator tests", () => {
 
       expect(() => new CommandValidator(getCLIConfig()).validate(command))
         .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation fails due to option default value" +
+      " not matching any values specified in argument valid values with case sensitivity",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        defaultValue: "bar",
+        allowableValues: ["BAR"],
+      }], []);
+
+      expect(() => new CommandValidator(getCLIConfig()).validate(command))
+        .toThrow();
+    },
+  );
+
+  test(
+    "SubCommand validation successed with option default value" +
+      " matching value specified in argument valid values with case insensitivity",
+    () => {
+      const command = getSubCommand("command", [{
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+        defaultValue: "bar",
+        allowableValues: ["BAR"],
+        isCaseInsensitive: true,
+      }], []);
+
+      new CommandValidator(getCLIConfig()).validate(command);
     },
   );
 

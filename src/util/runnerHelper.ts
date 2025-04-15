@@ -10,6 +10,8 @@ import {
 } from "../runtime/command/CommandTypeGuards.ts";
 import type Context from "../api/Context.ts";
 import { getInvalidArgumentString } from "../runtime/values/argumentValueValidation.ts";
+import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
+import { findPossibleCommandNames } from "./helpHelper.ts";
 
 function getCommandString(
   printerService: PrinterService,
@@ -89,6 +91,45 @@ export async function printNoCommandSpecifiedError(context: Context) {
     PRINTER_SERVICE_ID,
   ) as PrinterService;
   await printerService.error("No command specified\n\n");
+}
+
+export async function printNoCommandRecognisedError(
+  context: Context,
+  commandRegistry: CommandRegistry,
+  availableArgs: ReadonlyArray<string>,
+) {
+  const printerService = context.getServiceById(
+    PRINTER_SERVICE_ID,
+  ) as PrinterService;
+  await printerService.error("No command recognised\n\n");
+
+  if (availableArgs.length > 0) {
+    const groupCommands = commandRegistry.getGroupCommands();
+    const subCommands = commandRegistry.getSubCommands();
+
+    const allPossibleCommandNames: string[] = [];
+    for (const arg of availableArgs) {
+      // look for other possible matches
+      const possibleCommandNames = findPossibleCommandNames(
+        arg,
+        groupCommands,
+        subCommands,
+      );
+      // add the possible command names to the list if not already present
+      for (const possibleCommandName of possibleCommandNames) {
+        if (!allPossibleCommandNames.includes(possibleCommandName)) {
+          allPossibleCommandNames.push(possibleCommandName);
+        }
+      }
+    }
+
+    if (allPossibleCommandNames.length > 0) {
+      await printerService.print(
+        `Possible matches: ${allPossibleCommandNames.join(", ")}\n\n`,
+        Icon.INFORMATION,
+      );
+    }
+  }
 }
 
 export async function printUnusedArgsWarning(

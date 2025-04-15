@@ -3,7 +3,6 @@ import type Option from "../api/argument/Option.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type GroupCommand from "../api/command/GroupCommand.ts";
-import { distance } from "fastest-levenshtein";
 import {
   type ArgumentSingleValueType,
   type ArgumentValues,
@@ -12,6 +11,7 @@ import {
 import type Context from "../api/Context.ts";
 import type { HelpSection } from "../util/helpHelper.ts";
 import {
+  findPossibleCommandNames,
   getCommandArgsHelpSections,
   getCommandExamplesHelpSections,
   getGlobalArgumentHelpEntry,
@@ -42,34 +42,6 @@ abstract class MultiCommandCliAbstractHelpCommand {
   ) {
     this.#includeEnvVars = includeEnvVars;
     this.#commandRegistry = commandRegistry;
-  }
-
-  #findPossibleCommandNames(
-    commandName: string,
-    groupCommands: ReadonlyArray<GroupCommand>,
-    subCommands: ReadonlyArray<SubCommand>,
-  ): string[] {
-    const levenCommandArray = new Array<[number, string]>();
-    subCommands.forEach((subCommand) => {
-      levenCommandArray.push([
-        distance(subCommand.name, commandName),
-        subCommand.name,
-      ]);
-    });
-    groupCommands.forEach((groupCommand) => {
-      groupCommand.memberSubCommands.forEach((memberCommand) => {
-        const memberName = `${groupCommand.name}:${memberCommand.name}`;
-        levenCommandArray.push([
-          distance(memberName, commandName),
-          memberName,
-        ]);
-      });
-    });
-    return levenCommandArray
-      .sort((a, b) => a[0] - b[0])
-      .slice(0, 2)
-      .filter((value) => value[0] < 3)
-      .map((value) => value[1]);
   }
 
   #getGlobalCommandsHelpSection(
@@ -273,7 +245,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
       );
 
       // look for other possible matches
-      const possibleCommandNames = this.#findPossibleCommandNames(
+      const possibleCommandNames = findPossibleCommandNames(
         commandName,
         groupCommands,
         subCommands,
