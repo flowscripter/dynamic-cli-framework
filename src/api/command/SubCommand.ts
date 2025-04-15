@@ -21,7 +21,7 @@ export default interface SubCommand extends Command {
   readonly positionals: ReadonlyArray<Positional>;
 
   /**
-   * Optional grouping topic of the command to structuring of help output.
+   * Optional grouping topic of the command for structuring of help output.
    */
   readonly helpTopic?: string;
 

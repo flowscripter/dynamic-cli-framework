@@ -23,6 +23,7 @@ export default class LogLevelCommand implements GlobalModifierCommand {
       "WARN",
       "ERROR",
     ],
+    isCaseInsensitive: true,
     defaultValue: "INFO",
     configurationKey: "LOG_LEVEL",
   };
@@ -44,7 +45,7 @@ export default class LogLevelCommand implements GlobalModifierCommand {
   ): Promise<void> {
     const logLevel = argumentValue as string;
 
-    switch (logLevel) {
+    switch (logLevel.toUpperCase()) {
       case "DEBUG":
         this.#printerServiceProvider.printerService!.setLevel(
           Level.DEBUG,

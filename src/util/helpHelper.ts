@@ -1,3 +1,4 @@
+import { distance } from "fastest-levenshtein";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
 import {
@@ -267,6 +268,20 @@ export function getGlobalArgumentHelpEntry(
         notesItems.push("number value");
         break;
     }
+    if (
+      (argument.minValueInclusive !== undefined) ||
+      (argument.maxValueInclusive !== undefined)
+    ) {
+      let range = "..";
+
+      if (argument.minValueInclusive !== undefined) {
+        range = argument.minValueInclusive + range;
+      }
+      if (argument.maxValueInclusive !== undefined) {
+        range += argument.maxValueInclusive;
+      }
+      notesItems.push(range);
+    }
   }
 
   if (argument.defaultValue !== undefined) {
@@ -399,6 +414,21 @@ function getOptionHelpEntry(
       }
     }
   }
+  if (
+    (option.minValueInclusive !== undefined) ||
+    (option.maxValueInclusive !== undefined)
+  ) {
+    let range = "..";
+
+    if (option.minValueInclusive !== undefined) {
+      range = option.minValueInclusive + range;
+    }
+    if (option.maxValueInclusive !== undefined) {
+      range += option.maxValueInclusive;
+    }
+    notesItems.push(range);
+  }
+
   if (option.defaultValue !== undefined) {
     notesItems.push(
       `default: ${
@@ -479,6 +509,20 @@ function getPositionalHelpEntry(
         notesItems.push(`boolean value`);
         break;
     }
+  }
+  if (
+    (positional.minValueInclusive !== undefined) ||
+    (positional.maxValueInclusive !== undefined)
+  ) {
+    let range = "..";
+
+    if (positional.minValueInclusive !== undefined) {
+      range = positional.minValueInclusive + range;
+    }
+    if (positional.maxValueInclusive !== undefined) {
+      range += positional.maxValueInclusive;
+    }
+    notesItems.push(range);
   }
 
   if (positional.isVarargOptional) {
@@ -633,7 +677,7 @@ export function getMultiCommandAppSyntax(
   let argOptional = false;
   let argValueOptional = false;
   let multipleArg = false;
-  const commandClauses = [];
+  const commandClauses: string[] = [];
   if (globalCommands.length > 0) {
     commandClauses.push(`<${globalPrefix}command>`);
     arg = globalCommands.some((
@@ -748,4 +792,32 @@ export function getMultiCommandAppSyntax(
     syntax += ` ${subSyntax}`;
   }
   return syntax;
+}
+
+export function findPossibleCommandNames(
+  commandName: string,
+  groupCommands: ReadonlyArray<GroupCommand>,
+  subCommands: ReadonlyArray<SubCommand>,
+): string[] {
+  const levenCommandArray = new Array<[number, string]>();
+  subCommands.forEach((subCommand) => {
+    levenCommandArray.push([
+      distance(subCommand.name, commandName),
+      subCommand.name,
+    ]);
+  });
+  groupCommands.forEach((groupCommand) => {
+    groupCommand.memberSubCommands.forEach((memberCommand) => {
+      const memberName = `${groupCommand.name}:${memberCommand.name}`;
+      levenCommandArray.push([
+        distance(memberName, commandName),
+        memberName,
+      ]);
+    });
+  });
+  return levenCommandArray
+    .sort((a, b) => a[0] - b[0])
+    .slice(0, 2)
+    .filter((value) => value[0] < 3)
+    .map((value) => value[1]);
 }

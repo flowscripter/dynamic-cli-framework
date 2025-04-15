@@ -12,6 +12,7 @@ import type {
 import getLogger from "../util/logger.ts";
 import {
   printCommandExecutionError,
+  printNoCommandRecognisedError,
   printNoCommandSpecifiedError,
   printParseResultError,
   printUnusedArgsWarning,
@@ -690,7 +691,15 @@ export async function run(
   }
 
   // give up if we haven't successfully parsed a non-modifier Command by now
-  await printNoCommandSpecifiedError(context);
+  if (availableArgs.length > 0) {
+    await printNoCommandRecognisedError(
+      context,
+      commandRegistry,
+      availableArgs.flat(),
+    );
+  } else {
+    await printNoCommandSpecifiedError(context);
+  }
   return {
     runState: RunState.NO_COMMAND,
   };

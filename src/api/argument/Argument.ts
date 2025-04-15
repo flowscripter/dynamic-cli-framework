@@ -13,9 +13,24 @@ export default interface Argument {
   readonly type: ArgumentValueTypeName;
 
   /**
-   * Optional list of values that the value must match.
+   * Optional list of values that the value must match. This is not supported for {@link ArgumentValueTypeName.BOOLEAN}.
    */
   readonly allowableValues?: ReadonlyArray<ArgumentSingleValueType>;
+
+  /**
+   * Optional (default is `false`) for {@link ArgumentValueTypeName.STRING} when comparing a value against {@link allowableValues}.
+   */
+  readonly isCaseInsensitive?: boolean;
+
+  /**
+   * Optional for {@link ArgumentValueTypeName.INTEGER} or {@link ArgumentValueTypeName.NUMBER} when validating a value.
+   */
+  readonly minValueInclusive?: number;
+
+  /**
+   * Optional for {@link ArgumentValueTypeName.INTEGER} or {@link ArgumentValueTypeName.NUMBER} when validating a value.
+   */
+  readonly maxValueInclusive?: number;
 
   /**
    * Optional configuration key to use for the argument. Must consist of alphanumeric non-whitespace uppercase
