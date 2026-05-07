@@ -994,6 +994,201 @@ describe("argumentValueValidation tests", () => {
     }]);
   });
 
+  test("Option with custom validator that passes", () => {
+    const option: Option = {
+      name: "foo",
+      type: ArgumentValueTypeName.STRING,
+      validate: () => undefined,
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, "hello", invalidArguments)).toEqual(
+      "hello",
+    );
+    expect(invalidArguments).toEqual([]);
+  });
+
+  test("Option with custom validator that fails", () => {
+    const option: Option = {
+      name: "foo",
+      type: ArgumentValueTypeName.STRING,
+      validate: (v) =>
+        (v as string).length < 3 ? "min 3 chars" : undefined,
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, "ab", invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: option,
+      name: "foo",
+      value: "ab",
+      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+      message: "min 3 chars",
+    }]);
+  });
+
+  test("Positional with custom validator that passes and fails", () => {
+    const positional: Positional = {
+      name: "count",
+      type: ArgumentValueTypeName.NUMBER,
+      validate: (v) =>
+        (v as number) % 2 !== 0 ? "must be even" : undefined,
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validatePositionalValue(positional, "4", invalidArguments),
+    ).toEqual(4);
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(
+      validatePositionalValue(positional, "3", invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: positional,
+      name: "count",
+      value: 3,
+      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+      message: "must be even",
+    }]);
+  });
+
+  test("GlobalCommand argument with custom validator that passes and fails", () => {
+    const globalCommandArgument: GlobalCommandArgument = {
+      type: ArgumentValueTypeName.STRING,
+      validate: (v) =>
+        (v as string).startsWith("x") ? undefined : "must start with x",
+    };
+    const globalCommand = getGlobalCommandWithShortAlias(
+      "globalCommand",
+      "f",
+      globalCommandArgument,
+    );
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateGlobalCommandArgumentValue(
+        globalCommand,
+        "xfoo",
+        invalidArguments,
+      ),
+    ).toEqual("xfoo");
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(
+      validateGlobalCommandArgumentValue(
+        globalCommand,
+        "bar",
+        invalidArguments,
+      ),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: globalCommandArgument,
+      name: "globalCommand",
+      value: "bar",
+      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+      message: "must start with x",
+    }]);
+  });
+
+  test("Option isArray with custom validator checking uniqueness", () => {
+    const option: Option = {
+      name: "tags",
+      type: ArgumentValueTypeName.STRING,
+      isArray: true,
+      validate: (v) => {
+        const arr = v as string[];
+        return new Set(arr).size !== arr.length
+          ? "values must be unique"
+          : undefined;
+      },
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, ["a", "b", "c"], invalidArguments),
+    ).toEqual(["a", "b", "c"]);
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(
+      validateOptionValue(option, ["a", "b", "a"], invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: option,
+      name: "tags",
+      value: ["a", "b", "a"],
+      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+      message: "values must be unique",
+    }]);
+  });
+
+  test("Positional isVarargMultiple with custom validator checking uniqueness", () => {
+    const positional: Positional = {
+      name: "ids",
+      type: ArgumentValueTypeName.NUMBER,
+      isVarargMultiple: true,
+      validate: (v) => {
+        const arr = v as number[];
+        return new Set(arr).size !== arr.length
+          ? "values must be unique"
+          : undefined;
+      },
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validatePositionalValue(positional, ["1", "2", "3"], invalidArguments),
+    ).toEqual([1, 2, 3]);
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(
+      validatePositionalValue(positional, ["1", "2", "1"], invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: positional,
+      name: "ids",
+      value: [1, 2, 1],
+      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+      message: "values must be unique",
+    }]);
+  });
+
+  test("Custom validator not called when built-in validation fails", () => {
+    const option: Option = {
+      name: "foo",
+      type: ArgumentValueTypeName.NUMBER,
+      validate: () => {
+        throw new Error("should not be called");
+      },
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, "notanumber", invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([{
+      argument: option,
+      name: "foo",
+      value: "notanumber",
+      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+    }]);
+  });
+
+  test("Custom validator not called when value is undefined and optional", () => {
+    const option: Option = {
+      name: "foo",
+      type: ArgumentValueTypeName.STRING,
+      isOptional: true,
+      validate: () => {
+        throw new Error("should not be called");
+      },
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, undefined, invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([]);
+  });
+
   test("Invalid global command argument value", () => {
     let globalCommandArgument: GlobalCommandArgument = {
       type: ArgumentValueTypeName.STRING,

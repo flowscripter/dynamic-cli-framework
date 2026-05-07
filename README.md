@@ -45,8 +45,9 @@ So it isn't really dynamic at the moment! 😜
 - Support (optional) for persisted configuration and environment variables to
   specify command argument defaults.
 - Core (but optional) commands for help, logging level and version management.
-- Core (but optional) services for color output, syntax highlighting and pretty
-  printing to stdout/stderr and configuration management.
+- Core (but optional) services for color output (foreground and background),
+  syntax highlighting, pretty printing, tree structure rendering and
+  configuration management.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
@@ -575,11 +576,6 @@ or `GlobalCommandArgument` are:
   value in a configuration file or (ideally) sourced from an environment
   variable.
 
-[//]: # (TODO: remove when PromptService is implemented: https://github.com/flowscripter/dynamic-cli-framework/issues/10)
-
-**NOTE**: `SECRET` will be more useful as a type when a `PromptService` is
-implemented.
-
 #### Default Values
 
 Support for reading default argument values from a configuration file and/or
@@ -825,6 +821,10 @@ The following scenarios produce validation errors:
 - **Option Is Complex**: If the argument attempts to set a value on a complex
   option rather than on a primitive option or a primitive property of a complex
   option.
+- **Custom Validation**: If the argument defines a custom `validate` function
+  and the value (after passing all built-in validations) fails the custom
+  validation check. The error message provided by the custom validator is
+  included in the error output.
 
 ## Implementation Details
 
@@ -1201,7 +1201,8 @@ implementations they provide) built into the framework are:
 #### `BannerServiceProvider`
 
 On initialisation this uses the `PrinterService` to output the CLI name in ASCII
-banner text together with the CLI description and version.
+banner text together with the CLI description, version and optional sub-message
+(from `CLIConfig.subMessage`).
 
 Provides:
 
@@ -1230,8 +1231,12 @@ Provides:
 
 Provides:
 
-- `DefaultPrinterService` allowing color output to stdout, stderr, management of
-  log levels and widgets such as a spinner and progress bars.
+- `DefaultPrinterService` allowing foreground and background color output to
+  stdout, stderr, management of log levels and widgets such as a spinner and
+  progress bars. Background colors include theme-based variants (primary,
+  secondary, emphasised, selected) and named colors (yellow, orange, red,
+  magenta, violet, blue, cyan, green) as well as arbitrary hex colors.
+  Printing hyperlinks is supported.
 - `DarkModeCommand` which allows dark or light mode to be enabled via the
   argument `--dark-mode` or the env var `DARK_MODE`.
 - `NoColorCommand` which allows color output to be disabled via the argument
@@ -1258,6 +1263,15 @@ Provides:
 Note that the `SyntaxHighlighterService` has no effect if the
 `DefaultPrinterService` is configured to disable color output.
 
+#### `TreePrinterServiceProvider`
+
+Provides:
+
+- `TreePrinterService` allowing rendering of tree structures using Unicode
+  box-drawing characters. Trees are defined using `TreeNode` objects with a
+  `label` and optional `children` (which can be nested `TreeNode` objects or
+  plain strings). Node labels are colored using the `PrinterService`.
+
 #### `AsciiBannerGeneratorServiceProvider`
 
 Provides:
@@ -1265,6 +1279,11 @@ Provides:
 - `AsciiBannerGeneratorService` allowing messages to be rendered using ASCII
   banner [FIGlet](http://www.figlet.org) fonts. The FIGlet "standard" font is
   provided by default and other fonts can be added on demand by commands.
+  Supports color effects (fixed, gradient, rainbow) applied independently to
+  the message foreground, sub-message foreground and background in both
+  horizontal and vertical directions. A `ChiselFontAsciiBannerGeneratorService`
+  variant is also provided with a built-in "chisel" FIGlet font and support for
+  ANSI color remapping via `ChiselBannerColors`.
 
 ### Core Commands
 

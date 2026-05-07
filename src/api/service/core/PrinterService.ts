@@ -144,6 +144,87 @@ export default interface PrinterService {
   color(message: string, hexFormattedColor: string): string;
 
   /**
+   * Return the provided message so that the background is colored as primary content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundPrimary(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as secondary content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundSecondary(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as emphasised content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundEmphasised(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as selected content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundSelected(message: string): string;
+
+  /**
+   * Return the provided message so that the background is yellow.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundYellow(message: string): string;
+
+  /**
+   * Return the provided message so that the background is orange.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundOrange(message: string): string;
+
+  /**
+   * Return the provided message so that the background is red.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundRed(message: string): string;
+
+  /**
+   * Return the provided message so that the background is magenta.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundMagenta(message: string): string;
+
+  /**
+   * Return the provided message so that the background is violet.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundViolet(message: string): string;
+
+  /**
+   * Return the provided message so that the background is blue.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundBlue(message: string): string;
+
+  /**
+   * Return the provided message so that the background is cyan.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundCyan(message: string): string;
+
+  /**
+   * Return the provided message so that the background is green.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundGreen(message: string): string;
+
+  /**
+   * Return the provided message so that the background is the specified color.
+   * Has no effect if {@link colorEnabled} is `false`.
+   *
+   * @param message the message to color.
+   * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "#rrggbb".
+   */
+  backgroundColor(message: string, hexFormattedColor: string): string;
+
+  /**
    * Print a message on `stdout`.
    * Will be displayed as primary content if {@link colorEnabled} is `true`.
    *

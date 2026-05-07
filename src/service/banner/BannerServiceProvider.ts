@@ -70,7 +70,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     const { cliConfig } = context;
     const bannerText = await asciiBannerGeneratorService.generate(
       cliConfig.name.toUpperCase(),
-      this.fontName,
+      { fontName: this.fontName, subMessage: cliConfig.subMessage },
     );
 
     await printerService.info(printerService.blue(bannerText));

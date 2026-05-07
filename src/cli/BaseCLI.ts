@@ -72,11 +72,11 @@ export default class BaseCLI implements CLI {
    * Constructor configures the instance with the specified CLI application details and WritableStream instances.
    *
    * @param cliConfig the {@link CLIConfig} for the CLI application.
-   * @param stdoutWritableStream the WritableStream to use for stderr output.
+   * @param stdoutWritableStream the WritableStream to use for stdout output.
    * @param stderrWritableStream the WritableStream to use for stderr output.
    * @param stdoutIsColor true if stdout supports color.
    * @param stderrIsColor true if stderr supports color.
-   * @param terminal the Terminal implementation to use.
+   * @param stderrTerminal the Terminal implementation to use for stderr.
    * @param styler the Styler implementation to use.
    * @param envVarsEnabled optionally support checking env variables for default argument values.
    * @param configEnabled optionally enable configuration file support for default argument values.
