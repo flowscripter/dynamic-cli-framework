@@ -107,7 +107,7 @@ async function printHelpEntry(
     indentText += (isLastSibling ? "  " : "│ ") +
       " ".repeat(helpEntry.subEntryIndent || 0);
     for (let i = 0; i < helpEntry.helpSubEntries!.length; i++) {
-      const helpSubEntry = helpEntry.helpSubEntries![i];
+      const helpSubEntry = helpEntry.helpSubEntries![i]!;
       const helpSubEntryHasChildren = helpSubEntry.helpSubEntries !== undefined;
       const helpSubEntryIsLastSibling =
         i === helpEntry.helpSubEntries!.length - 1;
@@ -182,14 +182,14 @@ export async function printHelpSections(
 
   // print the help
   for (let i = 0; i < sections.length; i++) {
-    const section = sections[i];
+    const section = sections[i]!;
     if (section.title.length > 0) {
       await printerService.print(
         `${printerService.emphasised(section.title)}\n\n`,
       );
     }
     for (let j = 0; j < section.helpEntries.length; j++) {
-      const helpEntry = section.helpEntries[j];
+      const helpEntry = section.helpEntries[j]!;
       await printHelpEntry(
         printerService,
         helpEntry,

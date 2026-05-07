@@ -175,14 +175,14 @@ class ParseContext {
 
     for (let i = 0; i < complexPathElements.length; i++) {
       let arrayIndexString: string | undefined;
-      let complexPathElement = complexPathElements[i];
+      let complexPathElement = complexPathElements[i]!;
 
       // look for array index
       if (complexPathElement.endsWith("]")) {
         [complexPathElement, arrayIndexString] = complexPathElement.slice(
           0,
           complexPathElement.length - 1,
-        ).split("[");
+        ).split("[") as [string, string | undefined];
       }
 
       let lookupPath = this.subCommand.name;
@@ -237,7 +237,7 @@ class ParseContext {
         }
         option = this.optionLookupMapsByPath.get(lookupPath)!.get(
           complexPathElement,
-        );
+        ) as Option | ComplexOption | undefined;
 
         // now we are parsing properties of complex options it is an error if we cannot match an option name or alias
         if (option === undefined) {
@@ -423,8 +423,8 @@ class ParseContext {
         if (typeof pathElement === "string") {
           if (Array.isArray(optionValue)) {
             optionValue = (optionValue as Array<PopulatedArgumentValues>)[
-              optionValue.length - 1
-            ][pathElement as string] as
+              (optionValue as Array<PopulatedArgumentValues>).length - 1
+            ]![pathElement as string] as
               | Array<PopulatedArgumentValues>
               | PopulatedArgumentValues
               | PopulatedArgumentValueType;
@@ -459,7 +459,8 @@ class ParseContext {
    * @param value the value to attempt to set.
    */
   setPositionalValue(value: ArgumentSingleValueType): boolean {
-    const positional = this.subCommand.positionals[this.currentPositionalIndex];
+    const positional = this.subCommand
+      .positionals[this.currentPositionalIndex]!;
     const currentValue = this.populatedArgumentValues[positional.name];
 
     // if we haven't populated the argument value before...
@@ -536,7 +537,7 @@ class ParseContext {
         // check for option AND value
         if (potentialOptionPath.includes("=")) {
           [potentialOptionPath, potentialOptionValue] = potentialOptionPath
-            .split(/=(.*)/);
+            .split(/=(.*)/) as [string, string | undefined, ...string[]];
 
           // check for illegal syntax e.g. --optionName=
           if (potentialOptionValue === "") {
@@ -623,7 +624,7 @@ export default function populateSubCommandValues(
   const unusedArgs: Array<string> = [];
 
   for (let i = 0; i < potentialArgs.length; i++) {
-    const potentialArg = potentialArgs[i];
+    const potentialArg = potentialArgs[i]!;
 
     // parse the next arg
     parseContext.parse(potentialArg);

@@ -67,15 +67,15 @@ function normaliseFirstArgumentIfRequired(
   // --<global_[modifier_]command_name>=<value>
   // -<global_[modifier_]command_short_alias>
   // -<global_[modifier_]command_short_alias>=<value>
-  if ((firstArg.length < 2) || (firstArg.charAt(0) !== "-")) {
+  if ((firstArg!.length < 2) || (firstArg!.charAt(0) !== "-")) {
     return args;
   }
 
   // looking for:
   // --<global_[modifier_]command_name>
   // --<global_[modifier_]command_name>=<value>
-  if ((firstArg.length > 2) && (firstArg.charAt(1) === "-")) {
-    let potentialGlobalCommandName = firstArg.slice(2);
+  if ((firstArg!.length > 2) && (firstArg!.charAt(1) === "-")) {
+    let potentialGlobalCommandName = firstArg!.slice(2);
 
     // looking for:
     // <global_command_name>=<value>
@@ -84,7 +84,7 @@ function normaliseFirstArgumentIfRequired(
     if (potentialGlobalCommandName.includes("=")) {
       [potentialGlobalCommandName, nextArg] = potentialGlobalCommandName.split(
         /=(.*)/,
-      );
+      ) as [string, string | undefined];
     }
 
     if (!globalCommandsByName.has(potentialGlobalCommandName)) {
@@ -105,14 +105,17 @@ function normaliseFirstArgumentIfRequired(
   // -<global_[modifier_]command_short_alias>
   // -<global_[modifier_]command_short_alias>=<value>
   // (by now we know the arg starts with -<char>)
-  let potentialGlobalCommandShortAlias = firstArg.slice(1);
+  let potentialGlobalCommandShortAlias = firstArg!.slice(1);
 
   // looking for:
   // <global_[modifier_]command_short_alias>=<value>
   let nextArg: string | undefined;
   if (potentialGlobalCommandShortAlias.includes("=")) {
     [potentialGlobalCommandShortAlias, nextArg] =
-      potentialGlobalCommandShortAlias.split(/=(.*)/);
+      potentialGlobalCommandShortAlias.split(/=(.*)/) as [
+        string,
+        string | undefined,
+      ];
   }
 
   if (!globalCommandsByShortAlias) {
@@ -169,8 +172,8 @@ function scanForNextCommandClause(
 
     // looking for:
     // <global_[modifier_]command_name>
-    if (currentArg.startsWith("--")) {
-      const potentialCommandName = currentArg.slice(2);
+    if (currentArg!.startsWith("--")) {
+      const potentialCommandName = currentArg!.slice(2);
 
       // check for Global[Modifier]Command name
       const command = commandsByName.get(potentialCommandName);
@@ -188,8 +191,8 @@ function scanForNextCommandClause(
         };
       }
     }
-    if (!includeSubCommands || (currentArg[0] === "-")) {
-      unusedArgs.push(currentArg);
+    if (!includeSubCommands || (currentArg![0] === "-")) {
+      unusedArgs.push(currentArg!);
       continue;
     }
 
@@ -202,11 +205,11 @@ function scanForNextCommandClause(
       let potentialMemberSubCommandName: string | undefined;
       let potentialMemberCommandNameArgumentUsed = false;
 
-      if (potentialGroupCommandName.includes(":")) {
+      if (potentialGroupCommandName!.includes(":")) {
         // looking for:
         // <group_command_name>:<member_sub_command_name>
         [potentialGroupCommandName, potentialMemberSubCommandName] =
-          potentialGroupCommandName.split(":");
+          potentialGroupCommandName!.split(":") as [string, string | undefined];
       } else if (pendingArgs.length > 0) {
         // looking for:
         // <group_command_name> <member_sub_command_name>
@@ -250,9 +253,9 @@ function scanForNextCommandClause(
     //
     // if we find it is a group command we skip it as we didn't find a member command
     // following it the logic above
-    const command = commandsByName.get(currentArg);
+    const command = commandsByName.get(currentArg!);
     if (command && !isGroupCommand(command)) {
-      logger.debug("Found sub-command name: %s", currentArg);
+      logger.debug("Found sub-command name: %s", currentArg!);
       return {
         commandClause: {
           command,
@@ -263,7 +266,7 @@ function scanForNextCommandClause(
     }
 
     // if we got here we haven't found a command so add the current arg to unused args
-    unusedArgs.push(currentArg);
+    unusedArgs.push(currentArg!);
   }
   // if we got here we haven't found a command and we have processed all provided args
   return {

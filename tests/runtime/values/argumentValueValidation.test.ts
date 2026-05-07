@@ -1011,8 +1011,7 @@ describe("argumentValueValidation tests", () => {
     const option: Option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validate: (v) =>
-        (v as string).length < 3 ? "min 3 chars" : undefined,
+      validate: (v) => (v as string).length < 3 ? "min 3 chars" : undefined,
     };
     const invalidArguments: Array<InvalidArgument> = [];
     expect(
@@ -1031,8 +1030,7 @@ describe("argumentValueValidation tests", () => {
     const positional: Positional = {
       name: "count",
       type: ArgumentValueTypeName.NUMBER,
-      validate: (v) =>
-        (v as number) % 2 !== 0 ? "must be even" : undefined,
+      validate: (v) => (v as number) % 2 !== 0 ? "must be even" : undefined,
     };
     let invalidArguments: Array<InvalidArgument> = [];
     expect(

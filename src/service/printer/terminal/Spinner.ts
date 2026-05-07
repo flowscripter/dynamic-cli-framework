@@ -1,4 +1,4 @@
-import Styler from "./Styler.ts";
+import type Styler from "./Styler.ts";
 import type Terminal from "./Terminal.ts";
 
 const FRAMES = [
@@ -36,13 +36,13 @@ export default class Spinner {
     await this.#terminal.clearLine();
     if (this.#message) {
       await this.#terminal.write(
-        `${this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor)} ${
-          this.#styler.colorText(this.#message!, this.#msgColor)
-        }`,
+        `${
+          this.#styler.colorText(FRAMES[this.#frameIndex]!, this.#spinColor)
+        } ${this.#styler.colorText(this.#message!, this.#msgColor)}`,
       );
     } else {
       await this.#terminal.write(
-        this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor),
+        this.#styler.colorText(FRAMES[this.#frameIndex]!, this.#spinColor),
       );
     }
     this.#frameIndex = (this.#frameIndex + 1) % FRAMES.length;

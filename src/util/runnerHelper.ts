@@ -10,7 +10,7 @@ import {
 } from "../runtime/command/CommandTypeGuards.ts";
 import type Context from "../api/Context.ts";
 import { getInvalidArgumentString } from "../runtime/values/argumentValueValidation.ts";
-import CommandRegistry from "../runtime/registry/CommandRegistry.ts";
+import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
 import { findPossibleCommandNames } from "./helpHelper.ts";
 
 function getCommandString(

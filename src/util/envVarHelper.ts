@@ -21,7 +21,7 @@ import type ComplexOption from "../api/argument/ComplexOption.ts";
 
 function getKeySegment(segment: string) {
   let keySegment = segment.replace("-", "_").toUpperCase();
-  if (keySegment[0].match(/[0-9]/)) {
+  if (keySegment[0]!.match(/[0-9]/)) {
     keySegment = `_${keySegment}`;
   }
   return keySegment;
@@ -152,7 +152,7 @@ function getOptionValuesFromEnvVars(
               getOptionValuesFromEnvVars(
                 (envVarValues[option.name] as Array<PopulatedArgumentValues>)[
                   index
-                ],
+                ]!,
                 matches,
                 env,
                 property,

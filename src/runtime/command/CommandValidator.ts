@@ -98,7 +98,7 @@ function isNameLegal(name: string): boolean {
 function isConfigurationKeyLegal(configurationKey: string): boolean {
   return (configurationKey.length > 0) &&
     isUppercaseAlphaNumericOrUnderscore(configurationKey) &&
-    !configurationKey[0].match(/[0-9]/);
+    !configurationKey[0]!.match(/[0-9]/);
 }
 
 function validateArgument(argument: Argument, name: string): void {
@@ -368,7 +368,7 @@ export default class CommandValidator {
     }
     if (subCommand.positionals) {
       for (let i = 0; i < subCommand.positionals.length; i += 1) {
-        const positional = subCommand.positionals[i];
+        const positional = subCommand.positionals[i]!;
         validateSubCommandArgument(positional);
         if (argumentNames.includes(positional.name)) {
           throw new Error(
@@ -396,7 +396,7 @@ export default class CommandValidator {
     command: Command,
     argumentAncestry: Array<SubCommandArgument>,
   ) {
-    const argument = argumentAncestry[argumentAncestry.length - 1];
+    const argument = argumentAncestry[argumentAncestry.length - 1]!;
     if (command.enableConfiguration === true) {
       if (
         (argument.configurationKey !== undefined) &&

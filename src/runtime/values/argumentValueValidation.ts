@@ -120,7 +120,7 @@ function validatePrimitiveValue(
       (argument.type === ArgumentValueTypeName.STRING) &&
       argument.isCaseInsensitive
     ) {
-      searchValue = convertedValue.toLowerCase();
+      searchValue = (convertedValue as string).toLowerCase();
       allowableValues = argument.allowableValues.map((v) =>
         (v as string).toLowerCase()
       );
@@ -136,7 +136,7 @@ function validatePrimitiveValue(
     }
   }
   if (argument.minValueInclusive !== undefined) {
-    if (convertedValue < argument.minValueInclusive) {
+    if ((convertedValue as number) < argument.minValueInclusive) {
       return {
         invalidArgument: {
           argument,
@@ -148,7 +148,7 @@ function validatePrimitiveValue(
   }
 
   if (argument.maxValueInclusive !== undefined) {
-    if (convertedValue > argument.maxValueInclusive) {
+    if ((convertedValue as number) > argument.maxValueInclusive) {
       return {
         invalidArgument: {
           argument,
@@ -275,7 +275,7 @@ function validateObjectValue(
   const convertedObjectValue: ArgumentValues = {};
 
   for (let i = 0; i < argument.properties.length; i++) {
-    const propertyArg = argument.properties[i];
+    const propertyArg = argument.properties[i]!;
     const propertyValue = objectValue[propertyArg.name];
 
     if (propertyValue === undefined) {
@@ -306,7 +306,10 @@ function validateObjectValue(
           },
         };
       }
-      validationResult = validateArrayValue(propertyArg, propertyValue);
+      validationResult = validateArrayValue(
+        propertyArg as ComplexOption | SubCommandArgument,
+        propertyValue,
+      );
     } else if (typeof propertyValue === "object") {
       if (propertyArg.type !== ComplexValueTypeName.COMPLEX) {
         return {
