@@ -7,10 +7,12 @@ import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
 import { WritableStream } from "node:stream/web";
 import type Styler from "./terminal/Styler.ts";
+import { HYPERLINK_END, hyperlinkStart } from "./terminal/Ansi.ts";
 
 export default class DefaultPrinterService implements PrinterService {
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;
+  #hyperlinksEnabled = true;
   #stdoutIsColor: boolean;
   #stderrTerminal: Terminal;
   #styler: Styler;
@@ -88,6 +90,21 @@ export default class DefaultPrinterService implements PrinterService {
 
   get colorEnabled(): boolean {
     return this.#styler.colorEnabled;
+  }
+
+  set hyperlinksEnabled(enabled: boolean) {
+    this.#hyperlinksEnabled = enabled;
+  }
+
+  get hyperlinksEnabled(): boolean {
+    return this.#hyperlinksEnabled;
+  }
+
+  public hyperlink(text: string, url: string): string {
+    if (!this.#hyperlinksEnabled) {
+      return url;
+    }
+    return hyperlinkStart(url) + text + HYPERLINK_END;
   }
 
   set darkMode(isDarkMode: boolean) {

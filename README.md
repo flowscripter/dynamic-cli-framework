@@ -1241,6 +1241,8 @@ Provides:
   argument `--dark-mode` or the env var `DARK_MODE`.
 - `NoColorCommand` which allows color output to be disabled via the argument
   `--no-color` or the env var `NO_COLOR`.
+- `NoHyperlinksCommand` which allows hyperlink output to be disabled via the
+  argument `--no-hyperlinks` or the env var `NO_HYPERLINKS`.
 - `LogLevelCommand` which allows the log level to be set via the argument
   `--log-level` or the env var `LOG_LEVEL`.
 
@@ -1262,6 +1264,15 @@ Provides:
 
 Note that the `SyntaxHighlighterService` has no effect if the
 `DefaultPrinterService` is configured to disable color output.
+
+#### `ImagePrinterServiceProvider`
+
+Provides:
+
+- `ImagePrinterService` allowing rendering of images and animated GIFs in the
+  terminal. Images are rendered from a `Uint8Array` buffer with configurable
+  width as a percentage of the terminal width. GIF detection is automatic based
+  on file magic bytes.
 
 #### `TreePrinterServiceProvider`
 

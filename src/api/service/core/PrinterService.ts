@@ -39,6 +39,11 @@ export default interface PrinterService {
   colorEnabled: boolean;
 
   /**
+   * Disable or enable hyperlink output for messages.
+   */
+  hyperlinksEnabled: boolean;
+
+  /**
    * Enable or disable dark mode. Default is disabled i.e. `false`.
    */
   darkMode: boolean;
@@ -223,6 +228,15 @@ export default interface PrinterService {
    * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "#rrggbb".
    */
   backgroundColor(message: string, hexFormattedColor: string): string;
+
+  /**
+   * Return the provided text wrapped in an OSC 8 hyperlink to the specified URL.
+   * Has no effect if {@link hyperlinksEnabled} is `false`, in which case the text is returned unchanged.
+   *
+   * @param text the text to display as the hyperlink.
+   * @param url the URL target of the hyperlink.
+   */
+  hyperlink(text: string, url: string): string;
 
   /**
    * Print a message on `stdout`.

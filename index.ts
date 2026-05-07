@@ -87,6 +87,11 @@ export type { default as PrettyPrinterService } from "./src/api/service/core/Pre
 export { default as DefaultPrettyPrinterService } from "./src/service/prettyPrinter/DefaultPrettyPrinterService.ts";
 export { default as PrettyPrinterServiceProvider } from "./src/service/prettyPrinter/PrettyPrinterServiceProvider.ts";
 
+export { IMAGE_PRINTER_SERVICE_ID } from "./src/api/service/core/ImagePrinterService.ts";
+export type { default as ImagePrinterService } from "./src/api/service/core/ImagePrinterService.ts";
+export { default as DefaultImagePrinterService } from "./src/service/imagePrinter/DefaultImagePrinterService.ts";
+export { default as ImagePrinterServiceProvider } from "./src/service/imagePrinter/ImagePrinterServiceProvider.ts";
+
 export { TREE_PRINTER_SERVICE_ID } from "./src/api/service/core/TreePrinterService.ts";
 export type { default as TreePrinterService } from "./src/api/service/core/TreePrinterService.ts";
 export type { TreeNode } from "./src/api/service/core/TreePrinterService.ts";
