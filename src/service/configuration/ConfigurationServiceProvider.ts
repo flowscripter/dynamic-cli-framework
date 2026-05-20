@@ -79,6 +79,8 @@ const logger = getLogger("ConfigurationServiceProvider");
  * default configuration will be used. The location of the configuration file can be modified via the
  * {@link ConfigCommand}.
  *
+ * NOTE: You should not store default arguments for secrets using this mechanism. Instead use the Environment Variables support outlined below.
+ *
  * *Environment Variables*
  *
  * Values are parsed using a key path defined by custom {@link Argument.configurationKey}
