@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import DefaultPrettyPrinterService from "../../../src/service/prettyPrinter/DefaultPrettyPrinterService";
-import FooSyntax from "../../fixtures/prettierPluginFoo";
+import DefaultPrettyPrinterService from "../../../src/service/prettyPrinter/DefaultPrettyPrinterService.ts";
+import FooSyntax from "../../fixtures/prettierPluginFoo.ts";
 
 describe("DefaultPrettyPrinterService tests", () => {
   test("JSON registered by default", async () => {
