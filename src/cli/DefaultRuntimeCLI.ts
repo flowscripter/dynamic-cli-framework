@@ -4,8 +4,8 @@ import type RunResult from "../api/RunResult.ts";
 import { RunState } from "../api/RunResult.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
 import { Writable } from "node:stream";
-import TtyTerminal from "../service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../terminal/TtyTerminal.ts";
+import TtyStyler from "../terminal/TtyStyler.ts";
 import supportsColor from "supports-color";
 
 /**

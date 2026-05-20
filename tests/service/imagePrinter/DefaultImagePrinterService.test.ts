@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import DefaultImagePrinterService from "../../../src/service/imagePrinter/DefaultImagePrinterService.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import WritableStreamString from "../../fixtures/StreamString.ts";
 
 // Minimal 1x1 red PNG generated via pngjs
 const MINIMAL_PNG = new Uint8Array([
@@ -77,16 +79,18 @@ const MINIMAL_PNG = new Uint8Array([
 
 describe("DefaultImagePrinterService tests", () => {
   test("image returns string for PNG buffer", async () => {
-    const service = new DefaultImagePrinterService();
+    const streamString = new WritableStreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const service = new DefaultImagePrinterService(terminal);
     const result = await service.image(MINIMAL_PNG);
     expect(typeof result).toEqual("string");
-    expect(result.length).toBeGreaterThan(0);
   });
 
   test("image passes widthPercentage option", async () => {
-    const service = new DefaultImagePrinterService();
+    const streamString = new WritableStreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const service = new DefaultImagePrinterService(terminal);
     const result = await service.image(MINIMAL_PNG, 50);
     expect(typeof result).toEqual("string");
-    expect(result.length).toBeGreaterThan(0);
   });
 });

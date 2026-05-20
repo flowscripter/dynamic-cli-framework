@@ -8,8 +8,8 @@ import {
 } from "../../fixtures/util.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import { Icon, Level } from "../../../src/api/service/core/PrinterService.ts";
-import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 
 describe("DefaultPrinterService tests", () => {

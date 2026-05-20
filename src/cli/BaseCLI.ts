@@ -33,10 +33,10 @@ import TableGeneratorServiceProvider from "../service/tableGenerator/TableGenera
 import { run } from "../runtime/runner.ts";
 
 import { WritableStream } from "node:stream/web";
-import type Terminal from "../service/printer/terminal/Terminal.ts";
+import type Terminal from "../terminal/Terminal.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
-import type Styler from "../service/printer/terminal/Styler.ts";
+import type Styler from "../terminal/Styler.ts";
 const logger = getLogger("BaseCLI");
 
 /**

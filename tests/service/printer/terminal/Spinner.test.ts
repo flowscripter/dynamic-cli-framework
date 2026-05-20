@@ -5,9 +5,9 @@ import {
   expectStringIncludes,
   sleep,
 } from "../../../fixtures/util.ts";
-import TtyTerminal from "../../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
-import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
 describe("Spinner tests", () => {
   test("Spinner works", async () => {

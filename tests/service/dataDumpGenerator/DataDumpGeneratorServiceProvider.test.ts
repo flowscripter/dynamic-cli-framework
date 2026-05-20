@@ -5,8 +5,8 @@ import DataDumpGeneratorServiceProvider from "../../../src/service/dataDumpGener
 import { PRINTER_SERVICE_ID } from "../../../src/api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import StreamString from "../../fixtures/StreamString.ts";
-import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("DataDumpGeneratorServiceProvider tests", () => {
   test("provide returns service and empty commands", async () => {

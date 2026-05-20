@@ -23,8 +23,8 @@ import type Context from "../../src/api/Context.ts";
 import type CLIConfig from "../../src/api/CLIConfig.ts";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
-import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/terminal/TtyStyler.ts";
 
 describe("BaseCLI tests", () => {
   test("BaseCLI no command specified works", async () => {

@@ -136,6 +136,10 @@ export type { default as CLI } from "./src/api/CLI.ts";
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
 
+// Terminal API
+export type { default as Terminal } from "./src/terminal/Terminal.ts";
+export type { default as Styler } from "./src/terminal/Styler.ts";
+
 // Convenience functions
 export {
   launchMultiCommandCLI,

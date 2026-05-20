@@ -1,5 +1,5 @@
-import type Styler from "./Styler.ts";
-import type Terminal from "./Terminal.ts";
+import type Styler from "../../../terminal/Styler.ts";
+import type Terminal from "../../../terminal/Terminal.ts";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 

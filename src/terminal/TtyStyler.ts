@@ -1,6 +1,8 @@
 import {
   BACKGROUND_COLOR_END,
   FOREGROUND_COLOR_END,
+  HYPERLINK_END,
+  hyperlinkStart,
   ITALIC_END,
   ITALIC_START,
 } from "./Ansi.ts";
@@ -8,6 +10,7 @@ import type Styler from "./Styler.ts";
 
 export default class TtyStyler implements Styler {
   colorEnabled: boolean = true;
+  hyperlinksEnabled: boolean = true;
 
   readonly colorLevel: number;
 
@@ -63,5 +66,12 @@ export default class TtyStyler implements Styler {
 
   italicText(text: string): string {
     return ITALIC_START + text + ITALIC_END;
+  }
+
+  hyperlink(text: string, url: string): string {
+    if (!this.hyperlinksEnabled) {
+      return url;
+    }
+    return hyperlinkStart(url) + text + HYPERLINK_END;
   }
 }

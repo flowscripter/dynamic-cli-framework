@@ -8,7 +8,7 @@ import {
   backgroundColorStart,
   FOREGROUND_COLOR_END,
   foregroundColorStart,
-} from "../printer/terminal/Ansi.ts";
+} from "../../terminal/Ansi.ts";
 import figlet from "figlet";
 import standardFont from "./standard.flf.json" with { type: "json" };
 

@@ -2,17 +2,14 @@ import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import { type Icon, Level } from "../../api/service/core/PrinterService.ts";
-import type Terminal from "./terminal/Terminal.ts";
+import type Terminal from "../../terminal/Terminal.ts";
 import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
 import { WritableStream } from "node:stream/web";
-import type Styler from "./terminal/Styler.ts";
-import { HYPERLINK_END, hyperlinkStart } from "./terminal/Ansi.ts";
-
+import type Styler from "../../terminal/Styler.ts";
 export default class DefaultPrinterService implements PrinterService {
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;
-  #hyperlinksEnabled = true;
   #stdoutIsColor: boolean;
   #stdoutTerminal: Terminal;
   #stderrTerminal: Terminal;
@@ -96,18 +93,15 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   set hyperlinksEnabled(enabled: boolean) {
-    this.#hyperlinksEnabled = enabled;
+    this.#styler.hyperlinksEnabled = enabled;
   }
 
   get hyperlinksEnabled(): boolean {
-    return this.#hyperlinksEnabled;
+    return this.#styler.hyperlinksEnabled;
   }
 
   public hyperlink(text: string, url: string): string {
-    if (!this.#hyperlinksEnabled) {
-      return url;
-    }
-    return hyperlinkStart(url) + text + HYPERLINK_END;
+    return this.#styler.hyperlink(text, url);
   }
 
   public stdoutColumns(): number {

@@ -1,9 +1,9 @@
 import { describe, test } from "bun:test";
 import Progress from "../../../../src/service/printer/terminal/Progress.ts";
 import { sleep } from "../../../fixtures/util.ts";
-import TtyTerminal from "../../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
-import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
 describe("Progress tests", () => {
   test("Progress works", async () => {

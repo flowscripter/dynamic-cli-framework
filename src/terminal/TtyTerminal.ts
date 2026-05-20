@@ -62,4 +62,12 @@ export default class TtyTerminal implements Terminal {
       return 80;
     }
   }
+
+  rows(): number {
+    try {
+      return this.#ttyWriteStream.rows;
+    } catch {
+      return 24;
+    }
+  }
 }

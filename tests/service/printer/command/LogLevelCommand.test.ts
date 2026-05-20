@@ -6,10 +6,10 @@ import PrinterServiceProvider from "../../../../src/service/printer/PrinterServi
 import { Level } from "../../../../src/api/service/core/PrinterService.ts";
 import ShutdownServiceProvider from "../../../../src/service/shutdown/ShutdownServiceProvider.ts";
 import { SHUTDOWN_SERVICE_ID } from "../../../../src/api/service/core/ShutdownService.ts";
-import TtyTerminal from "../../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
-import TtyStyler from "../../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
 describe("LogLevelCommand tests", () => {
   test("LogLevelCommand works", async () => {

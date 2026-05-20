@@ -6,6 +6,7 @@ import DefaultImagePrinterService from "./DefaultImagePrinterService.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "../../api/service/core/ImagePrinterService.ts";
 import type Context from "../../api/Context.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
+import type Terminal from "../../terminal/Terminal.ts";
 
 export default class ImagePrinterServiceProvider implements ServiceProvider {
   readonly serviceId: string = IMAGE_PRINTER_SERVICE_ID;
@@ -13,8 +14,9 @@ export default class ImagePrinterServiceProvider implements ServiceProvider {
 
   public constructor(
     readonly servicePriority: number,
+    terminal: Terminal,
   ) {
-    this.#defaultImagePrinterService = new DefaultImagePrinterService();
+    this.#defaultImagePrinterService = new DefaultImagePrinterService(terminal);
   }
 
   public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
