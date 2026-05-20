@@ -14,6 +14,7 @@ export default class DefaultPrinterService implements PrinterService {
   readonly stderrWritable: WritableStream;
   #hyperlinksEnabled = true;
   #stdoutIsColor: boolean;
+  #stdoutTerminal: Terminal;
   #stderrTerminal: Terminal;
   #styler: Styler;
   #isDarkMode = true;
@@ -48,12 +49,14 @@ export default class DefaultPrinterService implements PrinterService {
     stderrWritableStream: WritableStream,
     stdoutIsColor: boolean,
     stderrIsColor: boolean,
+    stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
   ) {
     this.stdoutWritable = stdoutWritableStream;
     this.stderrWritable = stderrWritableStream;
     this.#stdoutIsColor = stdoutIsColor;
+    this.#stdoutTerminal = stdoutTerminal;
     this.#stderrTerminal = stderrTerminal;
     this.#styler = styler;
     this.#styler.colorEnabled = stderrIsColor;
@@ -105,6 +108,14 @@ export default class DefaultPrinterService implements PrinterService {
       return url;
     }
     return hyperlinkStart(url) + text + HYPERLINK_END;
+  }
+
+  public stdoutColumns(): number {
+    return this.#stdoutTerminal.columns();
+  }
+
+  public stderrColumns(): number {
+    return this.#stderrTerminal.columns();
   }
 
   set darkMode(isDarkMode: boolean) {

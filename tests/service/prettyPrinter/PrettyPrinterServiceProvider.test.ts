@@ -25,6 +25,7 @@ describe("PrettyPrinterServiceProvider tests", () => {
         dummyStderr.writableStream,
         true,
         true,
+        new TtyTerminal(dummyStdout.writeStream),
         new TtyTerminal(dummyStderr.writeStream),
         new TtyStyler(3),
       ),

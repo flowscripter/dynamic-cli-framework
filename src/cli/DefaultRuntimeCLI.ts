@@ -29,6 +29,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       Writable.toWeb(process.stderr),
       supportsColor.stdout !== false,
       supportsColor.stderr !== false,
+      new TtyTerminal(process.stdout),
       new TtyTerminal(process.stderr),
       new TtyStyler(
         supportsColor.stderr === false ? 1 : supportsColor.stderr.level,

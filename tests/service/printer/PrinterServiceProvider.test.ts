@@ -18,6 +18,7 @@ describe("PrinterServiceProvider tests", () => {
       true,
       true,
       new TtyTerminal(streamString.writeStream),
+      new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
 

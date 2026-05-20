@@ -98,6 +98,29 @@ export type { TreeNode } from "./src/api/service/core/TreePrinterService.ts";
 export { default as DefaultTreePrinterService } from "./src/service/treePrinter/DefaultTreePrinterService.ts";
 export { default as TreePrinterServiceProvider } from "./src/service/treePrinter/TreePrinterServiceProvider.ts";
 
+export { TABLE_GENERATOR_SERVICE_ID } from "./src/api/service/core/TableGeneratorService.ts";
+export type { default as TableGeneratorService } from "./src/api/service/core/TableGeneratorService.ts";
+export {
+  Align,
+  type CellOptions,
+  type ColumnOptions,
+  type RowOptions,
+  type TableOptions,
+} from "./src/api/service/core/TableGeneratorService.ts";
+export { default as Table } from "./src/api/service/core/Table.ts";
+export { default as DefaultTableGeneratorService } from "./src/service/tableGenerator/DefaultTableGeneratorService.ts";
+export { default as TableGeneratorServiceProvider } from "./src/service/tableGenerator/TableGeneratorServiceProvider.ts";
+
+export { DATA_DUMP_GENERATOR_SERVICE_ID } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export type { default as DataDumpGeneratorService } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export {
+  type ByteRangeColor,
+  DumpFormat,
+  type HexDumpGenerateOptions,
+} from "./src/api/service/core/DataDumpGeneratorService.ts";
+export { default as DefaultDataDumpGeneratorService } from "./src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts";
+export { default as DataDumpGeneratorServiceProvider } from "./src/service/dataDumpGenerator/DataDumpGeneratorServiceProvider.ts";
+
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";
 export type { default as Context } from "./src/api/Context.ts";

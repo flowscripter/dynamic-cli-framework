@@ -119,7 +119,7 @@ const logger = getLogger("ConfigurationServiceProvider");
  * **Generic Key-Value Service**
  *
  * The same configuration file above is used to provide storage for the provided {@link KeyValueService}. The values
- * are stored under a top level `key-values` property. These are not expected to be modified by the user of the CLI.
+ * are stored under a top level `key-values` property. These are expected to not be modified by the user of the CLI.
  *
  * The second and third level of properties is used to scope the key-values to specific command names
  * (via {@link Command.name} values) and specific service IDs (via {@link ServiceInfo.serviceId} values).
@@ -231,7 +231,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   }
 
   /**
-   * Retrieve the defaults command argument values (if any) for the provided {@link Command}.
+   * Retrieve the default command argument values (if any) for the provided {@link Command}.
    *
    * This will retrieve values both from the configuration location and environment variables.
    *
