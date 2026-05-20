@@ -1235,8 +1235,8 @@ Provides:
   stdout, stderr, management of log levels and widgets such as a spinner and
   progress bars. Background colors include theme-based variants (primary,
   secondary, emphasised, selected) and named colors (yellow, orange, red,
-  magenta, violet, blue, cyan, green) as well as arbitrary hex colors.
-  Printing hyperlinks is supported.
+  magenta, violet, blue, cyan, green) as well as arbitrary hex colors. Printing
+  hyperlinks is supported.
 - `DarkModeCommand` which allows dark or light mode to be enabled via the
   argument `--dark-mode` or the env var `DARK_MODE`.
 - `NoColorCommand` which allows color output to be disabled via the argument
@@ -1279,11 +1279,11 @@ Provides:
 - `AsciiBannerGeneratorService` allowing messages to be rendered using ASCII
   banner [FIGlet](http://www.figlet.org) fonts. The FIGlet "standard" font is
   provided by default and other fonts can be added on demand by commands.
-  Supports color effects (fixed, gradient, rainbow) applied independently to
-  the message foreground, sub-message foreground and background in both
-  horizontal and vertical directions. A `ChiselFontAsciiBannerGeneratorService`
-  variant is also provided with a built-in "chisel" FIGlet font and support for
-  ANSI color remapping via `ChiselBannerColors`.
+  Supports color effects (fixed, gradient, rainbow) applied independently to the
+  message foreground, sub-message foreground and background in both horizontal
+  and vertical directions. A `ChiselFontAsciiBannerGeneratorService` variant is
+  also provided with a built-in "chisel" FIGlet font and support for ANSI color
+  remapping via `ChiselBannerColors`.
 
 ### Core Commands
 

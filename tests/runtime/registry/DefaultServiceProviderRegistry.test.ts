@@ -36,7 +36,7 @@ describe("DefaultServiceProviderRegistry tests", () => {
     serviceProviderRegistry.addServiceProvider(serviceProvider2);
 
     const orderedServices = serviceProviderRegistry.getServiceProviders();
-    expect(orderedServices[0].servicePriority).toEqual(2);
-    expect(orderedServices[1].servicePriority).toEqual(1);
+    expect(orderedServices[0]!.servicePriority).toEqual(2);
+    expect(orderedServices[1]!.servicePriority).toEqual(1);
   });
 });

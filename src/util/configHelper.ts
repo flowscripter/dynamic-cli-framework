@@ -9,7 +9,7 @@ function getKeySegment(segment: string, isCustom = false, isArray = false) {
   let keySegment = segment;
   if (!isCustom) {
     keySegment = keySegment.replace("-", "_").toUpperCase();
-    if (keySegment[0].match(/[0-9]/)) {
+    if (keySegment[0]!.match(/[0-9]/)) {
       keySegment = `_${keySegment}`;
     }
   }
@@ -43,7 +43,7 @@ export function getSubCommandArgumentConfigurationKey(
   }
 
   const keySegments: Array<string> = [];
-  const firstArgument = argumentAncestry[0];
+  const firstArgument = argumentAncestry[0]!;
   if (firstArgument.configurationKey === undefined) {
     keySegments.push(getKeySegment(cliConfig.name));
     keySegments.push(getKeySegment(command.name));

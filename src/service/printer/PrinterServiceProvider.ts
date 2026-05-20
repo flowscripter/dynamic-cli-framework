@@ -4,15 +4,13 @@ import type {
   ServiceInfo,
   ServiceProvider,
 } from "../../api/service/ServiceProvider.ts";
-import PrinterService, {
-  PRINTER_SERVICE_ID,
-} from "../../api/service/core/PrinterService.ts";
+import type PrinterService from "../../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import DarkModeCommand from "./command/DarkModeCommand.ts";
 import NoColorCommand from "./command/NoColorCommand.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
-import ShutdownService, {
-  SHUTDOWN_SERVICE_ID,
-} from "../../api/service/core/ShutdownService.ts";
+import type ShutdownService from "../../api/service/core/ShutdownService.ts";
+import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
 
 /**
  * Provides a {@link PrinterService}.

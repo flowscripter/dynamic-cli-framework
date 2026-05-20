@@ -32,10 +32,10 @@ import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts
 import { run } from "../runtime/runner.ts";
 
 import { WritableStream } from "node:stream/web";
-import Terminal from "../service/printer/terminal/Terminal.ts";
-import PrinterService from "../api/service/core/PrinterService.ts";
+import type Terminal from "../service/printer/terminal/Terminal.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
-import Styler from "../service/printer/terminal/Styler.ts";
+import type Styler from "../service/printer/terminal/Styler.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -99,7 +99,7 @@ export default class BaseCLI implements CLI {
     if (cliConfig.name.length === 0) {
       throw new Error("Invalid empty CLI name provided");
     }
-    if (cliConfig.name[0].match(/[0-9\-_]/)) {
+    if (cliConfig.name[0]!.match(/[0-9\-_]/)) {
       throw new Error(
         `Invalid CLI name starting with a digit or dash provided: '${cliConfig.name}'`,
       );
@@ -184,8 +184,8 @@ export default class BaseCLI implements CLI {
 
     if (
       (this.#addedNonModifierCommands.length === 1) &&
-      !isSubCommand(this.#addedNonModifierCommands[0]) &&
-      !isGlobalCommand(this.#addedNonModifierCommands[0])
+      !isSubCommand(this.#addedNonModifierCommands[0]!) &&
+      !isGlobalCommand(this.#addedNonModifierCommands[0]!)
     ) {
       throw new Error(
         "If only one command is added, if must be a global command or sub-command!",

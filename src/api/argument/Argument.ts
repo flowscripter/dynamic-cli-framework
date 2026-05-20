@@ -1,8 +1,8 @@
 import type {
   ArgumentSingleValueType,
+  ArgumentValues,
   ArgumentValueType,
   ArgumentValueTypeName,
-  ArgumentValues,
 } from "./ArgumentValueTypes.ts";
 
 /**

@@ -20,7 +20,7 @@ export function expectStringEquals(actual: string, expected: string) {
 }
 
 export function expectBytesEquals(actual: string, expected: Uint8Array) {
-  expect(encoder.encode(actual)).toEqual(expected);
+  expect(encoder.encode(actual)).toEqual(expected as Uint8Array<ArrayBuffer>);
 }
 
 export function sleep(ms: number) {

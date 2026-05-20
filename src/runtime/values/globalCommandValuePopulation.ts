@@ -49,7 +49,7 @@ export default function populateGlobalCommandValue(
 
     // don't use potentialArg if it cannot be a boolean value...
     if (argument.type === ArgumentValueTypeName.BOOLEAN) {
-      const firstPotentialArgLower = firstPotentialArg.toLowerCase();
+      const firstPotentialArgLower = firstPotentialArg!.toLowerCase();
 
       if (
         (firstPotentialArgLower !== "true") &&

@@ -149,6 +149,7 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
       l.includes("\x1b[38;2;")
     );
     const firstCodes = lines.map((l) =>
+      // deno-lint-ignore no-control-regex
       l.match(/\x1b\[38;2;(\d+;\d+;\d+)m/)?.[1]
     );
     const unique = new Set(firstCodes.filter(Boolean));
@@ -171,6 +172,7 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
       l.includes("\x1b[38;2;")
     );
     const firstLine = lines[0]!;
+    // deno-lint-ignore no-control-regex
     const codes = [...firstLine.matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g)].map((
       m,
     ) => m[1]);
@@ -195,6 +197,7 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
       l.includes("\x1b[38;2;")
     );
     const firstLine = lines[0]!;
+    // deno-lint-ignore no-control-regex
     const codes = [...firstLine.matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g)].map((
       m,
     ) => m[1]);
@@ -218,6 +221,7 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
       l.includes("\x1b[38;2;")
     );
     const firstCodes = lines.map((l) =>
+      // deno-lint-ignore no-control-regex
       l.match(/\x1b\[38;2;(\d+;\d+;\d+)m/)?.[1]
     );
     const unique = new Set(firstCodes.filter(Boolean));

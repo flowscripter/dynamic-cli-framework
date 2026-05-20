@@ -4,10 +4,10 @@ import type {
   ColorEffect,
 } from "../../api/service/core/AsciiBannerGeneratorService.ts";
 import {
-  backgroundColorStart,
   BACKGROUND_COLOR_END,
-  foregroundColorStart,
+  backgroundColorStart,
   FOREGROUND_COLOR_END,
+  foregroundColorStart,
 } from "../printer/terminal/Ansi.ts";
 import figlet from "figlet";
 import standardFont from "./standard.flf.json" with { type: "json" };
@@ -89,7 +89,6 @@ function rainbowColor(
   return hslToRgb(h, 1.0, 0.5);
 }
 
-
 export default class DefaultAsciiBannerGeneratorService
   implements AsciiBannerGeneratorService {
   #registeredFontNames: Array<string> = [];
@@ -119,7 +118,9 @@ export default class DefaultAsciiBannerGeneratorService
       const [r, g, b] = parseHex(effect.color);
       const code = foregroundColorStart(r, g, b);
       return lines.map((line) =>
-        line.split("").map((ch) => ch === " " ? ch : code + ch + FOREGROUND_COLOR_END).join(
+        line.split("").map((ch) =>
+          ch === " " ? ch : code + ch + FOREGROUND_COLOR_END
+        ).join(
           "",
         )
       );

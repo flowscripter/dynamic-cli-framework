@@ -386,7 +386,7 @@ describe("parser tests", () => {
       },
     };
 
-    ((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
+    ((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!.beta as Array<
       PopulatedArgumentValues
     >)[1] = {
       gamma: "foo2",
@@ -439,12 +439,14 @@ describe("parser tests", () => {
     };
 
     // these are still stored as strings as the validation (and type conversion) failed fast
-    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
-      PopulatedArgumentValues
-    >)[1].delta as Array<ArgumentValueType>)[0] = "0";
-    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0].beta as Array<
-      PopulatedArgumentValues
-    >)[1].delta as Array<ArgumentValueType>)[2] = "2";
+    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
+      .beta as Array<
+        PopulatedArgumentValues
+      >)[1]!.delta as Array<ArgumentValueType>)[0] = "0";
+    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
+      .beta as Array<
+        PopulatedArgumentValues
+      >)[1]!.delta as Array<ArgumentValueType>)[2] = "2";
 
     expectParseResult(parseResult, {
       command: subCommand,

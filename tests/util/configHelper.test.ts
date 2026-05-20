@@ -56,7 +56,7 @@ describe("configHelper tests", () => {
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0],
+        command.positionals![0]!,
       ]),
     ).toBeUndefined();
 
@@ -70,7 +70,7 @@ describe("configHelper tests", () => {
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0],
+        command.positionals![0]!,
       ]),
     ).toEqual(
       "FOO_BLAH_FOO",
@@ -86,7 +86,7 @@ describe("configHelper tests", () => {
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0],
+        command.positionals![0]!,
       ]),
     ).toEqual(
       "FOO_BLAH_FOO[_<index>]",
@@ -103,7 +103,7 @@ describe("configHelper tests", () => {
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0],
+        command.positionals![0]!,
       ]),
     ).toEqual(
       "FOO_BAR[_<index>]",
