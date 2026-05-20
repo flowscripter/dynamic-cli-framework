@@ -1,5 +1,7 @@
 import { describe, test } from "bun:test";
-import Spinner from "../../../../src/service/printer/terminal/Spinner.ts";
+import Spinner, {
+  SpinnerStyle,
+} from "../../../../src/service/printer/terminal/Spinner.ts";
 import {
   expectStringEquals,
   expectStringIncludes,
@@ -53,5 +55,44 @@ describe("Spinner tests", () => {
 
     expectStringIncludes(streamString.getString(), "foo");
     expectStringIncludes(streamString.getString(), "bar");
+  });
+
+  test("Star spinner style works", async () => {
+    const streamString = new StreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    spinner.spinnerStyle = SpinnerStyle.STAR;
+    await spinner.show();
+    await sleep(250);
+    await spinner.hide();
+
+    expectStringEquals(streamString.getString(), "★✶");
+  });
+
+  test("Changing spinner style resets to new frames", async () => {
+    const streamString = new StreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    spinner.spinnerStyle = SpinnerStyle.STAR;
+    await spinner.show();
+    await sleep(150);
+    await spinner.hide();
+
+    const starOutput = streamString.getString();
+    expectStringIncludes(starOutput, "★");
+  });
+
+  test("Default spinner style is BOX", async () => {
+    const streamString = new StreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    await spinner.show();
+    await sleep(250);
+    await spinner.hide();
+
+    expectStringEquals(streamString.getString(), "⠋⠙");
   });
 });
