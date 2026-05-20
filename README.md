@@ -72,13 +72,12 @@ The following example projects are available:
 
 ## Further Details
 
-* [Key Concepts](./README/key-concepts.md)
-* [Implementation Details](./README/implementation-details.md)
-* [Core Service Providers](./README/core-service-providers.md)
-* [Core Commands](./README/core-commands.md)
-* [Development](./README/development.md)
-* [API Documentation](https://flowscripter.github.io/dynamic-cli-framework/index.html)
-
+- [Key Concepts](./README/key-concepts.md)
+- [Implementation Details](./README/implementation-details.md)
+- [Core Service Providers](./README/core-service-providers.md)
+- [Core Commands](./README/core-commands.md)
+- [Development](./README/development.md)
+- [API Documentation](https://flowscripter.github.io/dynamic-cli-framework/index.html)
 
 ## License
 

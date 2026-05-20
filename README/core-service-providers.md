@@ -13,9 +13,9 @@ Provides:
   Supports color effects (fixed, gradient, rainbow) applied independently to the
   message foreground, sub-message foreground and background in both horizontal
   and vertical directions.
-- A `ChiselFontAsciiBannerGeneratorService` variant is
-  also provided with a built-in "chisel" FIGlet font and support for ANSI color
-  remapping via `ChiselBannerColors`.
+- A `ChiselFontAsciiBannerGeneratorService` variant is also provided with a
+  built-in "chisel" FIGlet font and support for ANSI color remapping via
+  `ChiselBannerColors`.
 
 ## `BannerServiceProvider`
 
