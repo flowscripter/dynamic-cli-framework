@@ -78,9 +78,12 @@ function flattenHelpEntry(
     const nextIndent = indentText +
       (isLastSibling ? "  " : "│ ") +
       " ".repeat(helpEntry.subEntryIndent || 0);
-    for (let i = 0; i < helpEntry.helpSubEntries.length; i++) {
-      const sub = helpEntry.helpSubEntries[i]!;
-      flattenHelpEntry(
+    for (let i = 0; i < helpEntry.helpSubEntries!.length; i++) {
+      const helpSubEntry = helpEntry.helpSubEntries![i]!;
+      const helpSubEntryHasChildren = helpSubEntry.helpSubEntries !== undefined;
+      const helpSubEntryIsLastSibling =
+        i === helpEntry.helpSubEntries!.length - 1;
+      await printHelpEntry(
         printerService,
         sub,
         nextIndent,
@@ -106,12 +109,9 @@ export async function printHelpSections(
         `${printerService.emphasised(section.title)}\n\n`,
       );
     }
-
-    if (section.helpEntries.length === 0) continue;
-
-    const rows: FlattenedRow[] = [];
-    for (const helpEntry of section.helpEntries) {
-      flattenHelpEntry(
+    for (let j = 0; j < section.helpEntries.length; j++) {
+      const helpEntry = section.helpEntries[j]!;
+      await printHelpEntry(
         printerService,
         helpEntry,
         "",
