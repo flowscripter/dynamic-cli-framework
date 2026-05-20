@@ -175,3 +175,9 @@ dist
 .DS_Store
 docs/
 /.releaserc
+.claude/CLAUDE.md
+.claude/settings.json
+.claude/plans/here-are-some-new-lucky-locket.md
+.claude/plans/i-want-you-to-robust-sedgewick.md
+.claude/plans/table-help-datadump-features.md
+.claude/plans/two-tasks-to-plan-dapper-engelbart.md
