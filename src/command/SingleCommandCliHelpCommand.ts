@@ -17,6 +17,8 @@ import type GroupCommand from "../api/command/GroupCommand.ts";
 import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
+import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
+import { TABLE_GENERATOR_SERVICE_ID } from "../api/service/core/TableGeneratorService.ts";
 
 /**
  * Provides common implementation for both {@link SingleCommandCliHelpGlobalCommand} and {@link SingleCommandCliHelpSubCommand}.
@@ -149,6 +151,9 @@ abstract class SingleCommandCliAbstractHelpCommand {
     const printerService = context.getServiceById(
       PRINTER_SERVICE_ID,
     ) as PrinterService;
+    const tableGeneratorService = context.getServiceById(
+      TABLE_GENERATOR_SERVICE_ID,
+    ) as TableGeneratorService;
 
     helpSections.push(
       ...getCommandExamplesHelpSections(
@@ -158,7 +163,11 @@ abstract class SingleCommandCliAbstractHelpCommand {
       ),
     );
 
-    await printHelpSections(printerService, helpSections);
+    await printHelpSections(
+      printerService,
+      tableGeneratorService,
+      helpSections,
+    );
   }
 }
 

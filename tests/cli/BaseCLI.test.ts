@@ -31,14 +31,14 @@ describe("BaseCLI tests", () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const terminal = new TtyTerminal(dummyStdout.writeStream);
     const baseCLI = new BaseCLI(
       config,
       dummyStdout.writableStream,
       dummyStderr.writableStream,
       false,
       false,
-      terminal,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
       false,
     );
@@ -54,14 +54,14 @@ describe("BaseCLI tests", () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const terminal = new TtyTerminal(dummyStderr.writeStream);
     const baseCLI = new BaseCLI(
       config,
       dummyStdout.writableStream,
       dummyStderr.writableStream,
       false,
       false,
-      terminal,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
       false,
     );
@@ -122,6 +122,7 @@ describe("BaseCLI tests", () => {
       dummyStderr.writableStream,
       false,
       false,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
       false,

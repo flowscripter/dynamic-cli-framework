@@ -1283,6 +1283,30 @@ Provides:
   `label` and optional `children` (which can be nested `TreeNode` objects or
   plain strings). Node labels are colored using the `PrinterService`.
 
+#### `TableGeneratorServiceProvider`
+
+Provides:
+
+- `TableGeneratorService` allowing rendering of tabular data using Unicode
+  box-drawing characters. Tables are defined using a `Table` class with
+  configurable rows, columns, and cells. Supports column flex-weight layout (CSS
+  flex-grow/shrink semantics), per-column/row/cell alignment (left, center,
+  right), configurable border colors, cell padding, and automatic word-wrapping
+  of cell contents. String width measurement uses `Bun.stringWidth` for correct
+  handling of CJK characters and emoji.
+
+NOTE: This service is automatically registered by `BaseCLI` with priority 70 and
+is used internally for help text rendering with proper column wrapping.
+
+#### `DataDumpGeneratorServiceProvider`
+
+Provides:
+
+- `DataDumpGeneratorService` allowing rendering of binary data as a hex dump or
+  ASCII dump. Supports configurable bytes per group, groups per row, spacing
+  between groups, and byte-range-based color schemes for visual differentiation
+  of byte value ranges.
+
 #### `AsciiBannerGeneratorServiceProvider`
 
 Provides:

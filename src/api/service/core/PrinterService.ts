@@ -239,6 +239,18 @@ export default interface PrinterService {
   hyperlink(text: string, url: string): string;
 
   /**
+   * The number of columns available on the stdout terminal.
+   * Defaults to 80 if the terminal width cannot be determined.
+   */
+  stdoutColumns(): number;
+
+  /**
+   * The number of columns available on the stderr terminal.
+   * Defaults to 80 if the terminal width cannot be determined.
+   */
+  stderrColumns(): number;
+
+  /**
    * Print a message on `stdout`.
    * Will be displayed as primary content if {@link colorEnabled} is `true`.
    *

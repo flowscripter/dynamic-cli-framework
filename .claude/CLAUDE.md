@@ -88,9 +88,11 @@ config files via `ConfigurationServiceProvider`.
 | ShutdownServiceProvider          | 100      | Graceful shutdown hooks                   |
 | ConfigurationServiceProvider     | 90       | Env var + config file defaults            |
 | PrinterServiceProvider           | 80       | Colored stdout/stderr, spinners, progress |
+| TableGeneratorServiceProvider    | 70       | Table rendering with flex layout          |
 | BannerServiceProvider            | -        | ASCII banner on startup                   |
 | SyntaxHighlighterServiceProvider | -        | Code syntax highlighting                  |
 | PrettyPrinterServiceProvider     | -        | JSON/object pretty printing               |
+| DataDumpGeneratorServiceProvider | -        | Hex/ASCII binary data dumps               |
 
 ## Testing
 

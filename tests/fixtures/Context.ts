@@ -8,6 +8,8 @@ import type Context from "../../src/api/Context.ts";
 import WritableStreamString from "./StreamString.ts";
 import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
 import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
+import { TABLE_GENERATOR_SERVICE_ID } from "../../src/api/service/core/TableGeneratorService.ts";
+import DefaultTableGeneratorService from "../../src/service/tableGenerator/DefaultTableGeneratorService.ts";
 
 export function getContext(
   streamString: WritableStreamString,
@@ -19,6 +21,7 @@ export function getContext(
     false,
     false,
     new TtyTerminal(streamString.writeStream),
+    new TtyTerminal(streamString.writeStream),
     new TtyStyler(3),
   );
 
@@ -27,6 +30,10 @@ export function getContext(
   defaultContext.addServiceInstance(
     KEY_VALUE_SERVICE_ID,
     new DefaultKeyValueService(),
+  );
+  defaultContext.addServiceInstance(
+    TABLE_GENERATOR_SERVICE_ID,
+    new DefaultTableGeneratorService(),
   );
 
   return defaultContext;

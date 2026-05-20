@@ -29,6 +29,7 @@ import CommandValidator from "../runtime/command/CommandValidator.ts";
 import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
+import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
 
 import { WritableStream } from "node:stream/web";
@@ -76,6 +77,7 @@ export default class BaseCLI implements CLI {
    * @param stderrWritableStream the WritableStream to use for stderr output.
    * @param stdoutIsColor true if stdout supports color.
    * @param stderrIsColor true if stderr supports color.
+   * @param stdoutTerminal the Terminal implementation to use for stdout.
    * @param stderrTerminal the Terminal implementation to use for stderr.
    * @param styler the Styler implementation to use.
    * @param envVarsEnabled optionally support checking env variables for default argument values.
@@ -89,6 +91,7 @@ export default class BaseCLI implements CLI {
     stderrWritableStream: WritableStream,
     stdoutIsColor: boolean,
     stderrIsColor: boolean,
+    stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
     envVarsEnabled = false,
@@ -139,6 +142,7 @@ export default class BaseCLI implements CLI {
       stderrWritableStream,
       stdoutIsColor,
       stderrIsColor,
+      stdoutTerminal,
       stderrTerminal,
       styler,
     );
@@ -200,6 +204,7 @@ export default class BaseCLI implements CLI {
         this.#printerService,
       ),
     );
+    this.addServiceProvider(new TableGeneratorServiceProvider(70));
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,

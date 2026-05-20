@@ -21,12 +21,12 @@ import type CLIConfig from "../api/CLIConfig.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
 import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
 import type ComplexOption from "../api/argument/ComplexOption.ts";
+import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
+import Table from "../api/service/core/Table.ts";
 
 const SYNTAX_INDENT_WIDTH = 2;
-const SYNTAX_MIN_PADDING_WIDTH = 2;
 const MINIMUM_SYNTAX_COLUMN_WIDTH = 15;
 const HELP_SYNTAX_INDENT = " ".repeat(SYNTAX_INDENT_WIDTH);
-const HELP_SYNTAX_PADDING = " ".repeat(SYNTAX_MIN_PADDING_WIDTH);
 
 export interface HelpEntry {
   readonly syntax: string;
@@ -40,147 +40,65 @@ export interface HelpSection {
   readonly helpEntries: Array<HelpEntry>;
 }
 
-async function printSingleHelpEntry(
+interface FlattenedRow {
+  syntax: string;
+  description?: string;
+}
+
+function flattenHelpEntry(
   printerService: PrinterService,
   helpEntry: HelpEntry,
-  syntaxWidth: number,
   indentText: string,
   isRoot: boolean,
   isLastSibling: boolean,
-): Promise<void> {
-  let text = "";
-  const notesIndent = syntaxWidth;
-  let syntaxTreeChars = "";
-  let totalSyntaxLength = 0;
-
+  rows: FlattenedRow[],
+): void {
+  let syntax = "";
   if (helpEntry.syntax) {
     if (isRoot) {
-      text += HELP_SYNTAX_INDENT + printerService.primary(helpEntry.syntax);
-      totalSyntaxLength = SYNTAX_INDENT_WIDTH + helpEntry.syntax.length;
+      syntax = HELP_SYNTAX_INDENT + printerService.primary(helpEntry.syntax);
     } else {
+      let syntaxTreeChars = "";
       if (indentText.length > 0) {
         syntaxTreeChars = isLastSibling ? "└╴" : "├╴";
       }
-      text += HELP_SYNTAX_INDENT +
+      syntax = HELP_SYNTAX_INDENT +
         printerService.secondary(indentText + syntaxTreeChars) +
         printerService.primary(helpEntry.syntax);
-      totalSyntaxLength = SYNTAX_INDENT_WIDTH + indentText.length +
-        syntaxTreeChars.length + helpEntry.syntax.length;
     }
   }
-  if (helpEntry.description) {
-    if (helpEntry.syntax) {
-      if (totalSyntaxLength > notesIndent) {
-        text += HELP_SYNTAX_PADDING +
-          printerService.secondary(helpEntry.description);
-      } else {
-        text += " ".repeat(syntaxWidth - totalSyntaxLength) +
-          printerService.secondary(helpEntry.description);
-      }
-    } else {
-      text += HELP_SYNTAX_PADDING +
-        printerService.secondary(helpEntry.description);
-    }
-  }
-  text += "\n";
-  await printerService.print(text);
-}
 
-async function printHelpEntry(
-  printerService: PrinterService,
-  helpEntry: HelpEntry,
-  syntaxWidth: number,
-  indentText: string,
-  isRoot: boolean,
-  hasChildren: boolean,
-  isLastSibling: boolean,
-): Promise<void> {
-  if (hasChildren) {
-    await printSingleHelpEntry(
-      printerService,
-      helpEntry,
-      syntaxWidth,
-      indentText,
-      isRoot,
-      isLastSibling,
-    );
-    indentText += (isLastSibling ? "  " : "│ ") +
+  const description = helpEntry.description
+    ? printerService.secondary(helpEntry.description)
+    : undefined;
+
+  rows.push({ syntax, description });
+
+  if (helpEntry.helpSubEntries !== undefined) {
+    const nextIndent = indentText +
+      (isLastSibling ? "  " : "│ ") +
       " ".repeat(helpEntry.subEntryIndent || 0);
-    for (let i = 0; i < helpEntry.helpSubEntries!.length; i++) {
-      const helpSubEntry = helpEntry.helpSubEntries![i]!;
-      const helpSubEntryHasChildren = helpSubEntry.helpSubEntries !== undefined;
-      const helpSubEntryIsLastSibling =
-        i === helpEntry.helpSubEntries!.length - 1;
-      await printHelpEntry(
+    for (let i = 0; i < helpEntry.helpSubEntries.length; i++) {
+      const sub = helpEntry.helpSubEntries[i]!;
+      flattenHelpEntry(
         printerService,
-        helpSubEntry,
-        syntaxWidth,
-        indentText,
+        sub,
+        nextIndent,
         false,
-        helpSubEntryHasChildren,
-        helpSubEntryIsLastSibling,
+        i === helpEntry.helpSubEntries.length - 1,
+        rows,
       );
     }
-  } else {
-    await printSingleHelpEntry(
-      printerService,
-      helpEntry,
-      syntaxWidth,
-      indentText,
-      isRoot,
-      isLastSibling,
-    );
   }
-}
-
-function getSyntaxWidth(helpEntry: HelpEntry, indent: number): number {
-  if (
-    (helpEntry.helpSubEntries === undefined) ||
-    (helpEntry.helpSubEntries.length === 0)
-  ) {
-    // 2 is for the tree characters
-    let finalWidth = SYNTAX_INDENT_WIDTH + indent + 2 +
-      SYNTAX_MIN_PADDING_WIDTH;
-    if (helpEntry.syntax) {
-      finalWidth += helpEntry.syntax.length;
-    }
-    return finalWidth;
-  }
-  let maxSubIndent = 0;
-  helpEntry.helpSubEntries.forEach((helpSubEntry) => {
-    // 2 is for the tree characters
-    const subEntryWidth = getSyntaxWidth(
-      helpSubEntry,
-      (helpEntry.subEntryIndent ? helpEntry.subEntryIndent : 0) + 2,
-    );
-    if (subEntryWidth > maxSubIndent) {
-      maxSubIndent = subEntryWidth;
-    }
-  });
-  return indent + maxSubIndent;
 }
 
 export async function printHelpSections(
   printerService: PrinterService,
+  tableGeneratorService: TableGeneratorService,
   sections: Array<HelpSection>,
 ): Promise<void> {
-  // calculate alignment
-  let syntaxWidth = SYNTAX_INDENT_WIDTH + MINIMUM_SYNTAX_COLUMN_WIDTH +
-    SYNTAX_MIN_PADDING_WIDTH;
-  sections.forEach((section) => {
-    section.helpEntries.forEach((helpEntry) => {
-      const entrySyntaxWidth = getSyntaxWidth(helpEntry, 0);
-      // don't expand out if no description as we can overwrite that space on the line
-      if (
-        helpEntry.description && (helpEntry.description.length > 0) &&
-        (entrySyntaxWidth > syntaxWidth)
-      ) {
-        syntaxWidth = entrySyntaxWidth;
-      }
-    });
-  });
+  const terminalWidth = printerService.stdoutColumns();
 
-  // print the help
   for (let i = 0; i < sections.length; i++) {
     const section = sections[i]!;
     if (section.title.length > 0) {
@@ -188,21 +106,47 @@ export async function printHelpSections(
         `${printerService.emphasised(section.title)}\n\n`,
       );
     }
-    for (let j = 0; j < section.helpEntries.length; j++) {
-      const helpEntry = section.helpEntries[j]!;
-      await printHelpEntry(
+
+    if (section.helpEntries.length === 0) continue;
+
+    const rows: FlattenedRow[] = [];
+    for (const helpEntry of section.helpEntries) {
+      flattenHelpEntry(
         printerService,
         helpEntry,
-        syntaxWidth,
         "",
         true,
-        helpEntry.helpSubEntries !== undefined,
         true,
+        rows,
       );
     }
-    if (section.helpEntries.length > 0) {
-      await printerService.print("\n");
+
+    const hasDescriptions = rows.some((r) => r.description !== undefined);
+
+    if (hasDescriptions) {
+      const table = new Table(rows.length, 2, {
+        border: false,
+        padding: 1,
+        maxWidth: terminalWidth,
+      });
+      table.column(0, { minWidth: MINIMUM_SYNTAX_COLUMN_WIDTH });
+      table.column(1, { flexWeight: 1 });
+
+      for (let r = 0; r < rows.length; r++) {
+        const row = rows[r]!;
+        table.cell(r, 0, row.syntax);
+        table.cell(r, 1, row.description ?? "");
+      }
+
+      const rendered = tableGeneratorService.render(table);
+      await printerService.print(rendered + "\n");
+    } else {
+      for (const row of rows) {
+        await printerService.print(row.syntax + "\n");
+      }
     }
+
+    await printerService.print("\n");
   }
 }
 
