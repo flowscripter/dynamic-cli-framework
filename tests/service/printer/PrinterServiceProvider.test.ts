@@ -34,6 +34,6 @@ describe("PrinterServiceProvider tests", () => {
     );
 
     const serviceInfo = await printerServiceProvider.provide(cliConfig);
-    expect(serviceInfo.commands.length).toEqual(3);
+    expect(serviceInfo.commands.length).toEqual(4);
   });
 });

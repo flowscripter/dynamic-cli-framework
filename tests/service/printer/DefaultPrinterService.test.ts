@@ -618,6 +618,59 @@ describe("DefaultPrinterService tests", () => {
     }
   });
 
+  test("hyperlinksEnabled defaults to true", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    expect(printerService.hyperlinksEnabled).toBeTrue();
+  });
+
+  test("hyperlink with hyperlinksEnabled returns OSC 8 wrapped text", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    const result = printerService.hyperlink(
+      "click here",
+      "https://example.com",
+    );
+    expect(result).toEqual(
+      "\x1b]8;;\x68ttps://example.com\x07click here\x1b]8;;\x07",
+    );
+  });
+
+  test("hyperlink with hyperlinksEnabled false returns url", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.hyperlinksEnabled = false;
+    const result = printerService.hyperlink(
+      "click here",
+      "https://example.com",
+    );
+    expect(result).toEqual("https://example.com");
+  });
+
   test("all background methods return plain text when colorEnabled is false", () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();

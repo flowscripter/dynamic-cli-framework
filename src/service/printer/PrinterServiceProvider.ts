@@ -8,6 +8,7 @@ import type PrinterService from "../../api/service/core/PrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import DarkModeCommand from "./command/DarkModeCommand.ts";
 import NoColorCommand from "./command/NoColorCommand.ts";
+import NoHyperlinksCommand from "./command/NoHyperlinksCommand.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
 import type ShutdownService from "../../api/service/core/ShutdownService.ts";
 import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
@@ -38,6 +39,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
     return Promise.resolve({
       service: this.printerService,
       commands: [
+        new NoHyperlinksCommand(this, this.servicePriority + 3),
         new DarkModeCommand(this, this.servicePriority + 2),
         new NoColorCommand(this, this.servicePriority + 1),
         new LogLevelCommand(this, this.servicePriority),
