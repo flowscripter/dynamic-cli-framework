@@ -468,6 +468,24 @@ function doSubCommandArgumentValidation(
       invalidArguments.push(validationResult.invalidArgument);
       return undefined;
     }
+    if (argument.validate && validationResult.validValue !== undefined) {
+      const customError = argument.validate(
+        validationResult.validValue as
+          | ArgumentValueType
+          | ArgumentValues
+          | Array<ArgumentValues>,
+      );
+      if (customError !== undefined) {
+        invalidArguments.push({
+          argument,
+          name: argument.name,
+          value: validationResult.validValue as PopulatedArgumentValueType,
+          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+          message: customError,
+        });
+        return undefined;
+      }
+    }
     return validationResult.validValue as
       | PopulatedArgumentValueType
       | PopulatedArgumentValues
@@ -574,6 +592,24 @@ export function validateGlobalCommandArgumentValue(
       return undefined;
     }
 
+    if (
+      globalCommandArgument.validate &&
+      validationResult.validValue !== undefined
+    ) {
+      const customError = globalCommandArgument.validate(
+        validationResult.validValue as ArgumentValueType,
+      );
+      if (customError !== undefined) {
+        invalidArguments.push({
+          argument: globalCommandArgument,
+          name: globalCommand.name,
+          value: validationResult.validValue,
+          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+          message: customError,
+        });
+        return undefined;
+      }
+    }
     return validationResult.validValue as PopulatedArgumentSingleValueType;
   }
 
@@ -640,6 +676,11 @@ export function getInvalidArgumentString(
       break;
     case InvalidArgumentReason.OPTION_IS_COMPLEX:
       invalidString = "(specified option is complex)";
+      break;
+    case InvalidArgumentReason.CUSTOM_VALIDATION:
+      invalidString = invalidArgument.message
+        ? `(custom validation: ${invalidArgument.message})`
+        : "(custom validation failed)";
       break;
     default:
       invalidString = "";

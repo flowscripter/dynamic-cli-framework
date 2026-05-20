@@ -13,6 +13,11 @@ export default interface CLIConfig {
   readonly description?: string;
 
   /**
+   * Optional sub-message to display below the banner.
+   */
+  readonly subMessage?: string;
+
+  /**
    * Version of the CLI application.
    */
   readonly version: string;

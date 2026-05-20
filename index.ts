@@ -39,8 +39,22 @@ export type { default as ServiceProviderRegistry } from "./src/runtime/registry/
 // Core Services
 export { ASCII_BANNER_GENERATOR_SERVICE_ID } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
 export type { default as AsciiBannerGeneratorService } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
+export type {
+  BannerColorEffects,
+  BannerGenerateOptions,
+  ColorEffect,
+  ColorEffectDirection,
+  FixedColorEffect,
+  GradientColorEffect,
+  RainbowColorEffect,
+} from "./src/api/service/core/AsciiBannerGeneratorService.ts";
 export { default as DefaultAsciiBannerGeneratorService } from "./src/service/asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
 export { default as AsciiBannerGeneratorServiceProvider } from "./src/service/asciiBannerGenerator/AsciiBannerGeneratorServiceProvider.ts";
+export { default as ChiselFontAsciiBannerGeneratorService } from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
+export type {
+  ChiselBannerColors,
+  ChiselBannerGenerateOptions,
+} from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
 
 export { default as BannerServiceProvider } from "./src/service/banner/BannerServiceProvider.ts";
 
@@ -72,6 +86,12 @@ export { PRETTY_PRINTER_SERVICE_ID } from "./src/api/service/core/PrettyPrinterS
 export type { default as PrettyPrinterService } from "./src/api/service/core/PrettyPrinterService.ts";
 export { default as DefaultPrettyPrinterService } from "./src/service/prettyPrinter/DefaultPrettyPrinterService.ts";
 export { default as PrettyPrinterServiceProvider } from "./src/service/prettyPrinter/PrettyPrinterServiceProvider.ts";
+
+export { TREE_PRINTER_SERVICE_ID } from "./src/api/service/core/TreePrinterService.ts";
+export type { default as TreePrinterService } from "./src/api/service/core/TreePrinterService.ts";
+export type { TreeNode } from "./src/api/service/core/TreePrinterService.ts";
+export { default as DefaultTreePrinterService } from "./src/service/treePrinter/DefaultTreePrinterService.ts";
+export { default as TreePrinterServiceProvider } from "./src/service/treePrinter/TreePrinterServiceProvider.ts";
 
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";

@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Run the following command from the project root and fix any issues encountered:\n\n  bun install && bunx tsc --noEmit && bun test && deno fmt && deno lint index.ts src/ tests/ && deno doc --html --name=template-bun-library index.ts\n\nIf the command exits cleanly, do nothing and stop.\n\nIf there are failures:\n- Type errors (tsc --noEmit): read the file at the reported line, understand the type mismatch, and fix it (e.g. add undefined checks, narrow types, use non-null assertions where safe). Re-run bunx tsc --noEmit to confirm.\n- Test failures: read the failing test and implementation, identify the root cause, fix it in the source file, then re-run bun test to confirm.\n- Lint errors: fix the reported violations in the listed files.\n- Format changes: deno fmt auto-fixes files in place; just run it.\n- Doc generation errors: fix the TypeScript issues causing them.\n\nAfter any fixes, re-run the full command chain to confirm everything passes before stopping.",
+            "model": "claude-haiku-4-5-20251001",
+            "timeout": 300,
+            "statusMessage": "Running quality checks..."
+          }
+        ]
+      }
+    ]
+  }
+}

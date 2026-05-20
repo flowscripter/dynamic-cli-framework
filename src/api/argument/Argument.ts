@@ -1,6 +1,8 @@
 import type {
   ArgumentSingleValueType,
+  ArgumentValueType,
   ArgumentValueTypeName,
+  ArgumentValues,
 } from "./ArgumentValueTypes.ts";
 
 /**
@@ -48,4 +50,26 @@ export default interface Argument {
    * it will only be used if the parent {@link Command} has specified {@link Command.enableConfiguration} as `true`.
    */
   readonly configurationKey?: string;
+
+  /**
+   * Optional custom validation function invoked after all built-in validation
+   * has passed. Receives the validated and type-converted value.
+   *
+   * Return `undefined` if the value is valid, or a string describing the
+   * validation error. The error string is associated with
+   * {@link InvalidArgumentReason.CUSTOM_VALIDATION}.
+   *
+   * Example: ensure array values are unique:
+   * ```typescript
+   * validate: (value) => {
+   *   const arr = value as string[];
+   *   return new Set(arr).size !== arr.length
+   *     ? "values must be unique"
+   *     : undefined;
+   * }
+   * ```
+   */
+  readonly validate?: (
+    value: ArgumentValueType | ArgumentValues | Array<ArgumentValues>,
+  ) => string | undefined;
 }
