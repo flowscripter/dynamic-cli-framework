@@ -690,7 +690,7 @@ describe("DefaultPrinterService tests", () => {
       "click here",
       "https://example.com",
     );
-    expect(result).toEqual("https://example.com");
+    expect(result).toEqual("click here: https://example.com");
   });
 
   test("all background methods return plain text when colorEnabled is false", () => {

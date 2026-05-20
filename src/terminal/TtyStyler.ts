@@ -70,7 +70,7 @@ export default class TtyStyler implements Styler {
 
   hyperlink(text: string, url: string): string {
     if (!this.hyperlinksEnabled) {
-      return url;
+      return `${text}: ${url}`;
     }
     return hyperlinkStart(url) + text + HYPERLINK_END;
   }
