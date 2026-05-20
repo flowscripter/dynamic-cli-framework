@@ -3,6 +3,19 @@ import type Terminal from "../../../terminal/Terminal.ts";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 
+export enum ProgressStyle {
+  STROKE = "STROKE",
+  FILL = "FILL",
+}
+
+const STYLE_CHARS: Record<
+  ProgressStyle,
+  { complete: string; remaining: string }
+> = {
+  [ProgressStyle.STROKE]: { complete: "=", remaining: "-" },
+  [ProgressStyle.FILL]: { complete: "▰", remaining: "▱" },
+};
+
 interface Bar {
   name: string;
   current: number;
@@ -26,6 +39,7 @@ export default class Progress {
   #remColor = 0x585858;
   #labColor = 0x585858;
   #valColor = 0x808080;
+  #style: ProgressStyle = ProgressStyle.STROKE;
 
   public constructor(terminal: Terminal, styler: Styler) {
     this.#terminal = terminal;
@@ -282,12 +296,13 @@ export default class Progress {
       const completeLength = Math.floor(
         totalLength * barInfo.bar.current / barInfo.bar.total,
       );
+      const chars = STYLE_CHARS[this.#style];
       const complete = this.#styler.colorText(
-        "=".repeat(completeLength),
+        chars.complete.repeat(completeLength),
         this.#comColor,
       );
       const remaining = this.#styler.colorText(
-        "-".repeat(totalLength - completeLength),
+        chars.remaining.repeat(totalLength - completeLength),
         this.#remColor,
       );
 
@@ -329,6 +344,10 @@ export default class Progress {
 
   set valueColor(color: number) {
     this.#valColor = color;
+  }
+
+  set progressStyle(style: ProgressStyle) {
+    this.#style = style;
   }
 
   #formatTime(millis: number): string {

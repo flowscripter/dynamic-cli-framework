@@ -68,6 +68,8 @@ export type {
   default as PrinterService,
 } from "./src/api/service/core/PrinterService.ts";
 export { Icon, Level } from "./src/api/service/core/PrinterService.ts";
+export { ProgressStyle } from "./src/service/printer/terminal/Progress.ts";
+export { SpinnerStyle } from "./src/service/printer/terminal/Spinner.ts";
 export { default as DefaultPrinterService } from "./src/service/printer/DefaultPrinterService.ts";
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
