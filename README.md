@@ -46,8 +46,8 @@ So it isn't really dynamic at the moment! 😜
   specify command argument defaults.
 - Core (but optional) commands for help, logging level and version management.
 - Core (but optional) services for color output (foreground and background),
-  syntax highlighting, pretty printing, table and tree structure rendering and
-  configuration management.
+  syntax highlighting, pretty printing, table and tree structure rendering,
+  configuration management, and user input prompting.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)

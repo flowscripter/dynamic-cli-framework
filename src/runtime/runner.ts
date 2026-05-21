@@ -33,8 +33,27 @@ import type GroupCommand from "../api/command/GroupCommand.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type Command from "../api/command/Command.ts";
+import type ArgumentPrompterService from "../api/service/core/ArgumentPrompterService.ts";
+import { ARGUMENT_PROMPTER_SERVICE_ID } from "../api/service/core/ArgumentPrompterService.ts";
 
 const logger = getLogger("runner");
+
+async function attemptPromptForMissingArguments(
+  parseResult: ParseResult,
+  context: Context,
+): Promise<ParseResult | undefined> {
+  if (!context.doesServiceExist(ARGUMENT_PROMPTER_SERVICE_ID)) {
+    return undefined;
+  }
+  const service = context.getServiceById(
+    ARGUMENT_PROMPTER_SERVICE_ID,
+  ) as ArgumentPrompterService;
+  const updated = await service.promptForMissingArguments(parseResult);
+  if (updated.invalidArguments.length === 0) {
+    return updated;
+  }
+  return undefined;
+}
 
 /**
  * Execute the {@link Command} with arguments contained in the provided {@link ParseResult}.
@@ -306,12 +325,20 @@ async function findAndExecuteNonModifierCommand(
     }
 
     if (parseResult.invalidArguments.length > 0) {
-      await printParseResultError(context, parseResult);
-      return {
-        runState: RunState.PARSE_ERROR,
-        command: parseResult.command,
-        invalidArguments: parseResult.invalidArguments,
-      };
+      const prompted = await attemptPromptForMissingArguments(
+        parseResult,
+        context,
+      );
+      if (prompted) {
+        parseResult = prompted;
+      } else {
+        await printParseResultError(context, parseResult);
+        return {
+          runState: RunState.PARSE_ERROR,
+          command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
+        };
+      }
     }
 
     // add any unused args back to the list of still unused args
@@ -341,12 +368,20 @@ async function findAndExecuteNonModifierCommand(
         }
 
         if (parseResult.invalidArguments.length > 0) {
-          await printParseResultError(context, parseResult);
-          return {
-            runState: RunState.PARSE_ERROR,
-            command: parseResult.command,
-            invalidArguments: parseResult.invalidArguments,
-          };
+          const prompted = await attemptPromptForMissingArguments(
+            parseResult,
+            context,
+          );
+          if (prompted) {
+            parseResult = prompted;
+          } else {
+            await printParseResultError(context, parseResult);
+            return {
+              runState: RunState.PARSE_ERROR,
+              command: parseResult.command,
+              invalidArguments: parseResult.invalidArguments,
+            };
+          }
         }
 
         break;
@@ -460,14 +495,23 @@ async function findAndExecuteDefaultNonModifierCommand(
     }
   }
 
-  // if there were invalid arguments, treat this as the error
+  // if there were invalid arguments, attempt prompting before treating as error
   if (lastErroneousParseResult) {
-    await printParseResultError(context, lastErroneousParseResult, true);
-    return {
-      runState: RunState.PARSE_ERROR,
-      command: defaultNonModifierCommand,
-      invalidArguments: lastErroneousParseResult.invalidArguments,
-    };
+    const prompted = await attemptPromptForMissingArguments(
+      lastErroneousParseResult,
+      context,
+    );
+    if (prompted) {
+      parseResult = prompted;
+      lastErroneousParseResult = undefined;
+    } else {
+      await printParseResultError(context, lastErroneousParseResult, true);
+      return {
+        runState: RunState.PARSE_ERROR,
+        command: defaultNonModifierCommand,
+        invalidArguments: lastErroneousParseResult.invalidArguments,
+      };
+    }
   }
 
   // give up if still nothing found

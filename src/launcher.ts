@@ -29,6 +29,8 @@ export async function launchSingleCommandCLI(
   keyValueServiceEnabled = false,
   secretServiceEnabled = false,
   serviceProviders?: ReadonlyArray<ServiceProvider>,
+  prompterEnabled = false,
+  argumentPrompterEnabled = false,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -49,6 +51,11 @@ export async function launchSingleCommandCLI(
       "configEnabled must be true if secretServiceEnabled is true",
     );
   }
+  if (argumentPrompterEnabled && !prompterEnabled) {
+    throw new Error(
+      "prompterEnabled must be true if argumentPrompterEnabled is true",
+    );
+  }
   const validateAllCommands =
     process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
@@ -58,6 +65,8 @@ export async function launchSingleCommandCLI(
     keyValueServiceEnabled,
     secretServiceEnabled,
     validateAllCommands,
+    prompterEnabled,
+    argumentPrompterEnabled,
   );
 
   cli.addCommand(command);
@@ -89,6 +98,8 @@ export async function launchMultiCommandCLI(
   keyValueServiceEnabled = false,
   secretServiceEnabled = false,
   serviceProviders?: ReadonlyArray<ServiceProvider>,
+  prompterEnabled = false,
+  argumentPrompterEnabled = false,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -108,6 +119,11 @@ export async function launchMultiCommandCLI(
       "configEnabled must be true if secretServiceEnabled is true",
     );
   }
+  if (argumentPrompterEnabled && !prompterEnabled) {
+    throw new Error(
+      "prompterEnabled must be true if argumentPrompterEnabled is true",
+    );
+  }
   const validateAllCommands =
     process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
@@ -117,6 +133,8 @@ export async function launchMultiCommandCLI(
     keyValueServiceEnabled,
     secretServiceEnabled,
     validateAllCommands,
+    prompterEnabled,
+    argumentPrompterEnabled,
   );
 
   commands.forEach((command) => cli.addCommand(command));

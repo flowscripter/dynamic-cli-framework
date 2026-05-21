@@ -85,6 +85,34 @@ Provides:
 - `LogLevelCommand` which allows the log level to be set via the argument
   `--log-level` or the env var `LOG_LEVEL`.
 
+## `PrompterServiceProvider`
+
+Provides:
+
+- `PrompterService` allowing interactive user input via the terminal. Supports
+  five prompt types: single select (scrollable list), multi select (checkboxes),
+  acknowledge (Yes/No), toggle (True/False), and text entry (with masking for
+  secrets). Configurable via `PrompterServiceConfig` for prompt characters,
+  checkbox characters, list colors, and scroll window size.
+- `NoPromptCommand` which allows interactive prompting to be disabled via the
+  argument `--no-prompt` or the env var `NO_PROMPT`.
+
+## `ArgumentPrompterServiceProvider`
+
+Provides:
+
+- `ArgumentPrompterService` which automatically prompts the user for missing
+  mandatory arguments when all parse errors are of type `MISSING_VALUE`. Derives
+  the appropriate prompt type from the argument definition: boolean arguments
+  become toggle prompts, arguments with allowable values become single select
+  prompts, and other arguments become text entry prompts. Handles complex
+  options by prompting for each nested property and array/vararg arguments by
+  repeating prompts with an "add another?" confirmation.
+
+NOTE: Both services are opt-in. Enable via `prompterEnabled` and
+`argumentPrompterEnabled` flags on `BaseCLI`, `DefaultRuntimeCLI`, or the
+launcher functions. `argumentPrompterEnabled` requires `prompterEnabled`.
+
 ## `ShutdownServiceProvider`
 
 Provides:

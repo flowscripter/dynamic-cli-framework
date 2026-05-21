@@ -126,6 +126,26 @@ export {
 export { default as DefaultDataDumpGeneratorService } from "./src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts";
 export { default as DataDumpGeneratorServiceProvider } from "./src/service/dataDumpGenerator/DataDumpGeneratorServiceProvider.ts";
 
+export { PROMPTER_SERVICE_ID } from "./src/api/service/core/PrompterService.ts";
+export type { default as PrompterService } from "./src/api/service/core/PrompterService.ts";
+export {
+  type Prompt,
+  type PromptOption,
+  type PromptResult,
+  PromptType,
+} from "./src/api/service/core/PrompterService.ts";
+export { default as DefaultPrompterService } from "./src/service/prompter/DefaultPrompterService.ts";
+export {
+  DEFAULT_PROMPTER_CONFIG,
+  type PrompterServiceConfig,
+} from "./src/service/prompter/DefaultPrompterService.ts";
+export { default as PrompterServiceProvider } from "./src/service/prompter/PrompterServiceProvider.ts";
+
+export { ARGUMENT_PROMPTER_SERVICE_ID } from "./src/api/service/core/ArgumentPrompterService.ts";
+export type { default as ArgumentPrompterService } from "./src/api/service/core/ArgumentPrompterService.ts";
+export { default as DefaultArgumentPrompterService } from "./src/service/argumentPrompter/DefaultArgumentPrompterService.ts";
+export { default as ArgumentPrompterServiceProvider } from "./src/service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
+
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";
 export type { default as Context } from "./src/api/Context.ts";
@@ -144,6 +164,12 @@ export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
 // Terminal API
 export type { default as Terminal } from "./src/terminal/Terminal.ts";
 export type { default as Styler } from "./src/terminal/Styler.ts";
+export type {
+  default as KeyReader,
+  KeyEvent,
+} from "./src/terminal/KeyReader.ts";
+export { SpecialKey } from "./src/terminal/KeyReader.ts";
+export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
 export {

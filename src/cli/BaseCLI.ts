@@ -37,6 +37,13 @@ import type Terminal from "../terminal/Terminal.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
 import type Styler from "../terminal/Styler.ts";
+import type KeyReader from "../terminal/KeyReader.ts";
+import DefaultPrompterService, {
+  DEFAULT_PROMPTER_CONFIG,
+} from "../service/prompter/DefaultPrompterService.ts";
+import PrompterServiceProvider from "../service/prompter/PrompterServiceProvider.ts";
+import DefaultArgumentPrompterService from "../service/argumentPrompter/DefaultArgumentPrompterService.ts";
+import ArgumentPrompterServiceProvider from "../service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -65,6 +72,10 @@ export default class BaseCLI implements CLI {
   readonly #configEnabled: boolean;
   readonly #keyValueServiceEnabled: boolean;
   readonly #secretServiceEnabled: boolean;
+  readonly #prompterEnabled: boolean;
+  readonly #argumentPrompterEnabled: boolean;
+  readonly #keyReader: KeyReader | undefined;
+  readonly #stderrTerminal: Terminal;
   readonly #addedNonModifierCommands: Array<Command>;
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
   readonly #commandRegistry: DefaultCommandRegistry;
@@ -101,6 +112,9 @@ export default class BaseCLI implements CLI {
     keyValueServiceEnabled = false,
     secretServiceEnabled = false,
     validateAllCommands = false,
+    keyReader?: KeyReader,
+    prompterEnabled = false,
+    argumentPrompterEnabled = false,
   ) {
     if (cliConfig.name.length === 0) {
       throw new Error("Invalid empty CLI name provided");
@@ -124,6 +138,20 @@ export default class BaseCLI implements CLI {
     this.#configEnabled = configEnabled;
     this.#keyValueServiceEnabled = keyValueServiceEnabled;
     this.#secretServiceEnabled = secretServiceEnabled;
+    this.#prompterEnabled = prompterEnabled;
+    this.#argumentPrompterEnabled = argumentPrompterEnabled;
+    this.#keyReader = keyReader;
+    this.#stderrTerminal = stderrTerminal;
+    if (argumentPrompterEnabled && !prompterEnabled) {
+      throw new Error(
+        "prompterEnabled must be true if argumentPrompterEnabled is true",
+      );
+    }
+    if (prompterEnabled && !keyReader) {
+      throw new Error(
+        "keyReader must be provided if prompterEnabled is true",
+      );
+    }
     this.#addedNonModifierCommands = [];
 
     // create a validator if required
@@ -209,6 +237,25 @@ export default class BaseCLI implements CLI {
       ),
     );
     this.addServiceProvider(new TableGeneratorServiceProvider(70));
+
+    if (this.#prompterEnabled && this.#keyReader) {
+      const prompterService = new DefaultPrompterService(
+        DEFAULT_PROMPTER_CONFIG,
+        this.#stderrTerminal,
+        this.#keyReader,
+        this.#printerService,
+      );
+      this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+
+      if (this.#argumentPrompterEnabled) {
+        const argumentPrompterService = new DefaultArgumentPrompterService(
+          prompterService,
+        );
+        this.addServiceProvider(
+          new ArgumentPrompterServiceProvider(65, argumentPrompterService),
+        );
+      }
+    }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,

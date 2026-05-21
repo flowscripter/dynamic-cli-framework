@@ -5,6 +5,7 @@ import { RunState } from "../api/RunResult.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
 import { Writable } from "node:stream";
 import TtyTerminal from "../terminal/TtyTerminal.ts";
+import TtyKeyReader from "../terminal/TtyKeyReader.ts";
 import TtyStyler from "../terminal/TtyStyler.ts";
 import supportsColor from "supports-color";
 
@@ -23,6 +24,8 @@ export default class DefaultRuntimeCLI extends BaseCLI {
     keyValueServiceEnabled = false,
     secretServiceEnabled = false,
     validateAllCommands = false,
+    prompterEnabled = false,
+    argumentPrompterEnabled = false,
   ) {
     super(
       cliConfig,
@@ -40,6 +43,11 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       keyValueServiceEnabled,
       secretServiceEnabled,
       validateAllCommands,
+      prompterEnabled && process.stdin.isTTY
+        ? new TtyKeyReader(process.stdin)
+        : undefined,
+      prompterEnabled,
+      argumentPrompterEnabled,
     );
   }
 
