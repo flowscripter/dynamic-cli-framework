@@ -31,7 +31,7 @@ export default class SyntaxHighlighterServiceProvider
       new DefaultSyntaxHighlighterService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultSyntaxHighlighterService,
       commands: [],

@@ -9,10 +9,10 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("TableGeneratorServiceProvider tests", () => {
-  test("provide returns service and empty commands", async () => {
+  test("getServiceInfo returns service and empty commands", async () => {
     const provider = new TableGeneratorServiceProvider(100);
     const cliConfig = getCLIConfig();
-    const serviceInfo = await provider.provide(cliConfig);
+    const serviceInfo = await provider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
     expect(serviceInfo.service).toBeDefined();
   });
@@ -35,7 +35,7 @@ describe("TableGeneratorServiceProvider tests", () => {
         new TtyStyler(3),
       ),
     );
-    const serviceInfo = await provider.provide(cliConfig);
+    const serviceInfo = await provider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
     await provider.initService(context);
     const service = serviceInfo

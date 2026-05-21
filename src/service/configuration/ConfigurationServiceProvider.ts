@@ -238,7 +238,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.secretServiceEnabled = secretServiceEnabled;
   }
 
-  public provide(cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
     const commands: Array<Command> = [];
 
     if (this.configEnabled) {

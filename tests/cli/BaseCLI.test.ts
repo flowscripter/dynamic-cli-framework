@@ -208,7 +208,7 @@ describe("BaseCLI tests", () => {
 
       defaultService1: DefaultService1 | undefined;
 
-      provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+      getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
         this.defaultService1 = new DefaultService1();
         return Promise.resolve({
           service: this.defaultService1,
@@ -236,7 +236,7 @@ describe("BaseCLI tests", () => {
 
       defaultService2: DefaultService2 | undefined;
 
-      provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+      getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
         this.defaultService2 = new DefaultService2();
         return Promise.resolve({
           service: this.defaultService2,

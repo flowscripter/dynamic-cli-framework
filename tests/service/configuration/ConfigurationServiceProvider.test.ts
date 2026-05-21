@@ -61,13 +61,13 @@ function getSubCommand(): SubCommand {
   };
 }
 describe("ConfigurationServiceProvider tests", () => {
-  test("ConfigurationServiceProvider provide works", async () => {
+  test("ConfigurationServiceProvider getServiceInfo works", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(
       100,
       false,
       true,
     );
-    const serviceInfo = await configurationServiceProvider.provide(
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(
       getCLIConfig(),
     );
     expect(serviceInfo.commands.length).toEqual(2);
@@ -131,7 +131,7 @@ describe("ConfigurationServiceProvider tests", () => {
     const subCommand = getSubCommand();
 
     await configurationServiceProvider.initService(context);
-    await configurationServiceProvider.provide(getCLIConfig());
+    await configurationServiceProvider.getServiceInfo(getCLIConfig());
 
     expect(
       await configurationServiceProvider.getDefaultArgumentValues(
@@ -158,7 +158,7 @@ describe("ConfigurationServiceProvider tests", () => {
       const subCommand = getSubCommand();
 
       await configurationServiceProvider.initService(context);
-      await configurationServiceProvider.provide(getCLIConfig());
+      await configurationServiceProvider.getServiceInfo(getCLIConfig());
 
       expect(
         await configurationServiceProvider.getDefaultArgumentValues(
@@ -191,7 +191,9 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.provide(cliConfig);
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(
+      cliConfig,
+    );
 
     await configurationServiceProvider.initService(context);
 
@@ -229,7 +231,9 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.provide(cliConfig);
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(
+      cliConfig,
+    );
 
     await configurationServiceProvider.initService(context);
 

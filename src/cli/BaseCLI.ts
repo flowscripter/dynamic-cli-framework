@@ -47,6 +47,7 @@ const logger = getLogger("BaseCLI");
  * * {@link ShutdownServiceProvider}
  * * {@link PrinterServiceProvider}
  * * {@link ConfigurationServiceProvider}
+ * * {@link TableGeneratorServiceProvider}
  *
  * NOTE: The `ConfigurationServiceProvider` will not be added if the required `allow-read` and `allow-write`
  * permissions are not granted. It can also be excluded if desired via a constructor argument.
@@ -222,7 +223,7 @@ export default class BaseCLI implements CLI {
       const serviceProvider of this.#serviceProviderRegistry
         .getServiceProviders()
     ) {
-      const serviceInfo = await serviceProvider.provide(this.#cliConfig);
+      const serviceInfo = await serviceProvider.getServiceInfo(this.#cliConfig);
 
       if (serviceInfo.service) {
         this.#context.addServiceInstance(

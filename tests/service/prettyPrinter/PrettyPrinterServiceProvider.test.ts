@@ -9,7 +9,7 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("PrettyPrinterServiceProvider tests", () => {
-  test("PrettyPrinterServiceProvider provide and initService works", async () => {
+  test("PrettyPrinterServiceProvider getServiceInfo and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const prettyPrinterServiceProvider = new PrettyPrinterServiceProvider(
@@ -31,7 +31,7 @@ describe("PrettyPrinterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await prettyPrinterServiceProvider.provide(
+    const serviceInfo = await prettyPrinterServiceProvider.getServiceInfo(
       cliConfig,
     );
     expect(serviceInfo.commands.length).toEqual(0);

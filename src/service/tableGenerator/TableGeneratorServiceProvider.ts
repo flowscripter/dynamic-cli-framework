@@ -19,7 +19,7 @@ export default class TableGeneratorServiceProvider implements ServiceProvider {
     this.#defaultTableGeneratorService = new DefaultTableGeneratorService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultTableGeneratorService,
       commands: [],

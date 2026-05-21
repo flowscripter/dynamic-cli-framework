@@ -32,7 +32,7 @@ export default class AsciiBannerGeneratorServiceProvider
       new DefaultAsciiBannerGeneratorService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#asciiBannerGeneratorService,
       commands: [],

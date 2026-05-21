@@ -9,12 +9,12 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("DataDumpGeneratorServiceProvider tests", () => {
-  test("provide returns service and empty commands", async () => {
+  test("getServiceInfo returns service and empty commands", async () => {
     const dataDumpGeneratorServiceProvider =
       new DataDumpGeneratorServiceProvider(100);
     const cliConfig = getCLIConfig();
 
-    const serviceInfo = await dataDumpGeneratorServiceProvider.provide(
+    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(
       cliConfig,
     );
     expect(serviceInfo.commands.length).toEqual(0);
@@ -42,7 +42,7 @@ describe("DataDumpGeneratorServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await dataDumpGeneratorServiceProvider.provide(
+    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(
       cliConfig,
     );
     expect(serviceInfo.commands.length).toEqual(0);

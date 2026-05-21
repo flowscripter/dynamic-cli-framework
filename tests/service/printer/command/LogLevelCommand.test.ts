@@ -31,12 +31,13 @@ describe("LogLevelCommand tests", () => {
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService = (await shutdownServiceProvider.provide(cliConfig))
-      .service!;
+    const shutdownService =
+      (await shutdownServiceProvider.getServiceInfo(cliConfig))
+        .service!;
 
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
-    await printerServiceProvider.provide(cliConfig);
+    await printerServiceProvider.getServiceInfo(cliConfig);
 
     const logLevelCommand = new LogLevelCommand(printerServiceProvider, 100);
 

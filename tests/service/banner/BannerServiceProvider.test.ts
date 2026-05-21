@@ -17,9 +17,11 @@ import smallFont from "../asciiBannerGenerator/small.flf.json" with {
 };
 
 describe("BannerServiceProvider tests", () => {
-  test("BannerServiceProvider provide works", async () => {
+  test("BannerServiceProvider getServiceInfo works", async () => {
     const bannerServiceProvider = new BannerServiceProvider(100);
-    const serviceInfo = await bannerServiceProvider.provide(getCLIConfig());
+    const serviceInfo = await bannerServiceProvider.getServiceInfo(
+      getCLIConfig(),
+    );
     expect(serviceInfo.commands.length).toEqual(1);
   });
 

@@ -35,7 +35,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
     this.printerService = printerService;
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.printerService,
       commands: [

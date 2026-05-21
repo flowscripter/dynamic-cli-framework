@@ -9,11 +9,13 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("TreePrinterServiceProvider tests", () => {
-  test("provide returns service and empty commands", async () => {
+  test("getServiceInfo returns service and empty commands", async () => {
     const treePrinterServiceProvider = new TreePrinterServiceProvider(100);
     const cliConfig = getCLIConfig();
 
-    const serviceInfo = await treePrinterServiceProvider.provide(cliConfig);
+    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(
+      cliConfig,
+    );
     expect(serviceInfo.commands.length).toEqual(0);
     expect(serviceInfo.service).toBeDefined();
   });
@@ -38,7 +40,9 @@ describe("TreePrinterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await treePrinterServiceProvider.provide(cliConfig);
+    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(
+      cliConfig,
+    );
     expect(serviceInfo.commands.length).toEqual(0);
 
     await treePrinterServiceProvider.initService(context);

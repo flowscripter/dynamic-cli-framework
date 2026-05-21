@@ -19,7 +19,7 @@ export default class ImagePrinterServiceProvider implements ServiceProvider {
     this.#defaultImagePrinterService = new DefaultImagePrinterService(terminal);
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultImagePrinterService,
       commands: [],

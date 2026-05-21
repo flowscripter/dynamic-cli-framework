@@ -14,7 +14,7 @@ function getServiceProvider(
   return {
     serviceId,
     servicePriority,
-    provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+    getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
       return Promise.resolve({
         service: {},
         commands: [],

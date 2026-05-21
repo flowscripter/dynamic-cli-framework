@@ -20,7 +20,7 @@ export default class DataDumpGeneratorServiceProvider
     this.#defaultService = new DefaultDataDumpGeneratorService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultService,
       commands: [],

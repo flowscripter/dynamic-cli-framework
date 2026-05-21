@@ -19,7 +19,7 @@ export default class TreePrinterServiceProvider implements ServiceProvider {
     this.#defaultTreePrinterService = new DefaultTreePrinterService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultTreePrinterService,
       commands: [],

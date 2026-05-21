@@ -9,7 +9,7 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("SyntaxHighlighterServiceProvider tests", () => {
-  test("SyntaxHighlighterServiceProvider provide and initService works", async () => {
+  test("SyntaxHighlighterServiceProvider getServiceInfo and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const syntaxHighlighterServiceProvider =
@@ -32,7 +32,7 @@ describe("SyntaxHighlighterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await syntaxHighlighterServiceProvider.provide(
+    const serviceInfo = await syntaxHighlighterServiceProvider.getServiceInfo(
       cliConfig,
     );
     expect(serviceInfo.commands.length).toEqual(0);

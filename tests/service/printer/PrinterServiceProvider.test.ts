@@ -10,7 +10,7 @@ import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 
 describe("PrinterServiceProvider tests", () => {
-  test("PrinterServiceProvider provide works", async () => {
+  test("PrinterServiceProvider getServiceInfo works", async () => {
     const streamString = new StreamString();
     const printerService = new DefaultPrinterService(
       streamString.writableStream,
@@ -34,7 +34,7 @@ describe("PrinterServiceProvider tests", () => {
       new DefaultShutdownService(),
     );
 
-    const serviceInfo = await printerServiceProvider.provide(cliConfig);
+    const serviceInfo = await printerServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(4);
   });
 });
