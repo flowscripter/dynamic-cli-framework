@@ -1,7 +1,12 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
-import { type Icon, Level } from "../../api/service/core/PrinterService.ts";
+import {
+  type Icon,
+  Level,
+  type ProgressStyle,
+  type SpinnerStyle,
+} from "../../api/service/core/PrinterService.ts";
 import type Terminal from "../../terminal/Terminal.ts";
 import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
@@ -331,10 +336,16 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#threshold;
   }
 
-  public async showSpinner(message?: string): Promise<void> {
+  public async showSpinner(
+    message?: string,
+    style?: SpinnerStyle,
+  ): Promise<void> {
     await this.#progress.hideAll();
     if (this.#threshold > Level.INFO) {
       return;
+    }
+    if (style != null) {
+      this.#spinner.spinnerStyle = style;
     }
     await this.#spinner.show(message);
   }
@@ -348,10 +359,14 @@ export default class DefaultPrinterService implements PrinterService {
     message = "",
     total = 100,
     current = 0,
+    style?: ProgressStyle,
   ): Promise<number> {
     await this.#spinner.hide();
     if (this.#threshold > Level.INFO) {
       return -1;
+    }
+    if (style != null) {
+      this.#progress.progressStyle = style;
     }
 
     return this.#progress.add(units, message, total, current);

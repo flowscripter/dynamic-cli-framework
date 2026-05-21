@@ -25,10 +25,8 @@ const STAR_FRAMES = [
   "✦",
 ];
 
-export enum SpinnerStyle {
-  BOX = "BOX",
-  STAR = "STAR",
-}
+export { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
+import { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
 
 export default class Spinner {
   #isShown = false;

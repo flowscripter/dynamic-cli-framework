@@ -3,10 +3,8 @@ import type Terminal from "../../../terminal/Terminal.ts";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 
-export enum ProgressStyle {
-  STROKE = "STROKE",
-  FILL = "FILL",
-}
+export { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
+import { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
 
 const STYLE_CHARS: Record<
   ProgressStyle,

@@ -13,6 +13,22 @@ export enum Level {
 }
 
 /**
+ * Enum of spinner animation styles.
+ */
+export enum SpinnerStyle {
+  BOX = "BOX",
+  STAR = "STAR",
+}
+
+/**
+ * Enum of progress bar rendering styles.
+ */
+export enum ProgressStyle {
+  STROKE = "STROKE",
+  FILL = "FILL",
+}
+
+/**
  * Enum of message icons.
  */
 export enum Icon {
@@ -322,8 +338,9 @@ export default interface PrinterService {
    * NOTE: If any progress bars are currently displayed they will be hidden.
    *
    * @param message the message to output after the spinner.
+   * @param style optional spinner animation style, defaults to {@link SpinnerStyle.BOX}.
    */
-  showSpinner(message: string): Promise<void>;
+  showSpinner(message: string, style?: SpinnerStyle): Promise<void>;
 
   /**
    * Hide the spinner.
@@ -345,6 +362,7 @@ export default interface PrinterService {
    * @param message an optional message for the progress bar.
    * @param total the total value which equates to 100% complete, defaults to `100`.
    * @param current the current value which is a portion of the total value, defaults to `0`.
+   * @param style optional progress bar rendering style, defaults to {@link ProgressStyle.STROKE}.
    *
    * @return a handle to use when invoking {@link updateProgressBar}.
    */
@@ -353,6 +371,7 @@ export default interface PrinterService {
     message?: string,
     total?: number,
     current?: number,
+    style?: ProgressStyle,
   ): Promise<number>;
 
   /**
