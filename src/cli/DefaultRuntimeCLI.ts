@@ -26,6 +26,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
     validateAllCommands = false,
     prompterEnabled = false,
     argumentPrompterEnabled = false,
+    completionEnabled = false,
   ) {
     super(
       cliConfig,
@@ -48,6 +49,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
         : undefined,
       prompterEnabled,
       argumentPrompterEnabled,
+      completionEnabled,
     );
   }
 

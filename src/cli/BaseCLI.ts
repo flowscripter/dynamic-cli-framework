@@ -44,6 +44,13 @@ import DefaultPrompterService, {
 import PrompterServiceProvider from "../service/prompter/PrompterServiceProvider.ts";
 import DefaultArgumentPrompterService from "../service/argumentPrompter/DefaultArgumentPrompterService.ts";
 import ArgumentPrompterServiceProvider from "../service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
+import DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
+import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
+import {
+  CompletionCompleteSubCommand,
+  CompletionGroupCommand,
+  CompletionIntegrationSubCommand,
+} from "../command/CompletionCommand.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -74,6 +81,7 @@ export default class BaseCLI implements CLI {
   readonly #secretServiceEnabled: boolean;
   readonly #prompterEnabled: boolean;
   readonly #argumentPrompterEnabled: boolean;
+  readonly #completionEnabled: boolean;
   readonly #keyReader: KeyReader | undefined;
   readonly #stderrTerminal: Terminal;
   readonly #addedNonModifierCommands: Array<Command>;
@@ -115,6 +123,7 @@ export default class BaseCLI implements CLI {
     keyReader?: KeyReader,
     prompterEnabled = false,
     argumentPrompterEnabled = false,
+    completionEnabled = false,
   ) {
     if (cliConfig.name.length === 0) {
       throw new Error("Invalid empty CLI name provided");
@@ -140,6 +149,7 @@ export default class BaseCLI implements CLI {
     this.#secretServiceEnabled = secretServiceEnabled;
     this.#prompterEnabled = prompterEnabled;
     this.#argumentPrompterEnabled = argumentPrompterEnabled;
+    this.#completionEnabled = completionEnabled;
     this.#keyReader = keyReader;
     this.#stderrTerminal = stderrTerminal;
     if (argumentPrompterEnabled && !prompterEnabled) {
@@ -257,6 +267,14 @@ export default class BaseCLI implements CLI {
       }
     }
 
+    let completionService: DefaultCompletionService | undefined;
+    if (this.#completionEnabled) {
+      completionService = new DefaultCompletionService();
+      this.addServiceProvider(
+        new CompletionServiceProvider(60, completionService),
+      );
+    }
+
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,
       this.#envVarsEnabled,
@@ -323,6 +341,16 @@ export default class BaseCLI implements CLI {
 
       // register the version command
       this.#commandRegistry.addCommand(new VersionCommand());
+
+      // register completion commands (need CommandRegistry reference like help commands)
+      if (completionService) {
+        completionService.setCommandRegistry(this.#commandRegistry);
+        const integrationCommand = new CompletionIntegrationSubCommand();
+        const completeCommand = new CompletionCompleteSubCommand();
+        this.#commandRegistry.addCommand(
+          new CompletionGroupCommand(integrationCommand, completeCommand),
+        );
+      }
 
       // run...
       const runResult = await run(

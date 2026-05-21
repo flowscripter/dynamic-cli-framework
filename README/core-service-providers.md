@@ -28,6 +28,29 @@ Provides:
 - `NoBannerCommand` allowing banner printing to be disabled via the argument
   `--no-banner` or the env var `NO_BANNER`.
 
+## `CompletionServiceProvider`
+
+Provides:
+
+- `CompletionService` allowing shell auto-completion support for Bash, Zsh,
+  Fish, and PowerShell. Completions are dynamic (callback-based) rather than
+  static scripts, so they reflect the current set of registered commands
+  including dynamically discovered plugins.
+- `CompletionGroupCommand` (`completions`) with two sub-commands:
+  - `completions:integration` installs shell completion integration by adding a
+    bootstrap script to the shell configuration file (e.g. `~/.bashrc`,
+    `~/.zshrc`, `~/.config/fish/config.fish`, or the PowerShell profile). Takes
+    a required `shell` positional argument and an optional `--config-path`
+    option.
+  - `completions:complete` generates completions for shell integration. This is
+    invoked by the shell's completion mechanism and returns completions in the
+    format expected by that shell.
+- On first run, if both `PrompterService` and `KeyValueService` are available,
+  prompts the user to enable auto-completion.
+
+NOTE: This service is opt-in. Enable via `completionEnabled` flag on `BaseCLI`,
+`DefaultRuntimeCLI`, or the launcher functions.
+
 ## `ConfigurationServiceProvider`
 
 Provides:

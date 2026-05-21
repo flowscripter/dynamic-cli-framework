@@ -126,6 +126,15 @@ export {
 export { default as DefaultDataDumpGeneratorService } from "./src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts";
 export { default as DataDumpGeneratorServiceProvider } from "./src/service/dataDumpGenerator/DataDumpGeneratorServiceProvider.ts";
 
+export { COMPLETION_SERVICE_ID } from "./src/api/service/core/CompletionService.ts";
+export type { default as CompletionService } from "./src/api/service/core/CompletionService.ts";
+export {
+  type CompletionItem,
+  ShellType,
+} from "./src/api/service/core/CompletionService.ts";
+export { default as DefaultCompletionService } from "./src/service/completion/DefaultCompletionService.ts";
+export { default as CompletionServiceProvider } from "./src/service/completion/CompletionServiceProvider.ts";
+
 export { PROMPTER_SERVICE_ID } from "./src/api/service/core/PrompterService.ts";
 export type { default as PrompterService } from "./src/api/service/core/PrompterService.ts";
 export {

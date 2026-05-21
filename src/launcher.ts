@@ -31,6 +31,7 @@ export async function launchSingleCommandCLI(
   serviceProviders?: ReadonlyArray<ServiceProvider>,
   prompterEnabled = false,
   argumentPrompterEnabled = false,
+  completionEnabled = false,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -67,6 +68,7 @@ export async function launchSingleCommandCLI(
     validateAllCommands,
     prompterEnabled,
     argumentPrompterEnabled,
+    completionEnabled,
   );
 
   cli.addCommand(command);
@@ -100,6 +102,7 @@ export async function launchMultiCommandCLI(
   serviceProviders?: ReadonlyArray<ServiceProvider>,
   prompterEnabled = false,
   argumentPrompterEnabled = false,
+  completionEnabled = false,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -135,6 +138,7 @@ export async function launchMultiCommandCLI(
     validateAllCommands,
     prompterEnabled,
     argumentPrompterEnabled,
+    completionEnabled,
   );
 
   commands.forEach((command) => cli.addCommand(command));
