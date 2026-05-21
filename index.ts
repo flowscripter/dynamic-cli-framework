@@ -59,8 +59,11 @@ export type {
 export { default as BannerServiceProvider } from "./src/service/banner/BannerServiceProvider.ts";
 
 export { KEY_VALUE_SERVICE_ID } from "./src/api/service/core/KeyValueService.ts";
+export { SECRET_SENTINEL_PREFIX } from "./src/api/service/core/KeyValueService.ts";
 export type { default as KeyValueService } from "./src/api/service/core/KeyValueService.ts";
+export type { default as SecretService } from "./src/api/service/core/SecretService.ts";
 export { default as DefaultKeyValueService } from "./src/service/configuration/DefaultKeyValueService.ts";
+export { default as DefaultSecretService } from "./src/service/configuration/DefaultSecretService.ts";
 export { default as ConfigurationServiceProvider } from "./src/service/configuration/ConfigurationServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "./src/api/service/core/PrinterService.ts";

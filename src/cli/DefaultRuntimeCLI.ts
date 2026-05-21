@@ -21,6 +21,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
     envVarsEnabled = false,
     configEnabled = false,
     keyValueServiceEnabled = false,
+    secretServiceEnabled = false,
     validateAllCommands = false,
   ) {
     super(
@@ -37,6 +38,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       envVarsEnabled,
       configEnabled,
       keyValueServiceEnabled,
+      secretServiceEnabled,
       validateAllCommands,
     );
   }

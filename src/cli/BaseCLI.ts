@@ -63,6 +63,7 @@ export default class BaseCLI implements CLI {
   readonly #envVarsEnabled: boolean;
   readonly #configEnabled: boolean;
   readonly #keyValueServiceEnabled: boolean;
+  readonly #secretServiceEnabled: boolean;
   readonly #addedNonModifierCommands: Array<Command>;
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
   readonly #commandRegistry: DefaultCommandRegistry;
@@ -97,6 +98,7 @@ export default class BaseCLI implements CLI {
     envVarsEnabled = false,
     configEnabled = false,
     keyValueServiceEnabled = false,
+    secretServiceEnabled = false,
     validateAllCommands = false,
   ) {
     if (cliConfig.name.length === 0) {
@@ -120,6 +122,7 @@ export default class BaseCLI implements CLI {
     this.#envVarsEnabled = envVarsEnabled;
     this.#configEnabled = configEnabled;
     this.#keyValueServiceEnabled = keyValueServiceEnabled;
+    this.#secretServiceEnabled = secretServiceEnabled;
     this.#addedNonModifierCommands = [];
 
     // create a validator if required
@@ -211,6 +214,7 @@ export default class BaseCLI implements CLI {
       this.#envVarsEnabled,
       this.#configEnabled,
       this.#keyValueServiceEnabled,
+      this.#secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
 

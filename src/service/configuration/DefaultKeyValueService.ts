@@ -1,8 +1,15 @@
 import type KeyValueService from "../../api/service/core/KeyValueService.ts";
+import { SECRET_SENTINEL_PREFIX } from "../../api/service/core/KeyValueService.ts";
+import type DefaultSecretService from "./DefaultSecretService.ts";
 
 export default class DefaultKeyValueService implements KeyValueService {
   #keyValueData: Map<string, string> | undefined;
   #dirty = false;
+  readonly #secretService: DefaultSecretService | undefined;
+
+  constructor(secretService?: DefaultSecretService) {
+    this.#secretService = secretService;
+  }
 
   public setKeyValueData(keyValueData: Map<string, string>) {
     if (this.#keyValueData) {
@@ -23,7 +30,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     return this.#dirty;
   }
 
-  public getKey(key: string): string {
+  public async getKey(key: string): Promise<string> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
@@ -32,27 +39,66 @@ export default class DefaultKeyValueService implements KeyValueService {
       throw new Error("Attempt to access unknown key");
     }
 
+    if (value.startsWith(SECRET_SENTINEL_PREFIX)) {
+      if (!this.#secretService) {
+        throw new Error(
+          "Secret sentinel found but no secret service is available",
+        );
+      }
+      const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
+      const secretValue = await this.#secretService.getSecret(bunSecretName);
+      if (secretValue === null) {
+        throw new Error(
+          `Secret not found in OS secret store for key: '${key}'`,
+        );
+      }
+      return secretValue;
+    }
+
     return value;
   }
 
-  public hasKey(key: string): boolean {
+  public hasKey(key: string): Promise<boolean> {
     if (this.#keyValueData === undefined) {
-      throw new Error("Attempt to access undefined key-value data");
+      return Promise.reject(
+        new Error("Attempt to access undefined key-value data"),
+      );
     }
-    return this.#keyValueData.has(key);
+    return Promise.resolve(this.#keyValueData.has(key));
   }
 
-  public setKey(key: string, value: string): void {
+  public async setKey(
+    key: string,
+    value: string,
+    isSecret = false,
+  ): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
-    this.#keyValueData.set(key, value);
+    if (isSecret) {
+      if (!this.#secretService) {
+        throw new Error(
+          "Attempt to set a secret but no secret service is available",
+        );
+      }
+      const bunSecretName = await this.#secretService.setSecret(key, value);
+      this.#keyValueData.set(key, SECRET_SENTINEL_PREFIX + bunSecretName);
+    } else {
+      this.#keyValueData.set(key, value);
+    }
     this.#dirty = true;
   }
 
-  public deleteKey(key: string): void {
+  public async deleteKey(key: string): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
+    }
+    const value = this.#keyValueData.get(key);
+    if (value !== undefined && value.startsWith(SECRET_SENTINEL_PREFIX)) {
+      if (this.#secretService) {
+        const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
+        await this.#secretService.deleteSecret(bunSecretName);
+      }
     }
     this.#keyValueData.delete(key);
     this.#dirty = true;

@@ -496,9 +496,11 @@ or `GlobalCommandArgument` are:
 - `BOOLEAN` - string values of `true`, `TRUE`, `false` and `FALSE` are converted
   to a JavaScript boolean value. Specifying just the argument name is also
   sufficient to indicate a value of `true`.
-- `SECRET` - a string value which may be specified as an argument, as a default
-  value in a configuration file or (ideally) sourced from an environment
-  variable.
+- `SECRET` - a string value which may be specified as an argument (not
+  recommended), provided as a response to an argument value prompt, provided as
+  a default value in a configuration file (using native OS secret storage
+  functionality provided in the ConfigurationService) or sourced from an
+  environment variable.
 
 ## Default Argument Values
 

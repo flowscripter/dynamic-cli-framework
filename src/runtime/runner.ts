@@ -56,13 +56,19 @@ async function executeParsedCommand(
         "Executing group command with name: %s",
         parseResult!.groupCommand!.name,
       );
-      if (configurationServiceProvider?.keyValueServiceEnabled) {
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
         configurationServiceProvider.setCommandKeyValueScope(
           parseResult!.groupCommand!.name,
         );
       }
       await parseResult.groupCommand.execute(context);
-      if (configurationServiceProvider?.keyValueServiceEnabled) {
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
         await configurationServiceProvider.clearKeyValueScope();
       }
     }
@@ -73,7 +79,10 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       configurationServiceProvider.setCommandKeyValueScope(
         parseResult.command.name,
       );
@@ -89,7 +98,10 @@ async function executeParsedCommand(
         parseResult.populatedArgumentValues as ArgumentSingleValueType,
       );
     }
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
@@ -155,7 +167,7 @@ async function findAndExecuteGlobalModifierCommands(
     ) {
       // parse and fast fail on error
       const defaultArgumentValues = configurationServiceProvider
-        ? configurationServiceProvider
+        ? await configurationServiceProvider
           .getDefaultArgumentValues(
             context.cliConfig,
             globalModifierCommandClause.command,
@@ -195,7 +207,7 @@ async function findAndExecuteGlobalModifierCommands(
   for (const globalModifierCommand of remainingGlobalModifierCommands) {
     // if there is a config entry run this by default even though no arguments were provided on the command line
     const defaultArgumentValues = configurationServiceProvider
-      ? configurationServiceProvider
+      ? await configurationServiceProvider
         .getDefaultArgumentValues(context.cliConfig, globalModifierCommand)
       : undefined;
 
@@ -274,7 +286,7 @@ async function findAndExecuteNonModifierCommand(
 
   if (scanResult.nonModifierCommandClause) {
     const defaultArgumentValues = configurationServiceProvider
-      ? configurationServiceProvider
+      ? await configurationServiceProvider
         .getDefaultArgumentValues(
           context.cliConfig,
           scanResult.nonModifierCommandClause.command,
@@ -311,7 +323,7 @@ async function findAndExecuteNonModifierCommand(
     for (const nonModifierCommand of nonModifierCommandsByName.values()) {
       // if there is a config entry run this by default even though no arguments were provided on the command line
       const defaultArgumentValues = configurationServiceProvider
-        ? configurationServiceProvider
+        ? await configurationServiceProvider
           .getDefaultArgumentValues(context.cliConfig, nonModifierCommand)
         : undefined;
 
@@ -376,7 +388,7 @@ async function findAndExecuteDefaultNonModifierCommand(
   context: Context,
 ): Promise<RunResult | undefined> {
   const defaultArgumentValues = configurationServiceProvider
-    ? configurationServiceProvider
+    ? await configurationServiceProvider
       .getDefaultArgumentValues(context.cliConfig, defaultNonModifierCommand)
     : undefined;
   const isGlobal = isGlobalCommand(defaultNonModifierCommand);
@@ -604,14 +616,20 @@ export async function run(
 
     logger.debug("Initialising service with ID: %s", serviceProvider.serviceId);
 
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       configurationServiceProvider.setServiceKeyValueScope(
         serviceProvider.serviceId,
       );
     }
 
     await serviceProvider.initService(context);
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       await configurationServiceProvider.clearKeyValueScope();
     }
   }

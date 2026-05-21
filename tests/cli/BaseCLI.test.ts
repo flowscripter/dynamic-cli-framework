@@ -141,21 +141,20 @@ describe("BaseCLI tests", () => {
     const SERVICE_2 = "service2";
 
     interface ServiceInterface {
-      serviceMethod(context: Context): void;
+      serviceMethod(context: Context): Promise<void>;
     }
 
     class DefaultService1 implements ServiceInterface {
       copyOfKeyValueService: KeyValueService | undefined;
 
-      serviceMethod(context: Context): void {
-        // should only have access to the modifierCommand KV scope
-        expect(this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
+      async serviceMethod(context: Context): Promise<void> {
+        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "modifierCommand",
         );
-        this.copyOfKeyValueService!.setKey(
+        await this.copyOfKeyValueService!.setKey(
           "name",
           "defaultService1+modifierCommand",
         );
@@ -164,10 +163,9 @@ describe("BaseCLI tests", () => {
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the modifierCommand KV scope
-        expect(keyValueService.hasKey("name")).toBeTrue();
+        expect(await keyValueService.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "defaultService1+modifierCommand",
         );
@@ -179,13 +177,12 @@ describe("BaseCLI tests", () => {
     class DefaultService2 implements ServiceInterface {
       copyOfKeyValueService: KeyValueService | undefined;
 
-      serviceMethod(context: Context): void {
-        // should only have access to the modifierCommand KV scope
-        expect(this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(this.copyOfKeyValueService!.getKey("name")).toEqual(
+      async serviceMethod(context: Context): Promise<void> {
+        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
           "subCommand",
         );
-        this.copyOfKeyValueService!.setKey(
+        await this.copyOfKeyValueService!.setKey(
           "name",
           "defaultService2+subCommand",
         );
@@ -194,10 +191,9 @@ describe("BaseCLI tests", () => {
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the subCommand KV scope
-        expect(keyValueService.hasKey("name")).toBeTrue();
+        expect(await keyValueService.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "defaultService2+subCommand",
         );
@@ -220,20 +216,17 @@ describe("BaseCLI tests", () => {
         });
       }
 
-      initService(context: Context): Promise<void> {
+      async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the ServiceProvider1 KV scope
-        expect(keyValueService.hasKey("name")).toBeFalse();
-        keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.hasKey("name")).toBeFalse();
+        await keyValueService.setKey("name", "defaultService2");
 
-        // take a copy to check later when service is accessed via a command
         this.defaultService1!.copyOfKeyValueService = keyValueService;
 
         serviceProvider1Initialised = true;
-        return Promise.resolve(undefined);
       }
     }
 
@@ -251,20 +244,17 @@ describe("BaseCLI tests", () => {
         });
       }
 
-      initService(context: Context): Promise<void> {
+      async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the ServiceProvider2 KV scope
-        expect(keyValueService.hasKey("name")).toBeFalse();
-        keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.hasKey("name")).toBeFalse();
+        await keyValueService.setKey("name", "defaultService2");
 
-        // take a copy to check later when service is accessed via a command
         this.defaultService2!.copyOfKeyValueService = keyValueService;
 
         serviceProvider2Initialised = true;
-        return Promise.resolve(undefined);
       }
     }
 
@@ -283,37 +273,33 @@ describe("BaseCLI tests", () => {
     };
     const subCommand = getSubCommand("command", [option], []);
 
-    modifierCommand.execute = (context): Promise<void> => {
+    modifierCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(
         KEY_VALUE_SERVICE_ID,
       ) as KeyValueService;
 
-      // should only have access to the modifierCommand KV scope
-      expect(keyValueService.hasKey("name")).toBeFalse();
-      keyValueService.setKey("name", "modifierCommand");
+      expect(await keyValueService.hasKey("name")).toBeFalse();
+      await keyValueService.setKey("name", "modifierCommand");
 
       const service1 = context.getServiceById(SERVICE_1) as ServiceInterface;
 
-      service1.serviceMethod(context);
+      await service1.serviceMethod(context);
 
       modifierHasRun = true;
-      return Promise.resolve();
     };
-    subCommand.execute = (context): Promise<void> => {
+    subCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(
         KEY_VALUE_SERVICE_ID,
       ) as KeyValueService;
 
-      // should only have access to the subCommand KV scope
-      expect(keyValueService.hasKey("name")).toBeFalse();
-      keyValueService.setKey("name", "subCommand");
+      expect(await keyValueService.hasKey("name")).toBeFalse();
+      await keyValueService.setKey("name", "subCommand");
 
       const service2 = context.getServiceById(SERVICE_2) as ServiceInterface;
 
-      service2.serviceMethod(context);
+      await service2.serviceMethod(context);
 
       subHasRun = true;
-      return Promise.resolve();
     };
 
     baseCLI.addServiceProvider(new ServiceProvider1());

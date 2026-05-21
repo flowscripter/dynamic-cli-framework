@@ -131,9 +131,10 @@ describe("ConfigurationServiceProvider tests", () => {
     const subCommand = getSubCommand();
 
     await configurationServiceProvider.initService(context);
+    await configurationServiceProvider.provide(getCLIConfig());
 
     expect(
-      configurationServiceProvider.getDefaultArgumentValues(
+      await configurationServiceProvider.getDefaultArgumentValues(
         getCLIConfig(),
         subCommand,
       ),
@@ -157,9 +158,10 @@ describe("ConfigurationServiceProvider tests", () => {
       const subCommand = getSubCommand();
 
       await configurationServiceProvider.initService(context);
+      await configurationServiceProvider.provide(getCLIConfig());
 
       expect(
-        configurationServiceProvider.getDefaultArgumentValues(
+        await configurationServiceProvider.getDefaultArgumentValues(
           getCLIConfig(),
           subCommand,
         ),
@@ -197,16 +199,16 @@ describe("ConfigurationServiceProvider tests", () => {
 
     configurationServiceProvider.setCommandKeyValueScope("command2");
 
-    expect(keyValueService.hasKey("foo2")).toBeFalse();
+    expect(await keyValueService.hasKey("foo2")).toBeFalse();
 
     await configurationServiceProvider.clearKeyValueScope();
     configurationServiceProvider.setCommandKeyValueScope("command1");
 
-    expect(keyValueService.getKey("foo2")).toEqual("bar2");
+    expect(await keyValueService.getKey("foo2")).toEqual("bar2");
 
     await configurationServiceProvider.clearKeyValueScope();
 
-    expect(() => keyValueService.hasKey("foo2")).toThrow();
+    expect(keyValueService.hasKey("foo2")).rejects.toThrow();
   });
 
   test("setServiceKeyValueScope works", async () => {
@@ -235,15 +237,21 @@ describe("ConfigurationServiceProvider tests", () => {
 
     configurationServiceProvider.setServiceKeyValueScope("service-id-2");
 
-    expect(keyValueService.hasKey("foo1")).toBeFalse();
+    expect(await keyValueService.hasKey("foo1")).toBeFalse();
 
     await configurationServiceProvider.clearKeyValueScope();
     configurationServiceProvider.setServiceKeyValueScope("service-id-1");
 
-    expect(keyValueService.getKey("foo1")).toEqual("bar");
+    expect(await keyValueService.getKey("foo1")).toEqual("bar");
 
     await configurationServiceProvider.clearKeyValueScope();
 
-    expect(() => keyValueService.hasKey("foo1")).toThrow();
+    expect(keyValueService.hasKey("foo1")).rejects.toThrow();
+  });
+
+  test("secretServiceEnabled requires configEnabled", () => {
+    expect(
+      () => new ConfigurationServiceProvider(100, false, false, false, true),
+    ).toThrow("configEnabled must be true");
   });
 });

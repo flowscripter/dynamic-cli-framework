@@ -42,7 +42,7 @@ describe("Progress tests", () => {
 
   test("Default style is STROKE and uses = and - characters", async () => {
     const streamString = new StreamString();
-    (streamString.writeStream as any).columns = 120;
+    (streamString.writeStream as unknown as { columns: number }).columns = 120;
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
@@ -58,7 +58,7 @@ describe("Progress tests", () => {
 
   test("FILL style uses block characters", async () => {
     const streamString = new StreamString();
-    (streamString.writeStream as any).columns = 120;
+    (streamString.writeStream as unknown as { columns: number }).columns = 120;
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
@@ -74,7 +74,7 @@ describe("Progress tests", () => {
 
   test("progressStyle can be changed between renders", async () => {
     const streamString = new StreamString();
-    (streamString.writeStream as any).columns = 120;
+    (streamString.writeStream as unknown as { columns: number }).columns = 120;
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 

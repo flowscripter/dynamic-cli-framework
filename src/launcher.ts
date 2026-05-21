@@ -27,6 +27,7 @@ export async function launchSingleCommandCLI(
   envVarsEnabled = false,
   configEnabled = false,
   keyValueServiceEnabled = false,
+  secretServiceEnabled = false,
   serviceProviders?: ReadonlyArray<ServiceProvider>,
 ): Promise<RunResult> {
   if (!name) {
@@ -43,6 +44,11 @@ export async function launchSingleCommandCLI(
       "configEnabled must be true if keyValueServiceEnabled is true",
     );
   }
+  if (!configEnabled && secretServiceEnabled) {
+    throw new Error(
+      "configEnabled must be true if secretServiceEnabled is true",
+    );
+  }
   const validateAllCommands =
     process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
@@ -50,6 +56,7 @@ export async function launchSingleCommandCLI(
     envVarsEnabled,
     configEnabled,
     keyValueServiceEnabled,
+    secretServiceEnabled,
     validateAllCommands,
   );
 
@@ -80,6 +87,7 @@ export async function launchMultiCommandCLI(
   envVarsEnabled = false,
   configEnabled = false,
   keyValueServiceEnabled = false,
+  secretServiceEnabled = false,
   serviceProviders?: ReadonlyArray<ServiceProvider>,
 ): Promise<RunResult> {
   if (!name) {
@@ -95,6 +103,11 @@ export async function launchMultiCommandCLI(
       "configEnabled must be true if keyValueServiceEnabled is true",
     );
   }
+  if (!configEnabled && secretServiceEnabled) {
+    throw new Error(
+      "configEnabled must be true if secretServiceEnabled is true",
+    );
+  }
   const validateAllCommands =
     process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined;
   const cli = new DefaultRuntimeCLI(
@@ -102,6 +115,7 @@ export async function launchMultiCommandCLI(
     envVarsEnabled,
     configEnabled,
     keyValueServiceEnabled,
+    secretServiceEnabled,
     validateAllCommands,
   );
 
