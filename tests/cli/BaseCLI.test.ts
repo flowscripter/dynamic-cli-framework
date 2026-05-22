@@ -25,6 +25,13 @@ import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
 import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../src/terminal/TtyStyler.ts";
+import type KeyReader from "../../src/terminal/KeyReader.ts";
+
+const mockKeyReader: KeyReader = {
+  enableRawMode() {},
+  disableRawMode() {},
+  readKey: () => Promise.resolve({}),
+};
 
 describe("BaseCLI tests", () => {
   test("BaseCLI no command specified works", async () => {
@@ -40,7 +47,7 @@ describe("BaseCLI tests", () => {
       new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
+      mockKeyReader,
     );
 
     baseCLI.addCommand(getSubCommandWithOptionAndPositional());
@@ -63,7 +70,7 @@ describe("BaseCLI tests", () => {
       new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
+      mockKeyReader,
     );
 
     let modifierHasRun = false;
@@ -125,9 +132,11 @@ describe("BaseCLI tests", () => {
       new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
-      true,
-      true,
+      mockKeyReader,
+      {
+        configFileSupportEnabled: true,
+        keyValueServiceEnabled: true,
+      },
     );
 
     let serviceProvider1Initialised = false;

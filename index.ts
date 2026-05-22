@@ -166,6 +166,7 @@ export type {
   InvalidArgumentReason,
   RunState,
 } from "./src/api/RunResult.ts";
+export type { default as BaseCLIFeatureOptions } from "./src/api/BaseCLIFeatureOptions.ts";
 export type { default as CLIConfig } from "./src/api/CLIConfig.ts";
 export type { default as CLI } from "./src/api/CLI.ts";
 

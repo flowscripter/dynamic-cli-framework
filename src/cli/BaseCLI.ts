@@ -38,6 +38,7 @@ import type PrinterService from "../api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
 import type Styler from "../terminal/Styler.ts";
 import type KeyReader from "../terminal/KeyReader.ts";
+import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
 import DefaultPrompterService, {
   DEFAULT_PROMPTER_CONFIG,
 } from "../service/prompter/DefaultPrompterService.ts";
@@ -75,14 +76,8 @@ const logger = getLogger("BaseCLI");
  */
 export default class BaseCLI implements CLI {
   readonly #cliConfig: CLIConfig;
-  readonly #envVarsEnabled: boolean;
-  readonly #configEnabled: boolean;
-  readonly #keyValueServiceEnabled: boolean;
-  readonly #secretServiceEnabled: boolean;
-  readonly #prompterEnabled: boolean;
-  readonly #argumentPrompterEnabled: boolean;
-  readonly #completionEnabled: boolean;
-  readonly #keyReader: KeyReader | undefined;
+  readonly #options: Required<BaseCLIFeatureOptions>;
+  readonly #keyReader: KeyReader;
   readonly #stderrTerminal: Terminal;
   readonly #addedNonModifierCommands: Array<Command>;
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
@@ -90,22 +85,6 @@ export default class BaseCLI implements CLI {
   readonly #context: DefaultContext;
   readonly #printerService: PrinterService;
 
-  /**
-   * Constructor configures the instance with the specified CLI application details and WritableStream instances.
-   *
-   * @param cliConfig the {@link CLIConfig} for the CLI application.
-   * @param stdoutWritableStream the WritableStream to use for stdout output.
-   * @param stderrWritableStream the WritableStream to use for stderr output.
-   * @param stdoutIsColor true if stdout supports color.
-   * @param stderrIsColor true if stderr supports color.
-   * @param stdoutTerminal the Terminal implementation to use for stdout.
-   * @param stderrTerminal the Terminal implementation to use for stderr.
-   * @param styler the Styler implementation to use.
-   * @param envVarsEnabled optionally support checking env variables for default argument values.
-   * @param configEnabled optionally enable configuration file support for default argument values.
-   * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
-   * @param validateAllCommands optionally force validation of all i.e. include validation of core commands.
-   */
   constructor(
     cliConfig: CLIConfig,
     stdoutWritableStream: WritableStream,
@@ -115,15 +94,8 @@ export default class BaseCLI implements CLI {
     stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
-    envVarsEnabled = false,
-    configEnabled = false,
-    keyValueServiceEnabled = false,
-    secretServiceEnabled = false,
-    validateAllCommands = false,
-    keyReader?: KeyReader,
-    prompterEnabled = false,
-    argumentPrompterEnabled = false,
-    completionEnabled = false,
+    keyReader: KeyReader,
+    options?: BaseCLIFeatureOptions,
   ) {
     if (cliConfig.name.length === 0) {
       throw new Error("Invalid empty CLI name provided");
@@ -143,30 +115,22 @@ export default class BaseCLI implements CLI {
       throw new Error("Invalid empty CLI version provided");
     }
     this.#cliConfig = cliConfig;
-    this.#envVarsEnabled = envVarsEnabled;
-    this.#configEnabled = configEnabled;
-    this.#keyValueServiceEnabled = keyValueServiceEnabled;
-    this.#secretServiceEnabled = secretServiceEnabled;
-    this.#prompterEnabled = prompterEnabled;
-    this.#argumentPrompterEnabled = argumentPrompterEnabled;
-    this.#completionEnabled = completionEnabled;
+    this.#options = {
+      configFileSupportEnabled: false,
+      envVarsSupportEnabled: false,
+      keyValueServiceEnabled: false,
+      secretServiceEnabled: false,
+      argumentPrompterServiceEnabled: false,
+      completionServiceEnabled: false,
+      validateAllCommands: false,
+      ...options,
+    };
     this.#keyReader = keyReader;
     this.#stderrTerminal = stderrTerminal;
-    if (argumentPrompterEnabled && !prompterEnabled) {
-      throw new Error(
-        "prompterEnabled must be true if argumentPrompterEnabled is true",
-      );
-    }
-    if (prompterEnabled && !keyReader) {
-      throw new Error(
-        "keyReader must be provided if prompterEnabled is true",
-      );
-    }
     this.#addedNonModifierCommands = [];
 
-    // create a validator if required
     let commandValidator: CommandValidator | undefined;
-    if (validateAllCommands) {
+    if (this.#options.validateAllCommands) {
       commandValidator = new CommandValidator(this.#cliConfig);
     }
 
@@ -248,27 +212,25 @@ export default class BaseCLI implements CLI {
     );
     this.addServiceProvider(new TableGeneratorServiceProvider(70));
 
-    if (this.#prompterEnabled && this.#keyReader) {
-      const prompterService = new DefaultPrompterService(
-        DEFAULT_PROMPTER_CONFIG,
-        this.#stderrTerminal,
-        this.#keyReader,
-        this.#printerService,
-      );
-      this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+    const prompterService = new DefaultPrompterService(
+      DEFAULT_PROMPTER_CONFIG,
+      this.#stderrTerminal,
+      this.#keyReader,
+      this.#printerService,
+    );
+    this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
 
-      if (this.#argumentPrompterEnabled) {
-        const argumentPrompterService = new DefaultArgumentPrompterService(
-          prompterService,
-        );
-        this.addServiceProvider(
-          new ArgumentPrompterServiceProvider(65, argumentPrompterService),
-        );
-      }
+    if (this.#options.argumentPrompterServiceEnabled) {
+      const argumentPrompterService = new DefaultArgumentPrompterService(
+        prompterService,
+      );
+      this.addServiceProvider(
+        new ArgumentPrompterServiceProvider(65, argumentPrompterService),
+      );
     }
 
     let completionService: DefaultCompletionService | undefined;
-    if (this.#completionEnabled) {
+    if (this.#options.completionServiceEnabled) {
       completionService = new DefaultCompletionService();
       this.addServiceProvider(
         new CompletionServiceProvider(60, completionService),
@@ -277,10 +239,10 @@ export default class BaseCLI implements CLI {
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,
-      this.#envVarsEnabled,
-      this.#configEnabled,
-      this.#keyValueServiceEnabled,
-      this.#secretServiceEnabled,
+      this.#options.envVarsSupportEnabled,
+      this.#options.configFileSupportEnabled,
+      this.#options.keyValueServiceEnabled,
+      this.#options.secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
 
@@ -314,23 +276,23 @@ export default class BaseCLI implements CLI {
         // a single-command CLI
         defaultCommand = this.#addedNonModifierCommands[0];
         helpSubCommand = new SingleCommandCliHelpSubCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           defaultCommand as SubCommand,
           this.#commandRegistry,
         );
         helpGlobalCommand = new SingleCommandCliHelpGlobalCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           defaultCommand as SubCommand,
           this.#commandRegistry,
         );
       } else {
         // a multi-command CLI
         helpSubCommand = new MultiCommandCliHelpSubCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           this.#commandRegistry,
         );
         helpGlobalCommand = new MultiCommandCliHelpGlobalCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           this.#commandRegistry,
         );
       }

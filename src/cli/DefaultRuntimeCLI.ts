@@ -3,6 +3,7 @@ import BaseCLI from "./BaseCLI.ts";
 import type RunResult from "../api/RunResult.ts";
 import { RunState } from "../api/RunResult.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
+import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
 import { Writable } from "node:stream";
 import TtyTerminal from "../terminal/TtyTerminal.ts";
 import TtyKeyReader from "../terminal/TtyKeyReader.ts";
@@ -13,20 +14,9 @@ import supportsColor from "supports-color";
  * Default Bun implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
  */
 export default class DefaultRuntimeCLI extends BaseCLI {
-  /**
-   * Constructor configures the instance with the specified CLI application details
-   * and making use of `process.stdout` and `process.stderr`.
-   */
   constructor(
     cliConfig: CLIConfig,
-    envVarsEnabled = false,
-    configEnabled = false,
-    keyValueServiceEnabled = false,
-    secretServiceEnabled = false,
-    validateAllCommands = false,
-    prompterEnabled = false,
-    argumentPrompterEnabled = false,
-    completionEnabled = false,
+    options?: BaseCLIFeatureOptions,
   ) {
     super(
       cliConfig,
@@ -39,24 +29,11 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       new TtyStyler(
         supportsColor.stderr === false ? 1 : supportsColor.stderr.level,
       ),
-      envVarsEnabled,
-      configEnabled,
-      keyValueServiceEnabled,
-      secretServiceEnabled,
-      validateAllCommands,
-      prompterEnabled && process.stdin.isTTY
-        ? new TtyKeyReader(process.stdin)
-        : undefined,
-      prompterEnabled,
-      argumentPrompterEnabled,
-      completionEnabled,
+      new TtyKeyReader(process.stdin),
+      options,
     );
   }
 
-  /**
-   * Run the CLI using `process.argv` for the arguments and call `process.exit()` passing the
-   * {@link RunState} value resulting from the invocation.
-   */
   override async run(): Promise<RunResult> {
     const runResult = await super.run(process.argv.slice(2));
     if (runResult.runState === RunState.RUNTIME_ERROR) {
