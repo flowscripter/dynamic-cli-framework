@@ -7,7 +7,9 @@ describe("FishShellHandler", () => {
 
   test("getDefaultConfigPath returns fish config.fish", () => {
     const configPath = handler.getDefaultConfigPath();
-    expect(configPath).toEndWith(path.sep + path.join(".config", "fish", "config.fish"));
+    expect(configPath).toEndWith(
+      path.sep + path.join(".config", "fish", "config.fish"),
+    );
   });
 
   test("getBootstrapScript generates correct complete command", () => {
