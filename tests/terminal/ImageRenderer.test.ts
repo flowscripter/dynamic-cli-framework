@@ -1,5 +1,6 @@
 import { deflateSync } from "node:zlib";
 import { describe, expect, test } from "bun:test";
+import supportsTerminalGraphics from "supports-terminal-graphics";
 import ImageRenderer from "../../src/terminal/ImageRenderer.ts";
 import type Terminal from "../../src/terminal/Terminal.ts";
 
@@ -120,15 +121,22 @@ function createMockTerminal(columns: number = 80, rows: number = 24): Terminal {
 }
 
 describe("ImageRenderer", () => {
-  test("renderImage returns ANSI block string in non-graphical terminal", async () => {
+  test("renderImage returns a string with correct protocol markers", async () => {
     const terminal = createMockTerminal(40, 20);
     const renderer = new ImageRenderer(terminal);
     const png = buildValidPng(4, 4, 6);
 
     const result = await renderer.renderImage(png, 50);
     expect(typeof result).toBe("string");
-    // ANSI blocks output should contain newlines (one per pair of rows)
-    expect(result).toContain("\n");
+    expect(result.length).toBeGreaterThan(0);
+
+    if (supportsTerminalGraphics.stdout.kitty) {
+      expect(result).toContain("\x1b_Gf=100");
+    } else if (supportsTerminalGraphics.stdout.iterm2) {
+      expect(result).toContain("\x1b]1337;File=inline=1;width=50%:");
+    } else {
+      expect(result).toContain("\n");
+    }
   });
 
   test("renderImage with default widthPercentage", async () => {
@@ -138,6 +146,7 @@ describe("ImageRenderer", () => {
 
     const result = await renderer.renderImage(png);
     expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
   });
 
   test("renderImage with RGB image (colorType=2)", async () => {
@@ -147,5 +156,6 @@ describe("ImageRenderer", () => {
 
     const result = await renderer.renderImage(png, 50);
     expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
   });
 });

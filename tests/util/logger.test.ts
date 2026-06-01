@@ -60,8 +60,9 @@ describe("logger with debug enabled", () => {
   test("debug-enabled logger exercises all wrapped levels", async () => {
     const tmpDir = await import("node:os").then((os) => os.tmpdir());
     const scriptFile = `${tmpDir}/logger_debug_test_${Date.now()}.ts`;
+    const projectRoot = import.meta.dir.replace(/\/tests\/util$/, "");
     const scriptContent = `
-import getLogger from "/home/nick/projects/flowscripter/dynamic-cli-framework/src/util/logger.ts";
+import getLogger from "${projectRoot}/src/util/logger.ts";
 const logger = getLogger("debugtest");
 logger.trace("trace msg");
 logger.debug("debug string");
@@ -77,8 +78,8 @@ console.log("OK");
     await Bun.write(scriptFile, scriptContent);
     try {
       const result = Bun.spawnSync({
-        cmd: ["bun", "run", scriptFile],
-        cwd: "/home/nick/projects/flowscripter/dynamic-cli-framework",
+        cmd: [process.execPath, "run", scriptFile],
+        cwd: projectRoot,
         env: {
           ...process.env,
           DYNAMIC_CLI_FRAMEWORK_DEBUG: "true",
