@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import DefaultCompletionService from "../../../src/service/completion/DefaultCompletionService.ts";
 import DefaultCommandRegistry from "../../../src/runtime/registry/DefaultCommandRegistry.ts";
@@ -262,7 +263,7 @@ describe("DefaultCompletionService", () => {
   test("getDefaultConfigPath delegates to shell handler", () => {
     const service = new DefaultCompletionService();
     const result = service.getDefaultConfigPath(ShellType.ZSH);
-    expect(result).toEndWith("/.zshrc");
+    expect(result).toEndWith(path.sep + ".zshrc");
   });
 
   test("parseCompletionContext delegates to shell handler", () => {

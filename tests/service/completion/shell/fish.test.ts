@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import FishShellHandler from "../../../../src/service/completion/shell/fish.ts";
 
@@ -5,8 +6,8 @@ describe("FishShellHandler", () => {
   const handler = new FishShellHandler();
 
   test("getDefaultConfigPath returns fish config.fish", () => {
-    const path = handler.getDefaultConfigPath();
-    expect(path).toEndWith("/.config/fish/config.fish");
+    const configPath = handler.getDefaultConfigPath();
+    expect(configPath).toEndWith(path.sep + path.join(".config", "fish", "config.fish"));
   });
 
   test("getBootstrapScript generates correct complete command", () => {

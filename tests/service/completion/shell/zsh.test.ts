@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import ZshShellHandler from "../../../../src/service/completion/shell/zsh.ts";
 
@@ -5,8 +6,8 @@ describe("ZshShellHandler", () => {
   const handler = new ZshShellHandler();
 
   test("getDefaultConfigPath returns ~/.zshrc", () => {
-    const path = handler.getDefaultConfigPath();
-    expect(path).toEndWith("/.zshrc");
+    const configPath = handler.getDefaultConfigPath();
+    expect(configPath).toEndWith(path.sep + ".zshrc");
   });
 
   test("getBootstrapScript generates correct function", () => {

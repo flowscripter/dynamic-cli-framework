@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import BashShellHandler from "../../../../src/service/completion/shell/bash.ts";
 
@@ -5,8 +6,8 @@ describe("BashShellHandler", () => {
   const handler = new BashShellHandler();
 
   test("getDefaultConfigPath returns ~/.bashrc", () => {
-    const path = handler.getDefaultConfigPath();
-    expect(path).toEndWith("/.bashrc");
+    const configPath = handler.getDefaultConfigPath();
+    expect(configPath).toEndWith(path.sep + ".bashrc");
   });
 
   test("getBootstrapScript generates correct function", () => {
