@@ -1,3 +1,4 @@
+import process from "node:process";
 import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import BashShellHandler from "../../../../src/service/completion/shell/bash.ts";
@@ -42,5 +43,31 @@ describe("BashShellHandler", () => {
     const ctx = handler.parseCompletionContext([]);
     expect(ctx.line).toEqual("");
     expect(ctx.cursorPosition).toEqual(0);
+  });
+
+  describe("validateEnvironment", () => {
+    const originalShell = process.env.SHELL;
+
+    test("returns true when SHELL ends with /bash", async () => {
+      process.env.SHELL = "/bin/bash";
+      const result = await handler.validateEnvironment();
+      expect(result).toBe(true);
+      process.env.SHELL = originalShell;
+    });
+
+    test("falls back to spawning bash --version when SHELL is not bash", async () => {
+      process.env.SHELL = "/bin/zsh";
+      const result = await handler.validateEnvironment();
+      // Result depends on whether bash is installed; just verify it returns a boolean
+      expect(typeof result).toBe("boolean");
+      process.env.SHELL = originalShell;
+    });
+
+    test("falls back to spawning bash --version when SHELL is empty", async () => {
+      process.env.SHELL = "";
+      const result = await handler.validateEnvironment();
+      expect(typeof result).toBe("boolean");
+      process.env.SHELL = originalShell;
+    });
   });
 });

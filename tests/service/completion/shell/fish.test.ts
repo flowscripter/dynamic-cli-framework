@@ -1,3 +1,4 @@
+import process from "node:process";
 import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import FishShellHandler from "../../../../src/service/completion/shell/fish.ts";
@@ -32,5 +33,30 @@ describe("FishShellHandler", () => {
     const ctx = handler.parseCompletionContext(["mycli he", "8"]);
     expect(ctx.line).toEqual("mycli he");
     expect(ctx.cursorPosition).toEqual(8);
+  });
+
+  describe("validateEnvironment", () => {
+    const originalShell = process.env.SHELL;
+
+    test("returns true when SHELL ends with /fish", async () => {
+      process.env.SHELL = "/usr/bin/fish";
+      const result = await handler.validateEnvironment();
+      expect(result).toBe(true);
+      process.env.SHELL = originalShell;
+    });
+
+    test("falls back to spawning fish --version when SHELL is not fish", async () => {
+      process.env.SHELL = "/bin/bash";
+      const result = await handler.validateEnvironment();
+      expect(typeof result).toBe("boolean");
+      process.env.SHELL = originalShell;
+    });
+
+    test("falls back to spawning fish --version when SHELL is empty", async () => {
+      process.env.SHELL = "";
+      const result = await handler.validateEnvironment();
+      expect(typeof result).toBe("boolean");
+      process.env.SHELL = originalShell;
+    });
   });
 });

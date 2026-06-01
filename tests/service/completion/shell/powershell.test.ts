@@ -1,3 +1,4 @@
+import process from "node:process";
 import { describe, expect, test } from "bun:test";
 import PowerShellShellHandler from "../../../../src/service/completion/shell/powershell.ts";
 
@@ -30,5 +31,29 @@ describe("PowerShellShellHandler", () => {
     const ctx = handler.parseCompletionContext(["mycli he", "8"]);
     expect(ctx.line).toEqual("mycli he");
     expect(ctx.cursorPosition).toEqual(8);
+  });
+
+  describe("validateEnvironment", () => {
+    test("returns a boolean", async () => {
+      // validateEnvironment tries pwsh first, then powershell fallback
+      // Result depends on whether either is installed
+      const result = await handler.validateEnvironment();
+      expect(typeof result).toBe("boolean");
+    });
+  });
+
+  describe("getDefaultConfigPath platform handling", () => {
+    test("path contains Microsoft.PowerShell_profile.ps1", () => {
+      const configPath = handler.getDefaultConfigPath();
+      expect(configPath).toContain("Microsoft.PowerShell_profile.ps1");
+      // On non-win32 platforms, path should contain .config/powershell
+      if (process.platform !== "win32") {
+        expect(configPath).toContain(".config");
+        expect(configPath).toContain("powershell");
+      } else {
+        expect(configPath).toContain("Documents");
+        expect(configPath).toContain("PowerShell");
+      }
+    });
   });
 });
