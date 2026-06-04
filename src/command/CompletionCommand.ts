@@ -60,7 +60,7 @@ export class CompletionIntegrationSubCommand implements SubCommand {
     const isValid = await completionService.validateShellEnvironment(shellType);
     if (!isValid) {
       await printerService.warn(
-        `Shell '${shellType}' was not detected in the current environment. Proceeding anyway.`,
+        `Shell '${shellType}' was not detected in the current environment. Proceeding anyway.\n`,
         Icon.ALERT,
       );
     }

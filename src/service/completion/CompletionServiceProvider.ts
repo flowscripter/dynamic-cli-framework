@@ -136,7 +136,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
         PRINTER_SERVICE_ID,
       ) as PrinterService;
       await printerService.warn(
-        `Shell '${shellType}' was not detected in the current environment. Proceeding anyway.`,
+        `Shell '${shellType}' was not detected in the current environment. Proceeding anyway.\n`,
         Icon.ALERT,
       );
     }
