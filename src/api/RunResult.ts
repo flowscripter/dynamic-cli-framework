@@ -34,6 +34,11 @@ export enum RunState {
    * General runtime error related to the framework.
    */
   RUNTIME_ERROR = 4,
+
+  /**
+   * Execution was interrupted by a signal (e.g. Ctrl-C or SIGTERM).
+   */
+  INTERRUPTED = 130,
 }
 
 /**

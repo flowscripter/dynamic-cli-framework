@@ -9,6 +9,7 @@ export enum PromptType {
   ACKNOWLEDGE = 2,
   TOGGLE = 3,
   TEXT = 4,
+  OPEN_URL = 5,
 }
 
 export interface PromptOption {

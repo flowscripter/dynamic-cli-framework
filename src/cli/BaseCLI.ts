@@ -23,10 +23,12 @@ import UsageCommand from "../command/UsageCommand.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
+  isGroupCommand,
   isSubCommand,
 } from "../runtime/command/CommandTypeGuards.ts";
 import CommandValidator from "../runtime/command/CommandValidator.ts";
 import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider.ts";
+import { shutdownState } from "../service/shutdown/ShutdownState.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
@@ -195,10 +197,11 @@ export default class BaseCLI implements CLI {
     if (
       (this.#addedNonModifierCommands.length === 1) &&
       !isSubCommand(this.#addedNonModifierCommands[0]!) &&
-      !isGlobalCommand(this.#addedNonModifierCommands[0]!)
+      !isGlobalCommand(this.#addedNonModifierCommands[0]!) &&
+      !isGroupCommand(this.#addedNonModifierCommands[0]!)
     ) {
       throw new Error(
-        "If only one command is added, if must be a global command or sub-command!",
+        "If only one command is added, it must be a global command, sub-command, or group command!",
       );
     }
 
@@ -272,7 +275,10 @@ export default class BaseCLI implements CLI {
 
     try {
       // setup help commands and default command based on the number of commands explicitly added via {@link addCommand)
-      if (this.#addedNonModifierCommands.length === 1) {
+      if (
+        this.#addedNonModifierCommands.length === 1 &&
+        !isGroupCommand(this.#addedNonModifierCommands[0]!)
+      ) {
         // a single-command CLI
         defaultCommand = this.#addedNonModifierCommands[0];
         helpSubCommand = new SingleCommandCliHelpSubCommand(
@@ -346,7 +352,12 @@ export default class BaseCLI implements CLI {
       }
       return runResult;
     } catch (error) {
-      // An unexpected error in the framework
+      if (
+        shutdownState.shutdownRequested ||
+        (error as Error).message === "Interrupted"
+      ) {
+        return { runState: RunState.INTERRUPTED };
+      }
       logger.error("Runtime error: %s", (error as Error).message);
       return {
         runState: RunState.RUNTIME_ERROR,

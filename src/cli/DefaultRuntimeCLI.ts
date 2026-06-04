@@ -9,6 +9,7 @@ import TtyTerminal from "../terminal/TtyTerminal.ts";
 import TtyKeyReader from "../terminal/TtyKeyReader.ts";
 import TtyStyler from "../terminal/TtyStyler.ts";
 import supportsColor from "supports-color";
+import supportsHyperlinks from "../terminal/supportsHyperlinks.ts";
 
 /**
  * Default Bun implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
@@ -28,6 +29,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       new TtyTerminal(process.stderr),
       new TtyStyler(
         supportsColor.stderr === false ? 1 : supportsColor.stderr.level,
+        supportsHyperlinks(process.stderr),
       ),
       new TtyKeyReader(process.stdin),
       options,

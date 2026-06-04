@@ -8,6 +8,7 @@ export enum SpecialKey {
   BACKSPACE = 6,
   ESCAPE = 7,
   TAB = 8,
+  INTERRUPT = 9,
 }
 
 export interface KeyEvent {

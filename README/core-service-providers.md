@@ -142,6 +142,26 @@ Provides:
 
 - `ShutdownService` allowing registration of callbacks for CLI shutdown.
 
+Handles SIGINT (Ctrl-C) and SIGTERM signals:
+
+- **Normal mode** (default): A single SIGINT triggers graceful shutdown (running
+  all registered shutdown listeners) then exits with code 130.
+- **Long-running mode**: Commands can opt in via `enterLongRunningMode()`. In
+  this mode, the first SIGINT sets a cooperative `isShutdownRequested` flag that
+  the command can poll. A third SIGINT forces graceful shutdown and exit.
+- **SIGTERM**: Always triggers immediate graceful shutdown and exits with code
+  143.
+
+Cooperative cancellation pattern which can be used in a long running command:
+
+```typescript
+shutdownService.enterLongRunningMode();
+while (!shutdownService.isShutdownRequested) {
+  // do work
+}
+shutdownService.leaveLongRunningMode();
+```
+
 ## `SyntaxHighlighterServiceProvider`
 
 Provides:

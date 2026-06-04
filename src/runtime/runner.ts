@@ -48,9 +48,16 @@ async function attemptPromptForMissingArguments(
   const service = context.getServiceById(
     ARGUMENT_PROMPTER_SERVICE_ID,
   ) as ArgumentPrompterService;
-  const updated = await service.promptForMissingArguments(parseResult);
-  if (updated.invalidArguments.length === 0) {
-    return updated;
+  try {
+    const updated = await service.promptForMissingArguments(parseResult);
+    if (updated.invalidArguments.length === 0) {
+      return updated;
+    }
+  } catch (error) {
+    if ((error as Error).message === "Interrupted") {
+      throw error;
+    }
+    return undefined;
   }
   return undefined;
 }
@@ -124,6 +131,9 @@ async function executeParsedCommand(
       await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
+    if ((err as Error).message === "Interrupted") {
+      throw err;
+    }
     await printCommandExecutionError(
       context,
       parseResult,

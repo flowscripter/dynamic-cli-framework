@@ -69,8 +69,7 @@ export default class TtyKeyReader implements KeyReader {
       case 0x09:
         return { specialKey: SpecialKey.TAB };
       case 0x03:
-        // Ctrl+C
-        return { specialKey: SpecialKey.ESCAPE };
+        return { specialKey: SpecialKey.INTERRUPT };
     }
 
     // printable characters

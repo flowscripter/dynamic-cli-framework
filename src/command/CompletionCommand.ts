@@ -12,8 +12,6 @@ import {
   ShellType,
 } from "../api/service/core/CompletionService.ts";
 import type DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
-import { KEY_VALUE_SERVICE_ID } from "../api/service/core/KeyValueService.ts";
-import type KeyValueService from "../api/service/core/KeyValueService.ts";
 import {
   Icon,
   PRINTER_SERVICE_ID,
@@ -102,13 +100,6 @@ export class CompletionIntegrationSubCommand implements SubCommand {
     }
 
     await Bun.write(configPath, newContent);
-
-    if (context.doesServiceExist(KEY_VALUE_SERVICE_ID)) {
-      const keyValueService = context.getServiceById(
-        KEY_VALUE_SERVICE_ID,
-      ) as KeyValueService;
-      await keyValueService.setKey("completion-status", "installed");
-    }
 
     await printerService.info(
       `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.\n`,

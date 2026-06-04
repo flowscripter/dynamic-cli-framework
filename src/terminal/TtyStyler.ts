@@ -10,7 +10,7 @@ import type Styler from "./Styler.ts";
 
 export default class TtyStyler implements Styler {
   colorEnabled: boolean = true;
-  hyperlinksEnabled: boolean = true;
+  hyperlinksEnabled: boolean;
 
   readonly colorLevel: number;
 
@@ -21,8 +21,9 @@ export default class TtyStyler implements Styler {
    * 2 = 256 color
    * 3 = 16 million color
    */
-  constructor(colorLevel: number = 1) {
+  constructor(colorLevel: number = 1, hyperlinksEnabled: boolean = true) {
     this.colorLevel = colorLevel;
+    this.hyperlinksEnabled = hyperlinksEnabled;
   }
 
   colorText(text: string, colorValue: number): string {

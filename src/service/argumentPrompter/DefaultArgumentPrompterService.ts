@@ -59,7 +59,10 @@ export default class DefaultArgumentPrompterService
       if (isSubCommand(parseResult.command)) {
         return await this.#promptForSubCommand(parseResult);
       }
-    } catch {
+    } catch (error) {
+      if ((error as Error).message === "Interrupted") {
+        throw error;
+      }
       return parseResult;
     }
 
