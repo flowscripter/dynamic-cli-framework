@@ -5,11 +5,11 @@ import SyntaxHighlighterServiceProvider from "../../../src/service/syntaxHighlig
 import { PRINTER_SERVICE_ID } from "../../../src/api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import StreamString from "../../fixtures/StreamString.ts";
-import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("SyntaxHighlighterServiceProvider tests", () => {
-  test("SyntaxHighlighterServiceProvider provide and initService works", async () => {
+  test("SyntaxHighlighterServiceProvider getServiceInfo and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const syntaxHighlighterServiceProvider =
@@ -26,12 +26,13 @@ describe("SyntaxHighlighterServiceProvider tests", () => {
         dummyStderr.writableStream,
         true,
         true,
+        new TtyTerminal(dummyStdout.writeStream),
         new TtyTerminal(dummyStderr.writeStream),
         new TtyStyler(3),
       ),
     );
 
-    const serviceInfo = await syntaxHighlighterServiceProvider.provide(
+    const serviceInfo = await syntaxHighlighterServiceProvider.getServiceInfo(
       cliConfig,
     );
     expect(serviceInfo.commands.length).toEqual(0);

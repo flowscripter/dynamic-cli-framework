@@ -6,9 +6,9 @@ import { PRINTER_SERVICE_ID } from "../../../src/api/service/core/PrinterService
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "../../../src/api/service/core/AsciiBannerGeneratorService.ts";
 import DefaultAsciiBannerGeneratorService from "../../../src/service/asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
-import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
-import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
@@ -17,9 +17,11 @@ import smallFont from "../asciiBannerGenerator/small.flf.json" with {
 };
 
 describe("BannerServiceProvider tests", () => {
-  test("BannerServiceProvider provide works", async () => {
+  test("BannerServiceProvider getServiceInfo works", async () => {
     const bannerServiceProvider = new BannerServiceProvider(100);
-    const serviceInfo = await bannerServiceProvider.provide(getCLIConfig());
+    const serviceInfo = await bannerServiceProvider.getServiceInfo(
+      getCLIConfig(),
+    );
     expect(serviceInfo.commands.length).toEqual(1);
   });
 
@@ -31,6 +33,7 @@ describe("BannerServiceProvider tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -61,6 +64,7 @@ describe("BannerServiceProvider tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );

@@ -26,6 +26,8 @@ import {
   Icon,
   PRINTER_SERVICE_ID,
 } from "../api/service/core/PrinterService.ts";
+import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
+import { TABLE_GENERATOR_SERVICE_ID } from "../api/service/core/TableGeneratorService.ts";
 
 /**
  * Provides common implementation for both {@link MultiCommandCliHelpGlobalCommand} and {@link MultiCommandCliHelpSubCommand}.
@@ -178,6 +180,9 @@ abstract class MultiCommandCliAbstractHelpCommand {
     const printerService = context.getServiceById(
       PRINTER_SERVICE_ID,
     ) as PrinterService;
+    const tableGeneratorService = context.getServiceById(
+      TABLE_GENERATOR_SERVICE_ID,
+    ) as TableGeneratorService;
 
     const globalModifierCommands = this.#commandRegistry
       .getGlobalModifierCommands();
@@ -210,7 +215,11 @@ abstract class MultiCommandCliAbstractHelpCommand {
       ),
     );
 
-    await printHelpSections(printerService, helpSections);
+    await printHelpSections(
+      printerService,
+      tableGeneratorService,
+      helpSections,
+    );
   }
 
   protected async printUsageHelp(
@@ -220,6 +229,9 @@ abstract class MultiCommandCliAbstractHelpCommand {
     const printerService = context.getServiceById(
       PRINTER_SERVICE_ID,
     ) as PrinterService;
+    const tableGeneratorService = context.getServiceById(
+      TABLE_GENERATOR_SERVICE_ID,
+    ) as TableGeneratorService;
 
     const groupCommands = this.#commandRegistry.getGroupCommands();
     const subCommands = this.#commandRegistry.getSubCommands();
@@ -300,7 +312,11 @@ abstract class MultiCommandCliAbstractHelpCommand {
       ...getCommandExamplesHelpSections(printerService, context, subCommand),
     );
 
-    await printHelpSections(printerService, helpSections);
+    await printHelpSections(
+      printerService,
+      tableGeneratorService,
+      helpSections,
+    );
   }
 }
 

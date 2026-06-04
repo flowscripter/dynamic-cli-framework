@@ -1,7 +1,7 @@
-import Styler from "./Styler.ts";
-import type Terminal from "./Terminal.ts";
+import type Styler from "../../../terminal/Styler.ts";
+import type Terminal from "../../../terminal/Terminal.ts";
 
-const FRAMES = [
+const BOX_FRAMES = [
   "⠋",
   "⠙",
   "⠹",
@@ -14,6 +14,20 @@ const FRAMES = [
   "⠏",
 ];
 
+const STAR_FRAMES = [
+  "★",
+  "✶",
+  "✷",
+  "✹",
+  "✷",
+  "✶",
+  "★",
+  "✦",
+];
+
+export { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
+import { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
+
 export default class Spinner {
   #isShown = false;
   #message: string | undefined;
@@ -21,6 +35,7 @@ export default class Spinner {
   #timer: Timer | undefined;
   #spinColor = 0x8a8a8a;
   #msgColor = 0x808080;
+  #style: SpinnerStyle = SpinnerStyle.BOX;
   readonly #terminal: Terminal;
   readonly #styler: Styler;
 
@@ -29,23 +44,28 @@ export default class Spinner {
     this.#styler = styler;
   }
 
+  get #frames(): string[] {
+    return this.#style === SpinnerStyle.STAR ? STAR_FRAMES : BOX_FRAMES;
+  }
+
   async #nextFrame(): Promise<void> {
     if (!this.#isShown) {
       return;
     }
+    const frames = this.#frames;
     await this.#terminal.clearLine();
     if (this.#message) {
       await this.#terminal.write(
-        `${this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor)} ${
-          this.#styler.colorText(this.#message!, this.#msgColor)
-        }`,
+        `${
+          this.#styler.colorText(frames[this.#frameIndex]!, this.#spinColor)
+        } ${this.#styler.colorText(this.#message!, this.#msgColor)}`,
       );
     } else {
       await this.#terminal.write(
-        this.#styler.colorText(FRAMES[this.#frameIndex], this.#spinColor),
+        this.#styler.colorText(frames[this.#frameIndex]!, this.#spinColor),
       );
     }
-    this.#frameIndex = (this.#frameIndex + 1) % FRAMES.length;
+    this.#frameIndex = (this.#frameIndex + 1) % frames.length;
   }
 
   public async show(message?: string): Promise<void> {
@@ -96,5 +116,9 @@ export default class Spinner {
 
   set messageColor(color: number) {
     this.#msgColor = color;
+  }
+
+  set spinnerStyle(style: SpinnerStyle) {
+    this.#style = style;
   }
 }

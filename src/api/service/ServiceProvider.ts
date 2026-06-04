@@ -18,7 +18,7 @@ export interface ServiceInfo {
 }
 
 /**
- * Interface allowing services to be provided to the CLI.
+ * Interface allowing a service to be provided to the CLI.
  */
 export interface ServiceProvider {
   /**
@@ -33,11 +33,11 @@ export interface ServiceProvider {
   readonly servicePriority: number;
 
   /**
-   * Return {@link ServiceInfo} containing the service and any commands which should be registered in the CLI.
+   * Return {@link ServiceInfo} containing the service and any commands it provides which should be registered in the CLI.
    *
    * @param cliConfig the {@link CLIConfig} for the CLI.
    */
-  provide(cliConfig: CLIConfig): Promise<ServiceInfo>;
+  getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo>;
 
   /**
    * Initialise the service. This will be invoked AFTER any {@link GlobalModifierCommand} provided in the

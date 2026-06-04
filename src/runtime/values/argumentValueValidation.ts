@@ -120,7 +120,7 @@ function validatePrimitiveValue(
       (argument.type === ArgumentValueTypeName.STRING) &&
       argument.isCaseInsensitive
     ) {
-      searchValue = convertedValue.toLowerCase();
+      searchValue = (convertedValue as string).toLowerCase();
       allowableValues = argument.allowableValues.map((v) =>
         (v as string).toLowerCase()
       );
@@ -136,7 +136,7 @@ function validatePrimitiveValue(
     }
   }
   if (argument.minValueInclusive !== undefined) {
-    if (convertedValue < argument.minValueInclusive) {
+    if ((convertedValue as number) < argument.minValueInclusive) {
       return {
         invalidArgument: {
           argument,
@@ -148,7 +148,7 @@ function validatePrimitiveValue(
   }
 
   if (argument.maxValueInclusive !== undefined) {
-    if (convertedValue > argument.maxValueInclusive) {
+    if ((convertedValue as number) > argument.maxValueInclusive) {
       return {
         invalidArgument: {
           argument,
@@ -275,7 +275,7 @@ function validateObjectValue(
   const convertedObjectValue: ArgumentValues = {};
 
   for (let i = 0; i < argument.properties.length; i++) {
-    const propertyArg = argument.properties[i];
+    const propertyArg = argument.properties[i]!;
     const propertyValue = objectValue[propertyArg.name];
 
     if (propertyValue === undefined) {
@@ -306,7 +306,10 @@ function validateObjectValue(
           },
         };
       }
-      validationResult = validateArrayValue(propertyArg, propertyValue);
+      validationResult = validateArrayValue(
+        propertyArg as ComplexOption | SubCommandArgument,
+        propertyValue,
+      );
     } else if (typeof propertyValue === "object") {
       if (propertyArg.type !== ComplexValueTypeName.COMPLEX) {
         return {
@@ -468,6 +471,24 @@ function doSubCommandArgumentValidation(
       invalidArguments.push(validationResult.invalidArgument);
       return undefined;
     }
+    if (argument.validate && validationResult.validValue !== undefined) {
+      const customError = argument.validate(
+        validationResult.validValue as
+          | ArgumentValueType
+          | ArgumentValues
+          | Array<ArgumentValues>,
+      );
+      if (customError !== undefined) {
+        invalidArguments.push({
+          argument,
+          name: argument.name,
+          value: validationResult.validValue as PopulatedArgumentValueType,
+          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+          message: customError,
+        });
+        return undefined;
+      }
+    }
     return validationResult.validValue as
       | PopulatedArgumentValueType
       | PopulatedArgumentValues
@@ -574,6 +595,24 @@ export function validateGlobalCommandArgumentValue(
       return undefined;
     }
 
+    if (
+      globalCommandArgument.validate &&
+      validationResult.validValue !== undefined
+    ) {
+      const customError = globalCommandArgument.validate(
+        validationResult.validValue as ArgumentValueType,
+      );
+      if (customError !== undefined) {
+        invalidArguments.push({
+          argument: globalCommandArgument,
+          name: globalCommand.name,
+          value: validationResult.validValue,
+          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+          message: customError,
+        });
+        return undefined;
+      }
+    }
     return validationResult.validValue as PopulatedArgumentSingleValueType;
   }
 
@@ -640,6 +679,11 @@ export function getInvalidArgumentString(
       break;
     case InvalidArgumentReason.OPTION_IS_COMPLEX:
       invalidString = "(specified option is complex)";
+      break;
+    case InvalidArgumentReason.CUSTOM_VALIDATION:
+      invalidString = invalidArgument.message
+        ? `(custom validation: ${invalidArgument.message})`
+        : "(custom validation failed)";
       break;
     default:
       invalidString = "";

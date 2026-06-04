@@ -9,8 +9,8 @@ import type Context from "../../src/api/Context.ts";
 import type Command from "../../src/api/command/Command.ts";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals } from "../fixtures/util.ts";
-import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/terminal/TtyStyler.ts";
 
 describe("UsageCommand tests", () => {
   test("Usage works", async () => {
@@ -21,6 +21,7 @@ describe("UsageCommand tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );

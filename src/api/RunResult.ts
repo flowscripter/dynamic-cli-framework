@@ -34,6 +34,11 @@ export enum RunState {
    * General runtime error related to the framework.
    */
   RUNTIME_ERROR = 4,
+
+  /**
+   * Execution was interrupted by a signal (e.g. Ctrl-C or SIGTERM).
+   */
+  INTERRUPTED = 130,
 }
 
 /**
@@ -84,6 +89,11 @@ export enum InvalidArgumentReason {
    * Attempt to set a primitive value on a complex object object.
    */
   OPTION_IS_COMPLEX = 8,
+
+  /**
+   * The value failed a custom validation function defined on the argument.
+   */
+  CUSTOM_VALIDATION = 9,
 }
 
 /**
@@ -114,6 +124,12 @@ export interface InvalidArgument {
     | PopulatedArgumentValues
     | PopulatedArgumentValueType
     | Array<PopulatedArgumentValues | PopulatedArgumentValueType>;
+
+  /**
+   * An optional message providing detail about the validation failure.
+   * Populated when {@link reason} is {@link InvalidArgumentReason.CUSTOM_VALIDATION}.
+   */
+  readonly message?: string;
 }
 
 /**

@@ -3,25 +3,21 @@ import BaseCLI from "./BaseCLI.ts";
 import type RunResult from "../api/RunResult.ts";
 import { RunState } from "../api/RunResult.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
+import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
 import { Writable } from "node:stream";
-import TtyTerminal from "../service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../terminal/TtyTerminal.ts";
+import TtyKeyReader from "../terminal/TtyKeyReader.ts";
+import TtyStyler from "../terminal/TtyStyler.ts";
 import supportsColor from "supports-color";
+import supportsHyperlinks from "../terminal/supportsHyperlinks.ts";
 
 /**
  * Default Bun implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
  */
 export default class DefaultRuntimeCLI extends BaseCLI {
-  /**
-   * Constructor configures the instance with the specified CLI application details
-   * and making use of `process.stdout` and `process.stderr`.
-   */
   constructor(
     cliConfig: CLIConfig,
-    envVarsEnabled = false,
-    configEnabled = false,
-    keyValueServiceEnabled = false,
-    validateAllCommands = false,
+    options?: BaseCLIFeatureOptions,
   ) {
     super(
       cliConfig,
@@ -29,21 +25,17 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       Writable.toWeb(process.stderr),
       supportsColor.stdout !== false,
       supportsColor.stderr !== false,
+      new TtyTerminal(process.stdout),
       new TtyTerminal(process.stderr),
       new TtyStyler(
         supportsColor.stderr === false ? 1 : supportsColor.stderr.level,
+        supportsHyperlinks(process.stderr),
       ),
-      envVarsEnabled,
-      configEnabled,
-      keyValueServiceEnabled,
-      validateAllCommands,
+      new TtyKeyReader(process.stdin),
+      options,
     );
   }
 
-  /**
-   * Run the CLI using `process.argv` for the arguments and call `process.exit()` passing the
-   * {@link RunState} value resulting from the invocation.
-   */
   override async run(): Promise<RunResult> {
     const runResult = await super.run(process.argv.slice(2));
     if (runResult.runState === RunState.RUNTIME_ERROR) {

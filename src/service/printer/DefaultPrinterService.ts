@@ -1,17 +1,22 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
-import { type Icon, Level } from "../../api/service/core/PrinterService.ts";
-import Terminal from "./terminal/Terminal.ts";
+import {
+  type Icon,
+  Level,
+  type ProgressStyle,
+  type SpinnerStyle,
+} from "../../api/service/core/PrinterService.ts";
+import type Terminal from "../../terminal/Terminal.ts";
 import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
 import { WritableStream } from "node:stream/web";
-import Styler from "./terminal/Styler.ts";
-
+import type Styler from "../../terminal/Styler.ts";
 export default class DefaultPrinterService implements PrinterService {
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;
   #stdoutIsColor: boolean;
+  #stdoutTerminal: Terminal;
   #stderrTerminal: Terminal;
   #styler: Styler;
   #isDarkMode = true;
@@ -46,12 +51,14 @@ export default class DefaultPrinterService implements PrinterService {
     stderrWritableStream: WritableStream,
     stdoutIsColor: boolean,
     stderrIsColor: boolean,
+    stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
   ) {
     this.stdoutWritable = stdoutWritableStream;
     this.stderrWritable = stderrWritableStream;
     this.#stdoutIsColor = stdoutIsColor;
+    this.#stdoutTerminal = stdoutTerminal;
     this.#stderrTerminal = stderrTerminal;
     this.#styler = styler;
     this.#styler.colorEnabled = stderrIsColor;
@@ -90,6 +97,26 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#styler.colorEnabled;
   }
 
+  set hyperlinksEnabled(enabled: boolean) {
+    this.#styler.hyperlinksEnabled = enabled;
+  }
+
+  get hyperlinksEnabled(): boolean {
+    return this.#styler.hyperlinksEnabled;
+  }
+
+  public hyperlink(text: string, url: string): string {
+    return this.#styler.hyperlink(text, url);
+  }
+
+  public stdoutColumns(): number {
+    return this.#stdoutTerminal.columns();
+  }
+
+  public stderrColumns(): number {
+    return this.#stderrTerminal.columns();
+  }
+
   set darkMode(isDarkMode: boolean) {
     this.#isDarkMode = isDarkMode;
     if (isDarkMode) {
@@ -97,12 +124,12 @@ export default class DefaultPrinterService implements PrinterService {
     } else {
       this.#theme = getLightModeTheme();
     }
-    this.#spinner.spinnerColor = this.#theme[Color.EMPHASISED];
-    this.#spinner.messageColor = this.#theme[Color.PRIMARY];
-    this.#progress.completeColor = this.#theme[Color.GREEN];
-    this.#progress.remainingColor = this.#theme[Color.SECONDARY];
-    this.#progress.labelColor = this.#theme[Color.SECONDARY];
-    this.#progress.valueColor = this.#theme[Color.PRIMARY];
+    this.#spinner.spinnerColor = this.#theme[Color.EMPHASISED]!;
+    this.#spinner.messageColor = this.#theme[Color.PRIMARY]!;
+    this.#progress.completeColor = this.#theme[Color.GREEN]!;
+    this.#progress.remainingColor = this.#theme[Color.SECONDARY]!;
+    this.#progress.labelColor = this.#theme[Color.SECONDARY]!;
+    this.#progress.valueColor = this.#theme[Color.PRIMARY]!;
   }
 
   get darkMode(): boolean {
@@ -110,19 +137,19 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public primary(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.PRIMARY]);
+    return this.#styler.colorText(message, this.#theme[Color.PRIMARY]!);
   }
 
   public secondary(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.SECONDARY]);
+    return this.#styler.colorText(message, this.#theme[Color.SECONDARY]!);
   }
 
   public emphasised(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.EMPHASISED]);
+    return this.#styler.colorText(message, this.#theme[Color.EMPHASISED]!);
   }
 
   public selected(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.SELECTED]);
+    return this.#styler.colorText(message, this.#theme[Color.SELECTED]!);
   }
 
   public italic(message: string): string {
@@ -130,52 +157,135 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public yellow(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.YELLOW]);
+    return this.#styler.colorText(message, this.#theme[Color.YELLOW]!);
   }
 
   public orange(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.ORANGE]);
+    return this.#styler.colorText(message, this.#theme[Color.ORANGE]!);
   }
 
   public red(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.RED]);
+    return this.#styler.colorText(message, this.#theme[Color.RED]!);
   }
 
   public magenta(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.MAGENTA]);
+    return this.#styler.colorText(message, this.#theme[Color.MAGENTA]!);
   }
 
   public violet(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.VIOLET]);
+    return this.#styler.colorText(message, this.#theme[Color.VIOLET]!);
   }
 
   public blue(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.BLUE]);
+    return this.#styler.colorText(message, this.#theme[Color.BLUE]!);
   }
 
   public cyan(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.CYAN]);
+    return this.#styler.colorText(message, this.#theme[Color.CYAN]!);
   }
 
   public green(message: string): string {
-    return this.#styler.colorText(message, this.#theme[Color.GREEN]);
+    return this.#styler.colorText(message, this.#theme[Color.GREEN]!);
   }
 
-  public color(message: string, hexFormattedColor: string): string {
+  #parseHexColor(hexFormattedColor: string): number {
     if (
       (hexFormattedColor.length !== 7) ||
       (!hexFormattedColor.toLowerCase().startsWith("#"))
     ) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);
     }
-
     const colorValue = parseInt(hexFormattedColor.slice(1), 16);
-
     if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);
     }
+    return colorValue;
+  }
 
-    return this.#styler.colorText(message, colorValue);
+  public color(message: string, hexFormattedColor: string): string {
+    return this.#styler.colorText(
+      message,
+      this.#parseHexColor(hexFormattedColor),
+    );
+  }
+
+  public backgroundPrimary(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.PRIMARY]!,
+    );
+  }
+
+  public backgroundSecondary(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.SECONDARY]!,
+    );
+  }
+
+  public backgroundEmphasised(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.EMPHASISED]!,
+    );
+  }
+
+  public backgroundSelected(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.SELECTED]!,
+    );
+  }
+
+  public backgroundYellow(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.YELLOW]!,
+    );
+  }
+
+  public backgroundOrange(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.ORANGE]!,
+    );
+  }
+
+  public backgroundRed(message: string): string {
+    return this.#styler.backgroundColorText(message, this.#theme[Color.RED]!);
+  }
+
+  public backgroundMagenta(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.MAGENTA]!,
+    );
+  }
+
+  public backgroundViolet(message: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#theme[Color.VIOLET]!,
+    );
+  }
+
+  public backgroundBlue(message: string): string {
+    return this.#styler.backgroundColorText(message, this.#theme[Color.BLUE]!);
+  }
+
+  public backgroundCyan(message: string): string {
+    return this.#styler.backgroundColorText(message, this.#theme[Color.CYAN]!);
+  }
+
+  public backgroundGreen(message: string): string {
+    return this.#styler.backgroundColorText(message, this.#theme[Color.GREEN]!);
+  }
+
+  public backgroundColor(message: string, hexFormattedColor: string): string {
+    return this.#styler.backgroundColorText(
+      message,
+      this.#parseHexColor(hexFormattedColor),
+    );
   }
 
   public async debug(message: string, icon?: Icon): Promise<void> {
@@ -226,10 +336,16 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#threshold;
   }
 
-  public async showSpinner(message?: string): Promise<void> {
+  public async showSpinner(
+    message?: string,
+    style?: SpinnerStyle,
+  ): Promise<void> {
     await this.#progress.hideAll();
     if (this.#threshold > Level.INFO) {
       return;
+    }
+    if (style != null) {
+      this.#spinner.spinnerStyle = style;
     }
     await this.#spinner.show(message);
   }
@@ -243,10 +359,14 @@ export default class DefaultPrinterService implements PrinterService {
     message = "",
     total = 100,
     current = 0,
+    style?: ProgressStyle,
   ): Promise<number> {
     await this.#spinner.hide();
     if (this.#threshold > Level.INFO) {
       return -1;
+    }
+    if (style != null) {
+      this.#progress.progressStyle = style;
     }
 
     return this.#progress.add(units, message, total, current);

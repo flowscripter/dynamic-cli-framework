@@ -46,7 +46,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     this.#configurationServiceProvider = configurationServiceProvider;
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       commands: [
         new NoBannerCommand(this, this.servicePriority),
@@ -70,7 +70,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     const { cliConfig } = context;
     const bannerText = await asciiBannerGeneratorService.generate(
       cliConfig.name.toUpperCase(),
-      this.fontName,
+      { fontName: this.fontName, subMessage: cliConfig.subMessage },
     );
 
     await printerService.info(printerService.blue(bannerText));

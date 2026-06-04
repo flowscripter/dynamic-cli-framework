@@ -27,7 +27,7 @@ export default class PrettyPrinterServiceProvider implements ServiceProvider {
     this.#defaultPrettyPrinterService = new DefaultPrettyPrinterService();
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#defaultPrettyPrinterService,
       commands: [],

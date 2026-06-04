@@ -8,8 +8,8 @@ import {
 } from "../../fixtures/util.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import { Icon, Level } from "../../../src/api/service/core/PrinterService.ts";
-import TtyTerminal from "../../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 
 describe("DefaultPrinterService tests", () => {
@@ -21,6 +21,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -39,6 +40,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -118,6 +120,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -185,6 +188,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -206,6 +210,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -224,6 +229,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -242,6 +248,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -268,6 +275,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -313,6 +321,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -341,6 +350,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -369,6 +379,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -434,6 +445,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -462,6 +474,7 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
@@ -493,5 +506,223 @@ describe("DefaultPrinterService tests", () => {
       dummyStderr.getString(),
       "bar1",
     );
+  });
+
+  test("backgroundBlue with colorLevel 3 and colorEnabled produces background ANSI code", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    const result = printerService.backgroundBlue("text");
+    expect(result).toStartWith("\x1b[48;2;");
+    expect(result).toEndWith("\x1b[49m");
+  });
+
+  test("backgroundColor with colorLevel 3 produces background ANSI code", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    const result = printerService.backgroundColor("text", "#268bd2");
+    expect(result).toStartWith("\x1b[48;2;");
+    expect(result).toEndWith("\x1b[49m");
+  });
+
+  test("backgroundColor with invalid color throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    expect(() => printerService.backgroundColor("text", "invalid")).toThrow(
+      "Invalid color: invalid",
+    );
+  });
+
+  test("backgroundBlue with colorEnabled false returns plain text", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+    const result = printerService.backgroundBlue("text");
+    expectStringEquals(result, "text");
+  });
+
+  test("all named background methods produce background ANSI codes when colorEnabled", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    for (
+      const method of [
+        "backgroundYellow",
+        "backgroundOrange",
+        "backgroundRed",
+        "backgroundMagenta",
+        "backgroundViolet",
+        "backgroundBlue",
+        "backgroundCyan",
+        "backgroundGreen",
+      ] as const
+    ) {
+      const result = printerService[method]("text");
+      expect(result).toStartWith("\x1b[48;2;");
+      expect(result).toEndWith("\x1b[49m");
+    }
+  });
+
+  test("all semantic background methods produce background ANSI codes when colorEnabled", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = true;
+    for (
+      const method of [
+        "backgroundPrimary",
+        "backgroundSecondary",
+        "backgroundEmphasised",
+        "backgroundSelected",
+      ] as const
+    ) {
+      const result = printerService[method]("text");
+      expect(result).toStartWith("\x1b[48;2;");
+      expect(result).toEndWith("\x1b[49m");
+    }
+  });
+
+  test("hyperlinksEnabled defaults to true", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    expect(printerService.hyperlinksEnabled).toBeTrue();
+  });
+
+  test("hyperlink with hyperlinksEnabled returns OSC 8 wrapped text", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    const result = printerService.hyperlink(
+      "click here",
+      "https://example.com",
+    );
+    expect(result).toEqual(
+      "\x1b]8;;\x68ttps://example.com\x07click here\x1b]8;;\x07",
+    );
+  });
+
+  test("hyperlink with hyperlinksEnabled false returns url", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.hyperlinksEnabled = false;
+    const result = printerService.hyperlink(
+      "click here",
+      "https://example.com",
+    );
+    expect(result).toEqual("click here: https://example.com");
+  });
+
+  test("all background methods return plain text when colorEnabled is false", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+    for (
+      const method of [
+        "backgroundPrimary",
+        "backgroundSecondary",
+        "backgroundEmphasised",
+        "backgroundSelected",
+        "backgroundYellow",
+        "backgroundOrange",
+        "backgroundRed",
+        "backgroundMagenta",
+        "backgroundViolet",
+        "backgroundBlue",
+        "backgroundCyan",
+        "backgroundGreen",
+      ] as const
+    ) {
+      expectStringEquals(printerService[method]("text"), "text");
+    }
   });
 });

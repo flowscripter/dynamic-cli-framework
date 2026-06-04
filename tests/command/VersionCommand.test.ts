@@ -6,8 +6,8 @@ import { PRINTER_SERVICE_ID } from "../../src/api/service/core/PrinterService.ts
 import DefaultPrinterService from "../../src/service/printer/DefaultPrinterService.ts";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals } from "../fixtures/util.ts";
-import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/terminal/TtyStyler.ts";
 
 describe("VersionCommand tests", () => {
   test("Version works", async () => {
@@ -18,6 +18,7 @@ describe("VersionCommand tests", () => {
       dummyStderr.writableStream,
       true,
       true,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );

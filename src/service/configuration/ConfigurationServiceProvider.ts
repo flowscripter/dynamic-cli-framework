@@ -16,8 +16,12 @@ import type {
 import getLogger from "../../util/logger.ts";
 import type Context from "../../api/Context.ts";
 import DumpConfigCommand from "./command/DumpConfigCommand.ts";
-import { KEY_VALUE_SERVICE_ID } from "../../api/service/core/KeyValueService.ts";
+import {
+  KEY_VALUE_SERVICE_ID,
+  SECRET_SENTINEL_PREFIX,
+} from "../../api/service/core/KeyValueService.ts";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
+import DefaultSecretService from "./DefaultSecretService.ts";
 import type Command from "../../api/command/Command.ts";
 import argumentValueMerge from "../../runtime/values/argumentValueMerge.ts";
 import {
@@ -79,6 +83,11 @@ const logger = getLogger("ConfigurationServiceProvider");
  * default configuration will be used. The location of the configuration file can be modified via the
  * {@link ConfigCommand}.
  *
+ * NOTE: You may store default arguments for secrets by manually configuring secrets in your OS
+ * credential store and referencing them in the config file using the sentinel format
+ * `__SECRET__:<bun_secret_name>`. These values will be resolved from the OS secret store
+ * before being returned as default argument values. See "Generic Key-Value Service" below.
+ *
  * *Environment Variables*
  *
  * Values are parsed using a key path defined by custom {@link Argument.configurationKey}
@@ -119,11 +128,20 @@ const logger = getLogger("ConfigurationServiceProvider");
  * **Generic Key-Value Service**
  *
  * The same configuration file above is used to provide storage for the provided {@link KeyValueService}. The values
- * are stored under a top level `key-values` property. These are not expected to be modified by the user of the CLI.
+ * are stored under a top level `key-values` property. These are expected to not be modified by the user of the CLI.
  *
  * The second and third level of properties is used to scope the key-values to specific command names
  * (via {@link Command.name} values) and specific service IDs (via {@link ServiceInfo.serviceId} values).
  * Both keys and values are string based.
+ *
+ * Values may be stored as OS-native secrets via {@link KeyValueService.setKey} with `isSecret=true`.
+ * When a value is stored as a secret, a sentinel value of the format `__SECRET__:<bun_secret_name>`
+ * is stored in the config file instead of the actual value. The actual value is stored in the OS
+ * credential store via Bun.secrets. The sentinel prefix `__SECRET__:` is reserved and must not be
+ * used for regular key-value data.
+ *
+ * Secret support requires `secretServiceEnabled=true` in the constructor (which also requires
+ * `configEnabled=true`).
  *
  * As an example:
  * ```
@@ -135,7 +153,7 @@ const logger = getLogger("ConfigurationServiceProvider");
  *        "commands": {
  *            "command1": {
  *               "foo1": "bar1",
- *               "foo2": "bar2"
+ *               "foo2": "__SECRET__:command_command1_foo2"
  *            },
  *            "command2": {
  *                "foo1": "bar3"
@@ -157,6 +175,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public readonly envVarsEnabled: boolean;
   public readonly configEnabled: boolean;
   public readonly keyValueServiceEnabled: boolean;
+  public readonly secretServiceEnabled: boolean;
 
   // the location of the currently managed configuration data
   public configLocation: string | undefined;
@@ -178,7 +197,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   #serviceKeyValueData = new Map<string, Map<string, string>>();
 
   // the optional service providing scope limited key-value data to commands and other services
-  readonly #defaultKeyValueService: DefaultKeyValueService | undefined;
+  #defaultKeyValueService: DefaultKeyValueService | undefined;
+
+  // the optional service providing OS-native secret storage
+  #defaultSecretService: DefaultSecretService | undefined;
 
   #currentCommandNameKeyValueScope: string | undefined;
   #currentServiceIdKeyValueScope: string | undefined;
@@ -190,36 +212,49 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @param envVarsEnabled optionally support checking env variables for default argument values.
    * @param configEnabled optionally enable configuration file support for default argument values.
    * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
+   * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets: `configEnabled` must be true in this case
    */
   public constructor(
     servicePriority: number,
     envVarsEnabled = false,
     configEnabled = false,
     keyValueServiceEnabled = false,
+    secretServiceEnabled = false,
   ) {
     if (!configEnabled && keyValueServiceEnabled) {
       throw new Error(
         "configEnabled must be true if keyValueServiceEnabled is true",
       );
     }
+    if (!configEnabled && secretServiceEnabled) {
+      throw new Error(
+        "configEnabled must be true if secretServiceEnabled is true",
+      );
+    }
     this.servicePriority = servicePriority;
     this.envVarsEnabled = envVarsEnabled;
     this.configEnabled = configEnabled;
     this.keyValueServiceEnabled = keyValueServiceEnabled;
-    if (keyValueServiceEnabled) {
-      this.#defaultKeyValueService = new DefaultKeyValueService();
-    }
+    this.secretServiceEnabled = secretServiceEnabled;
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
     const commands: Array<Command> = [];
 
     if (this.configEnabled) {
       commands.push(new ConfigCommand(this, this.servicePriority));
       commands.push(new DumpConfigCommand(this));
     }
+    if (this.secretServiceEnabled) {
+      this.#defaultSecretService = new DefaultSecretService(cliConfig.name);
+    }
+    if (this.keyValueServiceEnabled || this.secretServiceEnabled) {
+      this.#defaultKeyValueService = new DefaultKeyValueService(
+        this.#defaultSecretService,
+      );
+    }
     return Promise.resolve({
-      // this may be undefined if keyValueServiceEnabled is false
+      // this may be undefined if keyValueServiceEnabled and secretServiceEnabled are false
       service: this.#defaultKeyValueService,
       // this may be empty if configEnabled is false
       commands,
@@ -231,17 +266,19 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   }
 
   /**
-   * Retrieve the defaults command argument values (if any) for the provided {@link Command}.
+   * Retrieve the default command argument values (if any) for the provided {@link Command}.
    *
    * This will retrieve values both from the configuration location and environment variables.
    *
    * @param cliConfig the {@link CLIConfig} to use for retrieving configuration keys.
    * @param command the {@link Command} instance to retrieve default argument values for.
    */
-  public getDefaultArgumentValues(
+  public async getDefaultArgumentValues(
     cliConfig: CLIConfig,
     command: Command,
-  ): PopulatedArgumentValues | PopulatedArgumentValueType | undefined {
+  ): Promise<
+    PopulatedArgumentValues | PopulatedArgumentValueType | undefined
+  > {
     if (!this.configEnabled) {
       logger.debug(
         "configuration of default values is not enabled",
@@ -265,6 +302,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       return undefined;
     }
 
+    let result:
+      | PopulatedArgumentValues
+      | PopulatedArgumentValueType
+      | undefined;
+
     if (isGlobalModifierCommand(command) || isGlobalCommand(command)) {
       const configuredValue = this.defaultsData.get(
         command.name,
@@ -276,11 +318,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         )
         : undefined;
       // default to environment variable value
-      if (envVarValue !== undefined) {
-        return envVarValue;
-      }
-
-      return configuredValue;
+      result = envVarValue !== undefined ? envVarValue : configuredValue;
     } else if (isSubCommand(command)) {
       const configuredValues = this.defaultsData.get(
         command.name,
@@ -292,16 +330,56 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         )
         : undefined;
       if (envVarValues === undefined) {
-        return configuredValues;
+        result = configuredValues;
+      } else if (configuredValues === undefined) {
+        result = envVarValues;
+      } else {
+        result = argumentValueMerge(
+          envVarValues,
+          configuredValues,
+        ) as PopulatedArgumentValues;
       }
-      if (configuredValues === undefined) {
-        return envVarValues;
-      }
-      return argumentValueMerge(
-        envVarValues,
-        configuredValues,
-      ) as PopulatedArgumentValues;
     }
+
+    if (result !== undefined && this.#defaultSecretService) {
+      result = await this.#resolveSecrets(result);
+    }
+
+    return result;
+  }
+
+  async #resolveSecrets(
+    value: PopulatedArgumentValues | PopulatedArgumentValueType,
+  ): Promise<PopulatedArgumentValues | PopulatedArgumentValueType> {
+    if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
+      const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
+      const secretValue = await this.#defaultSecretService!.getSecret(
+        bunSecretName,
+      );
+      if (secretValue === null) {
+        throw new Error(
+          `Secret not found in OS secret store for sentinel: '${value}'`,
+        );
+      }
+      return secretValue;
+    }
+    if ((typeof value === "object") && (value !== null)) {
+      if (Array.isArray(value)) {
+        const resolved = [];
+        for (const item of value) {
+          resolved.push(await this.#resolveSecrets(item));
+        }
+        return resolved as unknown as PopulatedArgumentValues;
+      }
+      const resolved: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value)) {
+        resolved[key] = await this.#resolveSecrets(
+          val as PopulatedArgumentValueType,
+        );
+      }
+      return resolved as unknown as PopulatedArgumentValues;
+    }
+    return value;
   }
 
   /**
@@ -313,9 +391,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @throws {Error} if an existing scope is set.
    */
   public setCommandKeyValueScope(commandName: string): void {
-    if (!this.keyValueServiceEnabled) {
+    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
       throw new Error(
-        `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService/SecretService which is not enabled`,
       );
     }
     if (this.#currentCommandNameKeyValueScope) {
@@ -332,12 +410,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
     logger.debug("currentCommandNameKeyValueScope: %s", commandName);
 
-    if (!this.#commandKeyValueData.has(commandName)) {
-      this.#commandKeyValueData.set(commandName, new Map());
+    if (this.#defaultKeyValueService) {
+      if (!this.#commandKeyValueData.has(commandName)) {
+        this.#commandKeyValueData.set(commandName, new Map());
+      }
+      this.#defaultKeyValueService.setKeyValueData(
+        this.#commandKeyValueData.get(commandName)!,
+      );
     }
-    this.#defaultKeyValueService!.setKeyValueData(
-      this.#commandKeyValueData.get(commandName)!,
-    );
+    if (this.#defaultSecretService) {
+      this.#defaultSecretService.setScope("command_" + commandName);
+    }
   }
 
   /**
@@ -349,9 +432,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @throws {Error} if an existing scope is set.
    */
   public setServiceKeyValueScope(serviceId: string): void {
-    if (!this.keyValueServiceEnabled) {
+    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
       throw new Error(
-        `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService/SecretService which is not enabled`,
       );
     }
     if (this.#currentServiceIdKeyValueScope) {
@@ -368,12 +451,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
     logger.debug("currentServiceIdKeyValueScope: %s", serviceId);
 
-    if (!this.#serviceKeyValueData.has(serviceId)) {
-      this.#serviceKeyValueData.set(serviceId, new Map());
+    if (this.#defaultKeyValueService) {
+      if (!this.#serviceKeyValueData.has(serviceId)) {
+        this.#serviceKeyValueData.set(serviceId, new Map());
+      }
+      this.#defaultKeyValueService.setKeyValueData(
+        this.#serviceKeyValueData.get(serviceId)!,
+      );
     }
-    this.#defaultKeyValueService!.setKeyValueData(
-      this.#serviceKeyValueData.get(serviceId)!,
-    );
+    if (this.#defaultSecretService) {
+      this.#defaultSecretService.setScope("service_" + serviceId);
+    }
   }
 
   /**
@@ -383,12 +471,15 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * to the current configuration location.
    */
   public async clearKeyValueScope(): Promise<void> {
-    if (!this.keyValueServiceEnabled) {
+    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
       throw new Error(
-        `Attempt to use KeyValueService which is not enabled`,
+        `Attempt to use KeyValueService/SecretService which is not enabled`,
       );
     }
-    if (this.#defaultKeyValueService!.isDirty()) {
+    if (
+      this.#defaultKeyValueService &&
+      this.#defaultKeyValueService.isDirty()
+    ) {
       if (this.configLocation === undefined) {
         throw new Error(
           "Attempt to write updated config with no configLocation set",
@@ -399,7 +490,12 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.#currentCommandNameKeyValueScope = undefined;
     this.#currentServiceIdKeyValueScope = undefined;
 
-    this.#defaultKeyValueService!.clearKeyValueData();
+    if (this.#defaultKeyValueService) {
+      this.#defaultKeyValueService.clearKeyValueData();
+    }
+    if (this.#defaultSecretService) {
+      this.#defaultSecretService.clearScope();
+    }
   }
 
   public async initService(context: Context): Promise<void> {

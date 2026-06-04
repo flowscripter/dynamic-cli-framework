@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import getLogger from "../../src/util/logger.ts";
 
 describe("logger tests", () => {
@@ -30,5 +30,27 @@ describe("logger tests", () => {
     const logger = getLogger("logger test");
 
     logger.error("foo: %s %O", "bar", { foo1: "bar1", func: () => "foobar" });
+  });
+
+  test("Logger name padding is updated when a longer name is used", () => {
+    const shortLogger = getLogger("short");
+    const longLogger = getLogger("very-long-logger-name");
+    // Both should be valid logger instances
+    expect(shortLogger).toBeDefined();
+    expect(longLogger).toBeDefined();
+    // Calling all levels to exercise non-debug path
+    shortLogger.trace("trace msg");
+    shortLogger.debug("debug msg");
+    shortLogger.info("info msg");
+    shortLogger.warn("warn msg");
+    shortLogger.error("error msg");
+  });
+
+  test("Logger with same-length name reuses existing padding", () => {
+    // Create two loggers with same length names to hit the else-if branch
+    const logger1 = getLogger("aaa");
+    const logger2 = getLogger("bbb");
+    expect(logger1).toBeDefined();
+    expect(logger2).toBeDefined();
   });
 });

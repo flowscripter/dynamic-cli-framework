@@ -9,29 +9,25 @@ import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
 import type Context from "../../api/Context.ts";
 import getLogger from "../../util/logger.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
+import { shutdownState } from "./ShutdownState.ts";
 
 const logger = getLogger("ShutdownServiceProvider");
 
-/**
- * Provides a {@link ShutdownService}.
- */
 export default class ShutdownServiceProvider implements ServiceProvider {
   readonly serviceId: string = SHUTDOWN_SERVICE_ID;
   readonly #shutdownService: ShutdownService;
+  static #shutdownInProgress = false;
 
-  /**
-   * Create an instance of the service provider with the specified details.
-   *
-   * @param servicePriority the priority of the service.
-   */
   public constructor(
     readonly servicePriority: number,
   ) {
     this.#shutdownService = new DefaultShutdownService();
     process.on("beforeExit", ShutdownServiceProvider.shutdown);
+    process.on("SIGINT", ShutdownServiceProvider.onInterrupt);
+    process.on("SIGTERM", ShutdownServiceProvider.onTerminate);
   }
 
-  public provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+  public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.#shutdownService,
       commands: [],
@@ -42,9 +38,32 @@ export default class ShutdownServiceProvider implements ServiceProvider {
     return Promise.resolve(undefined);
   }
 
+  static onInterrupt(): void {
+    shutdownState.interruptCount++;
+    if (
+      !shutdownState.longRunningMode || shutdownState.interruptCount >= 3
+    ) {
+      ShutdownServiceProvider.shutdown().then(() => {
+        process.exit(130);
+      });
+    } else {
+      shutdownState.shutdownRequested = true;
+    }
+  }
+
+  static onTerminate(): void {
+    ShutdownServiceProvider.shutdown().then(() => {
+      process.exit(143);
+    });
+  }
+
   static async shutdown() {
+    if (ShutdownServiceProvider.#shutdownInProgress) return;
+    ShutdownServiceProvider.#shutdownInProgress = true;
     try {
       process.removeListener("beforeExit", ShutdownServiceProvider.shutdown);
+      process.removeListener("SIGINT", ShutdownServiceProvider.onInterrupt);
+      process.removeListener("SIGTERM", ShutdownServiceProvider.onTerminate);
       for await (const callback of DefaultShutdownService.callbacks) {
         await callback();
       }

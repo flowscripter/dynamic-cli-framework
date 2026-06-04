@@ -13,6 +13,22 @@ export enum Level {
 }
 
 /**
+ * Enum of spinner animation styles.
+ */
+export enum SpinnerStyle {
+  BOX = "BOX",
+  STAR = "STAR",
+}
+
+/**
+ * Enum of progress bar rendering styles.
+ */
+export enum ProgressStyle {
+  STROKE = "STROKE",
+  FILL = "FILL",
+}
+
+/**
  * Enum of message icons.
  */
 export enum Icon {
@@ -37,6 +53,11 @@ export default interface PrinterService {
    * Disable or enable color output for messages.
    */
   colorEnabled: boolean;
+
+  /**
+   * Disable or enable hyperlink output for messages.
+   */
+  hyperlinksEnabled: boolean;
 
   /**
    * Enable or disable dark mode. Default is disabled i.e. `false`.
@@ -144,6 +165,108 @@ export default interface PrinterService {
   color(message: string, hexFormattedColor: string): string;
 
   /**
+   * Return the provided message so that the background is colored as primary content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundPrimary(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as secondary content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundSecondary(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as emphasised content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundEmphasised(message: string): string;
+
+  /**
+   * Return the provided message so that the background is colored as selected content.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundSelected(message: string): string;
+
+  /**
+   * Return the provided message so that the background is yellow.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundYellow(message: string): string;
+
+  /**
+   * Return the provided message so that the background is orange.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundOrange(message: string): string;
+
+  /**
+   * Return the provided message so that the background is red.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundRed(message: string): string;
+
+  /**
+   * Return the provided message so that the background is magenta.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundMagenta(message: string): string;
+
+  /**
+   * Return the provided message so that the background is violet.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundViolet(message: string): string;
+
+  /**
+   * Return the provided message so that the background is blue.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundBlue(message: string): string;
+
+  /**
+   * Return the provided message so that the background is cyan.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundCyan(message: string): string;
+
+  /**
+   * Return the provided message so that the background is green.
+   * Has no effect if {@link colorEnabled} is `false`.
+   */
+  backgroundGreen(message: string): string;
+
+  /**
+   * Return the provided message so that the background is the specified color.
+   * Has no effect if {@link colorEnabled} is `false`.
+   *
+   * @param message the message to color.
+   * @param hexFormattedColor the color to use. This should be a valid hex formatted string e.g. "#rrggbb".
+   */
+  backgroundColor(message: string, hexFormattedColor: string): string;
+
+  /**
+   * Return the provided text wrapped in an OSC 8 hyperlink to the specified URL.
+   * Has no effect if {@link hyperlinksEnabled} is `false`, in which case the text is returned unchanged.
+   *
+   * @param text the text to display as the hyperlink.
+   * @param url the URL target of the hyperlink.
+   */
+  hyperlink(text: string, url: string): string;
+
+  /**
+   * The number of columns available on the stdout terminal.
+   * Defaults to 80 if the terminal width cannot be determined.
+   */
+  stdoutColumns(): number;
+
+  /**
+   * The number of columns available on the stderr terminal.
+   * Defaults to 80 if the terminal width cannot be determined.
+   */
+  stderrColumns(): number;
+
+  /**
    * Print a message on `stdout`.
    * Will be displayed as primary content if {@link colorEnabled} is `true`.
    *
@@ -215,8 +338,9 @@ export default interface PrinterService {
    * NOTE: If any progress bars are currently displayed they will be hidden.
    *
    * @param message the message to output after the spinner.
+   * @param style optional spinner animation style, defaults to {@link SpinnerStyle.BOX}.
    */
-  showSpinner(message: string): Promise<void>;
+  showSpinner(message: string, style?: SpinnerStyle): Promise<void>;
 
   /**
    * Hide the spinner.
@@ -238,6 +362,7 @@ export default interface PrinterService {
    * @param message an optional message for the progress bar.
    * @param total the total value which equates to 100% complete, defaults to `100`.
    * @param current the current value which is a portion of the total value, defaults to `0`.
+   * @param style optional progress bar rendering style, defaults to {@link ProgressStyle.STROKE}.
    *
    * @return a handle to use when invoking {@link updateProgressBar}.
    */
@@ -246,6 +371,7 @@ export default interface PrinterService {
     message?: string,
     total?: number,
     current?: number,
+    style?: ProgressStyle,
   ): Promise<number>;
 
   /**

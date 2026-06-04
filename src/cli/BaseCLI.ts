@@ -23,19 +23,38 @@ import UsageCommand from "../command/UsageCommand.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
+  isGroupCommand,
   isSubCommand,
 } from "../runtime/command/CommandTypeGuards.ts";
 import CommandValidator from "../runtime/command/CommandValidator.ts";
 import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider.ts";
+import { shutdownState } from "../service/shutdown/ShutdownState.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
+import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
 
 import { WritableStream } from "node:stream/web";
-import Terminal from "../service/printer/terminal/Terminal.ts";
-import PrinterService from "../api/service/core/PrinterService.ts";
+import type Terminal from "../terminal/Terminal.ts";
+import type PrinterService from "../api/service/core/PrinterService.ts";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
-import Styler from "../service/printer/terminal/Styler.ts";
+import type Styler from "../terminal/Styler.ts";
+import type KeyReader from "../terminal/KeyReader.ts";
+import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
+import DefaultPrompterService, {
+  DEFAULT_PROMPTER_CONFIG,
+} from "../service/prompter/DefaultPrompterService.ts";
+import PrompterServiceProvider from "../service/prompter/PrompterServiceProvider.ts";
+import DefaultArgumentPrompterService from "../service/argumentPrompter/DefaultArgumentPrompterService.ts";
+import ArgumentPrompterServiceProvider from "../service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
+import DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
+import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
+import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
+import {
+  CompletionCompleteSubCommand,
+  CompletionGroupCommand,
+  CompletionIntegrationSubCommand,
+} from "../command/CompletionCommand.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -46,9 +65,14 @@ const logger = getLogger("BaseCLI");
  * * {@link ShutdownServiceProvider}
  * * {@link PrinterServiceProvider}
  * * {@link ConfigurationServiceProvider}
+ * * {@link TableGeneratorServiceProvider}
  *
  * NOTE: The `ConfigurationServiceProvider` will not be added if the required `allow-read` and `allow-write`
  * permissions are not granted. It can also be excluded if desired via a constructor argument.
+ *
+ * Optionally enabled via {@link BaseCLIFeatureOptions}:
+ *
+ * * {@link ImagePrinterServiceProvider}
  *
  * By default the following commands are added:
  *
@@ -59,47 +83,32 @@ const logger = getLogger("BaseCLI");
  */
 export default class BaseCLI implements CLI {
   readonly #cliConfig: CLIConfig;
-  readonly #envVarsEnabled: boolean;
-  readonly #configEnabled: boolean;
-  readonly #keyValueServiceEnabled: boolean;
+  readonly #options: Required<BaseCLIFeatureOptions>;
+  readonly #keyReader: KeyReader;
+  readonly #stderrTerminal: Terminal;
   readonly #addedNonModifierCommands: Array<Command>;
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
   readonly #commandRegistry: DefaultCommandRegistry;
   readonly #context: DefaultContext;
   readonly #printerService: PrinterService;
+  readonly #stdoutTerminal: Terminal;
 
-  /**
-   * Constructor configures the instance with the specified CLI application details and WritableStream instances.
-   *
-   * @param cliConfig the {@link CLIConfig} for the CLI application.
-   * @param stdoutWritableStream the WritableStream to use for stderr output.
-   * @param stderrWritableStream the WritableStream to use for stderr output.
-   * @param stdoutIsColor true if stdout supports color.
-   * @param stderrIsColor true if stderr supports color.
-   * @param terminal the Terminal implementation to use.
-   * @param styler the Styler implementation to use.
-   * @param envVarsEnabled optionally support checking env variables for default argument values.
-   * @param configEnabled optionally enable configuration file support for default argument values.
-   * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
-   * @param validateAllCommands optionally force validation of all i.e. include validation of core commands.
-   */
   constructor(
     cliConfig: CLIConfig,
     stdoutWritableStream: WritableStream,
     stderrWritableStream: WritableStream,
     stdoutIsColor: boolean,
     stderrIsColor: boolean,
+    stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
-    envVarsEnabled = false,
-    configEnabled = false,
-    keyValueServiceEnabled = false,
-    validateAllCommands = false,
+    keyReader: KeyReader,
+    options?: BaseCLIFeatureOptions,
   ) {
     if (cliConfig.name.length === 0) {
       throw new Error("Invalid empty CLI name provided");
     }
-    if (cliConfig.name[0].match(/[0-9\-_]/)) {
+    if (cliConfig.name[0]!.match(/[0-9\-_]/)) {
       throw new Error(
         `Invalid CLI name starting with a digit or dash provided: '${cliConfig.name}'`,
       );
@@ -114,14 +123,23 @@ export default class BaseCLI implements CLI {
       throw new Error("Invalid empty CLI version provided");
     }
     this.#cliConfig = cliConfig;
-    this.#envVarsEnabled = envVarsEnabled;
-    this.#configEnabled = configEnabled;
-    this.#keyValueServiceEnabled = keyValueServiceEnabled;
+    this.#options = {
+      configFileSupportEnabled: false,
+      envVarsSupportEnabled: false,
+      keyValueServiceEnabled: false,
+      secretServiceEnabled: false,
+      argumentPrompterServiceEnabled: false,
+      completionServiceEnabled: false,
+      imagePrinterServiceEnabled: false,
+      validateAllCommands: false,
+      ...options,
+    };
+    this.#keyReader = keyReader;
+    this.#stderrTerminal = stderrTerminal;
     this.#addedNonModifierCommands = [];
 
-    // create a validator if required
     let commandValidator: CommandValidator | undefined;
-    if (validateAllCommands) {
+    if (this.#options.validateAllCommands) {
       commandValidator = new CommandValidator(this.#cliConfig);
     }
 
@@ -134,11 +152,13 @@ export default class BaseCLI implements CLI {
     // create a context
     this.#context = new DefaultContext(this.#cliConfig);
 
+    this.#stdoutTerminal = stdoutTerminal;
     this.#printerService = new DefaultPrinterService(
       stdoutWritableStream,
       stderrWritableStream,
       stdoutIsColor,
       stderrIsColor,
+      stdoutTerminal,
       stderrTerminal,
       styler,
     );
@@ -184,11 +204,12 @@ export default class BaseCLI implements CLI {
 
     if (
       (this.#addedNonModifierCommands.length === 1) &&
-      !isSubCommand(this.#addedNonModifierCommands[0]) &&
-      !isGlobalCommand(this.#addedNonModifierCommands[0])
+      !isSubCommand(this.#addedNonModifierCommands[0]!) &&
+      !isGlobalCommand(this.#addedNonModifierCommands[0]!) &&
+      !isGroupCommand(this.#addedNonModifierCommands[0]!)
     ) {
       throw new Error(
-        "If only one command is added, if must be a global command or sub-command!",
+        "If only one command is added, it must be a global command, sub-command, or group command!",
       );
     }
 
@@ -200,12 +221,45 @@ export default class BaseCLI implements CLI {
         this.#printerService,
       ),
     );
+    this.addServiceProvider(new TableGeneratorServiceProvider(70));
+
+    const prompterService = new DefaultPrompterService(
+      DEFAULT_PROMPTER_CONFIG,
+      this.#stderrTerminal,
+      this.#keyReader,
+      this.#printerService,
+    );
+    this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+
+    if (this.#options.argumentPrompterServiceEnabled) {
+      const argumentPrompterService = new DefaultArgumentPrompterService(
+        prompterService,
+      );
+      this.addServiceProvider(
+        new ArgumentPrompterServiceProvider(65, argumentPrompterService),
+      );
+    }
+
+    if (this.#options.imagePrinterServiceEnabled) {
+      this.addServiceProvider(
+        new ImagePrinterServiceProvider(55, this.#stdoutTerminal),
+      );
+    }
+
+    let completionService: DefaultCompletionService | undefined;
+    if (this.#options.completionServiceEnabled) {
+      completionService = new DefaultCompletionService();
+      this.addServiceProvider(
+        new CompletionServiceProvider(60, completionService),
+      );
+    }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
       90,
-      this.#envVarsEnabled,
-      this.#configEnabled,
-      this.#keyValueServiceEnabled,
+      this.#options.envVarsSupportEnabled,
+      this.#options.configFileSupportEnabled,
+      this.#options.keyValueServiceEnabled,
+      this.#options.secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
 
@@ -213,7 +267,7 @@ export default class BaseCLI implements CLI {
       const serviceProvider of this.#serviceProviderRegistry
         .getServiceProviders()
     ) {
-      const serviceInfo = await serviceProvider.provide(this.#cliConfig);
+      const serviceInfo = await serviceProvider.getServiceInfo(this.#cliConfig);
 
       if (serviceInfo.service) {
         this.#context.addServiceInstance(
@@ -235,27 +289,30 @@ export default class BaseCLI implements CLI {
 
     try {
       // setup help commands and default command based on the number of commands explicitly added via {@link addCommand)
-      if (this.#addedNonModifierCommands.length === 1) {
+      if (
+        this.#addedNonModifierCommands.length === 1 &&
+        !isGroupCommand(this.#addedNonModifierCommands[0]!)
+      ) {
         // a single-command CLI
         defaultCommand = this.#addedNonModifierCommands[0];
         helpSubCommand = new SingleCommandCliHelpSubCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           defaultCommand as SubCommand,
           this.#commandRegistry,
         );
         helpGlobalCommand = new SingleCommandCliHelpGlobalCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           defaultCommand as SubCommand,
           this.#commandRegistry,
         );
       } else {
         // a multi-command CLI
         helpSubCommand = new MultiCommandCliHelpSubCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           this.#commandRegistry,
         );
         helpGlobalCommand = new MultiCommandCliHelpGlobalCommand(
-          this.#envVarsEnabled,
+          this.#options.envVarsSupportEnabled,
           this.#commandRegistry,
         );
       }
@@ -266,6 +323,16 @@ export default class BaseCLI implements CLI {
 
       // register the version command
       this.#commandRegistry.addCommand(new VersionCommand());
+
+      // register completion commands (need CommandRegistry reference like help commands)
+      if (completionService) {
+        completionService.setCommandRegistry(this.#commandRegistry);
+        const integrationCommand = new CompletionIntegrationSubCommand();
+        const completeCommand = new CompletionCompleteSubCommand();
+        this.#commandRegistry.addCommand(
+          new CompletionGroupCommand(integrationCommand, completeCommand),
+        );
+      }
 
       // run...
       const runResult = await run(
@@ -299,7 +366,12 @@ export default class BaseCLI implements CLI {
       }
       return runResult;
     } catch (error) {
-      // An unexpected error in the framework
+      if (
+        shutdownState.shutdownRequested ||
+        (error as Error).message === "Interrupted"
+      ) {
+        return { runState: RunState.INTERRUPTED };
+      }
       logger.error("Runtime error: %s", (error as Error).message);
       return {
         runState: RunState.RUNTIME_ERROR,

@@ -23,24 +23,31 @@ import type Context from "../../src/api/Context.ts";
 import type CLIConfig from "../../src/api/CLIConfig.ts";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
-import TtyTerminal from "../../src/service/printer/terminal/TtyTerminal.ts";
-import TtyStyler from "../../src/service/printer/terminal/TtyStyler.ts";
+import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../src/terminal/TtyStyler.ts";
+import type KeyReader from "../../src/terminal/KeyReader.ts";
+
+const mockKeyReader: KeyReader = {
+  enableRawMode() {},
+  disableRawMode() {},
+  readKey: () => Promise.resolve({}),
+};
 
 describe("BaseCLI tests", () => {
   test("BaseCLI no command specified works", async () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const terminal = new TtyTerminal(dummyStdout.writeStream);
     const baseCLI = new BaseCLI(
       config,
       dummyStdout.writableStream,
       dummyStderr.writableStream,
       false,
       false,
-      terminal,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
+      mockKeyReader,
     );
 
     baseCLI.addCommand(getSubCommandWithOptionAndPositional());
@@ -54,16 +61,16 @@ describe("BaseCLI tests", () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const terminal = new TtyTerminal(dummyStderr.writeStream);
     const baseCLI = new BaseCLI(
       config,
       dummyStdout.writableStream,
       dummyStderr.writableStream,
       false,
       false,
-      terminal,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
+      mockKeyReader,
     );
 
     let modifierHasRun = false;
@@ -122,11 +129,14 @@ describe("BaseCLI tests", () => {
       dummyStderr.writableStream,
       false,
       false,
+      new TtyTerminal(dummyStdout.writeStream),
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
-      false,
-      true,
-      true,
+      mockKeyReader,
+      {
+        configFileSupportEnabled: true,
+        keyValueServiceEnabled: true,
+      },
     );
 
     let serviceProvider1Initialised = false;
@@ -140,21 +150,20 @@ describe("BaseCLI tests", () => {
     const SERVICE_2 = "service2";
 
     interface ServiceInterface {
-      serviceMethod(context: Context): void;
+      serviceMethod(context: Context): Promise<void>;
     }
 
     class DefaultService1 implements ServiceInterface {
       copyOfKeyValueService: KeyValueService | undefined;
 
-      serviceMethod(context: Context): void {
-        // should only have access to the modifierCommand KV scope
-        expect(this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
+      async serviceMethod(context: Context): Promise<void> {
+        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "modifierCommand",
         );
-        this.copyOfKeyValueService!.setKey(
+        await this.copyOfKeyValueService!.setKey(
           "name",
           "defaultService1+modifierCommand",
         );
@@ -163,10 +172,9 @@ describe("BaseCLI tests", () => {
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the modifierCommand KV scope
-        expect(keyValueService.hasKey("name")).toBeTrue();
+        expect(await keyValueService.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "defaultService1+modifierCommand",
         );
@@ -178,13 +186,12 @@ describe("BaseCLI tests", () => {
     class DefaultService2 implements ServiceInterface {
       copyOfKeyValueService: KeyValueService | undefined;
 
-      serviceMethod(context: Context): void {
-        // should only have access to the modifierCommand KV scope
-        expect(this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(this.copyOfKeyValueService!.getKey("name")).toEqual(
+      async serviceMethod(context: Context): Promise<void> {
+        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
           "subCommand",
         );
-        this.copyOfKeyValueService!.setKey(
+        await this.copyOfKeyValueService!.setKey(
           "name",
           "defaultService2+subCommand",
         );
@@ -193,10 +200,9 @@ describe("BaseCLI tests", () => {
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the subCommand KV scope
-        expect(keyValueService.hasKey("name")).toBeTrue();
+        expect(await keyValueService.hasKey("name")).toBeTrue();
         expect(
-          this.copyOfKeyValueService!.getKey("name"),
+          await this.copyOfKeyValueService!.getKey("name"),
         ).toEqual(
           "defaultService2+subCommand",
         );
@@ -211,7 +217,7 @@ describe("BaseCLI tests", () => {
 
       defaultService1: DefaultService1 | undefined;
 
-      provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+      getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
         this.defaultService1 = new DefaultService1();
         return Promise.resolve({
           service: this.defaultService1,
@@ -219,20 +225,17 @@ describe("BaseCLI tests", () => {
         });
       }
 
-      initService(context: Context): Promise<void> {
+      async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the ServiceProvider1 KV scope
-        expect(keyValueService.hasKey("name")).toBeFalse();
-        keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.hasKey("name")).toBeFalse();
+        await keyValueService.setKey("name", "defaultService2");
 
-        // take a copy to check later when service is accessed via a command
         this.defaultService1!.copyOfKeyValueService = keyValueService;
 
         serviceProvider1Initialised = true;
-        return Promise.resolve(undefined);
       }
     }
 
@@ -242,7 +245,7 @@ describe("BaseCLI tests", () => {
 
       defaultService2: DefaultService2 | undefined;
 
-      provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+      getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
         this.defaultService2 = new DefaultService2();
         return Promise.resolve({
           service: this.defaultService2,
@@ -250,20 +253,17 @@ describe("BaseCLI tests", () => {
         });
       }
 
-      initService(context: Context): Promise<void> {
+      async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(
           KEY_VALUE_SERVICE_ID,
         ) as KeyValueService;
 
-        // should only have access to the ServiceProvider2 KV scope
-        expect(keyValueService.hasKey("name")).toBeFalse();
-        keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.hasKey("name")).toBeFalse();
+        await keyValueService.setKey("name", "defaultService2");
 
-        // take a copy to check later when service is accessed via a command
         this.defaultService2!.copyOfKeyValueService = keyValueService;
 
         serviceProvider2Initialised = true;
-        return Promise.resolve(undefined);
       }
     }
 
@@ -282,37 +282,33 @@ describe("BaseCLI tests", () => {
     };
     const subCommand = getSubCommand("command", [option], []);
 
-    modifierCommand.execute = (context): Promise<void> => {
+    modifierCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(
         KEY_VALUE_SERVICE_ID,
       ) as KeyValueService;
 
-      // should only have access to the modifierCommand KV scope
-      expect(keyValueService.hasKey("name")).toBeFalse();
-      keyValueService.setKey("name", "modifierCommand");
+      expect(await keyValueService.hasKey("name")).toBeFalse();
+      await keyValueService.setKey("name", "modifierCommand");
 
       const service1 = context.getServiceById(SERVICE_1) as ServiceInterface;
 
-      service1.serviceMethod(context);
+      await service1.serviceMethod(context);
 
       modifierHasRun = true;
-      return Promise.resolve();
     };
-    subCommand.execute = (context): Promise<void> => {
+    subCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(
         KEY_VALUE_SERVICE_ID,
       ) as KeyValueService;
 
-      // should only have access to the subCommand KV scope
-      expect(keyValueService.hasKey("name")).toBeFalse();
-      keyValueService.setKey("name", "subCommand");
+      expect(await keyValueService.hasKey("name")).toBeFalse();
+      await keyValueService.setKey("name", "subCommand");
 
       const service2 = context.getServiceById(SERVICE_2) as ServiceInterface;
 
-      service2.serviceMethod(context);
+      await service2.serviceMethod(context);
 
       subHasRun = true;
-      return Promise.resolve();
     };
 
     baseCLI.addServiceProvider(new ServiceProvider1());

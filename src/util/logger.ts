@@ -86,9 +86,11 @@ function wrapDefaultLogger(
  * @returns A logger instance with the specified name.
  */
 export default function getLogger(loggerName: string): Logger {
-  if (globalThis.defaultLogger === undefined) {
-    globalThis.defaultLogger = getDefaultLogger();
+  const g = globalThis as Record<string, unknown>;
+  if (g.defaultLogger === undefined) {
+    g.defaultLogger = getDefaultLogger();
   }
+  const defaultLogger = g.defaultLogger as Logger;
 
   if (loggerName.length > maxLoggerNameLength) {
     maxLoggerNameLength = loggerName.length;
@@ -108,28 +110,28 @@ export default function getLogger(loggerName: string): Logger {
     return {
       trace: wrapDefaultLogger(
         loggerName,
-        LEVEL_PADDINGS.TRACE,
-        globalThis.defaultLogger.trace,
+        LEVEL_PADDINGS.TRACE!,
+        defaultLogger.trace,
       ),
       debug: wrapDefaultLogger(
         loggerName,
-        LEVEL_PADDINGS.DEBUG,
-        globalThis.defaultLogger.debug,
+        LEVEL_PADDINGS.DEBUG!,
+        defaultLogger.debug,
       ),
       info: wrapDefaultLogger(
         loggerName,
-        LEVEL_PADDINGS.INFO,
-        globalThis.defaultLogger.info,
+        LEVEL_PADDINGS.INFO!,
+        defaultLogger.info,
       ),
       warn: wrapDefaultLogger(
         loggerName,
-        LEVEL_PADDINGS.WARN,
-        globalThis.defaultLogger.warn,
+        LEVEL_PADDINGS.WARN!,
+        defaultLogger.warn,
       ),
       error: wrapDefaultLogger(
         loggerName,
-        LEVEL_PADDINGS.ERROR,
-        globalThis.defaultLogger.error,
+        LEVEL_PADDINGS.ERROR!,
+        defaultLogger.error,
       ),
     };
   }
@@ -140,8 +142,8 @@ export default function getLogger(loggerName: string): Logger {
     warn: () => {},
     error: wrapDefaultLogger(
       loggerName,
-      LEVEL_PADDINGS.ERROR,
-      globalThis.defaultLogger.error,
+      LEVEL_PADDINGS.ERROR!,
+      defaultLogger.error,
     ),
   };
 }

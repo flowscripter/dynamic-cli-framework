@@ -5,4 +5,5 @@ export default interface Terminal {
   showCursor(): Promise<void>;
   write(text: string): Promise<void>;
   columns(): number;
+  rows(): number;
 }

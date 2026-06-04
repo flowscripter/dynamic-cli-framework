@@ -33,8 +33,34 @@ import type GroupCommand from "../api/command/GroupCommand.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type Command from "../api/command/Command.ts";
+import type ArgumentPrompterService from "../api/service/core/ArgumentPrompterService.ts";
+import { ARGUMENT_PROMPTER_SERVICE_ID } from "../api/service/core/ArgumentPrompterService.ts";
 
 const logger = getLogger("runner");
+
+async function attemptPromptForMissingArguments(
+  parseResult: ParseResult,
+  context: Context,
+): Promise<ParseResult | undefined> {
+  if (!context.doesServiceExist(ARGUMENT_PROMPTER_SERVICE_ID)) {
+    return undefined;
+  }
+  const service = context.getServiceById(
+    ARGUMENT_PROMPTER_SERVICE_ID,
+  ) as ArgumentPrompterService;
+  try {
+    const updated = await service.promptForMissingArguments(parseResult);
+    if (updated.invalidArguments.length === 0) {
+      return updated;
+    }
+  } catch (error) {
+    if ((error as Error).message === "Interrupted") {
+      throw error;
+    }
+    return undefined;
+  }
+  return undefined;
+}
 
 /**
  * Execute the {@link Command} with arguments contained in the provided {@link ParseResult}.
@@ -56,13 +82,19 @@ async function executeParsedCommand(
         "Executing group command with name: %s",
         parseResult!.groupCommand!.name,
       );
-      if (configurationServiceProvider?.keyValueServiceEnabled) {
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
         configurationServiceProvider.setCommandKeyValueScope(
           parseResult!.groupCommand!.name,
         );
       }
       await parseResult.groupCommand.execute(context);
-      if (configurationServiceProvider?.keyValueServiceEnabled) {
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
         await configurationServiceProvider.clearKeyValueScope();
       }
     }
@@ -73,7 +105,10 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       configurationServiceProvider.setCommandKeyValueScope(
         parseResult.command.name,
       );
@@ -89,10 +124,16 @@ async function executeParsedCommand(
         parseResult.populatedArgumentValues as ArgumentSingleValueType,
       );
     }
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
+    if ((err as Error).message === "Interrupted") {
+      throw err;
+    }
     await printCommandExecutionError(
       context,
       parseResult,
@@ -155,7 +196,7 @@ async function findAndExecuteGlobalModifierCommands(
     ) {
       // parse and fast fail on error
       const defaultArgumentValues = configurationServiceProvider
-        ? configurationServiceProvider
+        ? await configurationServiceProvider
           .getDefaultArgumentValues(
             context.cliConfig,
             globalModifierCommandClause.command,
@@ -195,7 +236,7 @@ async function findAndExecuteGlobalModifierCommands(
   for (const globalModifierCommand of remainingGlobalModifierCommands) {
     // if there is a config entry run this by default even though no arguments were provided on the command line
     const defaultArgumentValues = configurationServiceProvider
-      ? configurationServiceProvider
+      ? await configurationServiceProvider
         .getDefaultArgumentValues(context.cliConfig, globalModifierCommand)
       : undefined;
 
@@ -274,7 +315,7 @@ async function findAndExecuteNonModifierCommand(
 
   if (scanResult.nonModifierCommandClause) {
     const defaultArgumentValues = configurationServiceProvider
-      ? configurationServiceProvider
+      ? await configurationServiceProvider
         .getDefaultArgumentValues(
           context.cliConfig,
           scanResult.nonModifierCommandClause.command,
@@ -294,12 +335,20 @@ async function findAndExecuteNonModifierCommand(
     }
 
     if (parseResult.invalidArguments.length > 0) {
-      await printParseResultError(context, parseResult);
-      return {
-        runState: RunState.PARSE_ERROR,
-        command: parseResult.command,
-        invalidArguments: parseResult.invalidArguments,
-      };
+      const prompted = await attemptPromptForMissingArguments(
+        parseResult,
+        context,
+      );
+      if (prompted) {
+        parseResult = prompted;
+      } else {
+        await printParseResultError(context, parseResult);
+        return {
+          runState: RunState.PARSE_ERROR,
+          command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
+        };
+      }
     }
 
     // add any unused args back to the list of still unused args
@@ -311,7 +360,7 @@ async function findAndExecuteNonModifierCommand(
     for (const nonModifierCommand of nonModifierCommandsByName.values()) {
       // if there is a config entry run this by default even though no arguments were provided on the command line
       const defaultArgumentValues = configurationServiceProvider
-        ? configurationServiceProvider
+        ? await configurationServiceProvider
           .getDefaultArgumentValues(context.cliConfig, nonModifierCommand)
         : undefined;
 
@@ -329,12 +378,20 @@ async function findAndExecuteNonModifierCommand(
         }
 
         if (parseResult.invalidArguments.length > 0) {
-          await printParseResultError(context, parseResult);
-          return {
-            runState: RunState.PARSE_ERROR,
-            command: parseResult.command,
-            invalidArguments: parseResult.invalidArguments,
-          };
+          const prompted = await attemptPromptForMissingArguments(
+            parseResult,
+            context,
+          );
+          if (prompted) {
+            parseResult = prompted;
+          } else {
+            await printParseResultError(context, parseResult);
+            return {
+              runState: RunState.PARSE_ERROR,
+              command: parseResult.command,
+              invalidArguments: parseResult.invalidArguments,
+            };
+          }
         }
 
         break;
@@ -376,7 +433,7 @@ async function findAndExecuteDefaultNonModifierCommand(
   context: Context,
 ): Promise<RunResult | undefined> {
   const defaultArgumentValues = configurationServiceProvider
-    ? configurationServiceProvider
+    ? await configurationServiceProvider
       .getDefaultArgumentValues(context.cliConfig, defaultNonModifierCommand)
     : undefined;
   const isGlobal = isGlobalCommand(defaultNonModifierCommand);
@@ -448,14 +505,23 @@ async function findAndExecuteDefaultNonModifierCommand(
     }
   }
 
-  // if there were invalid arguments, treat this as the error
+  // if there were invalid arguments, attempt prompting before treating as error
   if (lastErroneousParseResult) {
-    await printParseResultError(context, lastErroneousParseResult, true);
-    return {
-      runState: RunState.PARSE_ERROR,
-      command: defaultNonModifierCommand,
-      invalidArguments: lastErroneousParseResult.invalidArguments,
-    };
+    const prompted = await attemptPromptForMissingArguments(
+      lastErroneousParseResult,
+      context,
+    );
+    if (prompted) {
+      parseResult = prompted;
+      lastErroneousParseResult = undefined;
+    } else {
+      await printParseResultError(context, lastErroneousParseResult, true);
+      return {
+        runState: RunState.PARSE_ERROR,
+        command: defaultNonModifierCommand,
+        invalidArguments: lastErroneousParseResult.invalidArguments,
+      };
+    }
   }
 
   // give up if still nothing found
@@ -604,14 +670,20 @@ export async function run(
 
     logger.debug("Initialising service with ID: %s", serviceProvider.serviceId);
 
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       configurationServiceProvider.setServiceKeyValueScope(
         serviceProvider.serviceId,
       );
     }
 
     await serviceProvider.initService(context);
-    if (configurationServiceProvider?.keyValueServiceEnabled) {
+    if (
+      configurationServiceProvider?.keyValueServiceEnabled ||
+      configurationServiceProvider?.secretServiceEnabled
+    ) {
       await configurationServiceProvider.clearKeyValueScope();
     }
   }

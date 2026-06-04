@@ -14,7 +14,7 @@ function getServiceProvider(
   return {
     serviceId,
     servicePriority,
-    provide(_cliConfig: CLIConfig): Promise<ServiceInfo> {
+    getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
       return Promise.resolve({
         service: {},
         commands: [],
@@ -36,7 +36,7 @@ describe("DefaultServiceProviderRegistry tests", () => {
     serviceProviderRegistry.addServiceProvider(serviceProvider2);
 
     const orderedServices = serviceProviderRegistry.getServiceProviders();
-    expect(orderedServices[0].servicePriority).toEqual(2);
-    expect(orderedServices[1].servicePriority).toEqual(1);
+    expect(orderedServices[0]!.servicePriority).toEqual(2);
+    expect(orderedServices[1]!.servicePriority).toEqual(1);
   });
 });

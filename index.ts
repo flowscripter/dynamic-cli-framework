@@ -39,21 +39,43 @@ export type { default as ServiceProviderRegistry } from "./src/runtime/registry/
 // Core Services
 export { ASCII_BANNER_GENERATOR_SERVICE_ID } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
 export type { default as AsciiBannerGeneratorService } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
+export type {
+  BannerColorEffects,
+  BannerGenerateOptions,
+  ColorEffect,
+  ColorEffectDirection,
+  FixedColorEffect,
+  GradientColorEffect,
+  RainbowColorEffect,
+} from "./src/api/service/core/AsciiBannerGeneratorService.ts";
 export { default as DefaultAsciiBannerGeneratorService } from "./src/service/asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
 export { default as AsciiBannerGeneratorServiceProvider } from "./src/service/asciiBannerGenerator/AsciiBannerGeneratorServiceProvider.ts";
+export { default as ChiselFontAsciiBannerGeneratorService } from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
+export type {
+  ChiselBannerColors,
+  ChiselBannerGenerateOptions,
+} from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
 
 export { default as BannerServiceProvider } from "./src/service/banner/BannerServiceProvider.ts";
 
 export { KEY_VALUE_SERVICE_ID } from "./src/api/service/core/KeyValueService.ts";
+export { SECRET_SENTINEL_PREFIX } from "./src/api/service/core/KeyValueService.ts";
 export type { default as KeyValueService } from "./src/api/service/core/KeyValueService.ts";
+export type { default as SecretService } from "./src/api/service/core/SecretService.ts";
 export { default as DefaultKeyValueService } from "./src/service/configuration/DefaultKeyValueService.ts";
+export { default as DefaultSecretService } from "./src/service/configuration/DefaultSecretService.ts";
 export { default as ConfigurationServiceProvider } from "./src/service/configuration/ConfigurationServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "./src/api/service/core/PrinterService.ts";
 export type {
   default as PrinterService,
 } from "./src/api/service/core/PrinterService.ts";
-export { Icon, Level } from "./src/api/service/core/PrinterService.ts";
+export {
+  Icon,
+  Level,
+  ProgressStyle,
+  SpinnerStyle,
+} from "./src/api/service/core/PrinterService.ts";
 export { default as DefaultPrinterService } from "./src/service/printer/DefaultPrinterService.ts";
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
@@ -73,6 +95,69 @@ export type { default as PrettyPrinterService } from "./src/api/service/core/Pre
 export { default as DefaultPrettyPrinterService } from "./src/service/prettyPrinter/DefaultPrettyPrinterService.ts";
 export { default as PrettyPrinterServiceProvider } from "./src/service/prettyPrinter/PrettyPrinterServiceProvider.ts";
 
+export { IMAGE_PRINTER_SERVICE_ID } from "./src/api/service/core/ImagePrinterService.ts";
+export type { default as ImagePrinterService } from "./src/api/service/core/ImagePrinterService.ts";
+export { default as DefaultImagePrinterService } from "./src/service/imagePrinter/DefaultImagePrinterService.ts";
+export { default as ImagePrinterServiceProvider } from "./src/service/imagePrinter/ImagePrinterServiceProvider.ts";
+
+export { TREE_PRINTER_SERVICE_ID } from "./src/api/service/core/TreePrinterService.ts";
+export type { default as TreePrinterService } from "./src/api/service/core/TreePrinterService.ts";
+export type { TreeNode } from "./src/api/service/core/TreePrinterService.ts";
+export { default as DefaultTreePrinterService } from "./src/service/treePrinter/DefaultTreePrinterService.ts";
+export { default as TreePrinterServiceProvider } from "./src/service/treePrinter/TreePrinterServiceProvider.ts";
+
+export { TABLE_GENERATOR_SERVICE_ID } from "./src/api/service/core/TableGeneratorService.ts";
+export type { default as TableGeneratorService } from "./src/api/service/core/TableGeneratorService.ts";
+export {
+  Align,
+  type CellOptions,
+  type ColumnOptions,
+  type RowOptions,
+  type TableOptions,
+} from "./src/api/service/core/TableGeneratorService.ts";
+export { default as Table } from "./src/api/service/core/Table.ts";
+export { default as DefaultTableGeneratorService } from "./src/service/tableGenerator/DefaultTableGeneratorService.ts";
+export { default as TableGeneratorServiceProvider } from "./src/service/tableGenerator/TableGeneratorServiceProvider.ts";
+
+export { DATA_DUMP_GENERATOR_SERVICE_ID } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export type { default as DataDumpGeneratorService } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export {
+  type ByteRangeColor,
+  DumpFormat,
+  type HexDumpGenerateOptions,
+} from "./src/api/service/core/DataDumpGeneratorService.ts";
+export { default as DefaultDataDumpGeneratorService } from "./src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts";
+export { default as DataDumpGeneratorServiceProvider } from "./src/service/dataDumpGenerator/DataDumpGeneratorServiceProvider.ts";
+
+export { COMPLETION_SERVICE_ID } from "./src/api/service/core/CompletionService.ts";
+export type { default as CompletionService } from "./src/api/service/core/CompletionService.ts";
+export {
+  type CompletionItem,
+  ShellType,
+} from "./src/api/service/core/CompletionService.ts";
+export { default as DefaultCompletionService } from "./src/service/completion/DefaultCompletionService.ts";
+export { default as CompletionServiceProvider } from "./src/service/completion/CompletionServiceProvider.ts";
+
+export { PROMPTER_SERVICE_ID } from "./src/api/service/core/PrompterService.ts";
+export type { default as PrompterService } from "./src/api/service/core/PrompterService.ts";
+export {
+  type Prompt,
+  type PromptOption,
+  type PromptResult,
+  PromptType,
+} from "./src/api/service/core/PrompterService.ts";
+export { default as DefaultPrompterService } from "./src/service/prompter/DefaultPrompterService.ts";
+export {
+  DEFAULT_PROMPTER_CONFIG,
+  type PrompterServiceConfig,
+} from "./src/service/prompter/DefaultPrompterService.ts";
+export { default as PrompterServiceProvider } from "./src/service/prompter/PrompterServiceProvider.ts";
+
+export { ARGUMENT_PROMPTER_SERVICE_ID } from "./src/api/service/core/ArgumentPrompterService.ts";
+export type { default as ArgumentPrompterService } from "./src/api/service/core/ArgumentPrompterService.ts";
+export { default as DefaultArgumentPrompterService } from "./src/service/argumentPrompter/DefaultArgumentPrompterService.ts";
+export { default as ArgumentPrompterServiceProvider } from "./src/service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
+
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";
 export type { default as Context } from "./src/api/Context.ts";
@@ -81,12 +166,23 @@ export type {
   InvalidArgumentReason,
   RunState,
 } from "./src/api/RunResult.ts";
+export type { default as BaseCLIFeatureOptions } from "./src/api/BaseCLIFeatureOptions.ts";
 export type { default as CLIConfig } from "./src/api/CLIConfig.ts";
 export type { default as CLI } from "./src/api/CLI.ts";
 
 // Core CLI
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
+
+// Terminal API
+export type { default as Terminal } from "./src/terminal/Terminal.ts";
+export type { default as Styler } from "./src/terminal/Styler.ts";
+export type {
+  default as KeyReader,
+  KeyEvent,
+} from "./src/terminal/KeyReader.ts";
+export { SpecialKey } from "./src/terminal/KeyReader.ts";
+export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
 export {
