@@ -57,7 +57,7 @@ export default class TtyTerminal implements Terminal {
 
   columns(): number {
     try {
-      return this.#ttyWriteStream.columns;
+      return this.#ttyWriteStream.columns || 80;
     } catch {
       return 80;
     }
@@ -65,7 +65,7 @@ export default class TtyTerminal implements Terminal {
 
   rows(): number {
     try {
-      return this.#ttyWriteStream.rows;
+      return this.#ttyWriteStream.rows || 24;
     } catch {
       return 24;
     }

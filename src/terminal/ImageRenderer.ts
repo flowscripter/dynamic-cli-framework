@@ -1,3 +1,4 @@
+import process from "node:process";
 import supportsTerminalGraphics from "supports-terminal-graphics";
 import { decodePngToRGBA } from "./PngDecoder.ts";
 import {
@@ -19,14 +20,28 @@ export default class ImageRenderer {
   renderImage(
     imageBuffer: Uint8Array,
     widthPercentage: number = 100,
+    hexFormattedBackgroundColor?: string,
   ): Promise<string> {
-    if (supportsTerminalGraphics.stdout.kitty) {
-      return this.#renderKitty(imageBuffer, widthPercentage);
+    if (!this.#isMultiplexer()) {
+      if (supportsTerminalGraphics.stdout.kitty) {
+        return this.#renderKitty(imageBuffer, widthPercentage);
+      }
+      if (supportsTerminalGraphics.stdout.iterm2) {
+        return this.#renderITerm2(imageBuffer, widthPercentage);
+      }
     }
-    if (supportsTerminalGraphics.stdout.iterm2) {
-      return this.#renderITerm2(imageBuffer, widthPercentage);
-    }
-    return this.#renderAnsiBlocks(imageBuffer, widthPercentage);
+    return this.#renderAnsiBlocks(
+      imageBuffer,
+      widthPercentage,
+      hexFormattedBackgroundColor,
+    );
+  }
+
+  #isMultiplexer(): boolean {
+    const term = (process.env.TERM || "").toLowerCase();
+    const termProgram = (process.env.TERM_PROGRAM || "").toLowerCase();
+    return termProgram === "tmux" || termProgram === "screen" ||
+      term.startsWith("tmux") || term.startsWith("screen");
   }
 
   // https://sw.kovidgoyal.net/kitty/graphics-protocol/
@@ -67,10 +82,26 @@ export default class ImageRenderer {
     return `\x1b]1337;File=inline=1;width=${widthPercentage}%:${base64}\x07`;
   }
 
+  static #parseHexColor(
+    hex: string,
+  ): { r: number; g: number; b: number } | undefined {
+    const match = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (!match) return undefined;
+    return {
+      r: Number.parseInt(match[1]!, 16),
+      g: Number.parseInt(match[2]!, 16),
+      b: Number.parseInt(match[3]!, 16),
+    };
+  }
+
   async #renderAnsiBlocks(
     imageBuffer: Uint8Array,
     widthPercentage: number,
+    hexFormattedBackgroundColor?: string,
   ): Promise<string> {
+    const bg = hexFormattedBackgroundColor
+      ? ImageRenderer.#parseHexColor(hexFormattedBackgroundColor)
+      : undefined;
     const columns = this.#terminal.columns();
     const rows = this.#terminal.rows();
     const targetWidth = Math.floor(columns * widthPercentage / 100);
@@ -104,10 +135,36 @@ export default class ImageRenderer {
           const r2 = pixels[botIdx]!;
           const g2 = pixels[botIdx + 1]!;
           const b2 = pixels[botIdx + 2]!;
+          const a2 = pixels[botIdx + 3]!;
 
-          if (a === 0) {
-            line += foregroundColorStart(r2, g2, b2) + "▄" +
-              FOREGROUND_COLOR_END;
+          if (a === 0 && a2 === 0) {
+            if (bg) {
+              line += backgroundColorStart(
+                bg.r, bg.g, bg.b,
+              ) + " " + BACKGROUND_COLOR_END;
+            } else {
+              line += " ";
+            }
+          } else if (a === 0) {
+            if (bg) {
+              line += backgroundColorStart(
+                bg.r, bg.g, bg.b,
+              ) + foregroundColorStart(r2, g2, b2) + "▄" +
+                FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
+            } else {
+              line += foregroundColorStart(r2, g2, b2) + "▄" +
+                FOREGROUND_COLOR_END;
+            }
+          } else if (a2 === 0) {
+            if (bg) {
+              line += backgroundColorStart(
+                bg.r, bg.g, bg.b,
+              ) + foregroundColorStart(r, g, b) + "▀" +
+                FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
+            } else {
+              line += foregroundColorStart(r, g, b) + "▀" +
+                FOREGROUND_COLOR_END;
+            }
           } else {
             line += backgroundColorStart(r, g, b) +
               foregroundColorStart(r2, g2, b2) + "▄" +
@@ -115,7 +172,13 @@ export default class ImageRenderer {
           }
         } else {
           if (a === 0) {
-            line += " ";
+            if (bg) {
+              line += backgroundColorStart(
+                bg.r, bg.g, bg.b,
+              ) + " " + BACKGROUND_COLOR_END;
+            } else {
+              line += " ";
+            }
           } else {
             line += backgroundColorStart(r, g, b) + " " + BACKGROUND_COLOR_END;
           }

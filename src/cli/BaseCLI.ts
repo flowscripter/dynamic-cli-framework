@@ -49,6 +49,7 @@ import DefaultArgumentPrompterService from "../service/argumentPrompter/DefaultA
 import ArgumentPrompterServiceProvider from "../service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
 import DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
 import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
+import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
 import {
   CompletionCompleteSubCommand,
   CompletionGroupCommand,
@@ -69,6 +70,10 @@ const logger = getLogger("BaseCLI");
  * NOTE: The `ConfigurationServiceProvider` will not be added if the required `allow-read` and `allow-write`
  * permissions are not granted. It can also be excluded if desired via a constructor argument.
  *
+ * Optionally enabled via {@link BaseCLIFeatureOptions}:
+ *
+ * * {@link ImagePrinterServiceProvider}
+ *
  * By default the following commands are added:
  *
  * * {@link SingleCommandCliHelpSubCommand} or {@link MultiCommandCliHelpSubCommand}
@@ -86,6 +91,7 @@ export default class BaseCLI implements CLI {
   readonly #commandRegistry: DefaultCommandRegistry;
   readonly #context: DefaultContext;
   readonly #printerService: PrinterService;
+  readonly #stdoutTerminal: Terminal;
 
   constructor(
     cliConfig: CLIConfig,
@@ -124,6 +130,7 @@ export default class BaseCLI implements CLI {
       secretServiceEnabled: false,
       argumentPrompterServiceEnabled: false,
       completionServiceEnabled: false,
+      imagePrinterServiceEnabled: false,
       validateAllCommands: false,
       ...options,
     };
@@ -145,6 +152,7 @@ export default class BaseCLI implements CLI {
     // create a context
     this.#context = new DefaultContext(this.#cliConfig);
 
+    this.#stdoutTerminal = stdoutTerminal;
     this.#printerService = new DefaultPrinterService(
       stdoutWritableStream,
       stderrWritableStream,
@@ -229,6 +237,12 @@ export default class BaseCLI implements CLI {
       );
       this.addServiceProvider(
         new ArgumentPrompterServiceProvider(65, argumentPrompterService),
+      );
+    }
+
+    if (this.#options.imagePrinterServiceEnabled) {
+      this.addServiceProvider(
+        new ImagePrinterServiceProvider(55, this.#stdoutTerminal),
       );
     }
 
