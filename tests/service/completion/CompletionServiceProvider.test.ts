@@ -135,8 +135,43 @@ describe("CompletionServiceProvider", () => {
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
+  test("initService skips when no supported shells detected", async () => {
+    const service = new DefaultCompletionService();
+    service.validateShellEnvironment = () => Promise.resolve(false);
+    const provider = new CompletionServiceProvider(60, service);
+    await provider.getServiceInfo(getCLIConfig());
+
+    const context = new DefaultContext(getCLIConfig());
+
+    let promptCalled = false;
+    context.addServiceInstance(
+      "@flowscripter/dynamic-cli-framework/prompter-service",
+      {
+        promptEnabled: true,
+        prompt: () => {
+          promptCalled = true;
+          return Promise.resolve({ name: "", value: false });
+        },
+        promptAll: () => Promise.resolve([]),
+      },
+    );
+    context.addServiceInstance(
+      "@flowscripter/dynamic-cli-framework/key-value-service",
+      {
+        hasKey: () => Promise.resolve(false),
+        getKey: () => Promise.resolve(""),
+        setKey: () => Promise.resolve(),
+        deleteKey: () => Promise.resolve(),
+      },
+    );
+
+    await provider.initService(context);
+    expect(promptCalled).toBe(false);
+  });
+
   test("initService stores 'declined' when user says no to completion", async () => {
     const service = new DefaultCompletionService();
+    service.validateShellEnvironment = () => Promise.resolve(true);
     const provider = new CompletionServiceProvider(60, service);
     await provider.getServiceInfo(getCLIConfig());
 
@@ -172,27 +207,29 @@ describe("CompletionServiceProvider", () => {
     expect(storedValue).toEqual("declined");
   });
 
-  test("initService installs completion when user accepts and selects shell", async () => {
+  test("initService skips shell prompt when only one shell detected", async () => {
     const service = new DefaultCompletionService();
+    service.validateShellEnvironment = (shell) =>
+      Promise.resolve(shell === "bash");
     const provider = new CompletionServiceProvider(60, service);
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
 
     const storedEntries: Array<{ key: string; value: string }> = [];
-    const promptResponses = new Map<string, unknown>();
-    promptResponses.set("enable-completion", true);
-    promptResponses.set("shell-type", "bash");
+    const promptNames: string[] = [];
 
     context.addServiceInstance(
       "@flowscripter/dynamic-cli-framework/prompter-service",
       {
         promptEnabled: true,
-        prompt: (promptDef: { name: string }) =>
-          Promise.resolve({
+        prompt: (promptDef: { name: string }) => {
+          promptNames.push(promptDef.name);
+          return Promise.resolve({
             name: promptDef.name,
-            value: promptResponses.get(promptDef.name),
-          }),
+            value: true,
+          });
+        },
         promptAll: () => Promise.resolve([]),
       },
     );
@@ -225,6 +262,7 @@ describe("CompletionServiceProvider", () => {
 
     await provider.initService(context);
 
+    expect(promptNames).toEqual(["enable-completion"]);
     const statusEntry = storedEntries.find(
       (e) => e.key === "completion-status",
     );
@@ -233,11 +271,86 @@ describe("CompletionServiceProvider", () => {
     expect(infoMessage).toContain("Shell completion installed for bash");
   });
 
+  test("initService shows shell prompt with default when multiple shells detected", async () => {
+    const service = new DefaultCompletionService();
+    service.validateShellEnvironment = (shell) =>
+      Promise.resolve(shell === "bash" || shell === "zsh");
+    const provider = new CompletionServiceProvider(60, service);
+    await provider.getServiceInfo(getCLIConfig());
+
+    const context = new DefaultContext(getCLIConfig());
+
+    const storedEntries: Array<{ key: string; value: string }> = [];
+    const promptResponses = new Map<string, unknown>();
+    promptResponses.set("enable-completion", true);
+    promptResponses.set("shell-type", "zsh");
+
+    let shellPromptDefault: unknown;
+    context.addServiceInstance(
+      "@flowscripter/dynamic-cli-framework/prompter-service",
+      {
+        promptEnabled: true,
+        prompt: (promptDef: {
+          name: string;
+          defaultOption?: { returnedValue: unknown };
+        }) => {
+          if (promptDef.name === "shell-type") {
+            shellPromptDefault = promptDef.defaultOption;
+          }
+          return Promise.resolve({
+            name: promptDef.name,
+            value: promptResponses.get(promptDef.name),
+          });
+        },
+        promptAll: () => Promise.resolve([]),
+      },
+    );
+    context.addServiceInstance(
+      "@flowscripter/dynamic-cli-framework/key-value-service",
+      {
+        hasKey: () => Promise.resolve(false),
+        getKey: () => Promise.resolve(""),
+        setKey: (key: string, value: string) => {
+          storedEntries.push({ key, value });
+          return Promise.resolve();
+        },
+        deleteKey: () => Promise.resolve(),
+      },
+    );
+
+    let infoMessage = "";
+    context.addServiceInstance(
+      "@flowscripter/dynamic-cli-framework/printer-service",
+      {
+        info: (msg: string) => {
+          infoMessage = msg;
+          return Promise.resolve();
+        },
+        warn: () => Promise.resolve(),
+        error: () => Promise.resolve(),
+        print: () => Promise.resolve(),
+      },
+    );
+
+    await provider.initService(context);
+
+    expect(shellPromptDefault).toEqual({
+      displayValue: "bash",
+      returnedValue: "bash",
+    });
+    const statusEntry = storedEntries.find(
+      (e) => e.key === "completion-status",
+    );
+    expect(statusEntry).toBeDefined();
+    expect(statusEntry!.value).toEqual("installed");
+    expect(infoMessage).toContain("Shell completion installed for zsh");
+  });
+
   test("initService shows error when installation fails", async () => {
     const service = new DefaultCompletionService();
-    // Override validateShellEnvironment to throw
-    const originalValidate = service.validateShellEnvironment.bind(service);
-    service.validateShellEnvironment = () => {
+    service.validateShellEnvironment = () => Promise.resolve(true);
+    const originalGetConfigPath = service.getDefaultConfigPath.bind(service);
+    service.getDefaultConfigPath = () => {
       throw new Error("test error");
     };
 
@@ -246,10 +359,6 @@ describe("CompletionServiceProvider", () => {
 
     const context = new DefaultContext(getCLIConfig());
 
-    const promptResponses = new Map<string, unknown>();
-    promptResponses.set("enable-completion", true);
-    promptResponses.set("shell-type", "bash");
-
     context.addServiceInstance(
       "@flowscripter/dynamic-cli-framework/prompter-service",
       {
@@ -257,7 +366,7 @@ describe("CompletionServiceProvider", () => {
         prompt: (promptDef: { name: string }) =>
           Promise.resolve({
             name: promptDef.name,
-            value: promptResponses.get(promptDef.name),
+            value: promptDef.name === "enable-completion" ? true : "bash",
           }),
         promptAll: () => Promise.resolve([]),
       },
@@ -290,7 +399,6 @@ describe("CompletionServiceProvider", () => {
     expect(errorMessage).toContain("Failed to install completion");
     expect(errorMessage).toContain("test error");
 
-    // Restore
-    service.validateShellEnvironment = originalValidate;
+    service.getDefaultConfigPath = originalGetConfigPath;
   });
 });

@@ -74,6 +74,14 @@ export default class CompletionServiceProvider implements ServiceProvider {
       return;
     }
 
+    const detectedShells = await this.#detectAvailableShells();
+    if (detectedShells.length === 0) {
+      logger.debug(
+        () => "No supported shells detected, skipping auto-prompt",
+      );
+      return;
+    }
+
     const enableResult = await prompterService.prompt({
       name: "enable-completion",
       promptText:
@@ -90,19 +98,26 @@ export default class CompletionServiceProvider implements ServiceProvider {
       return;
     }
 
-    const shellOptions = Object.values(ShellType).map((shell) => ({
-      displayValue: shell,
-      returnedValue: shell,
-    }));
+    let shellType: ShellType;
 
-    const shellResult = await prompterService.prompt({
-      name: "shell-type",
-      promptText: "Which shell would you like to configure?",
-      type: PromptType.SINGLE_SELECT,
-      options: shellOptions,
-    });
+    if (detectedShells.length === 1) {
+      shellType = detectedShells[0]!;
+    } else {
+      const shellOptions = detectedShells.map((shell) => ({
+        displayValue: shell,
+        returnedValue: shell,
+      }));
 
-    const shellType = shellResult.value as ShellType;
+      const shellResult = await prompterService.prompt({
+        name: "shell-type",
+        promptText: "Which shell would you like to configure?",
+        type: PromptType.SINGLE_SELECT,
+        defaultOption: shellOptions[0],
+        options: shellOptions,
+      });
+
+      shellType = shellResult.value as ShellType;
+    }
 
     try {
       await this.#installCompletion(context, shellType);
@@ -124,23 +139,20 @@ export default class CompletionServiceProvider implements ServiceProvider {
     }
   }
 
+  async #detectAvailableShells(): Promise<ShellType[]> {
+    const available: ShellType[] = [];
+    for (const shell of Object.values(ShellType)) {
+      if (await this.#completionService.validateShellEnvironment(shell)) {
+        available.push(shell);
+      }
+    }
+    return available;
+  }
+
   async #installCompletion(
     context: Context,
     shellType: ShellType,
   ): Promise<void> {
-    const isValid = await this.#completionService.validateShellEnvironment(
-      shellType,
-    );
-    if (!isValid && context.doesServiceExist(PRINTER_SERVICE_ID)) {
-      const printerService = context.getServiceById(
-        PRINTER_SERVICE_ID,
-      ) as PrinterService;
-      await printerService.warn(
-        `Shell '${shellType}' was not detected in the current environment. Proceeding anyway.\n`,
-        Icon.ALERT,
-      );
-    }
-
     const configPath = this.#completionService.getDefaultConfigPath(shellType);
     const bootstrapScript = this.#completionService.getBootstrapScript(
       shellType,
