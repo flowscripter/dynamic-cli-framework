@@ -82,16 +82,22 @@ export default class CompletionServiceProvider implements ServiceProvider {
       return;
     }
 
-    const enableResult = await prompterService.prompt({
-      name: "enable-completion",
-      promptText:
-        "Would you like to enable autocompletion? This will set up your terminal so pressing TAB while typing commands will show possible options and autocomplete arguments. (Enabling autocompletion will modify configuration files in your home directory.)",
-      type: PromptType.TOGGLE,
-      options: [
-        { displayValue: "Yes", returnedValue: true },
-        { displayValue: "No", returnedValue: false },
-      ],
-    });
+    let enableResult;
+    try {
+      enableResult = await prompterService.prompt({
+        name: "enable-completion",
+        promptText: "Would you like to enable autocompletion?",
+        description:
+          "This will set up your terminal so that pressing TAB while typing commands will show possible options and autocomplete arguments.\n(Enabling autocompletion will modify configuration files in your home directory.)",
+        type: PromptType.TOGGLE,
+        options: [
+          { displayValue: "Yes", returnedValue: true },
+          { displayValue: "No", returnedValue: false },
+        ],
+      });
+    } catch {
+      return;
+    }
 
     if (enableResult.value !== true) {
       await keyValueService.setKey("completion-status", "declined");
@@ -108,13 +114,18 @@ export default class CompletionServiceProvider implements ServiceProvider {
         returnedValue: shell,
       }));
 
-      const shellResult = await prompterService.prompt({
-        name: "shell-type",
-        promptText: "Which shell would you like to configure?",
-        type: PromptType.SINGLE_SELECT,
-        defaultOption: shellOptions[0],
-        options: shellOptions,
-      });
+      let shellResult;
+      try {
+        shellResult = await prompterService.prompt({
+          name: "shell-type",
+          promptText: "Which shell would you like to configure?",
+          type: PromptType.SINGLE_SELECT,
+          defaultOption: shellOptions[0],
+          options: shellOptions,
+        });
+      } catch {
+        return;
+      }
 
       shellType = shellResult.value as ShellType;
     }
