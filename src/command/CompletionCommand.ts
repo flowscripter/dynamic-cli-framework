@@ -111,7 +111,7 @@ export class CompletionIntegrationSubCommand implements SubCommand {
     }
 
     await printerService.info(
-      `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.`,
+      `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.\n`,
     );
   }
 }
