@@ -52,10 +52,6 @@ export default function supportsHyperlinks(
     return true;
   }
 
-  if (process.platform === "win32") {
-    return false;
-  }
-
   if (CI) {
     return false;
   }
