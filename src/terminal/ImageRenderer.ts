@@ -140,7 +140,9 @@ export default class ImageRenderer {
           if (a === 0 && a2 === 0) {
             if (bg) {
               line += backgroundColorStart(
-                bg.r, bg.g, bg.b,
+                bg.r,
+                bg.g,
+                bg.b,
               ) + " " + BACKGROUND_COLOR_END;
             } else {
               line += " ";
@@ -148,7 +150,9 @@ export default class ImageRenderer {
           } else if (a === 0) {
             if (bg) {
               line += backgroundColorStart(
-                bg.r, bg.g, bg.b,
+                bg.r,
+                bg.g,
+                bg.b,
               ) + foregroundColorStart(r2, g2, b2) + "▄" +
                 FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
             } else {
@@ -158,7 +162,9 @@ export default class ImageRenderer {
           } else if (a2 === 0) {
             if (bg) {
               line += backgroundColorStart(
-                bg.r, bg.g, bg.b,
+                bg.r,
+                bg.g,
+                bg.b,
               ) + foregroundColorStart(r, g, b) + "▀" +
                 FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
             } else {
@@ -174,7 +180,9 @@ export default class ImageRenderer {
           if (a === 0) {
             if (bg) {
               line += backgroundColorStart(
-                bg.r, bg.g, bg.b,
+                bg.r,
+                bg.g,
+                bg.b,
               ) + " " + BACKGROUND_COLOR_END;
             } else {
               line += " ";
