@@ -165,7 +165,7 @@ export class CompletionCompleteSubCommand implements SubCommand {
 
     const output = completionService.formatCompletions(shellType, completions);
     if (output.length > 0) {
-      await printerService.print(output);
+      await printerService.print(output + "\n");
     }
   }
 }
