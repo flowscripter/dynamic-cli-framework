@@ -112,7 +112,6 @@ export class CompletionIntegrationSubCommand implements SubCommand {
 
     await printerService.info(
       `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.`,
-      Icon.SUCCESS,
     );
   }
 }
@@ -184,15 +183,6 @@ export class CompletionGroupCommand implements GroupCommand {
     this.memberSubCommands = [integrationCommand, completeCommand];
   }
 
-  async execute(context: Context): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
-    await printerService.info("Available sub-commands:");
-    for (const cmd of this.memberSubCommands) {
-      await printerService.info(
-        `  ${this.name}:${cmd.name} - ${cmd.description}`,
-      );
-    }
+  async execute(_context: Context): Promise<void> {
   }
 }
