@@ -3,9 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { decodePngToRGBA } from "../../src/terminal/PngDecoder.ts";
 
 // Helper to build a minimal PNG from raw components
-function buildPng(
-  chunks: Array<{ type: string; data: Uint8Array }>,
-): Uint8Array {
+function buildPng(chunks: Array<{ type: string; data: Uint8Array }>): Uint8Array {
   const parts: Uint8Array[] = [];
   // PNG signature
   parts.push(new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]));
@@ -177,9 +175,7 @@ describe("decodePngToRGBA", () => {
       { type: "IHDR", data: makeIHDR(1, 1, 8, 6, 1) },
       { type: "IEND", data: new Uint8Array(0) },
     ]);
-    expect(() => decodePngToRGBA(png)).toThrow(
-      "Interlaced PNGs are not supported",
-    );
+    expect(() => decodePngToRGBA(png)).toThrow("Interlaced PNGs are not supported");
   });
 
   test("throws on unknown filter type", () => {

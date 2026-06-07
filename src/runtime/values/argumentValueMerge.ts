@@ -36,12 +36,8 @@ function doClone(
 }
 
 function arrayMerge(
-  override:
-    | Array<PopulatedArgumentSingleValueType>
-    | Array<PopulatedArgumentValues | undefined>,
-  base:
-    | Array<PopulatedArgumentSingleValueType>
-    | Array<PopulatedArgumentValues>,
+  override: Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues | undefined>,
+  base: Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues>,
   nestingLevel: number,
 ): Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues> {
   if (override.length > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
@@ -55,16 +51,13 @@ function arrayMerge(
   override.forEach((argValue, index) => {
     if (Array.isArray(argValue)) {
       throw new Error(
-        `Array of array values discovered, this is not supported: ${
-          JSON.stringify(argValue)
-        }`,
+        `Array of array values discovered, this is not supported: ${JSON.stringify(argValue)}`,
       );
     }
     if (index >= base.length) {
       result.push(
-        doClone(argValue, nestingLevel) as
-          & PopulatedArgumentSingleValueType
-          & PopulatedArgumentValues,
+        doClone(argValue, nestingLevel) as PopulatedArgumentSingleValueType &
+          PopulatedArgumentValues,
       );
     } else {
       result[index] = doMerge(argValue, base[index], nestingLevel) as
@@ -81,9 +74,7 @@ function objectMerge(
   nestingLevel: number,
 ): PopulatedArgumentValues {
   if (nestingLevel > MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
-    throw new Error(
-      `Maximum complex option nesting depth exceeded: ${nestingLevel}`,
-    );
+    throw new Error(`Maximum complex option nesting depth exceeded: ${nestingLevel}`);
   }
 
   nestingLevel++;
@@ -120,15 +111,12 @@ function doMerge(
     | PopulatedArgumentValueType
     | Array<PopulatedArgumentValues | undefined>,
   nestingLevel: number,
-):
-  | PopulatedArgumentValues
-  | PopulatedArgumentValueType
-  | Array<PopulatedArgumentValues> {
+): PopulatedArgumentValues | PopulatedArgumentValueType | Array<PopulatedArgumentValues> {
   if (defaults === undefined) {
     throw new Error(
-      `Undefined value provided in merge: override = ${
-        JSON.stringify(override)
-      }, defaults = undefined`,
+      `Undefined value provided in merge: override = ${JSON.stringify(
+        override,
+      )}, defaults = undefined`,
     );
   }
   if (typeof override !== typeof defaults) {
@@ -147,17 +135,17 @@ function doMerge(
       }
     } // check if we need to convert from single non-string value to single string value
     else if (
-      (typeof override === "string") &&
-      ((typeof defaults == "number") || (typeof defaults == "boolean"))
+      typeof override === "string" &&
+      (typeof defaults == "number" || typeof defaults == "boolean")
     ) {
       defaults = `${defaults}`;
     }
   }
-  if (override !== undefined && (typeof override !== typeof defaults)) {
+  if (override !== undefined && typeof override !== typeof defaults) {
     throw new Error(
-      `Incompatible value types provided in merge: override = ${
-        JSON.stringify(override)
-      }, defaults = ${JSON.stringify(defaults)}`,
+      `Incompatible value types provided in merge: override = ${JSON.stringify(
+        override,
+      )}, defaults = ${JSON.stringify(defaults)}`,
     );
   }
 

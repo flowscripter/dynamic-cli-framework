@@ -128,21 +128,13 @@ function createService(
 } {
   const terminal = new MockTerminal();
   const config = { ...DEFAULT_PROMPTER_CONFIG, ...configOverrides };
-  const service = new DefaultPrompterService(
-    config,
-    terminal,
-    keyReader,
-    getMockPrinterService(),
-  );
+  const service = new DefaultPrompterService(config, terminal, keyReader, getMockPrinterService());
   return { service, terminal };
 }
 
 const SSH_ENV_KEYS = ["SSH_CONNECTION", "SSH_CLIENT", "SSH_TTY"] as const;
 
-function withSshEnvOverride<T>(
-  overrides: Record<string, string | undefined>,
-  fn: () => T,
-): T {
+function withSshEnvOverride<T>(overrides: Record<string, string | undefined>, fn: () => T): T {
   const saved = SSH_ENV_KEYS.map((k) => process.env[k]);
   SSH_ENV_KEYS.forEach((k) => {
     if (k in overrides) {
@@ -171,7 +163,9 @@ describe("DefaultPrompterService tests", () => {
     const keyReader = new MockKeyReader();
     keyReader.addKeys(
       { specialKey: SpecialKey.DOWN },
-      { specialKey: SpecialKey.ENTER },
+      {
+        specialKey: SpecialKey.ENTER,
+      },
     );
     const { service } = createService(keyReader);
 
@@ -219,7 +213,9 @@ describe("DefaultPrompterService tests", () => {
     const keyReader = new MockKeyReader();
     keyReader.addKeys(
       { specialKey: SpecialKey.UP },
-      { specialKey: SpecialKey.ENTER },
+      {
+        specialKey: SpecialKey.ENTER,
+      },
     );
     const { service } = createService(keyReader);
 
@@ -238,7 +234,9 @@ describe("DefaultPrompterService tests", () => {
     const keyReader = new MockKeyReader();
     keyReader.addKeys(
       { specialKey: SpecialKey.DOWN },
-      { specialKey: SpecialKey.ENTER },
+      {
+        specialKey: SpecialKey.ENTER,
+      },
     );
     const { service } = createService(keyReader);
 
@@ -258,7 +256,9 @@ describe("DefaultPrompterService tests", () => {
     keyReader.addKeys(
       { key: "h" },
       { key: "i" },
-      { specialKey: SpecialKey.ENTER },
+      {
+        specialKey: SpecialKey.ENTER,
+      },
     );
     const { service } = createService(keyReader);
 
@@ -325,9 +325,7 @@ describe("DefaultPrompterService tests", () => {
         name: "test",
         promptText: "Pick one",
         type: PromptType.SINGLE_SELECT,
-        options: [
-          { displayValue: "A", returnedValue: "a" },
-        ],
+        options: [{ displayValue: "A", returnedValue: "a" }],
       }),
     ).rejects.toThrow("Prompting is disabled and no default for prompt: test");
   });
@@ -342,9 +340,7 @@ describe("DefaultPrompterService tests", () => {
         name: "test",
         promptText: "Pick one",
         type: PromptType.SINGLE_SELECT,
-        options: [
-          { displayValue: "A", returnedValue: "a" },
-        ],
+        options: [{ displayValue: "A", returnedValue: "a" }],
       }),
     ).rejects.toThrow("Prompt cancelled");
   });
@@ -460,9 +456,7 @@ describe("DefaultPrompterService tests", () => {
 
       expect(terminal.buffer).toContain("Login at:");
       expect(terminal.buffer).toContain("https://example.com/login");
-      expect(terminal.buffer).toContain(
-        "Press ENTER to open in the browser...",
-      );
+      expect(terminal.buffer).toContain("Press ENTER to open in the browser...");
       expect(terminal.buffer).toContain("Open browser to login");
     }));
 
@@ -491,9 +485,7 @@ describe("DefaultPrompterService tests", () => {
 
       expect(result.name).toEqual("login");
       expect(result.value).toEqual("https://example.com/login");
-      expect(terminal.buffer).toContain(
-        "Failed to open URL: browser not found",
-      );
+      expect(terminal.buffer).toContain("Failed to open URL: browser not found");
     }));
 
   test("OPEN_URL with promptEnabled=false and defaultOption returns default", async () => {
@@ -538,49 +530,42 @@ describe("DefaultPrompterService tests", () => {
           },
         ],
       }),
-    ).rejects.toThrow(
-      "Prompting is disabled and no default for prompt: login",
-    );
+    ).rejects.toThrow("Prompting is disabled and no default for prompt: login");
   });
 
   test("OPEN_URL in SSH session shows copy message and skips openUrl", () =>
-    withSshEnvOverride(
-      { SSH_CONNECTION: "192.168.1.1 12345 192.168.1.2 22" },
-      async () => {
-        const keyReader = new MockKeyReader();
-        keyReader.addKeys({ specialKey: SpecialKey.ENTER });
-        let openUrlCalled = false;
-        const mockOpenUrl = (_url: string): Promise<void> => {
-          openUrlCalled = true;
-          return Promise.resolve();
-        };
-        const { service, terminal } = createService(keyReader, {
-          openUrl: mockOpenUrl,
-        });
+    withSshEnvOverride({ SSH_CONNECTION: "192.168.1.1 12345 192.168.1.2 22" }, async () => {
+      const keyReader = new MockKeyReader();
+      keyReader.addKeys({ specialKey: SpecialKey.ENTER });
+      let openUrlCalled = false;
+      const mockOpenUrl = (_url: string): Promise<void> => {
+        openUrlCalled = true;
+        return Promise.resolve();
+      };
+      const { service, terminal } = createService(keyReader, {
+        openUrl: mockOpenUrl,
+      });
 
-        const result = await service.prompt({
-          name: "login",
-          promptText: "Login at:",
-          type: PromptType.OPEN_URL,
-          options: [
-            {
-              displayValue: "Open browser",
-              returnedValue: "https://example.com/login",
-            },
-          ],
-        });
+      const result = await service.prompt({
+        name: "login",
+        promptText: "Login at:",
+        type: PromptType.OPEN_URL,
+        options: [
+          {
+            displayValue: "Open browser",
+            returnedValue: "https://example.com/login",
+          },
+        ],
+      });
 
-        expect(result.name).toEqual("login");
-        expect(result.value).toEqual("https://example.com/login");
-        expect(openUrlCalled).toBe(false);
-        expect(terminal.buffer).toContain(
-          "Copy the URL above and open it in your local browser, then press ENTER to continue...",
-        );
-        expect(terminal.buffer).not.toContain(
-          "Press ENTER to open in the browser...",
-        );
-      },
-    ));
+      expect(result.name).toEqual("login");
+      expect(result.value).toEqual("https://example.com/login");
+      expect(openUrlCalled).toBe(false);
+      expect(terminal.buffer).toContain(
+        "Copy the URL above and open it in your local browser, then press ENTER to continue...",
+      );
+      expect(terminal.buffer).not.toContain("Press ENTER to open in the browser...");
+    }));
 
   test("OPEN_URL outside SSH session shows open message", () =>
     withoutSshEnv(async () => {
@@ -608,8 +593,6 @@ describe("DefaultPrompterService tests", () => {
       });
 
       expect(openUrlCalled).toBe(true);
-      expect(terminal.buffer).toContain(
-        "Press ENTER to open in the browser...",
-      );
+      expect(terminal.buffer).toContain("Press ENTER to open in the browser...");
     }));
 });

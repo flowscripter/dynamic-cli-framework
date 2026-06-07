@@ -20,33 +20,19 @@ describe("configHelper tests", () => {
     let command = getGlobalCommand("blah", true);
 
     expect(
-      getGlobalCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        command.argument!,
-      ),
+      getGlobalCommandArgumentConfigurationKey(getCLIConfig(), command, command.argument!),
     ).toBeUndefined();
 
     command = getGlobalCommand("blah", true, false, true);
 
     expect(
-      getGlobalCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        command.argument!,
-      ),
-    ).toEqual(
-      "FOO_BLAH",
-    );
+      getGlobalCommandArgumentConfigurationKey(getCLIConfig(), command, command.argument!),
+    ).toEqual("FOO_BLAH");
 
     command = getGlobalCommand("blah", true, false, true, "FOO_BAR");
 
     expect(
-      getGlobalCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        command.argument!,
-      ),
+      getGlobalCommandArgumentConfigurationKey(getCLIConfig(), command, command.argument!),
       "FOO_BAR",
     );
   });
@@ -55,42 +41,20 @@ describe("configHelper tests", () => {
     let command = getSubCommandWithPositional("blah", true, true);
 
     expect(
-      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0]!,
-      ]),
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
     ).toBeUndefined();
 
-    command = getSubCommandWithPositional(
-      "blah",
-      true,
-      false,
-      ArgumentValueTypeName.BOOLEAN,
-      true,
-    );
+    command = getSubCommandWithPositional("blah", true, false, ArgumentValueTypeName.BOOLEAN, true);
 
     expect(
-      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0]!,
-      ]),
-    ).toEqual(
-      "FOO_BLAH_FOO",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
+    ).toEqual("FOO_BLAH_FOO");
 
-    command = getSubCommandWithPositional(
-      "blah",
-      true,
-      true,
-      ArgumentValueTypeName.BOOLEAN,
-      true,
-    );
+    command = getSubCommandWithPositional("blah", true, true, ArgumentValueTypeName.BOOLEAN, true);
 
     expect(
-      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0]!,
-      ]),
-    ).toEqual(
-      "FOO_BLAH_FOO[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
+    ).toEqual("FOO_BLAH_FOO[_<index>]");
 
     command = getSubCommandWithPositional(
       "blah",
@@ -102,23 +66,17 @@ describe("configHelper tests", () => {
     );
 
     expect(
-      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
-        command.positionals![0]!,
-      ]),
-    ).toEqual(
-      "FOO_BAR[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
+    ).toEqual("FOO_BAR[_<index>]");
   });
 
   test("getConfigurationKey works for simple option argument", () => {
     let command = getSubCommandWithOption("blah", true, false, true);
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [command.options![0] as Option],
-      ),
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        command.options![0] as Option,
+      ]),
     ).toBeUndefined();
 
     command = getSubCommandWithOption(
@@ -132,14 +90,10 @@ describe("configHelper tests", () => {
     );
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [command.options![0] as Option],
-      ),
-    ).toEqual(
-      "FOO_BLAH_FOO",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        command.options![0] as Option,
+      ]),
+    ).toEqual("FOO_BLAH_FOO");
 
     command = getSubCommandWithOption(
       "blah",
@@ -152,14 +106,10 @@ describe("configHelper tests", () => {
     );
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [command.options![0] as Option],
-      ),
-    ).toEqual(
-      "FOO_BLAH_FOO[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        command.options![0] as Option,
+      ]),
+    ).toEqual("FOO_BLAH_FOO[_<index>]");
 
     command = getSubCommandWithOption(
       "blah",
@@ -173,14 +123,10 @@ describe("configHelper tests", () => {
     );
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [command.options![0] as Option],
-      ),
-    ).toEqual(
-      "FOO_BAR[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        command.options![0] as Option,
+      ]),
+    ).toEqual("FOO_BAR[_<index>]");
   });
 
   test("getConfigurationKey works for complex option argument", () => {
@@ -191,15 +137,11 @@ describe("configHelper tests", () => {
     let arg2 = arg1.properties[0] as Option;
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [
-          arg0 as unknown as SubCommandArgument,
-          arg1 as unknown as SubCommandArgument,
-          arg2 as unknown as SubCommandArgument,
-        ],
-      ),
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        arg0 as unknown as SubCommandArgument,
+        arg1 as unknown as SubCommandArgument,
+        arg2 as unknown as SubCommandArgument,
+      ]),
     ).toBeUndefined();
 
     command = getSubCommandWithComplexOptions(true, true);
@@ -209,50 +151,32 @@ describe("configHelper tests", () => {
     arg2 = arg1.properties[0] as Option;
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [
-          arg0 as unknown as SubCommandArgument,
-          arg1 as unknown as SubCommandArgument,
-          arg2 as unknown as SubCommandArgument,
-        ],
-      ),
-    ).toEqual(
-      "FOO_SUBCOMMAND_ALPHA[_<index>]_BETA[_<index>]_GAMMA",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        arg0 as unknown as SubCommandArgument,
+        arg1 as unknown as SubCommandArgument,
+        arg2 as unknown as SubCommandArgument,
+      ]),
+    ).toEqual("FOO_SUBCOMMAND_ALPHA[_<index>]_BETA[_<index>]_GAMMA");
 
     arg2 = arg1.properties[1] as Option;
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [
-          arg0 as unknown as SubCommandArgument,
-          arg1 as unknown as SubCommandArgument,
-          arg2 as unknown as SubCommandArgument,
-        ],
-      ),
-    ).toEqual(
-      "FOO_SUBCOMMAND_ALPHA[_<index>]_BETA[_<index>]_DELTA[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        arg0 as unknown as SubCommandArgument,
+        arg1 as unknown as SubCommandArgument,
+        arg2 as unknown as SubCommandArgument,
+      ]),
+    ).toEqual("FOO_SUBCOMMAND_ALPHA[_<index>]_BETA[_<index>]_DELTA[_<index>]");
 
     arg0 = command.options![1] as ComplexOption;
     arg1 = arg0.properties[0] as ComplexOption;
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [
-          arg0 as unknown as SubCommandArgument,
-          arg1 as unknown as SubCommandArgument,
-        ],
-      ),
-    ).toEqual(
-      "FOO_SUBCOMMAND_EPSILON_FOO_BAR_A",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        arg0 as unknown as SubCommandArgument,
+        arg1 as unknown as SubCommandArgument,
+      ]),
+    ).toEqual("FOO_SUBCOMMAND_EPSILON_FOO_BAR_A");
 
     command = getSubCommandWithComplexOptions(true, true, true);
 
@@ -260,16 +184,10 @@ describe("configHelper tests", () => {
     arg1 = arg0.properties[1] as ComplexOption;
 
     expect(
-      getSubCommandArgumentConfigurationKey(
-        getCLIConfig(),
-        command,
-        [
-          arg0 as unknown as SubCommandArgument,
-          arg1 as unknown as SubCommandArgument,
-        ],
-      ),
-    ).toEqual(
-      "FOO_SUBCOMMAND_EPSILON_FOO_BAR_B[_<index>]",
-    );
+      getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [
+        arg0 as unknown as SubCommandArgument,
+        arg1 as unknown as SubCommandArgument,
+      ]),
+    ).toEqual("FOO_SUBCOMMAND_EPSILON_FOO_BAR_B[_<index>]");
   });
 });

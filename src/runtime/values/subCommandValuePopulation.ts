@@ -11,14 +11,9 @@ import getLogger from "../../util/logger.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
 import type { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import type ComplexOption from "../../api/argument/ComplexOption.ts";
-import {
-  MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH,
-} from "../../api/argument/ComplexOption.ts";
+import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "../../api/argument/ComplexOption.ts";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
-import {
-  type InvalidArgument,
-  InvalidArgumentReason,
-} from "../../api/RunResult.ts";
+import { type InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
 
 const logger = getLogger("subCommandValuePopulation");
@@ -150,10 +145,7 @@ class ParseContext {
     this.currentOption = undefined;
 
     // split up the path into elements
-    const complexPathElements = optionPath.split(
-      ".",
-      MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH + 1,
-    );
+    const complexPathElements = optionPath.split(".", MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH + 1);
 
     // check nesting depth
     if (complexPathElements.length > MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
@@ -179,10 +171,9 @@ class ParseContext {
 
       // look for array index
       if (complexPathElement.endsWith("]")) {
-        [complexPathElement, arrayIndexString] = complexPathElement.slice(
-          0,
-          complexPathElement.length - 1,
-        ).split("[") as [string, string | undefined];
+        [complexPathElement, arrayIndexString] = complexPathElement
+          .slice(0, complexPathElement.length - 1)
+          .split("[") as [string, string | undefined];
       }
 
       let lookupPath = this.subCommand.name;
@@ -235,9 +226,10 @@ class ParseContext {
           });
           this.optionLookupMapsByPath.set(lookupPath, lookupMap);
         }
-        option = this.optionLookupMapsByPath.get(lookupPath)!.get(
-          complexPathElement,
-        ) as Option | ComplexOption | undefined;
+        option = this.optionLookupMapsByPath.get(lookupPath)!.get(complexPathElement) as
+          | Option
+          | ComplexOption
+          | undefined;
 
         // now we are parsing properties of complex options it is an error if we cannot match an option name or alias
         if (option === undefined) {
@@ -272,7 +264,7 @@ class ParseContext {
       }
 
       // check for indexing when not allowed
-      if (!option.isArray && (arrayIndex !== undefined)) {
+      if (!option.isArray && arrayIndex !== undefined) {
         this.invalidArgument = {
           argument: option,
           name: optionPath,
@@ -282,15 +274,10 @@ class ParseContext {
         return false;
       }
 
-      if (
-        (currentValue as PopulatedArgumentValues)[complexPathElement] ===
-          undefined
-      ) {
+      if ((currentValue as PopulatedArgumentValues)[complexPathElement] === undefined) {
         // ensure we have a placeholder value
         if (option.isArray) {
-          currentValue =
-            (currentValue as PopulatedArgumentValues)[complexPathElement] =
-              [];
+          currentValue = (currentValue as PopulatedArgumentValues)[complexPathElement] = [];
 
           if (isComplexOption(option)) {
             // if we are retrieving a property by name only use the last entry in the array by default
@@ -302,9 +289,7 @@ class ParseContext {
             currentValue = currentValue[index] = {};
           }
         } else if (isComplexOption(option)) {
-          currentValue =
-            (currentValue as PopulatedArgumentValues)[complexPathElement] =
-              {};
+          currentValue = (currentValue as PopulatedArgumentValues)[complexPathElement] = {};
         }
       } else {
         currentValue = (currentValue as PopulatedArgumentValues)[
@@ -318,7 +303,7 @@ class ParseContext {
             index = arrayIndex;
           }
 
-          if ((currentValue[index] === undefined) && isComplexOption(option)) {
+          if (currentValue[index] === undefined && isComplexOption(option)) {
             // ensure we have a placeholder value
             currentValue = currentValue[index] = {};
           } else {
@@ -380,13 +365,11 @@ class ParseContext {
       // if on last path element, set the value
       if (i === optionPath.length - 1) {
         if (typeof pathElement === "string") {
-          const currentValue =
-            (optionValue as PopulatedArgumentValues)[pathElement as string];
+          const currentValue = (optionValue as PopulatedArgumentValues)[pathElement as string];
 
           // if we haven't populated the argument value before...
           if (currentValue === undefined) {
-            (optionValue as PopulatedArgumentValues)[pathElement as string] =
-              value;
+            (optionValue as PopulatedArgumentValues)[pathElement as string] = value;
           } // if we have already populated the argument value as an array...
           else if (Array.isArray(currentValue)) {
             if (currentValue.length === MAXIMUM_ARGUMENT_ARRAY_SIZE) {
@@ -399,9 +382,7 @@ class ParseContext {
               return false;
             }
             // push the new value
-            (currentValue as Array<PopulatedArgumentSingleValueType>).push(
-              value,
-            );
+            (currentValue as Array<PopulatedArgumentSingleValueType>).push(value);
           } // else the value to add would make an array where it is not allowed
           else {
             this.invalidArgument = {
@@ -414,9 +395,9 @@ class ParseContext {
           }
         } else {
           // set the new value on the array
-          (optionValue as Array<
-            PopulatedArgumentValueType | PopulatedArgumentValues
-          >)[pathElement as number] = value;
+          (optionValue as Array<PopulatedArgumentValueType | PopulatedArgumentValues>)[
+            pathElement as number
+          ] = value;
         }
       } // otherwise continue to navigate the path
       else {
@@ -429,16 +410,15 @@ class ParseContext {
               | PopulatedArgumentValues
               | PopulatedArgumentValueType;
           } else {
-            optionValue =
-              (optionValue as PopulatedArgumentValues)[pathElement as string] as
-                | Array<PopulatedArgumentValues>
-                | PopulatedArgumentValues
-                | PopulatedArgumentValueType;
+            optionValue = (optionValue as PopulatedArgumentValues)[pathElement as string] as
+              | Array<PopulatedArgumentValues>
+              | PopulatedArgumentValues
+              | PopulatedArgumentValueType;
           }
         } else {
-          optionValue = (optionValue as Array<
-            PopulatedArgumentSingleValueType | PopulatedArgumentValues
-          >)[pathElement as number];
+          optionValue = (
+            optionValue as Array<PopulatedArgumentSingleValueType | PopulatedArgumentValues>
+          )[pathElement as number];
         }
       }
     }
@@ -459,8 +439,7 @@ class ParseContext {
    * @param value the value to attempt to set.
    */
   setPositionalValue(value: ArgumentSingleValueType): boolean {
-    const positional = this.subCommand
-      .positionals[this.currentPositionalIndex]!;
+    const positional = this.subCommand.positionals[this.currentPositionalIndex]!;
     const currentValue = this.populatedArgumentValues[positional.name];
 
     // if we haven't populated the argument value before...
@@ -483,7 +462,7 @@ class ParseContext {
         return false;
       }
       this.populatedArgumentValues[positional.name] = [
-        ...currentValue as Array<PopulatedArgumentSingleValueType>,
+        ...(currentValue as Array<PopulatedArgumentSingleValueType>),
         value,
       ] as Array<PopulatedArgumentSingleValueType>;
     }
@@ -509,7 +488,8 @@ class ParseContext {
       // assume the boolean value was implicitly `true` and treat
       // the potential arg as a following option arg or positional value
       if (
-        (potentialArg !== "true") && (potentialArg !== "false") &&
+        potentialArg !== "true" &&
+        potentialArg !== "false" &&
         this.currentOption!.type === ArgumentValueTypeName.BOOLEAN
       ) {
         // Set the value to implicit value of true and return ony error.
@@ -536,8 +516,11 @@ class ParseContext {
 
         // check for option AND value
         if (potentialOptionPath.includes("=")) {
-          [potentialOptionPath, potentialOptionValue] = potentialOptionPath
-            .split(/=(.*)/) as [string, string | undefined, ...string[]];
+          [potentialOptionPath, potentialOptionValue] = potentialOptionPath.split(/=(.*)/) as [
+            string,
+            string | undefined,
+            ...string[],
+          ];
 
           // check for illegal syntax e.g. --optionName=
           if (potentialOptionValue === "") {
@@ -608,14 +591,11 @@ export default function populateSubCommandValues(
   defaultValues: PopulatedArgumentValues | undefined,
 ): SubCommandValuePopulationResult {
   logger.debug(() => {
-    const message =
-      `Populating values for sub-command: '${subCommand.name}' using potential args: ${
-        potentialArgs.join(" ")
-      }`;
+    const message = `Populating values for sub-command: '${subCommand.name}' using potential args: ${potentialArgs.join(
+      " ",
+    )}`;
     if (defaultValues !== undefined) {
-      return `${message} and configured values: ${
-        JSON.stringify(defaultValues)
-      }`;
+      return `${message} and configured values: ${JSON.stringify(defaultValues)}`;
     }
     return message;
   });
@@ -668,10 +648,7 @@ export default function populateSubCommandValues(
   // merge the configured values with the parsed values
   let populatedArgumentValues = parseContext.populatedArgumentValues;
   if (defaultValues) {
-    populatedArgumentValues = argumentValueMerge(
-      populatedArgumentValues,
-      defaultValues,
-    );
+    populatedArgumentValues = argumentValueMerge(populatedArgumentValues, defaultValues);
   }
 
   return {

@@ -11,12 +11,8 @@ export default class VersionCommand implements GlobalCommand {
   readonly description = "Show version information";
   readonly shortAlias = "v";
 
-  public async execute(
-    context: Context,
-  ): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+  public async execute(context: Context): Promise<void> {
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     await printerService.print(`${context.cliConfig.version}\n`);
   }
 }

@@ -21,22 +21,16 @@ import type Positional from "../../api/argument/Positional.ts";
 import type ComplexOption from "../../api/argument/ComplexOption.ts";
 import type SubCommand from "../../api/command/SubCommand.ts";
 import type GlobalCommand from "../../api/command/GlobalCommand.ts";
-import {
-  isGlobalCommand,
-  isSubCommand,
-} from "../../runtime/command/CommandTypeGuards.ts";
+import { isGlobalCommand, isSubCommand } from "../../runtime/command/CommandTypeGuards.ts";
 
-export default class DefaultArgumentPrompterService
-  implements ArgumentPrompterService {
+export default class DefaultArgumentPrompterService implements ArgumentPrompterService {
   readonly #prompterService: PrompterService;
 
   public constructor(prompterService: PrompterService) {
     this.#prompterService = prompterService;
   }
 
-  async promptForMissingArguments(
-    parseResult: ParseResult,
-  ): Promise<ParseResult> {
+  async promptForMissingArguments(parseResult: ParseResult): Promise<ParseResult> {
     if (!this.#prompterService.promptEnabled) {
       return parseResult;
     }
@@ -69,9 +63,7 @@ export default class DefaultArgumentPrompterService
     return parseResult;
   }
 
-  async #promptForGlobalCommand(
-    parseResult: ParseResult,
-  ): Promise<ParseResult> {
+  async #promptForGlobalCommand(parseResult: ParseResult): Promise<ParseResult> {
     const command = parseResult.command as GlobalCommand;
     if (!command.argument) {
       return parseResult;
@@ -97,48 +89,33 @@ export default class DefaultArgumentPrompterService
     };
   }
 
-  async #promptForSubCommand(
-    parseResult: ParseResult,
-  ): Promise<ParseResult> {
+  async #promptForSubCommand(parseResult: ParseResult): Promise<ParseResult> {
     const command = parseResult.command as SubCommand;
-    const existingValues = (parseResult.populatedArgumentValues ??
-      {}) as PopulatedArgumentValues;
-    const newValues: Record<
-      string,
-      PopulatedArgumentValues[string]
-    > = { ...existingValues };
+    const existingValues = (parseResult.populatedArgumentValues ?? {}) as PopulatedArgumentValues;
+    const newValues: Record<string, PopulatedArgumentValues[string]> = {
+      ...existingValues,
+    };
     const remainingInvalid: InvalidArgument[] = [];
 
     for (const invalid of parseResult.invalidArguments) {
-      if (
-        invalid.reason !== InvalidArgumentReason.MISSING_VALUE ||
-        !invalid.name
-      ) {
+      if (invalid.reason !== InvalidArgumentReason.MISSING_VALUE || !invalid.name) {
         remainingInvalid.push(invalid);
         continue;
       }
 
-      const arg = DefaultArgumentPrompterService.#findArgument(
-        command,
-        invalid.name,
-      );
+      const arg = DefaultArgumentPrompterService.#findArgument(command, invalid.name);
       if (!arg) {
         remainingInvalid.push(invalid);
         continue;
       }
 
-      if (
-        "type" in arg &&
-        (arg as ComplexOption).type === ComplexValueTypeName.COMPLEX
-      ) {
+      if ("type" in arg && (arg as ComplexOption).type === ComplexValueTypeName.COMPLEX) {
         const complexValues = await this.#promptForComplexOption(
           invalid.name,
           arg as ComplexOption,
         );
         newValues[invalid.name] = complexValues;
-      } else if (
-        DefaultArgumentPrompterService.#isArrayArgument(arg)
-      ) {
+      } else if (DefaultArgumentPrompterService.#isArrayArgument(arg)) {
         const arrayValues = await this.#promptForArrayArgument(
           invalid.name,
           arg as Option | Positional,
@@ -174,15 +151,11 @@ export default class DefaultArgumentPrompterService
     const values: Record<string, PopulatedArgumentValues[string]> = {};
 
     for (const prop of complexOption.properties) {
-      if (
-        "type" in prop &&
-        (prop as ComplexOption).type === ComplexValueTypeName.COMPLEX
-      ) {
-        values[(prop as ComplexOption).name] = await this
-          .#promptForComplexOption(
-            `${name}.${(prop as ComplexOption).name}`,
-            prop as ComplexOption,
-          );
+      if ("type" in prop && (prop as ComplexOption).type === ComplexValueTypeName.COMPLEX) {
+        values[(prop as ComplexOption).name] = await this.#promptForComplexOption(
+          `${name}.${(prop as ComplexOption).name}`,
+          prop as ComplexOption,
+        );
       } else {
         const option = prop as Option;
         if (option.isOptional && option.defaultValue !== undefined) {
@@ -213,9 +186,7 @@ export default class DefaultArgumentPrompterService
     while (true) {
       const prompt = DefaultArgumentPrompterService.#argumentToPrompt(
         name,
-        `${arg.description ?? name}${
-          values.length > 0 ? ` [${values.length + 1}]` : ""
-        }`,
+        `${arg.description ?? name}${values.length > 0 ? ` [${values.length + 1}]` : ""}`,
         arg as Argument,
       );
       const result = await this.#prompterService.prompt(prompt);
@@ -241,11 +212,7 @@ export default class DefaultArgumentPrompterService
     return values;
   }
 
-  static #argumentToPrompt(
-    name: string,
-    description: string,
-    arg: Argument,
-  ): Prompt {
+  static #argumentToPrompt(name: string, description: string, arg: Argument): Prompt {
     if (arg.type === ArgumentValueTypeName.BOOLEAN) {
       return {
         name,
@@ -269,9 +236,7 @@ export default class DefaultArgumentPrompterService
     }
 
     const validationOption: PromptOption = {
-      displayValue: arg.type === ArgumentValueTypeName.SECRET
-        ? "__SECRET__"
-        : name,
+      displayValue: arg.type === ArgumentValueTypeName.SECRET ? "__SECRET__" : name,
       returnedValue: "",
       min: arg.minValueInclusive,
       max: arg.maxValueInclusive,
@@ -316,9 +281,7 @@ export default class DefaultArgumentPrompterService
     return undefined;
   }
 
-  static #isArrayArgument(
-    arg: Option | Positional | ComplexOption,
-  ): boolean {
+  static #isArrayArgument(arg: Option | Positional | ComplexOption): boolean {
     if ("isArray" in arg && (arg as Option).isArray) {
       return true;
     }

@@ -136,9 +136,7 @@ describe("DefaultTableGeneratorService tests", () => {
 
     const result = service.render(table);
     const lines = result.split("\n");
-    const contentLines = lines.filter((l) =>
-      l.startsWith("│") && !l.includes("─")
-    );
+    const contentLines = lines.filter((l) => l.startsWith("│") && !l.includes("─"));
     expect(contentLines.length).toBeGreaterThan(1);
     // Each content line should have complete words (no mid-word breaks)
     for (const line of contentLines) {
@@ -146,9 +144,7 @@ describe("DefaultTableGeneratorService tests", () => {
       if (content.length > 0) {
         const words = content.split(/\s+/);
         for (const word of words) {
-          expect(
-            ["hello", "world", "foo", "bar", ""].includes(word),
-          ).toBe(true);
+          expect(["hello", "world", "foo", "bar", ""].includes(word)).toBe(true);
         }
       }
     }
@@ -163,14 +159,10 @@ describe("DefaultTableGeneratorService tests", () => {
 
     const result = service.render(table);
     const lines = result.split("\n");
-    const contentLines = lines.filter((l) =>
-      l.startsWith("│") && !l.includes("─")
-    );
+    const contentLines = lines.filter((l) => l.startsWith("│") && !l.includes("─"));
     expect(contentLines.length).toBeGreaterThan(1);
     // Verify all characters are present
-    const allContent = contentLines
-      .map((l) => l.replace(/│/g, "").replace(/ /g, ""))
-      .join("");
+    const allContent = contentLines.map((l) => l.replace(/│/g, "").replace(/ /g, "")).join("");
     expect(allContent).toBe("ABCDEFGHIJKLMNOP");
   });
 
@@ -245,8 +237,7 @@ describe("DefaultTableGeneratorService tests", () => {
 
   test("empty cells render as blank space", () => {
     const service = createService();
-    const table = new Table(1, 2, { maxWidth: 20, padding: 1 })
-      .cell(0, 0, "Hi");
+    const table = new Table(1, 2, { maxWidth: 20, padding: 1 }).cell(0, 0, "Hi");
     // cell(0, 1) not set
 
     const result = service.render(table);
@@ -269,9 +260,7 @@ describe("DefaultTableGeneratorService tests", () => {
     const result = service.render(table);
     const lines = result.split("\n");
     // Filter content lines (between top and bottom borders)
-    const contentLines = lines.filter((l) =>
-      l.startsWith("│") && !l.includes("─")
-    );
+    const contentLines = lines.filter((l) => l.startsWith("│") && !l.includes("─"));
     // Row should have 3 sub-lines due to multi-line content
     expect(contentLines.length).toBe(3);
     expect(contentLines[0]).toContain("line1");
@@ -304,8 +293,7 @@ describe("DefaultTableGeneratorService tests", () => {
 
   test("1x1 table renders correctly", () => {
     const service = createService();
-    const table = new Table(1, 1, { maxWidth: 10, padding: 0 })
-      .cell(0, 0, "Hi");
+    const table = new Table(1, 1, { maxWidth: 10, padding: 0 }).cell(0, 0, "Hi");
 
     const result = service.render(table);
     const lines = result.split("\n");
@@ -319,8 +307,7 @@ describe("DefaultTableGeneratorService tests", () => {
 
   test("padding=0 works", () => {
     const service = createService();
-    const table = new Table(1, 1, { maxWidth: 10, padding: 0 })
-      .cell(0, 0, "AB");
+    const table = new Table(1, 1, { maxWidth: 10, padding: 0 }).cell(0, 0, "AB");
 
     const result = service.render(table);
     const lines = result.split("\n");
@@ -335,22 +322,14 @@ describe("DefaultTableGeneratorService tests", () => {
 
   test("out-of-bounds row index throws", () => {
     const table = new Table(2, 2);
-    expect(() => table.row(5, { align: Align.LEFT })).toThrow(
-      /out of bounds/,
-    );
-    expect(() => table.row(-1, { align: Align.LEFT })).toThrow(
-      /out of bounds/,
-    );
+    expect(() => table.row(5, { align: Align.LEFT })).toThrow(/out of bounds/);
+    expect(() => table.row(-1, { align: Align.LEFT })).toThrow(/out of bounds/);
   });
 
   test("out-of-bounds column index throws", () => {
     const table = new Table(2, 2);
-    expect(() => table.column(5, { flexWeight: 1 })).toThrow(
-      /out of bounds/,
-    );
-    expect(() => table.column(-1, { flexWeight: 1 })).toThrow(
-      /out of bounds/,
-    );
+    expect(() => table.column(5, { flexWeight: 1 })).toThrow(/out of bounds/);
+    expect(() => table.column(-1, { flexWeight: 1 })).toThrow(/out of bounds/);
   });
 
   test("out-of-bounds cell index throws", () => {

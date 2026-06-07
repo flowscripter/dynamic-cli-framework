@@ -19,37 +19,23 @@ describe("envVarHelper tests", () => {
     try {
       let command = getGlobalCommand("blah", true);
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       command = getGlobalCommand("blah", true, false, true);
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BLAH"] = "foo";
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        "foo",
-      );
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toEqual("foo");
 
       command = getGlobalCommand("blah", true, false, true, "FOO_BAR");
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BAR"] = "foo";
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        "foo",
-      );
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toEqual("foo");
 
       command = getGlobalModifierCommandWithArgument(
         "FOO_BAR",
@@ -65,27 +51,17 @@ describe("envVarHelper tests", () => {
       // any env var value should set boolean option to true
       process.env["FOO_BAR"] = "foo";
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        "true",
-      );
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toEqual("true");
 
       // empty env var value should set boolean option to false
       process.env["FOO_BAR"] = "";
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        "false",
-      );
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toEqual("false");
 
       // no env var value should not set boolean option to false
       delete process.env["FOO_BAR"];
 
-      expect(
-        getGlobalCommandValueFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getGlobalCommandValueFromEnvVars(getCLIConfig(), command)).toBeUndefined();
     } finally {
       delete process.env["FOO_BLAH_VALUE"];
       delete process.env["FOO_BAR"];
@@ -96,9 +72,7 @@ describe("envVarHelper tests", () => {
     try {
       let command = getSubCommandWithOption("blah", true, false);
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       command = getSubCommandWithOption(
         "blah",
@@ -110,17 +84,13 @@ describe("envVarHelper tests", () => {
         true,
       );
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BLAH_FOO"] = "bar";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "bar" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "bar",
+      });
 
       command = getSubCommandWithOption(
         "blah",
@@ -133,17 +103,13 @@ describe("envVarHelper tests", () => {
         "FOO_BAR",
       );
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BAR"] = "bar";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "bar" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "bar",
+      });
 
       command = getSubCommandWithOption(
         "blah",
@@ -159,27 +125,21 @@ describe("envVarHelper tests", () => {
       // any env var value should set boolean option to true
       process.env["FOO_BAR"] = "foo";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "true" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "true",
+      });
 
       // empty env var value should set boolean option to false
       process.env["FOO_BAR"] = "";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "false" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "false",
+      });
 
       delete process.env["FOO_BAR"];
 
       // no env var value should not set boolean option to false
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
     } finally {
       delete process.env["FOO_BLAH_FOO"];
       delete process.env["FOO_BAR"];
@@ -190,9 +150,7 @@ describe("envVarHelper tests", () => {
     try {
       let command = getSubCommandWithPositional("blah", true, false);
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       command = getSubCommandWithPositional(
         "blah",
@@ -202,17 +160,13 @@ describe("envVarHelper tests", () => {
         true,
       );
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BLAH_FOO"] = "bar";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "bar" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "bar",
+      });
 
       command = getSubCommandWithPositional(
         "blah",
@@ -223,17 +177,13 @@ describe("envVarHelper tests", () => {
         "FOO_BAR",
       );
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_BAR"] = "bar";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "bar" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "bar",
+      });
 
       command = getSubCommandWithPositional(
         "blah",
@@ -247,27 +197,21 @@ describe("envVarHelper tests", () => {
       // any env var value should set boolean option to true
       process.env["FOO_BAR"] = "foo";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "true" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "true",
+      });
 
       // empty env var value should set boolean option to false
       process.env["FOO_BAR"] = "";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { foo: "false" },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        foo: "false",
+      });
 
       // no env var value should not set boolean option to false
       delete process.env["FOO_BAR"];
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
     } finally {
       delete process.env["FOO_BLAH_FOO"];
       delete process.env["FOO_BAR"];
@@ -278,18 +222,14 @@ describe("envVarHelper tests", () => {
     try {
       const command = getSubCommandWithComplexOptions(true, true);
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_GAMMA"] = "bar1";
       process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_DELTA_0"] = "bar2";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toEqual(
-        { alpha: [{ beta: [{ delta: ["bar2"], gamma: "bar1" }] }] },
-      );
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toEqual({
+        alpha: [{ beta: [{ delta: ["bar2"], gamma: "bar1" }] }],
+      });
     } finally {
       delete process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_GAMMA"];
       delete process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_DELTA_0"];
@@ -300,16 +240,12 @@ describe("envVarHelper tests", () => {
     try {
       const command = getSubCommandWithComplexOptions(true);
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
       process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_GAMMA"] = "bar1";
       process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_DELTA_0"] = "bar2";
 
-      expect(
-        getSubCommandValuesFromEnvVars(getCLIConfig(), command),
-      ).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
     } finally {
       delete process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_GAMMA"];
       delete process.env["FOO_SUBCOMMAND_ALPHA_0_BETA_0_DELTA_0"];

@@ -12,9 +12,7 @@ describe("PrettyPrinterServiceProvider tests", () => {
   test("PrettyPrinterServiceProvider getServiceInfo and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const prettyPrinterServiceProvider = new PrettyPrinterServiceProvider(
-      100,
-    );
+    const prettyPrinterServiceProvider = new PrettyPrinterServiceProvider(100);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
@@ -31,9 +29,7 @@ describe("PrettyPrinterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await prettyPrinterServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await prettyPrinterServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
 
     await prettyPrinterServiceProvider.initService(context);

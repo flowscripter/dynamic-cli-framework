@@ -5,67 +5,49 @@ import DefaultAsciiBannerGeneratorService from "../../../src/service/asciiBanner
 import smallFont from "./small.flf.json" with { type: "json" };
 describe("DefaultAsciiBannerGeneratorService tests", () => {
   test("standard font registered by default", () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
-    expect(asciiBannerGeneratorService.getRegisteredFonts()).toEqual([
-      "standard",
-    ]);
+    expect(asciiBannerGeneratorService.getRegisteredFonts()).toEqual(["standard"]);
   });
 
   test("Cannot register a font if already registered", () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
-    expect(() =>
-      asciiBannerGeneratorService.registerFont("standard", smallFont.font)
-    )
-      .toThrow();
+    expect(() => asciiBannerGeneratorService.registerFont("standard", smallFont.font)).toThrow();
   });
 
   test("Can register new font", () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
     asciiBannerGeneratorService.registerFont("small", smallFont.font);
-    expect(asciiBannerGeneratorService.getRegisteredFonts()).toEqual([
-      "standard",
-      "small",
-    ]);
+    expect(asciiBannerGeneratorService.getRegisteredFonts()).toEqual(["standard", "small"]);
   });
 
   test("Cannot generate with unknown font", () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
-    expect(asciiBannerGeneratorService.generate("foo", { fontName: "small" }))
-      .rejects
-      .toThrow();
+    expect(asciiBannerGeneratorService.generate("foo", { fontName: "small" })).rejects.toThrow();
   });
 
   test("Can generate with standard font", async () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
     asciiBannerGeneratorService.registerFont("small", smallFont.font);
 
-    const generated = await asciiBannerGeneratorService.generate(
-      "foo",
-      { fontName: "standard" },
-    );
+    const generated = await asciiBannerGeneratorService.generate("foo", {
+      fontName: "standard",
+    });
     expect(generated).toMatchSnapshot();
   });
 
   test("Can generate with newly registered font", async () => {
-    const asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    const asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
 
     asciiBannerGeneratorService.registerFont("small", smallFont.font);
 
-    const generated = await asciiBannerGeneratorService.generate(
-      "foo",
-      { fontName: "small" },
-    );
+    const generated = await asciiBannerGeneratorService.generate("foo", {
+      fontName: "small",
+    });
     expect(generated).toMatchSnapshot();
   });
 
@@ -145,13 +127,12 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
         },
       },
     });
-    const lines = result.trim().split("\n").filter((l) =>
-      l.includes("\x1b[38;2;")
-    );
-    const firstCodes = lines.map((l) =>
-      // deno-lint-ignore no-control-regex
-      l.match(/\x1b\[38;2;(\d+;\d+;\d+)m/)?.[1]
-    );
+    const lines = result
+      .trim()
+      .split("\n")
+      .filter((l) => l.includes("\x1b[38;2;"));
+    const ansiRe = /\x1b\[38;2;(\d+;\d+;\d+)m/; // oxlint-disable-line no-control-regex
+    const firstCodes = lines.map((l) => l.match(ansiRe)?.[1]);
     const unique = new Set(firstCodes.filter(Boolean));
     expect(unique.size).toBeGreaterThan(1);
   });
@@ -168,14 +149,13 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
         },
       },
     });
-    const lines = result.trim().split("\n").filter((l) =>
-      l.includes("\x1b[38;2;")
-    );
+    const lines = result
+      .trim()
+      .split("\n")
+      .filter((l) => l.includes("\x1b[38;2;"));
     const firstLine = lines[0]!;
-    // deno-lint-ignore no-control-regex
-    const codes = [...firstLine.matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g)].map((
-      m,
-    ) => m[1]);
+    const ansiReG = /\x1b\[38;2;(\d+;\d+;\d+)m/g; // oxlint-disable-line no-control-regex
+    const codes = [...firstLine.matchAll(ansiReG)].map((m) => m[1]);
     const unique = new Set(codes);
     expect(unique.size).toBeGreaterThan(1);
   });
@@ -193,14 +173,13 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
       },
     });
     expect(result).toContain("\x1b[38;2;");
-    const lines = result.trim().split("\n").filter((l) =>
-      l.includes("\x1b[38;2;")
-    );
+    const lines = result
+      .trim()
+      .split("\n")
+      .filter((l) => l.includes("\x1b[38;2;"));
     const firstLine = lines[0]!;
-    // deno-lint-ignore no-control-regex
-    const codes = [...firstLine.matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g)].map((
-      m,
-    ) => m[1]);
+    const ansiReG2 = /\x1b\[38;2;(\d+;\d+;\d+)m/g; // oxlint-disable-line no-control-regex
+    const codes = [...firstLine.matchAll(ansiReG2)].map((m) => m[1]);
     const unique = new Set(codes);
     expect(unique.size).toBeGreaterThan(1);
   });
@@ -217,13 +196,12 @@ describe("DefaultAsciiBannerGeneratorService tests", () => {
         },
       },
     });
-    const lines = result.trim().split("\n").filter((l) =>
-      l.includes("\x1b[38;2;")
-    );
-    const firstCodes = lines.map((l) =>
-      // deno-lint-ignore no-control-regex
-      l.match(/\x1b\[38;2;(\d+;\d+;\d+)m/)?.[1]
-    );
+    const lines = result
+      .trim()
+      .split("\n")
+      .filter((l) => l.includes("\x1b[38;2;"));
+    const ansiRe2 = /\x1b\[38;2;(\d+;\d+;\d+)m/; // oxlint-disable-line no-control-regex
+    const firstCodes = lines.map((l) => l.match(ansiRe2)?.[1]);
     const unique = new Set(firstCodes.filter(Boolean));
     expect(unique.size).toBeGreaterThan(1);
   });

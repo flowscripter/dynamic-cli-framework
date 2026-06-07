@@ -4,10 +4,7 @@ import {
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
-import {
-  type InvalidArgument,
-  InvalidArgumentReason,
-} from "../../../src/api/RunResult.ts";
+import { type InvalidArgument, InvalidArgumentReason } from "../../../src/api/RunResult.ts";
 import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
 import {
   ArgumentValueTypeName,
@@ -138,45 +135,45 @@ describe("argumentValueValidation tests", () => {
       name: "foo",
       type: ArgumentValueTypeName.NUMBER,
     };
-    expect(
-      validateOptionValue(option, "foo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, "foo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     option = {
       name: "foo",
       type: ArgumentValueTypeName.BOOLEAN,
     };
     invalidArguments = [];
-    expect(
-      validateOptionValue(option, "foo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, "foo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     option = {
       name: "foo",
       type: ArgumentValueTypeName.INTEGER,
     };
     invalidArguments = [];
-    expect(
-      validateOptionValue(option, "1.1", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "1.1",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, "1.1", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "1.1",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
   });
 
   test("Option array", () => {
@@ -186,14 +183,7 @@ describe("argumentValueValidation tests", () => {
       isArray: true,
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, ["foo", "bar"], invalidArguments),
-    ).toEqual(
-      [
-        "foo",
-        "bar",
-      ],
-    );
+    expect(validateOptionValue(option, ["foo", "bar"], invalidArguments)).toEqual(["foo", "bar"]);
     expect(invalidArguments).toEqual([]);
 
     option = {
@@ -201,10 +191,7 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.NUMBER,
       isArray: true,
     };
-    expect(validateOptionValue(option, ["1", "2"], invalidArguments)).toEqual([
-      1,
-      2,
-    ]);
+    expect(validateOptionValue(option, ["1", "2"], invalidArguments)).toEqual([1, 2]);
     expect(invalidArguments).toEqual([]);
 
     option = {
@@ -212,26 +199,22 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.BOOLEAN,
       isArray: true,
     };
-    expect(
-      validateOptionValue(option, ["true", "false"], invalidArguments),
-    ).toEqual(
-      [true, false],
-    );
+    expect(validateOptionValue(option, ["true", "false"], invalidArguments)).toEqual([true, false]);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
     };
-    expect(
-      validateOptionValue(option, ["true", "false"], invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: ["true", "false"],
-      reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
-    }]);
+    expect(validateOptionValue(option, ["true", "false"], invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: ["true", "false"],
+        reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
+      },
+    ]);
   });
 
   test("Optional option", () => {
@@ -241,9 +224,7 @@ describe("argumentValueValidation tests", () => {
       isOptional: true,
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, undefined, invalidArguments),
-    ).toBeUndefined();
+    expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([]);
 
     option = {
@@ -252,23 +233,21 @@ describe("argumentValueValidation tests", () => {
       isArray: true,
       isOptional: true,
     };
-    expect(
-      validateOptionValue(option, undefined, invalidArguments),
-    ).toBeUndefined();
+    expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
     };
-    expect(
-      validateOptionValue(option, undefined, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
 
     option = {
       name: "foo",
@@ -276,14 +255,14 @@ describe("argumentValueValidation tests", () => {
       isArray: true,
     };
     invalidArguments = [];
-    expect(
-      validateOptionValue(option, undefined, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
   });
 
   test("Invalid option argument value - not an allowable value", () => {
@@ -301,15 +280,15 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
-    expect(
-      validateOptionValue(option, "goo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "goo",
-      reason: InvalidArgumentReason.ILLEGAL_VALUE,
-    }]);
+    expect(validateOptionValue(option, "goo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "goo",
+        reason: InvalidArgumentReason.ILLEGAL_VALUE,
+      },
+    ]);
   });
 
   test("Invalid option argument value - not within range", () => {
@@ -322,15 +301,15 @@ describe("argumentValueValidation tests", () => {
     expect(validateOptionValue(option, "1", invalidArguments), "1");
     expect(invalidArguments).toEqual([]);
 
-    expect(
-      validateOptionValue(option, "0", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "0",
-      reason: InvalidArgumentReason.ILLEGAL_VALUE,
-    }]);
+    expect(validateOptionValue(option, "0", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "0",
+        reason: InvalidArgumentReason.ILLEGAL_VALUE,
+      },
+    ]);
   });
 
   test("Complex options", () => {
@@ -349,71 +328,67 @@ describe("argumentValueValidation tests", () => {
       ],
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, { a: 1, b: 2 }, invalidArguments),
-    ).toEqual(
-      { a: 1, b: 2 },
-    );
+    expect(validateOptionValue(option, { a: 1, b: 2 }, invalidArguments)).toEqual({ a: 1, b: 2 });
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
 
-    expect(
-      validateOptionValue(option, { a: "bar", b: 2 }, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "foo.a",
-      value: "bar",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, { a: "bar", b: 2 }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "foo.a",
+        value: "bar",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     invalidArguments = [];
 
-    expect(
-      validateOptionValue(option, { b: 2 }, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "foo.a",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(validateOptionValue(option, { b: 2 }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "foo.a",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
 
     invalidArguments = [];
 
-    expect(
-      validateOptionValue(option, { a: [1, 2], b: 2 }, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "foo.a",
-      value: [1, 2],
-      reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
-    }]);
+    expect(validateOptionValue(option, { a: [1, 2], b: 2 }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "foo.a",
+        value: [1, 2],
+        reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
+      },
+    ]);
 
     invalidArguments = [];
 
-    expect(
-      validateOptionValue(option, "bar", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "bar",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, "bar", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "bar",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     invalidArguments = [];
 
-    expect(
-      validateOptionValue(option, { a: 1, b: { c: 3 } }, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[1],
-      name: "foo.b",
-      value: { c: 3 },
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, { a: 1, b: { c: 3 } }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[1],
+        name: "foo.b",
+        value: { c: 3 },
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
   });
 
   test("Option array of complex options", () => {
@@ -433,22 +408,24 @@ describe("argumentValueValidation tests", () => {
       ],
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, [{ a: 1, b: 2 }], invalidArguments),
-    ).toEqual(
-      [{ a: 1, b: 2 }],
-    );
+    expect(validateOptionValue(option, [{ a: 1, b: 2 }], invalidArguments)).toEqual([
+      { a: 1, b: 2 },
+    ]);
     expect(invalidArguments).toEqual([]);
 
     expect(
       validateOptionValue(
         option,
-        [{ a: 1, b: 2 }, { a: 3, b: 4 }],
+        [
+          { a: 1, b: 2 },
+          { a: 3, b: 4 },
+        ],
         invalidArguments,
       ),
-    ).toEqual(
-      [{ a: 1, b: 2 }, { a: 3, b: 4 }],
-    );
+    ).toEqual([
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ]);
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
@@ -456,42 +433,47 @@ describe("argumentValueValidation tests", () => {
     expect(
       validateOptionValue(
         option,
-        [{ a: 1, b: 2 }, { a: "bar", b: 4 }],
+        [
+          { a: 1, b: 2 },
+          { a: "bar", b: 4 },
+        ],
         invalidArguments,
       ),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "foo[1].a",
-      value: "bar",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "foo[1].a",
+        value: "bar",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     invalidArguments = [];
 
     expect(
       validateOptionValue(option, [{ a: 1, b: 2 }, { b: 4 }], invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "foo[1].a",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "foo[1].a",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
 
     invalidArguments = [];
 
     expect(
-      validateOptionValue(
-        option,
-        [undefined, { a: 3, b: 4 }],
-        invalidArguments,
-      ),
+      validateOptionValue(option, [undefined, { a: 3, b: 4 }], invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo[0]",
-      reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo[0]",
+        reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
+      },
+    ]);
   });
 
   test("Complex nested options", () => {
@@ -500,65 +482,62 @@ describe("argumentValueValidation tests", () => {
       shortAlias: "a",
       type: ComplexValueTypeName.COMPLEX,
       isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
-        type: ComplexValueTypeName.COMPLEX,
-        isArray: true,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
+      properties: [
+        {
+          name: "beta",
+          shortAlias: "b",
+          type: ComplexValueTypeName.COMPLEX,
           isArray: true,
-        }],
-      }],
-    };
-    let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, [
-        {
-          beta: [
+          properties: [
             {
-              delta: [
-                1,
-              ],
-              gamma: "foo1",
+              name: "gamma",
+              shortAlias: "g",
+              type: ArgumentValueTypeName.STRING,
             },
             {
-              delta: [
-                3,
-                2,
-              ],
-              gamma: "foo2",
-            },
-          ],
-        },
-      ], invalidArguments),
-    ).toEqual(
-      [
-        {
-          beta: [
-            {
-              delta: [
-                1,
-              ],
-              gamma: "foo1",
-            },
-            {
-              delta: [
-                3,
-                2,
-              ],
-              gamma: "foo2",
+              name: "delta",
+              shortAlias: "d",
+              type: ArgumentValueTypeName.NUMBER,
+              isArray: true,
             },
           ],
         },
       ],
-    );
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(
+        option,
+        [
+          {
+            beta: [
+              {
+                delta: [1],
+                gamma: "foo1",
+              },
+              {
+                delta: [3, 2],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        invalidArguments,
+      ),
+    ).toEqual([
+      {
+        beta: [
+          {
+            delta: [1],
+            gamma: "foo1",
+          },
+          {
+            delta: [3, 2],
+            gamma: "foo2",
+          },
+        ],
+      },
+    ]);
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
@@ -574,12 +553,14 @@ describe("argumentValueValidation tests", () => {
         invalidArguments,
       ),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option.properties[0],
-      name: "alpha[0].beta",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-      value: 1,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "alpha[0].beta",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+        value: 1,
+      },
+    ]);
   });
 
   test("Complex sparse array options", () => {
@@ -588,42 +569,49 @@ describe("argumentValueValidation tests", () => {
       shortAlias: "a",
       type: ComplexValueTypeName.COMPLEX,
       isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
-        type: ComplexValueTypeName.COMPLEX,
-        isArray: true,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-          isArray: true,
-        }],
-      }],
-    };
-    const invalidArguments: Array<InvalidArgument> = [];
-    const value: Array<PopulatedArgumentValues> = [{
-      beta: [
-        {},
+      properties: [
         {
-          gamma: "foo1",
-          delta: [3, 2],
+          name: "beta",
+          shortAlias: "b",
+          type: ComplexValueTypeName.COMPLEX,
+          isArray: true,
+          properties: [
+            {
+              name: "gamma",
+              shortAlias: "g",
+              type: ArgumentValueTypeName.STRING,
+            },
+            {
+              name: "delta",
+              shortAlias: "d",
+              type: ArgumentValueTypeName.NUMBER,
+              isArray: true,
+            },
+          ],
         },
       ],
-    }];
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    const value: Array<PopulatedArgumentValues> = [
+      {
+        beta: [
+          {},
+          {
+            gamma: "foo1",
+            delta: [3, 2],
+          },
+        ],
+      },
+    ];
 
-    expect(
-      validateOptionValue(option, value, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: (option.properties[0] as ComplexOption).properties[0],
-      name: "alpha[0].beta[0].gamma",
-      reason: 0,
-    }]);
+    expect(validateOptionValue(option, value, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: (option.properties[0] as ComplexOption).properties[0],
+        name: "alpha[0].beta[0].gamma",
+        reason: 0,
+      },
+    ]);
   });
 
   test("Positional types", () => {
@@ -632,69 +620,58 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, "foo", invalidArguments),
-      "foo",
-    );
+    expect(validatePositionalValue(positional, "foo", invalidArguments), "foo");
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.NUMBER,
     };
-    expect(validatePositionalValue(positional, "1", invalidArguments)).toEqual(
-      1,
-    );
+    expect(validatePositionalValue(positional, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.BOOLEAN,
     };
-    expect(
-      validatePositionalValue(positional, "true", invalidArguments),
-    ).toBeTrue();
+    expect(validatePositionalValue(positional, "true", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
     };
-    expect(
-      validatePositionalValue(positional, "1", invalidArguments),
-    ).toEqual(
-      "1",
-    );
+    expect(validatePositionalValue(positional, "1", invalidArguments)).toEqual("1");
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.NUMBER,
     };
-    expect(
-      validatePositionalValue(positional, "foo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "foo",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validatePositionalValue(positional, "foo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "foo",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     positional = {
       name: "foo",
       type: ArgumentValueTypeName.BOOLEAN,
     };
     invalidArguments = [];
-    expect(
-      validatePositionalValue(positional, "foo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "foo",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validatePositionalValue(positional, "foo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "foo",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
   });
 
   test("Positional varargs multiple", () => {
@@ -704,11 +681,10 @@ describe("argumentValueValidation tests", () => {
       isVarargMultiple: true,
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, ["foo", "bar"], invalidArguments),
-    ).toEqual(
-      ["foo", "bar"],
-    );
+    expect(validatePositionalValue(positional, ["foo", "bar"], invalidArguments)).toEqual([
+      "foo",
+      "bar",
+    ]);
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -716,11 +692,7 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.NUMBER,
       isVarargMultiple: true,
     };
-    expect(
-      validatePositionalValue(positional, ["1", "2"], invalidArguments),
-    ).toEqual(
-      [1, 2],
-    );
+    expect(validatePositionalValue(positional, ["1", "2"], invalidArguments)).toEqual([1, 2]);
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -728,11 +700,10 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.BOOLEAN,
       isVarargMultiple: true,
     };
-    expect(
-      validatePositionalValue(positional, ["true", "false"], invalidArguments),
-    ).toEqual(
-      [true, false],
-    );
+    expect(validatePositionalValue(positional, ["true", "false"], invalidArguments)).toEqual([
+      true,
+      false,
+    ]);
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -740,14 +711,14 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.BOOLEAN,
       isVarargMultiple: true,
     };
-    expect(
-      validatePositionalValue(positional, undefined, invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "foo",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(validatePositionalValue(positional, undefined, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "foo",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
   });
 
   test("Positional varargs optional", () => {
@@ -757,9 +728,7 @@ describe("argumentValueValidation tests", () => {
       isVarargOptional: true,
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, undefined, invalidArguments),
-    ).toBeUndefined();
+    expect(validatePositionalValue(positional, undefined, invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -767,10 +736,7 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       isVarargOptional: true,
     };
-    expect(
-      validatePositionalValue(positional, "foo", invalidArguments),
-      "foo",
-    );
+    expect(validatePositionalValue(positional, "foo", invalidArguments), "foo");
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -778,15 +744,15 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       isVarargOptional: true,
     };
-    expect(
-      validatePositionalValue(positional, ["foo", "bar"], invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "foo",
-      value: ["foo", "bar"],
-      reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
-    }]);
+    expect(validatePositionalValue(positional, ["foo", "bar"], invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "foo",
+        value: ["foo", "bar"],
+        reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
+      },
+    ]);
 
     positional = {
       name: "foo",
@@ -795,11 +761,10 @@ describe("argumentValueValidation tests", () => {
       isVarargOptional: true,
     };
     invalidArguments = [];
-    expect(
-      validatePositionalValue(positional, ["foo", "bar"], invalidArguments),
-    ).toEqual(
-      ["foo", "bar"],
-    );
+    expect(validatePositionalValue(positional, ["foo", "bar"], invalidArguments)).toEqual([
+      "foo",
+      "bar",
+    ]);
     expect(invalidArguments).toEqual([]);
   });
 
@@ -810,10 +775,7 @@ describe("argumentValueValidation tests", () => {
       allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, "bar", invalidArguments),
-      "bar",
-    );
+    expect(validatePositionalValue(positional, "bar", invalidArguments), "bar");
     expect(invalidArguments).toEqual([]);
 
     positional = {
@@ -821,135 +783,79 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
-    expect(
-      validatePositionalValue(positional, "goo", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "foo",
-      value: "goo",
-      reason: InvalidArgumentReason.ILLEGAL_VALUE,
-    }]);
+    expect(validatePositionalValue(positional, "goo", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "foo",
+        value: "goo",
+        reason: InvalidArgumentReason.ILLEGAL_VALUE,
+      },
+    ]);
   });
 
   test("Global command argument types", () => {
     let globalCommandArgument: GlobalCommandArgument = {
       type: ArgumentValueTypeName.STRING,
     };
-    let globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "foo",
-        invalidArguments,
-      ),
-      "foo",
-    );
+    expect(validateGlobalCommandArgumentValue(globalCommand, "foo", invalidArguments), "foo");
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.NUMBER,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "1",
-        invalidArguments,
-      ),
-    ).toEqual(
-      1,
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
+    expect(validateGlobalCommandArgumentValue(globalCommand, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.BOOLEAN,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "true",
-        invalidArguments,
-      ),
-    ).toBeTrue();
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
+    expect(validateGlobalCommandArgumentValue(globalCommand, "true", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.STRING,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "1",
-        invalidArguments,
-      ),
-      "1",
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
+    expect(validateGlobalCommandArgumentValue(globalCommand, "1", invalidArguments), "1");
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.NUMBER,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "foo",
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, "foo", invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: globalCommandArgument,
-      name: "globalCommand",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: globalCommandArgument,
+        name: "globalCommand",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.BOOLEAN,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     invalidArguments = [];
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "foo",
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, "foo", invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: globalCommandArgument,
-      name: "globalCommand",
-      value: "foo",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: globalCommandArgument,
+        name: "globalCommand",
+        value: "foo",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
   });
 
   test("Optional global command argument", () => {
@@ -957,41 +863,27 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       isOptional: true,
     };
-    let globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     const invalidArguments: Array<InvalidArgument> = [];
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        undefined,
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, undefined, invalidArguments),
     ).toBeUndefined();
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.STRING,
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        undefined,
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, undefined, invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: globalCommandArgument,
-      name: "globalCommand",
-      reason: InvalidArgumentReason.MISSING_VALUE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: globalCommandArgument,
+        name: "globalCommand",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
   });
 
   test("Option with custom validator that passes", () => {
@@ -1001,9 +893,7 @@ describe("argumentValueValidation tests", () => {
       validate: () => undefined,
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(validateOptionValue(option, "hello", invalidArguments)).toEqual(
-      "hello",
-    );
+    expect(validateOptionValue(option, "hello", invalidArguments)).toEqual("hello");
     expect(invalidArguments).toEqual([]);
   });
 
@@ -1011,51 +901,48 @@ describe("argumentValueValidation tests", () => {
     const option: Option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
-      validate: (v) => (v as string).length < 3 ? "min 3 chars" : undefined,
+      validate: (v) => ((v as string).length < 3 ? "min 3 chars" : undefined),
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, "ab", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "ab",
-      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-      message: "min 3 chars",
-    }]);
+    expect(validateOptionValue(option, "ab", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "ab",
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "min 3 chars",
+      },
+    ]);
   });
 
   test("Positional with custom validator that passes and fails", () => {
     const positional: Positional = {
       name: "count",
       type: ArgumentValueTypeName.NUMBER,
-      validate: (v) => (v as number) % 2 !== 0 ? "must be even" : undefined,
+      validate: (v) => ((v as number) % 2 !== 0 ? "must be even" : undefined),
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, "4", invalidArguments),
-    ).toEqual(4);
+    expect(validatePositionalValue(positional, "4", invalidArguments)).toEqual(4);
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
-    expect(
-      validatePositionalValue(positional, "3", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "count",
-      value: 3,
-      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-      message: "must be even",
-    }]);
+    expect(validatePositionalValue(positional, "3", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "count",
+        value: 3,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "must be even",
+      },
+    ]);
   });
 
   test("GlobalCommand argument with custom validator that passes and fails", () => {
     const globalCommandArgument: GlobalCommandArgument = {
       type: ArgumentValueTypeName.STRING,
-      validate: (v) =>
-        (v as string).startsWith("x") ? undefined : "must start with x",
+      validate: (v) => ((v as string).startsWith("x") ? undefined : "must start with x"),
     };
     const globalCommand = getGlobalCommandWithShortAlias(
       "globalCommand",
@@ -1063,30 +950,24 @@ describe("argumentValueValidation tests", () => {
       globalCommandArgument,
     );
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "xfoo",
-        invalidArguments,
-      ),
-    ).toEqual("xfoo");
+    expect(validateGlobalCommandArgumentValue(globalCommand, "xfoo", invalidArguments)).toEqual(
+      "xfoo",
+    );
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "bar",
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, "bar", invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: globalCommandArgument,
-      name: "globalCommand",
-      value: "bar",
-      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-      message: "must start with x",
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: globalCommandArgument,
+        name: "globalCommand",
+        value: "bar",
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "must start with x",
+      },
+    ]);
   });
 
   test("Option isArray with custom validator checking uniqueness", () => {
@@ -1096,28 +977,24 @@ describe("argumentValueValidation tests", () => {
       isArray: true,
       validate: (v) => {
         const arr = v as string[];
-        return new Set(arr).size !== arr.length
-          ? "values must be unique"
-          : undefined;
+        return new Set(arr).size !== arr.length ? "values must be unique" : undefined;
       },
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, ["a", "b", "c"], invalidArguments),
-    ).toEqual(["a", "b", "c"]);
+    expect(validateOptionValue(option, ["a", "b", "c"], invalidArguments)).toEqual(["a", "b", "c"]);
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
-    expect(
-      validateOptionValue(option, ["a", "b", "a"], invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "tags",
-      value: ["a", "b", "a"],
-      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-      message: "values must be unique",
-    }]);
+    expect(validateOptionValue(option, ["a", "b", "a"], invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "tags",
+        value: ["a", "b", "a"],
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "values must be unique",
+      },
+    ]);
   });
 
   test("Positional isVarargMultiple with custom validator checking uniqueness", () => {
@@ -1127,28 +1004,26 @@ describe("argumentValueValidation tests", () => {
       isVarargMultiple: true,
       validate: (v) => {
         const arr = v as number[];
-        return new Set(arr).size !== arr.length
-          ? "values must be unique"
-          : undefined;
+        return new Set(arr).size !== arr.length ? "values must be unique" : undefined;
       },
     };
     let invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validatePositionalValue(positional, ["1", "2", "3"], invalidArguments),
-    ).toEqual([1, 2, 3]);
+    expect(validatePositionalValue(positional, ["1", "2", "3"], invalidArguments)).toEqual([
+      1, 2, 3,
+    ]);
     expect(invalidArguments).toEqual([]);
 
     invalidArguments = [];
-    expect(
-      validatePositionalValue(positional, ["1", "2", "1"], invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: positional,
-      name: "ids",
-      value: [1, 2, 1],
-      reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-      message: "values must be unique",
-    }]);
+    expect(validatePositionalValue(positional, ["1", "2", "1"], invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: positional,
+        name: "ids",
+        value: [1, 2, 1],
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "values must be unique",
+      },
+    ]);
   });
 
   test("Custom validator not called when built-in validation fails", () => {
@@ -1160,15 +1035,15 @@ describe("argumentValueValidation tests", () => {
       },
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, "notanumber", invalidArguments),
-    ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: option,
-      name: "foo",
-      value: "notanumber",
-      reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
-    }]);
+    expect(validateOptionValue(option, "notanumber", invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option,
+        name: "foo",
+        value: "notanumber",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
   });
 
   test("Custom validator not called when value is undefined and optional", () => {
@@ -1181,9 +1056,7 @@ describe("argumentValueValidation tests", () => {
       },
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateOptionValue(option, undefined, invalidArguments),
-    ).toBeUndefined();
+    expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([]);
   });
 
@@ -1192,43 +1065,26 @@ describe("argumentValueValidation tests", () => {
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
-    let globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     const invalidArguments: Array<InvalidArgument> = [];
-    expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "bar",
-        invalidArguments,
-      ),
-      "bar",
-    );
+    expect(validateGlobalCommandArgumentValue(globalCommand, "bar", invalidArguments), "bar");
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
       type: ArgumentValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
-    globalCommand = getGlobalCommandWithShortAlias(
-      "globalCommand",
-      "f",
-      globalCommandArgument,
-    );
+    globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(
-      validateGlobalCommandArgumentValue(
-        globalCommand,
-        "goo",
-        invalidArguments,
-      ),
+      validateGlobalCommandArgumentValue(globalCommand, "goo", invalidArguments),
     ).toBeUndefined();
-    expect(invalidArguments).toEqual([{
-      argument: globalCommandArgument,
-      name: "globalCommand",
-      value: "goo",
-      reason: InvalidArgumentReason.ILLEGAL_VALUE,
-    }]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: globalCommandArgument,
+        name: "globalCommand",
+        value: "goo",
+        reason: InvalidArgumentReason.ILLEGAL_VALUE,
+      },
+    ]);
   });
 });

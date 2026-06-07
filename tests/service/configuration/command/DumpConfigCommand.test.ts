@@ -3,12 +3,8 @@ import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import DumpConfigCommand from "../../../../src/service/configuration/command/DumpConfigCommand.ts";
 import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
-import {
-  PRINTER_SERVICE_ID,
-} from "../../../../src/api/service/core/PrinterService.ts";
-import {
-  SYNTAX_HIGHLIGHTER_SERVICE_ID,
-} from "../../../../src/api/service/core/SyntaxHighlighterService.ts";
+import { PRINTER_SERVICE_ID } from "../../../../src/api/service/core/PrinterService.ts";
+import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "../../../../src/api/service/core/SyntaxHighlighterService.ts";
 
 describe("DumpConfigCommand tests", () => {
   test("has correct name and description", () => {
@@ -43,18 +39,13 @@ describe("DumpConfigCommand tests", () => {
     };
 
     context.addServiceInstance(PRINTER_SERVICE_ID, mockPrinterService);
-    context.addServiceInstance(
-      SYNTAX_HIGHLIGHTER_SERVICE_ID,
-      mockSyntaxHighlighter,
-    );
+    context.addServiceInstance(SYNTAX_HIGHLIGHTER_SERVICE_ID, mockSyntaxHighlighter);
 
     const command = new DumpConfigCommand(configProvider);
     await command.execute(context);
 
     expect(highlightedLang).toEqual("json");
     expect(highlightedText).toEqual(configProvider.getConfigString());
-    expect(printedMessage).toEqual(
-      `highlighted:${configProvider.getConfigString()}\n`,
-    );
+    expect(printedMessage).toEqual(`highlighted:${configProvider.getConfigString()}\n`);
   });
 });

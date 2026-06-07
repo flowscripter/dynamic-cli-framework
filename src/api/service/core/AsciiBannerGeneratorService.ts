@@ -22,10 +22,7 @@ export interface RainbowColorEffect {
   direction: ColorEffectDirection;
 }
 
-export type ColorEffect =
-  | FixedColorEffect
-  | GradientColorEffect
-  | RainbowColorEffect;
+export type ColorEffect = FixedColorEffect | GradientColorEffect | RainbowColorEffect;
 
 export interface BannerColorEffects {
   background?: ColorEffect;

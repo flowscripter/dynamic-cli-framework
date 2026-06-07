@@ -26,11 +26,7 @@ function makeSubCommand(
   };
 }
 
-function makeGroupCommand(
-  name: string,
-  description: string,
-  members: SubCommand[],
-): GroupCommand {
+function makeGroupCommand(name: string, description: string, members: SubCommand[]): GroupCommand {
   return {
     name,
     description,
@@ -40,10 +36,7 @@ function makeGroupCommand(
   };
 }
 
-function makeGlobalCommand(
-  name: string,
-  description: string,
-): GlobalCommand {
+function makeGlobalCommand(name: string, description: string): GlobalCommand {
   return {
     name,
     description,
@@ -53,10 +46,7 @@ function makeGlobalCommand(
   };
 }
 
-function makeGlobalModifierCommand(
-  name: string,
-  description: string,
-): GlobalModifierCommand {
+function makeGlobalModifierCommand(name: string, description: string): GlobalModifierCommand {
   return {
     name,
     description,
@@ -69,9 +59,7 @@ function makeGlobalModifierCommand(
 
 describe("DefaultCompletionService", () => {
   function createService(
-    commands: Array<
-      SubCommand | GroupCommand | GlobalCommand | GlobalModifierCommand
-    >,
+    commands: Array<SubCommand | GroupCommand | GlobalCommand | GlobalModifierCommand>,
   ): DefaultCompletionService {
     const service = new DefaultCompletionService();
     const registry = new DefaultCommandRegistry(commands);
@@ -81,11 +69,7 @@ describe("DefaultCompletionService", () => {
 
   test("returns empty completions if no registry set", async () => {
     const service = new DefaultCompletionService();
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli ",
-      6,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli ", 6);
     expect(result).toEqual([]);
   });
 
@@ -96,11 +80,7 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("run", "Run something"),
     ]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli h",
-      7,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli h", 7);
     expect(result.length).toEqual(2);
     expect(result.map((r) => r.value)).toContain("help");
     expect(result.map((r) => r.value)).toContain("history");
@@ -112,11 +92,7 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("run", "Run something"),
     ]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli ",
-      6,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli ", 6);
     expect(result.map((r) => r.value)).toContain("help");
     expect(result.map((r) => r.value)).toContain("run");
   });
@@ -126,18 +102,10 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("integration", "Install completion"),
       makeSubCommand("complete", "Generate completions"),
     ];
-    const group = makeGroupCommand(
-      "completions",
-      "Completion management",
-      members,
-    );
+    const group = makeGroupCommand("completions", "Completion management", members);
     const service = createService([group]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli comp",
-      10,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli comp", 10);
     const values = result.map((r) => r.value);
     expect(values).toContain("completions");
     expect(values).toContain("completions:integration");
@@ -149,18 +117,10 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("integration", "Install completion"),
       makeSubCommand("complete", "Generate completions"),
     ];
-    const group = makeGroupCommand(
-      "completions",
-      "Completion management",
-      members,
-    );
+    const group = makeGroupCommand("completions", "Completion management", members);
     const service = createService([group]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli completions:i",
-      19,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli completions:i", 19);
     const values = result.map((r) => r.value);
     expect(values).toContain("completions:integration");
     expect(values).not.toContain("completions:complete");
@@ -184,11 +144,7 @@ describe("DefaultCompletionService", () => {
     ]);
     const service = createService([cmd]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli deploy --t",
-      16,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli deploy --t", 16);
     const values = result.map((r) => r.value);
     expect(values).toContain("--target");
   });
@@ -205,29 +161,18 @@ describe("DefaultCompletionService", () => {
     ]);
     const service = createService([cmd]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli deploy --env st",
-      21,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli deploy --env st", 21);
     const values = result.map((r) => r.value);
     expect(values).toContain("staging");
     expect(values).not.toContain("production");
   });
 
   test("completes global modifier commands with -- prefix", async () => {
-    const modifier = makeGlobalModifierCommand(
-      "verbose",
-      "Enable verbose output",
-    );
+    const modifier = makeGlobalModifierCommand("verbose", "Enable verbose output");
     const cmd = makeSubCommand("run", "Run something");
     const service = createService([modifier, cmd]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli --v",
-      9,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --v", 9);
     const values = result.map((r) => r.value);
     expect(values).toContain("--verbose");
   });
@@ -237,11 +182,7 @@ describe("DefaultCompletionService", () => {
     const cmd = makeSubCommand("run", "Run something");
     const service = createService([global, cmd]);
 
-    const result = await service.generateCompletions(
-      ShellType.BASH,
-      "mycli --ver",
-      11,
-    );
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --ver", 11);
     const values = result.map((r) => r.value);
     expect(values).toContain("--version");
   });
@@ -268,10 +209,7 @@ describe("DefaultCompletionService", () => {
 
   test("parseCompletionContext delegates to shell handler", () => {
     const service = new DefaultCompletionService();
-    const result = service.parseCompletionContext(ShellType.BASH, [
-      "mycli help",
-      "10",
-    ]);
+    const result = service.parseCompletionContext(ShellType.BASH, ["mycli help", "10"]);
     expect(result.line).toEqual("mycli help");
     expect(result.cursorPosition).toEqual(10);
   });

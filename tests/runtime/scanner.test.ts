@@ -19,48 +19,31 @@ import type Command from "../../src/api/command/Command.ts";
 
 function expectScanResult(result: ScanResult, expected: ScanResult) {
   expect(result.unusedArgSequences).toEqual(expected.unusedArgSequences);
-  expect(
-    result.nonModifierCommandClause,
-  ).toEqual(
-    expected.nonModifierCommandClause!,
-  );
-  expect(
-    result.globalModifierCommandClauses,
-  ).toEqual(
-    expected.globalModifierCommandClauses!,
-  );
+  expect(result.nonModifierCommandClause).toEqual(expected.nonModifierCommandClause!);
+  expect(result.globalModifierCommandClauses).toEqual(expected.globalModifierCommandClauses!);
 }
 describe("scanner tests", () => {
   test("Global modifier command scanned", () => {
-    const globalModifierCommand = getGlobalModifierCommand(
-      "modifier",
-      "m",
-      true,
-      true,
-    );
-    const globalModifierCommandsByName: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([[globalModifierCommand.name, globalModifierCommand]]);
-    const globalModifierCommandsByShortAlias: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([[globalModifierCommand.shortAlias!, globalModifierCommand]]);
+    const globalModifierCommand = getGlobalModifierCommand("modifier", "m", true, true);
+    const globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand> = new Map([
+      [globalModifierCommand.name, globalModifierCommand],
+    ]);
+    const globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand> = new Map([
+      [globalModifierCommand.shortAlias!, globalModifierCommand],
+    ]);
 
     const expected: ScanResult = {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand,
-        potentialArgs: ["g", "bar"],
-      }],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand,
+          potentialArgs: ["g", "bar"],
+        },
+      ],
       unusedArgSequences: [],
     };
 
     let scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "--modifier",
-        "g",
-        "bar",
-      ]],
+      [["--modifier", "g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
@@ -88,22 +71,14 @@ describe("scanner tests", () => {
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[], [
-        "--modifier",
-        "g",
-        "bar",
-      ]],
+      [[], ["--modifier", "g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "--modifier",
-        "g",
-        "bar",
-      ], []],
+      [["--modifier", "g", "bar"], []],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
@@ -111,127 +86,85 @@ describe("scanner tests", () => {
   });
 
   test("Two global modifier commands scanned", () => {
-    const globalModifierCommand1 = getGlobalModifierCommand(
-      "modifier1",
-      "1",
-      true,
-      true,
-    );
-    const globalModifierCommand2 = getGlobalModifierCommand(
-      "modifier2",
-      "2",
-      true,
-      true,
-    );
-    const globalModifierCommandsByName: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([
+    const globalModifierCommand1 = getGlobalModifierCommand("modifier1", "1", true, true);
+    const globalModifierCommand2 = getGlobalModifierCommand("modifier2", "2", true, true);
+    const globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand> = new Map([
       [globalModifierCommand1.name, globalModifierCommand1],
       [globalModifierCommand2.name, globalModifierCommand2],
     ]);
-    const globalModifierCommandsByShortAlias: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([
+    const globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand> = new Map([
       [globalModifierCommand1.shortAlias!, globalModifierCommand1],
       [globalModifierCommand2.shortAlias!, globalModifierCommand2],
     ]);
 
     let expected: ScanResult = {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand1,
-        potentialArgs: ["g", "bar"],
-      }, {
-        command: globalModifierCommand2,
-        potentialArgs: ["g", "bar"],
-      }],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand1,
+          potentialArgs: ["g", "bar"],
+        },
+        {
+          command: globalModifierCommand2,
+          potentialArgs: ["g", "bar"],
+        },
+      ],
       unusedArgSequences: [],
     };
 
     let scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "--modifier1",
-        "g",
-        "bar",
-        "--modifier2",
-        "g",
-        "bar",
-      ]],
+      [["--modifier1", "g", "bar", "--modifier2", "g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "--modifier1=g",
-        "bar",
-        "--modifier2=g",
-        "bar",
-      ]],
+      [["--modifier1=g", "bar", "--modifier2=g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "-1",
-        "g",
-        "bar",
-        "-2",
-        "g",
-        "bar",
-      ]],
+      [["-1", "g", "bar", "-2", "g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "-1=g",
-        "bar",
-        "-2=g",
-        "bar",
-      ]],
+      [["-1=g", "bar", "-2=g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[], [
-        "-1=g",
-        "bar",
-        "-2=g",
-        "bar",
-      ]],
+      [[], ["-1=g", "bar", "-2=g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     expected = {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand1,
-        potentialArgs: ["g", "bar"],
-      }, {
-        command: globalModifierCommand2,
-        potentialArgs: ["g", "bar"],
-      }],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand1,
+          potentialArgs: ["g", "bar"],
+        },
+        {
+          command: globalModifierCommand2,
+          potentialArgs: ["g", "bar"],
+        },
+      ],
       unusedArgSequences: [],
     };
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "-1=g",
-        "bar",
-      ], [
-        "-2=g",
-        "bar",
-      ]],
+      [
+        ["-1=g", "bar"],
+        ["-2=g", "bar"],
+      ],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
@@ -239,110 +172,71 @@ describe("scanner tests", () => {
   });
 
   test("Unused leading args whilst scanning for global modifier command", () => {
-    const globalModifierCommand = getGlobalModifierCommand(
-      "modifier",
-      "m",
-      true,
-      true,
-    );
-    const globalModifierCommandsByName: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([[globalModifierCommand.name, globalModifierCommand]]);
-    const globalModifierCommandsByShortAlias: ReadonlyMap<
-      string,
-      GlobalModifierCommand
-    > = new Map([[globalModifierCommand.shortAlias!, globalModifierCommand]]);
+    const globalModifierCommand = getGlobalModifierCommand("modifier", "m", true, true);
+    const globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand> = new Map([
+      [globalModifierCommand.name, globalModifierCommand],
+    ]);
+    const globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand> = new Map([
+      [globalModifierCommand.shortAlias!, globalModifierCommand],
+    ]);
 
     let scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "hello",
-        "--world",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier",
-        "g",
-        "bar",
-      ]],
+      [["hello", "--world", "subCommand", "bar", "--goo", "g", "--modifier", "g", "bar"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand,
-        potentialArgs: ["g", "bar"],
-      }],
-      unusedArgSequences: [[
-        "hello",
-        "--world",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand,
+          potentialArgs: ["g", "bar"],
+        },
+      ],
+      unusedArgSequences: [["hello", "--world", "subCommand", "bar", "--goo", "g"]],
     });
 
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "hello",
-        "--world",
-        "--modifier",
-        "g",
-        "bar",
-        "--globalCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["hello", "--world", "--modifier", "g", "bar", "--globalCommand", "bar", "--goo", "g"]],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand,
-        potentialArgs: ["g", "bar", "--globalCommand", "bar", "--goo", "g"],
-      }],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand,
+          potentialArgs: ["g", "bar", "--globalCommand", "bar", "--goo", "g"],
+        },
+      ],
       unusedArgSequences: [["hello", "--world"]],
     });
     scanResult = scanForGlobalModifierCommandClauses(
-      [[
-        "hello",
-        "--world",
-      ], [
-        "--modifier",
-        "g",
-        "bar",
-        "--globalCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [
+        ["hello", "--world"],
+        ["--modifier", "g", "bar", "--globalCommand", "bar", "--goo", "g"],
+      ],
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
     );
     expectScanResult(scanResult, {
-      globalModifierCommandClauses: [{
-        command: globalModifierCommand,
-        potentialArgs: ["g", "bar", "--globalCommand", "bar", "--goo", "g"],
-      }],
+      globalModifierCommandClauses: [
+        {
+          command: globalModifierCommand,
+          potentialArgs: ["g", "bar", "--globalCommand", "bar", "--goo", "g"],
+        },
+      ],
       unusedArgSequences: [["hello", "--world"]],
     });
   });
 
   test("Sub-command scanned", () => {
     const subCommand = getSubCommandWithOptionAndPositional();
-    const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([[
-      subCommand.name,
-      subCommand,
-    ]]);
-    let scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "bar",
-      "--goo",
-      "g",
-    ]], nonModifierCommandsByName);
+    const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
+      [subCommand.name, subCommand],
+    ]);
+    let scanResult = scanForNonModifierCommandClause(
+      [["subCommand", "bar", "--goo", "g"]],
+      nonModifierCommandsByName,
+    );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
@@ -351,12 +245,10 @@ describe("scanner tests", () => {
       unusedArgSequences: [],
     });
 
-    scanResult = scanForNonModifierCommandClause([[], [
-      "subCommand",
-      "bar",
-      "--goo",
-      "g",
-    ]], nonModifierCommandsByName);
+    scanResult = scanForNonModifierCommandClause(
+      [[], ["subCommand", "bar", "--goo", "g"]],
+      nonModifierCommandsByName,
+    );
 
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
@@ -366,12 +258,10 @@ describe("scanner tests", () => {
       unusedArgSequences: [],
     });
 
-    scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "bar",
-      "--goo",
-      "g",
-    ]], nonModifierCommandsByName);
+    scanResult = scanForNonModifierCommandClause(
+      [["subCommand", "bar", "--goo", "g"]],
+      nonModifierCommandsByName,
+    );
 
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
@@ -384,12 +274,12 @@ describe("scanner tests", () => {
 
   test("Global command scanned", () => {
     const globalCommand = getGlobalCommandWithShortAlias("globalCommand", "g");
-    const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([[
-      globalCommand.name,
-      globalCommand,
-    ]]);
-    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> =
-      new Map([[globalCommand.shortAlias!, globalCommand]]);
+    const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
+      [globalCommand.name, globalCommand],
+    ]);
+    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> = new Map([
+      [globalCommand.shortAlias!, globalCommand],
+    ]);
 
     let expected: ScanResult = {
       nonModifierCommandClause: {
@@ -400,9 +290,7 @@ describe("scanner tests", () => {
     };
 
     let scanResult = scanForNonModifierCommandClause(
-      [
-        ["--globalCommand", "g", "bar"],
-      ],
+      [["--globalCommand", "g", "bar"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -458,10 +346,15 @@ describe("scanner tests", () => {
     const groupAndMemberCommandsByJoinedName: ReadonlyMap<
       string,
       { groupCommand: GroupCommand; command: SubCommand }
-    > = new Map([[`${groupCommand.name}:${subCommand.name}`, {
-      groupCommand,
-      command: subCommand,
-    }]]);
+    > = new Map([
+      [
+        `${groupCommand.name}:${subCommand.name}`,
+        {
+          groupCommand,
+          command: subCommand,
+        },
+      ],
+    ]);
     let expected: ScanResult = {
       nonModifierCommandClause: {
         groupCommand,
@@ -475,13 +368,7 @@ describe("scanner tests", () => {
     ]);
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "group",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group", "subCommand", "bar", "--goo", "g"]],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -489,12 +376,7 @@ describe("scanner tests", () => {
     expectScanResult(scanResult, expected);
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "group:subCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group:subCommand", "bar", "--goo", "g"]],
       new Map(),
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -511,12 +393,7 @@ describe("scanner tests", () => {
     };
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "group:subCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group:subCommand", "bar", "--goo", "g"]],
       new Map(),
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -532,21 +409,12 @@ describe("scanner tests", () => {
       [globalCommand.name, globalCommand as Command],
       [subCommand.name, subCommand as Command],
     ]);
-    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> =
-      new Map([[globalCommand.shortAlias!, globalCommand]]);
+    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> = new Map([
+      [globalCommand.shortAlias!, globalCommand],
+    ]);
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "hello",
-        "--world",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier",
-        "g",
-        "bar",
-      ]],
+      [["hello", "--world", "subCommand", "bar", "--goo", "g", "--modifier", "g", "bar"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -559,17 +427,7 @@ describe("scanner tests", () => {
     });
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "hello",
-        "--world",
-        "--globalCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier",
-        "g",
-        "bar",
-      ]],
+      [["hello", "--world", "--globalCommand", "bar", "--goo", "g", "--modifier", "g", "bar"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -581,14 +439,10 @@ describe("scanner tests", () => {
       unusedArgSequences: [["hello", "--world"]],
     });
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "hello",
-        "--world",
-        "--globalCommand",
-        "bar",
-        "--goo",
-        "g",
-      ], ["--modifier", "g", "bar"]],
+      [
+        ["hello", "--world", "--globalCommand", "bar", "--goo", "g"],
+        ["--modifier", "g", "bar"],
+      ],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -597,7 +451,10 @@ describe("scanner tests", () => {
         command: globalCommand,
         potentialArgs: ["bar", "--goo", "g"],
       },
-      unusedArgSequences: [["hello", "--world"], ["--modifier", "g", "bar"]],
+      unusedArgSequences: [
+        ["hello", "--world"],
+        ["--modifier", "g", "bar"],
+      ],
     });
   });
 
@@ -608,16 +465,21 @@ describe("scanner tests", () => {
       [subCommand.name, subCommand],
     ]);
 
-    let scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "-a.b.g=foo1",
-      "-a.b.d=1",
-      "-a.b.g=foo2",
-      "-a.b.d=2",
-      "-a.b.d=3",
-      "-e.g=bar",
-      "-e.d=1",
-    ]], nonModifierCommandsByName);
+    let scanResult = scanForNonModifierCommandClause(
+      [
+        [
+          "subCommand",
+          "-a.b.g=foo1",
+          "-a.b.d=1",
+          "-a.b.g=foo2",
+          "-a.b.d=2",
+          "-a.b.d=3",
+          "-e.g=bar",
+          "-e.d=1",
+        ],
+      ],
+      nonModifierCommandsByName,
+    );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
@@ -633,16 +495,21 @@ describe("scanner tests", () => {
       },
       unusedArgSequences: [],
     });
-    scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "--alpha.beta.gamma=foo1",
-      "-a.b.d=1",
-      "-a.b.g=foo2",
-      "-a.b.d=2",
-      "-a.b.d=3",
-      "-e.g=bar",
-      "-e.d=1",
-    ]], nonModifierCommandsByName);
+    scanResult = scanForNonModifierCommandClause(
+      [
+        [
+          "subCommand",
+          "--alpha.beta.gamma=foo1",
+          "-a.b.d=1",
+          "-a.b.g=foo2",
+          "-a.b.d=2",
+          "-a.b.d=3",
+          "-e.g=bar",
+          "-e.d=1",
+        ],
+      ],
+      nonModifierCommandsByName,
+    );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
@@ -658,16 +525,21 @@ describe("scanner tests", () => {
       },
       unusedArgSequences: [],
     });
-    scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "-e.g=bar",
-      "-e.d=1",
-      "-a.b[1].g=foo2",
-      "--alpha.beta[0].gamma=foo1",
-      "-a.b[1].d[1]=2",
-      "-a.b[0].d=1",
-      "-a.b[1].d[0]=3",
-    ]], nonModifierCommandsByName);
+    scanResult = scanForNonModifierCommandClause(
+      [
+        [
+          "subCommand",
+          "-e.g=bar",
+          "-e.d=1",
+          "-a.b[1].g=foo2",
+          "--alpha.beta[0].gamma=foo1",
+          "-a.b[1].d[1]=2",
+          "-a.b[0].d=1",
+          "-a.b[1].d[0]=3",
+        ],
+      ],
+      nonModifierCommandsByName,
+    );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
@@ -691,21 +563,21 @@ describe("scanner tests", () => {
     const groupAndMemberCommandsByJoinedName: ReadonlyMap<
       string,
       { groupCommand: GroupCommand; command: SubCommand }
-    > = new Map([[`${groupCommand.name}:${subCommand.name}`, {
-      groupCommand,
-      command: subCommand,
-    }]]);
+    > = new Map([
+      [
+        `${groupCommand.name}:${subCommand.name}`,
+        {
+          groupCommand,
+          command: subCommand,
+        },
+      ],
+    ]);
     const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
       [groupCommand.name, groupCommand],
     ]);
 
     const scanResult = scanForNonModifierCommandClause(
-      [[
-        "subCommand",
-        "foo",
-        "--goo",
-        "g",
-      ]],
+      [["subCommand", "foo", "--goo", "g"]],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -721,8 +593,9 @@ describe("scanner tests", () => {
     const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
       [globalCommand.name, globalCommand],
     ]);
-    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> =
-      new Map([[globalCommand.shortAlias!, globalCommand]]);
+    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> = new Map([
+      [globalCommand.shortAlias!, globalCommand],
+    ]);
 
     const expected: ScanResult = {
       nonModifierCommandClause: {
@@ -733,42 +606,28 @@ describe("scanner tests", () => {
     };
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "--globalCommand",
-        "g=2",
-        "bar=2",
-      ]],
+      [["--globalCommand", "g=2", "bar=2"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "--globalCommand=g=2",
-        "bar=2",
-      ]],
+      [["--globalCommand=g=2", "bar=2"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "-g",
-        "g=2",
-        "bar=2",
-      ]],
+      [["-g", "g=2", "bar=2"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
     expectScanResult(scanResult, expected);
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "-g=g=2",
-        "bar=2",
-      ]],
+      [["-g=g=2", "bar=2"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -781,8 +640,9 @@ describe("scanner tests", () => {
     const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
       [globalCommand.name, globalCommand],
     ]);
-    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> =
-      new Map([[globalCommand.shortAlias!, globalCommand]]);
+    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> = new Map([
+      [globalCommand.shortAlias!, globalCommand],
+    ]);
 
     const expected: ScanResult = {
       nonModifierCommandClause: {
@@ -793,10 +653,7 @@ describe("scanner tests", () => {
     };
 
     const scanResult = scanForNonModifierCommandClause(
-      [[
-        "--globalCommand",
-        "g=",
-      ]],
+      [["--globalCommand", "g="]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -809,14 +666,10 @@ describe("scanner tests", () => {
       [subCommand.name, subCommand],
     ]);
 
-    const scanResult = scanForNonModifierCommandClause([[
-      "subCommand",
-      "bar",
-      "--goo",
-      "g",
-      "subCommand",
-      "bar",
-    ]], nonModifierCommandsByName);
+    const scanResult = scanForNonModifierCommandClause(
+      [["subCommand", "bar", "--goo", "g", "subCommand", "bar"]],
+      nonModifierCommandsByName,
+    );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
@@ -832,22 +685,21 @@ describe("scanner tests", () => {
     const groupAndMemberCommandsByJoinedName: ReadonlyMap<
       string,
       { groupCommand: GroupCommand; command: SubCommand }
-    > = new Map([[`${groupCommand.name}:${subCommand.name}`, {
-      groupCommand,
-      command: subCommand,
-    }]]);
+    > = new Map([
+      [
+        `${groupCommand.name}:${subCommand.name}`,
+        {
+          groupCommand,
+          command: subCommand,
+        },
+      ],
+    ]);
     const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
       [groupCommand.name, groupCommand],
     ]);
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "group",
-        "blah",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group", "blah", "bar", "--goo", "g"]],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -857,12 +709,7 @@ describe("scanner tests", () => {
     });
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "group:blah",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group:blah", "bar", "--goo", "g"]],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -880,14 +727,20 @@ describe("scanner tests", () => {
       string,
       { groupCommand: GroupCommand; command: SubCommand }
     > = new Map([
-      [`${groupCommand1.name}:${subCommand.name}`, {
-        groupCommand: groupCommand1,
-        command: subCommand,
-      }],
-      [`${groupCommand2.name}:${subCommand.name}`, {
-        groupCommand: groupCommand2,
-        command: subCommand,
-      }],
+      [
+        `${groupCommand1.name}:${subCommand.name}`,
+        {
+          groupCommand: groupCommand1,
+          command: subCommand,
+        },
+      ],
+      [
+        `${groupCommand2.name}:${subCommand.name}`,
+        {
+          groupCommand: groupCommand2,
+          command: subCommand,
+        },
+      ],
     ]);
     const nonModifierCommandsByName: ReadonlyMap<string, Command> = new Map([
       [groupCommand1.name, groupCommand1],
@@ -895,18 +748,7 @@ describe("scanner tests", () => {
     ]);
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "group1",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "group2",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group1", "subCommand", "bar", "--goo", "g", "group2", "subCommand", "bar", "--goo", "g"]],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -915,32 +757,13 @@ describe("scanner tests", () => {
       nonModifierCommandClause: {
         groupCommand: groupCommand1,
         command: subCommand,
-        potentialArgs: [
-          "bar",
-          "--goo",
-          "g",
-          "group2",
-          "subCommand",
-          "bar",
-          "--goo",
-          "g",
-        ],
+        potentialArgs: ["bar", "--goo", "g", "group2", "subCommand", "bar", "--goo", "g"],
       },
       unusedArgSequences: [],
     });
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "group1",
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "group2:command",
-        "bar",
-        "--goo",
-        "g",
-      ]],
+      [["group1", "subCommand", "bar", "--goo", "g", "group2:command", "bar", "--goo", "g"]],
       new Map(),
       new Map(),
       groupAndMemberCommandsByJoinedName,
@@ -949,15 +772,7 @@ describe("scanner tests", () => {
       nonModifierCommandClause: {
         groupCommand: groupCommand1,
         command: subCommand,
-        potentialArgs: [
-          "bar",
-          "--goo",
-          "g",
-          "group2:command",
-          "bar",
-          "--goo",
-          "g",
-        ],
+        potentialArgs: ["bar", "--goo", "g", "group2:command", "bar", "--goo", "g"],
       },
       unusedArgSequences: [],
     });
@@ -970,26 +785,29 @@ describe("scanner tests", () => {
       [subCommand.name, subCommand as Command],
       [globalCommand.name, globalCommand as Command],
     ]);
-    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> =
-      new Map([[globalCommand.shortAlias!, globalCommand]]);
+    const globalCommandsByShortAlias: ReadonlyMap<string, GlobalCommand> = new Map([
+      [globalCommand.shortAlias!, globalCommand],
+    ]);
 
     let scanResult = scanForNonModifierCommandClause(
-      [[
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier1",
-        "g",
-        "bar",
-        "--globalCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier2",
-        "g",
-        "bar",
-      ]],
+      [
+        [
+          "subCommand",
+          "bar",
+          "--goo",
+          "g",
+          "--modifier1",
+          "g",
+          "bar",
+          "--globalCommand",
+          "bar",
+          "--goo",
+          "g",
+          "--modifier2",
+          "g",
+          "bar",
+        ],
+      ],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
@@ -1016,35 +834,14 @@ describe("scanner tests", () => {
     });
 
     scanResult = scanForNonModifierCommandClause(
-      [[
-        "subCommand",
-        "bar",
-        "--goo=g",
-        "-1=g",
-        "bar",
-        "-g=bar",
-        "--goo",
-        "g",
-        "-2=g",
-        "bar",
-      ]],
+      [["subCommand", "bar", "--goo=g", "-1=g", "bar", "-g=bar", "--goo", "g", "-2=g", "bar"]],
       nonModifierCommandsByName,
       globalCommandsByShortAlias,
     );
     expectScanResult(scanResult, {
       nonModifierCommandClause: {
         command: subCommand,
-        potentialArgs: [
-          "bar",
-          "--goo=g",
-          "-1=g",
-          "bar",
-          "-g=bar",
-          "--goo",
-          "g",
-          "-2=g",
-          "bar",
-        ],
+        potentialArgs: ["bar", "--goo=g", "-1=g", "bar", "-g=bar", "--goo", "g", "-2=g", "bar"],
       },
       unusedArgSequences: [],
     });
@@ -1061,29 +858,34 @@ describe("scanner tests", () => {
       string,
       { groupCommand: GroupCommand; command: SubCommand }
     > = new Map([
-      [`${groupCommand.name}:${subCommand.name}`, {
-        groupCommand,
-        command: subCommand,
-      }],
+      [
+        `${groupCommand.name}:${subCommand.name}`,
+        {
+          groupCommand,
+          command: subCommand,
+        },
+      ],
     ]);
 
     const scanResult = scanForNonModifierCommandClause(
-      [[
-        "subCommand",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier1",
-        "g",
-        "bar",
-        "group:command",
-        "bar",
-        "--goo",
-        "g",
-        "--modifier2",
-        "g",
-        "bar",
-      ]],
+      [
+        [
+          "subCommand",
+          "bar",
+          "--goo",
+          "g",
+          "--modifier1",
+          "g",
+          "bar",
+          "group:command",
+          "bar",
+          "--goo",
+          "g",
+          "--modifier2",
+          "g",
+          "bar",
+        ],
+      ],
       nonModifierCommandsByName,
       new Map(),
       groupAndMemberCommandsByJoinedName,

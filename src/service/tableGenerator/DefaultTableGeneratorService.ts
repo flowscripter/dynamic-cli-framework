@@ -18,20 +18,12 @@ const BORDER_BOTTOM = "─";
 const BORDER_BOTTOM_MIDDLE = "┴";
 const BORDER_BOTTOM_RIGHT = "┘";
 
-export default class DefaultTableGeneratorService
-  implements TableGeneratorService {
+export default class DefaultTableGeneratorService implements TableGeneratorService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string = (
-    text,
-  ) => text;
-  backgroundColorFunction: (text: string, hexFormattedColor: string) => string =
-    (text) => text;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
+  backgroundColorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
 
-  #resolveAlign(
-    table: Table,
-    rowIndex: number,
-    columnIndex: number,
-  ): Align {
+  #resolveAlign(table: Table, rowIndex: number, columnIndex: number): Align {
     const cellOpts = table.getCell(rowIndex, columnIndex)?.options;
     if (cellOpts?.align !== undefined) return cellOpts.align;
     const rowOpts = table.getRowOptions(rowIndex);
@@ -46,14 +38,9 @@ export default class DefaultTableGeneratorService
     const padding = table.options.padding ?? 1;
     const maxWidth = table.options.maxWidth ?? 80;
 
-    const borderOverhead = border
-      ? table.columnCount + 1
-      : Math.max(table.columnCount - 1, 0);
+    const borderOverhead = border ? table.columnCount + 1 : Math.max(table.columnCount - 1, 0);
     const paddingOverhead = table.columnCount * 2 * padding;
-    const contentBudget = Math.max(
-      maxWidth - borderOverhead - paddingOverhead,
-      table.columnCount,
-    );
+    const contentBudget = Math.max(maxWidth - borderOverhead - paddingOverhead, table.columnCount);
 
     const naturalWidths: number[] = [];
     for (let col = 0; col < table.columnCount; col++) {
@@ -103,12 +90,7 @@ export default class DefaultTableGeneratorService
     return total;
   }
 
-  #distributeGrow(
-    table: Table,
-    widths: number[],
-    surplus: number,
-    totalFlexWeight: number,
-  ): void {
+  #distributeGrow(table: Table, widths: number[], surplus: number, totalFlexWeight: number): void {
     let remaining = surplus;
     for (let col = 0; col < table.columnCount; col++) {
       const colOpts = table.getColumnOptions(col);
@@ -139,11 +121,7 @@ export default class DefaultTableGeneratorService
     }
   }
 
-  #distributeShrink(
-    table: Table,
-    widths: number[],
-    excess: number,
-  ): void {
+  #distributeShrink(table: Table, widths: number[], excess: number): void {
     let remaining = excess;
     const shrinkable = new Set<number>();
     for (let col = 0; col < table.columnCount; col++) {
@@ -168,9 +146,7 @@ export default class DefaultTableGeneratorService
         const weight = colOpts?.flexWeight ?? 0;
         const share = Math.max(
           1,
-          Math.floor(
-            (weight * widths[col]! / totalWeightedWidth) * remaining,
-          ),
+          Math.floor(((weight * widths[col]!) / totalWeightedWidth) * remaining),
         );
         const minWidth = colOpts?.minWidth ?? 1;
         const maxShrink = widths[col]! - minWidth;
@@ -296,10 +272,7 @@ export default class DefaultTableGeneratorService
   #colorBorder(char: string, table: Table): string {
     let result = char;
     if (this.colorEnabled && table.options.borderBackgroundColor) {
-      result = this.backgroundColorFunction(
-        result,
-        table.options.borderBackgroundColor,
-      );
+      result = this.backgroundColorFunction(result, table.options.borderBackgroundColor);
     }
     if (this.colorEnabled && table.options.borderColor) {
       result = this.colorFunction(result, table.options.borderColor);
@@ -320,10 +293,7 @@ export default class DefaultTableGeneratorService
       let maxHeight = 1;
       for (let col = 0; col < table.columnCount; col++) {
         const cell = table.getCell(row, col);
-        const lines = this.#wrapCellContent(
-          cell?.contents ?? "",
-          columnWidths[col]!,
-        );
+        const lines = this.#wrapCellContent(cell?.contents ?? "", columnWidths[col]!);
         rowCells.push(lines);
         if (lines.length > maxHeight) maxHeight = lines.length;
       }
@@ -334,15 +304,17 @@ export default class DefaultTableGeneratorService
     const output: string[] = [];
 
     if (border) {
-      output.push(this.#renderHorizontalBorder(
-        table,
-        columnWidths,
-        padding,
-        BORDER_TOP_LEFT,
-        BORDER_TOP,
-        BORDER_TOP_MIDDLE,
-        BORDER_TOP_RIGHT,
-      ));
+      output.push(
+        this.#renderHorizontalBorder(
+          table,
+          columnWidths,
+          padding,
+          BORDER_TOP_LEFT,
+          BORDER_TOP,
+          BORDER_TOP_MIDDLE,
+          BORDER_TOP_RIGHT,
+        ),
+      );
     }
 
     for (let row = 0; row < table.rowCount; row++) {
@@ -365,28 +337,32 @@ export default class DefaultTableGeneratorService
       }
 
       if (border && row < table.rowCount - 1) {
-        output.push(this.#renderHorizontalBorder(
-          table,
-          columnWidths,
-          padding,
-          BORDER_LEFT_MIDDLE,
-          BORDER_MIDDLE,
-          BORDER_MIDDLE_MIDDLE,
-          BORDER_RIGHT_MIDDLE,
-        ));
+        output.push(
+          this.#renderHorizontalBorder(
+            table,
+            columnWidths,
+            padding,
+            BORDER_LEFT_MIDDLE,
+            BORDER_MIDDLE,
+            BORDER_MIDDLE_MIDDLE,
+            BORDER_RIGHT_MIDDLE,
+          ),
+        );
       }
     }
 
     if (border) {
-      output.push(this.#renderHorizontalBorder(
-        table,
-        columnWidths,
-        padding,
-        BORDER_BOTTOM_LEFT,
-        BORDER_BOTTOM,
-        BORDER_BOTTOM_MIDDLE,
-        BORDER_BOTTOM_RIGHT,
-      ));
+      output.push(
+        this.#renderHorizontalBorder(
+          table,
+          columnWidths,
+          padding,
+          BORDER_BOTTOM_LEFT,
+          BORDER_BOTTOM,
+          BORDER_BOTTOM_MIDDLE,
+          BORDER_BOTTOM_RIGHT,
+        ),
+      );
     }
 
     return output.join("\n");

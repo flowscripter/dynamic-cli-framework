@@ -20,20 +20,13 @@ export default class NoPromptCommand implements GlobalModifierCommand {
 
   readonly #prompterServiceProvider: PrompterServiceProvider;
 
-  public constructor(
-    prompterServiceProvider: PrompterServiceProvider,
-    executePriority: number,
-  ) {
+  public constructor(prompterServiceProvider: PrompterServiceProvider, executePriority: number) {
     this.#prompterServiceProvider = prompterServiceProvider;
     this.executePriority = executePriority;
   }
 
-  public execute(
-    _context: Context,
-    argumentValue: ArgumentSingleValueType,
-  ): Promise<void> {
-    this.#prompterServiceProvider.prompterService.promptEnabled =
-      !(argumentValue as boolean);
+  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+    this.#prompterServiceProvider.prompterService.promptEnabled = !(argumentValue as boolean);
 
     return Promise.resolve();
   }

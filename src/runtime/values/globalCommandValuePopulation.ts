@@ -1,11 +1,7 @@
 import type GlobalCommand from "../../api/command/GlobalCommand.ts";
 import type { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import {
-  ArgumentValueTypeName,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import type {
-  PopulatedArgumentSingleValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
+import { ArgumentValueTypeName } from "../../api/argument/ArgumentValueTypes.ts";
+import type { PopulatedArgumentSingleValueType } from "../../api/argument/ArgumentValueTypes.ts";
 import getLogger from "../../util/logger.ts";
 import { InvalidArgumentReason } from "../../api/RunResult.ts";
 
@@ -24,10 +20,9 @@ export default function populateGlobalCommandValue(
   defaultValue: PopulatedArgumentSingleValueType,
 ): GlobalCommandValuePopulationResult {
   logger.debug(() => {
-    const message =
-      `Populating value for global command: '${globalCommand.name}' using potential args: ${
-        potentialArgs.join(" ")
-      }`;
+    const message = `Populating value for global command: '${globalCommand.name}' using potential args: ${potentialArgs.join(
+      " ",
+    )}`;
     if (defaultValue !== undefined) {
       return `${message} and configured value: '${defaultValue}'`;
     }
@@ -51,10 +46,7 @@ export default function populateGlobalCommandValue(
     if (argument.type === ArgumentValueTypeName.BOOLEAN) {
       const firstPotentialArgLower = firstPotentialArg!.toLowerCase();
 
-      if (
-        (firstPotentialArgLower !== "true") &&
-        (firstPotentialArgLower !== "false")
-      ) {
+      if (firstPotentialArgLower !== "true" && firstPotentialArgLower !== "false") {
         // ...instead, use the fact that the argument is present as the value true
         return {
           populatedArgumentValue: "true",
@@ -67,9 +59,8 @@ export default function populateGlobalCommandValue(
     unusedArgs = potentialArgs.slice(1);
   } // check if argument type is boolean and therefore command being specified is an implicit value of true
   else if (
-    (argument.type === ArgumentValueTypeName.BOOLEAN) &&
-    ((populatedArgumentValue === undefined) ||
-      (argument.defaultValue === false))
+    argument.type === ArgumentValueTypeName.BOOLEAN &&
+    (populatedArgumentValue === undefined || argument.defaultValue === false)
   ) {
     return {
       populatedArgumentValue: "true",
@@ -78,7 +69,7 @@ export default function populateGlobalCommandValue(
   }
 
   // check if there is no value and the global command argument is not optional
-  if ((populatedArgumentValue === undefined) && !argument.isOptional) {
+  if (populatedArgumentValue === undefined && !argument.isOptional) {
     return {
       populatedArgumentValue,
       unusedArgs,

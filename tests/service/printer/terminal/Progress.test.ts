@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import Progress, {
-  ProgressStyle,
-} from "../../../../src/service/printer/terminal/Progress.ts";
+import Progress, { ProgressStyle } from "../../../../src/service/printer/terminal/Progress.ts";
 import { sleep } from "../../../fixtures/util.ts";
 import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";

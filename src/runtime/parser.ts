@@ -21,7 +21,7 @@ import type SubCommand from "../api/command/SubCommand.ts";
 const logger = getLogger("parser");
 
 /**
- * A container holding the result of a {@link CommandClause} parsing operation.
+ * A container holding the result of a command clause parsing operation.
  */
 export interface ParseResult {
   /**
@@ -40,9 +40,7 @@ export interface ParseResult {
    * {@link PopulatedArgumentSingleValueType} is for {@link GlobalCommand} values, {@link PopulatedArgumentValues} is for
    * {@link SubCommand} values.
    */
-  readonly populatedArgumentValues:
-    | PopulatedArgumentValues
-    | PopulatedArgumentSingleValueType;
+  readonly populatedArgumentValues: PopulatedArgumentValues | PopulatedArgumentSingleValueType;
 
   /**
    * Any arguments which were invalid.
@@ -72,7 +70,7 @@ export function parseSubCommandClause(
   const invalidArguments: Array<InvalidArgument> = [];
 
   // check if we need to process any arguments at all
-  if ((command.options.length === 0) && (command.positionals.length === 0)) {
+  if (command.options.length === 0 && command.positionals.length === 0) {
     return {
       command,
       groupCommand,
@@ -82,12 +80,11 @@ export function parseSubCommandClause(
     };
   }
 
-  const { populatedArgumentValues, unusedArgs, invalidArgument } =
-    populateSubCommandValues(
-      command,
-      potentialArgs,
-      defaultValues,
-    );
+  const { populatedArgumentValues, unusedArgs, invalidArgument } = populateSubCommandValues(
+    command,
+    potentialArgs,
+    defaultValues,
+  );
 
   if (invalidArgument) {
     invalidArguments.push(invalidArgument);
@@ -172,12 +169,11 @@ export function parseGlobalCommandClause(
     };
   }
 
-  let { populatedArgumentValue, unusedArgs, invalidArgument } =
-    populateGlobalCommandValue(
-      command,
-      potentialArgs,
-      defaultValue,
-    );
+  let { populatedArgumentValue, unusedArgs, invalidArgument } = populateGlobalCommandValue(
+    command,
+    potentialArgs,
+    defaultValue,
+  );
 
   if (invalidArgument) {
     invalidArguments.push(invalidArgument);

@@ -10,9 +10,7 @@ import {
 type ProcessEnv = NodeJS.ProcessEnv;
 
 import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
-import {
-  MAXIMUM_ARGUMENT_ARRAY_SIZE,
-} from "../api/argument/SubCommandArgument.ts";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../api/argument/SubCommandArgument.ts";
 import type Option from "../api/argument/Option.ts";
 import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
@@ -35,9 +33,9 @@ function getSubCommandArgumentKeyPrefix(
   if (subCommandArgument.configurationKey) {
     return subCommandArgument.configurationKey;
   }
-  return `${getKeySegment(cliConfig.name)}_${getKeySegment(command.name)}_${
-    getKeySegment(subCommandArgument.name)
-  }`;
+  return `${getKeySegment(cliConfig.name)}_${getKeySegment(command.name)}_${getKeySegment(
+    subCommandArgument.name,
+  )}`;
 }
 
 function getGlobalArgumentKeyPrefix(
@@ -68,14 +66,9 @@ export function getGlobalCommandValueFromEnvVars(
   }
 
   // simple check for a specific env var name
-  let envVarValue = process.env[
-    getGlobalArgumentKeyPrefix(cliConfig, command, argument)
-  ];
-  if (
-    (envVarValue != undefined) &&
-    (argument.type === ArgumentValueTypeName.BOOLEAN)
-  ) {
-    envVarValue = (envVarValue.length > 0) ? "true" : "false";
+  let envVarValue = process.env[getGlobalArgumentKeyPrefix(cliConfig, command, argument)];
+  if (envVarValue != undefined && argument.type === ArgumentValueTypeName.BOOLEAN) {
+    envVarValue = envVarValue.length > 0 ? "true" : "false";
   }
 
   return envVarValue;
@@ -92,10 +85,7 @@ function getOptionValuesFromEnvVars(
     return;
   }
 
-  if (
-    option.name === "__proto__" || option.name === "constructor" ||
-    option.name === "prototype"
-  ) {
+  if (option.name === "__proto__" || option.name === "constructor" || option.name === "prototype") {
     throw new Error(
       `Unsafe key name in use: ${option.name}, CodeQL Rule ID: js/prototype-polluting-assignment`,
     );
@@ -105,7 +95,7 @@ function getOptionValuesFromEnvVars(
     envVarNamePrefix = `${envVarNamePrefix}_`;
 
     const matches = potentialEnvVarNames.filter((envVarName) =>
-      envVarName.startsWith(envVarNamePrefix)
+      envVarName.startsWith(envVarNamePrefix),
     );
     matches.forEach((match) => {
       const path = match.substring(envVarNamePrefix.length);
@@ -123,14 +113,12 @@ function getOptionValuesFromEnvVars(
       let index: number;
       try {
         index = parseInt(indexString);
-      } catch (_err) {
+      } catch {
         throw new Error(`Unable to parse array index from env var: ${match}`);
       }
       if (index !== undefined) {
         if (index > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
-          throw new Error(
-            `Maximum array size exceeded: ${index} in env var: ${match}`,
-          );
+          throw new Error(`Maximum array size exceeded: ${index} in env var: ${match}`);
         }
         if (envVarValues[option.name] === undefined) {
           envVarValues[option.name] = [];
@@ -138,21 +126,15 @@ function getOptionValuesFromEnvVars(
         if (suffix.length > 0) {
           if (option.type === ComplexValueTypeName.COMPLEX) {
             if (
-              (envVarValues[option.name] as Array<
-                PopulatedArgumentSingleValueType
-              >)[index] === undefined
+              (envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>)[index] ===
+              undefined
             ) {
-              (envVarValues[option.name] as Array<PopulatedArgumentValues>)[
-                index
-              ] = {};
+              (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] = {};
             }
             (option as ComplexOption).properties.forEach((property) => {
-              const propertySegment = property.configurationKey ||
-                getKeySegment(property.name);
+              const propertySegment = property.configurationKey || getKeySegment(property.name);
               getOptionValuesFromEnvVars(
-                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[
-                  index
-                ]!,
+                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index]!,
                 matches,
                 env,
                 property,
@@ -161,41 +143,30 @@ function getOptionValuesFromEnvVars(
             });
             if (
               Object.keys(
-                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[
-                  index
-                ] as Record<string, string>,
+                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] as Record<
+                  string,
+                  string
+                >,
               ).length === 0
             ) {
-              delete (envVarValues[option.name] as Array<
-                PopulatedArgumentValues
-              >)[index];
+              delete (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index];
             }
           } else {
-            throw new Error(
-              `Unidentified suffix ${suffix} in env var: ${match}`,
-            );
+            throw new Error(`Unidentified suffix ${suffix} in env var: ${match}`);
           }
         } else if (option.type === ComplexValueTypeName.COMPLEX) {
           throw new Error(`Incomplete argument path in env var: ${match}`);
         } else {
           // set primitive value
           let envVarValue = env[match];
-          if (
-            (envVarValue != undefined) &&
-            (option.type === ArgumentValueTypeName.BOOLEAN)
-          ) {
+          if (envVarValue != undefined && option.type === ArgumentValueTypeName.BOOLEAN) {
             envVarValue = envVarValue.length > 1 ? "true" : "false";
           }
-          (envVarValues[option.name] as Array<
-            PopulatedArgumentSingleValueType
-          >)[
-            index
-          ] = envVarValue;
+          (envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>)[index] =
+            envVarValue;
         }
 
-        const elements = envVarValues[option.name] as Array<
-          PopulatedArgumentSingleValueType
-        >;
+        const elements = envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>;
         for (let i = elements.length - 1; i > -1; i--) {
           if (elements[i] === undefined) {
             elements.length = i;
@@ -211,8 +182,7 @@ function getOptionValuesFromEnvVars(
       if (envVarValues[option.name] === undefined) {
         envVarValues[option.name] = {};
       }
-      const propertySegment = property.configurationKey ||
-        getKeySegment(property.name);
+      const propertySegment = property.configurationKey || getKeySegment(property.name);
       getOptionValuesFromEnvVars(
         envVarValues[option.name] as PopulatedArgumentValues,
         potentialEnvVarNames,
@@ -220,10 +190,7 @@ function getOptionValuesFromEnvVars(
         property,
         `${envVarNamePrefix}_${propertySegment}`,
       );
-      if (
-        Object.keys(envVarValues[option.name] as Record<string, string>)
-          .length === 0
-      ) {
+      if (Object.keys(envVarValues[option.name] as Record<string, string>).length === 0) {
         delete envVarValues[option.name];
       }
     });
@@ -256,11 +223,7 @@ export function getSubCommandValuesFromEnvVars(
   if (command.options) {
     for (const option of command.options) {
       const potentialEnvVarNames = Object.keys(process.env);
-      const optionPrefix = getSubCommandArgumentKeyPrefix(
-        cliConfig,
-        command,
-        option as Option,
-      );
+      const optionPrefix = getSubCommandArgumentKeyPrefix(cliConfig, command, option as Option);
       getOptionValuesFromEnvVars(
         envVarValues,
         potentialEnvVarNames,
@@ -272,47 +235,35 @@ export function getSubCommandValuesFromEnvVars(
   }
   if (command.positionals) {
     for (const positional of command.positionals) {
-      let envVarNamePrefix = getSubCommandArgumentKeyPrefix(
-        cliConfig,
-        command,
-        positional,
-      );
+      let envVarNamePrefix = getSubCommandArgumentKeyPrefix(cliConfig, command, positional);
 
       if (positional.isVarargMultiple) {
         envVarNamePrefix = `${envVarNamePrefix}_`;
 
         const matches = Object.keys(process.env).filter((envVarName) =>
-          envVarName.startsWith(envVarNamePrefix)
+          envVarName.startsWith(envVarNamePrefix),
         );
         matches.forEach((match) => {
           let index;
           try {
             index = parseInt(match.substring(envVarNamePrefix.length));
-          } catch (_err) {
-            throw new Error(
-              `Unable to parse array index from env var: ${match}`,
-            );
+          } catch {
+            throw new Error(`Unable to parse array index from env var: ${match}`);
           }
           if (index !== undefined) {
             if (index > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
-              throw new Error(
-                `Maximum array size exceeded: ${index} in env var: ${match}`,
-              );
+              throw new Error(`Maximum array size exceeded: ${index} in env var: ${match}`);
             }
             if (envVarValues[positional.name] === undefined) {
               envVarValues[positional.name] = [];
             }
             // set primitive value
             let envVarValue = process.env[match];
-            if (
-              (envVarValue != undefined) &&
-              (positional.type === ArgumentValueTypeName.BOOLEAN)
-            ) {
+            if (envVarValue != undefined && positional.type === ArgumentValueTypeName.BOOLEAN) {
               envVarValue = envVarValue.length > 1 ? "true" : "false";
             }
-            (envVarValues[positional.name] as Array<
-              PopulatedArgumentSingleValueType
-            >)[index] = envVarValue;
+            (envVarValues[positional.name] as Array<PopulatedArgumentSingleValueType>)[index] =
+              envVarValue;
           }
         });
       } else {

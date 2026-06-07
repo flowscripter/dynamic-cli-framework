@@ -4,11 +4,9 @@ import { secrets as bunSecrets } from "bun";
 const MAX_NAME_LENGTH = 255;
 const MAX_VALUE_BYTES = 2047;
 
-interface SecretsApi {
+export interface SecretsApi {
   get(options: { service: string; name: string }): Promise<string | null>;
-  set(
-    options: { service: string; name: string; value: string },
-  ): Promise<void>;
+  set(options: { service: string; name: string; value: string }): Promise<void>;
   delete(options: { service: string; name: string }): Promise<boolean>;
 }
 
@@ -45,14 +43,10 @@ export default class DefaultSecretService implements SecretService {
     }
     const name = this.#scope + "_" + DefaultSecretService.#sanitize(key);
     if (name.length > MAX_NAME_LENGTH) {
-      throw new Error(
-        `Secret name exceeds ${MAX_NAME_LENGTH} characters: '${name}'`,
-      );
+      throw new Error(`Secret name exceeds ${MAX_NAME_LENGTH} characters: '${name}'`);
     }
     if (new TextEncoder().encode(value).byteLength > MAX_VALUE_BYTES) {
-      throw new Error(
-        `Secret value exceeds ${MAX_VALUE_BYTES} bytes`,
-      );
+      throw new Error(`Secret value exceeds ${MAX_VALUE_BYTES} bytes`);
     }
     await this.#secrets.set({
       service: this.#serviceName,
@@ -77,9 +71,11 @@ export default class DefaultSecretService implements SecretService {
   }
 
   public async hasSecret(bunSecretName: string): Promise<boolean> {
-    return (await this.#secrets.get({
-      service: this.#serviceName,
-      name: bunSecretName,
-    })) !== null;
+    return (
+      (await this.#secrets.get({
+        service: this.#serviceName,
+        name: bunSecretName,
+      })) !== null
+    );
   }
 }

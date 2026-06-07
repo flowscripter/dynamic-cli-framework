@@ -1,7 +1,4 @@
-import type {
-  Prompt,
-  PromptResult,
-} from "../../../api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "../../../api/service/core/PrompterService.ts";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
 import { headerLineCount, renderPromptHeader } from "./PromptContext.ts";
@@ -25,10 +22,7 @@ export default async function promptSingleSelect(
   }
 
   let scrollOffset = 0;
-  const visibleCount = Math.min(
-    ctx.config.scrollVisibleOptions,
-    options.length,
-  );
+  const visibleCount = Math.min(ctx.config.scrollVisibleOptions, options.length);
 
   ctx.keyReader.enableRawMode();
   try {
@@ -57,32 +51,21 @@ export default async function promptSingleSelect(
         const prefix = isSelected ? ctx.config.inputPromptCharacters : "  ";
         const text = prefix + option.displayValue;
         await ctx.terminal.write(
-          `${
-            isSelected
-              ? ctx.printerService.cyan(text)
-              : ctx.printerService.secondary(text)
-          }\n`,
+          `${isSelected ? ctx.printerService.cyan(text) : ctx.printerService.secondary(text)}\n`,
         );
       }
 
       const keyEvent = await ctx.keyReader.readKey();
       if (keyEvent.specialKey === SpecialKey.UP && selectedIndex > 0) {
         selectedIndex--;
-      } else if (
-        keyEvent.specialKey === SpecialKey.DOWN &&
-        selectedIndex < options.length - 1
-      ) {
+      } else if (keyEvent.specialKey === SpecialKey.DOWN && selectedIndex < options.length - 1) {
         selectedIndex++;
       } else if (keyEvent.specialKey === SpecialKey.ENTER) {
         await ctx.terminal.showCursor();
         const option = options[selectedIndex]!;
-        const validationError = option.validate
-          ? option.validate(option.returnedValue)
-          : undefined;
+        const validationError = option.validate ? option.validate(option.returnedValue) : undefined;
         if (validationError) {
-          await ctx.terminal.write(
-            `${ctx.printerService.red(validationError)}\n`,
-          );
+          await ctx.terminal.write(`${ctx.printerService.red(validationError)}\n`);
           firstRender = true;
           continue;
         }

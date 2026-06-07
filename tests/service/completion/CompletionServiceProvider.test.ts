@@ -46,14 +46,11 @@ describe("CompletionServiceProvider", () => {
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: () => Promise.resolve({ name: "", value: false }),
-        promptAll: () => Promise.resolve([]),
-      },
-    );
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: () => Promise.resolve({ name: "", value: false }),
+      promptAll: () => Promise.resolve([]),
+    });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
@@ -63,23 +60,17 @@ describe("CompletionServiceProvider", () => {
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: () => Promise.resolve({ name: "", value: false }),
-        promptAll: () => Promise.resolve([]),
-      },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: (key: string) => Promise.resolve(key === "completion-status"),
-        getKey: () => Promise.resolve("installed"),
-        setKey: () => Promise.resolve(),
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: () => Promise.resolve({ name: "", value: false }),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: (key: string) => Promise.resolve(key === "completion-status"),
+      getKey: () => Promise.resolve("installed"),
+      setKey: () => Promise.resolve(),
+      deleteKey: () => Promise.resolve(),
+    });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
@@ -89,23 +80,17 @@ describe("CompletionServiceProvider", () => {
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: () => Promise.resolve({ name: "", value: false }),
-        promptAll: () => Promise.resolve([]),
-      },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: (key: string) => Promise.resolve(key === "completion-status"),
-        getKey: () => Promise.resolve("declined"),
-        setKey: () => Promise.resolve(),
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: () => Promise.resolve({ name: "", value: false }),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: (key: string) => Promise.resolve(key === "completion-status"),
+      getKey: () => Promise.resolve("declined"),
+      setKey: () => Promise.resolve(),
+      deleteKey: () => Promise.resolve(),
+    });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
@@ -115,23 +100,17 @@ describe("CompletionServiceProvider", () => {
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: false,
-        prompt: () => Promise.resolve({ name: "", value: false }),
-        promptAll: () => Promise.resolve([]),
-      },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: () => Promise.resolve(),
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: false,
+      prompt: () => Promise.resolve({ name: "", value: false }),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: () => Promise.resolve(),
+      deleteKey: () => Promise.resolve(),
+    });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
@@ -144,26 +123,20 @@ describe("CompletionServiceProvider", () => {
     const context = new DefaultContext(getCLIConfig());
 
     let promptCalled = false;
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: () => {
-          promptCalled = true;
-          return Promise.resolve({ name: "", value: false });
-        },
-        promptAll: () => Promise.resolve([]),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: () => {
+        promptCalled = true;
+        return Promise.resolve({ name: "", value: false });
       },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: () => Promise.resolve(),
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: () => Promise.resolve(),
+      deleteKey: () => Promise.resolve(),
+    });
 
     await provider.initService(context);
     expect(promptCalled).toBe(false);
@@ -179,28 +152,21 @@ describe("CompletionServiceProvider", () => {
 
     let storedKey = "";
     let storedValue = "";
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: () =>
-          Promise.resolve({ name: "enable-completion", value: false }),
-        promptAll: () => Promise.resolve([]),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: () => Promise.resolve({ name: "enable-completion", value: false }),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: (key: string, value: string) => {
+        storedKey = key;
+        storedValue = value;
+        return Promise.resolve();
       },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: (key: string, value: string) => {
-          storedKey = key;
-          storedValue = value;
-          return Promise.resolve();
-        },
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+      deleteKey: () => Promise.resolve(),
+    });
 
     await provider.initService(context);
     expect(storedKey).toEqual("completion-status");
@@ -209,8 +175,7 @@ describe("CompletionServiceProvider", () => {
 
   test("initService skips shell prompt when only one shell detected", async () => {
     const service = new DefaultCompletionService();
-    service.validateShellEnvironment = (shell) =>
-      Promise.resolve(shell === "bash");
+    service.validateShellEnvironment = (shell) => Promise.resolve(shell === "bash");
     const provider = new CompletionServiceProvider(60, service);
     await provider.getServiceInfo(getCLIConfig());
 
@@ -219,53 +184,42 @@ describe("CompletionServiceProvider", () => {
     const storedEntries: Array<{ key: string; value: string }> = [];
     const promptNames: string[] = [];
 
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: (promptDef: { name: string }) => {
-          promptNames.push(promptDef.name);
-          return Promise.resolve({
-            name: promptDef.name,
-            value: true,
-          });
-        },
-        promptAll: () => Promise.resolve([]),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: (promptDef: { name: string }) => {
+        promptNames.push(promptDef.name);
+        return Promise.resolve({
+          name: promptDef.name,
+          value: true,
+        });
       },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: (key: string, value: string) => {
-          storedEntries.push({ key, value });
-          return Promise.resolve();
-        },
-        deleteKey: () => Promise.resolve(),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: (key: string, value: string) => {
+        storedEntries.push({ key, value });
+        return Promise.resolve();
       },
-    );
+      deleteKey: () => Promise.resolve(),
+    });
 
     let infoMessage = "";
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/printer-service",
-      {
-        info: (msg: string) => {
-          infoMessage = msg;
-          return Promise.resolve();
-        },
-        warn: () => Promise.resolve(),
-        error: () => Promise.resolve(),
-        print: () => Promise.resolve(),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/printer-service", {
+      info: (msg: string) => {
+        infoMessage = msg;
+        return Promise.resolve();
       },
-    );
+      warn: () => Promise.resolve(),
+      error: () => Promise.resolve(),
+      print: () => Promise.resolve(),
+    });
 
     await provider.initService(context);
 
     expect(promptNames).toEqual(["enable-completion"]);
-    const statusEntry = storedEntries.find(
-      (e) => e.key === "completion-status",
-    );
+    const statusEntry = storedEntries.find((e) => e.key === "completion-status");
     expect(statusEntry).toBeDefined();
     expect(statusEntry!.value).toEqual("installed");
     expect(infoMessage).toContain("Shell completion installed for bash");
@@ -286,51 +240,39 @@ describe("CompletionServiceProvider", () => {
     promptResponses.set("shell-type", "zsh");
 
     let shellPromptDefault: unknown;
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: (promptDef: {
-          name: string;
-          defaultOption?: { returnedValue: unknown };
-        }) => {
-          if (promptDef.name === "shell-type") {
-            shellPromptDefault = promptDef.defaultOption;
-          }
-          return Promise.resolve({
-            name: promptDef.name,
-            value: promptResponses.get(promptDef.name),
-          });
-        },
-        promptAll: () => Promise.resolve([]),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: (promptDef: { name: string; defaultOption?: { returnedValue: unknown } }) => {
+        if (promptDef.name === "shell-type") {
+          shellPromptDefault = promptDef.defaultOption;
+        }
+        return Promise.resolve({
+          name: promptDef.name,
+          value: promptResponses.get(promptDef.name),
+        });
       },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: (key: string, value: string) => {
-          storedEntries.push({ key, value });
-          return Promise.resolve();
-        },
-        deleteKey: () => Promise.resolve(),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: (key: string, value: string) => {
+        storedEntries.push({ key, value });
+        return Promise.resolve();
       },
-    );
+      deleteKey: () => Promise.resolve(),
+    });
 
     let infoMessage = "";
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/printer-service",
-      {
-        info: (msg: string) => {
-          infoMessage = msg;
-          return Promise.resolve();
-        },
-        warn: () => Promise.resolve(),
-        error: () => Promise.resolve(),
-        print: () => Promise.resolve(),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/printer-service", {
+      info: (msg: string) => {
+        infoMessage = msg;
+        return Promise.resolve();
       },
-    );
+      warn: () => Promise.resolve(),
+      error: () => Promise.resolve(),
+      print: () => Promise.resolve(),
+    });
 
     await provider.initService(context);
 
@@ -338,9 +280,7 @@ describe("CompletionServiceProvider", () => {
       displayValue: "bash",
       returnedValue: "bash",
     });
-    const statusEntry = storedEntries.find(
-      (e) => e.key === "completion-status",
-    );
+    const statusEntry = storedEntries.find((e) => e.key === "completion-status");
     expect(statusEntry).toBeDefined();
     expect(statusEntry!.value).toEqual("installed");
     expect(infoMessage).toContain("Shell completion installed for zsh");
@@ -359,41 +299,32 @@ describe("CompletionServiceProvider", () => {
 
     const context = new DefaultContext(getCLIConfig());
 
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/prompter-service",
-      {
-        promptEnabled: true,
-        prompt: (promptDef: { name: string }) =>
-          Promise.resolve({
-            name: promptDef.name,
-            value: promptDef.name === "enable-completion" ? true : "bash",
-          }),
-        promptAll: () => Promise.resolve([]),
-      },
-    );
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/key-value-service",
-      {
-        hasKey: () => Promise.resolve(false),
-        getKey: () => Promise.resolve(""),
-        setKey: () => Promise.resolve(),
-        deleteKey: () => Promise.resolve(),
-      },
-    );
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/prompter-service", {
+      promptEnabled: true,
+      prompt: (promptDef: { name: string }) =>
+        Promise.resolve({
+          name: promptDef.name,
+          value: promptDef.name === "enable-completion" ? true : "bash",
+        }),
+      promptAll: () => Promise.resolve([]),
+    });
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
+      hasKey: () => Promise.resolve(false),
+      getKey: () => Promise.resolve(""),
+      setKey: () => Promise.resolve(),
+      deleteKey: () => Promise.resolve(),
+    });
 
     let errorMessage = "";
-    context.addServiceInstance(
-      "@flowscripter/dynamic-cli-framework/printer-service",
-      {
-        info: () => Promise.resolve(),
-        warn: () => Promise.resolve(),
-        error: (msg: string) => {
-          errorMessage = msg;
-          return Promise.resolve();
-        },
-        print: () => Promise.resolve(),
+    context.addServiceInstance("@flowscripter/dynamic-cli-framework/printer-service", {
+      info: () => Promise.resolve(),
+      warn: () => Promise.resolve(),
+      error: (msg: string) => {
+        errorMessage = msg;
+        return Promise.resolve();
       },
-    );
+      print: () => Promise.resolve(),
+    });
 
     await provider.initService(context);
     expect(errorMessage).toContain("Failed to install completion");

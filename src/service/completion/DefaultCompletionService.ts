@@ -1,8 +1,5 @@
 import type CompletionService from "../../api/service/core/CompletionService.ts";
-import {
-  type CompletionItem,
-  ShellType,
-} from "../../api/service/core/CompletionService.ts";
+import { type CompletionItem, ShellType } from "../../api/service/core/CompletionService.ts";
 import type CommandRegistry from "../../runtime/registry/CommandRegistry.ts";
 import type ShellHandler from "./shell/ShellHandler.ts";
 import BashShellHandler from "./shell/bash.ts";
@@ -38,10 +35,7 @@ export default class DefaultCompletionService implements CompletionService {
     return this.#getHandler(shellType).validateEnvironment();
   }
 
-  formatCompletions(
-    shellType: ShellType,
-    completions: ReadonlyArray<CompletionItem>,
-  ): string {
+  formatCompletions(shellType: ShellType, completions: ReadonlyArray<CompletionItem>): string {
     return this.#getHandler(shellType).formatCompletions(completions);
   }
 
@@ -70,28 +64,19 @@ export default class DefaultCompletionService implements CompletionService {
     const previousWords = relevantWords.slice(0, -1);
     const endsWithSpace = beforeCursor.endsWith(" ");
 
-    if (
-      relevantWords.length === 0 ||
-      (relevantWords.length === 1 && !endsWithSpace)
-    ) {
+    if (relevantWords.length === 0 || (relevantWords.length === 1 && !endsWithSpace)) {
       return Promise.resolve(this.#completeCommandName(currentWord));
     }
 
     if (endsWithSpace) {
       const commandWord = relevantWords[0]!;
-      return Promise.resolve(
-        this.#completeAfterCommand(commandWord, relevantWords.slice(1), ""),
-      );
+      return Promise.resolve(this.#completeAfterCommand(commandWord, relevantWords.slice(1), ""));
     }
 
     const commandWord = previousWords[0];
     if (commandWord) {
       return Promise.resolve(
-        this.#completeAfterCommand(
-          commandWord,
-          previousWords.slice(1),
-          currentWord,
-        ),
+        this.#completeAfterCommand(commandWord, previousWords.slice(1), currentWord),
       );
     }
 
@@ -105,14 +90,10 @@ export default class DefaultCompletionService implements CompletionService {
   ): ReadonlyArray<CompletionItem> {
     // Check for group:member pattern
     if (commandWord.includes(":")) {
-      const result = this.#commandRegistry!
-        .getGroupCommandAndMemberSubCommandByJoinedName(commandWord);
+      const result =
+        this.#commandRegistry!.getGroupCommandAndMemberSubCommandByJoinedName(commandWord);
       if (result) {
-        return this.#completeSubCommandArgs(
-          result.command,
-          intermediateWords,
-          currentWord,
-        );
+        return this.#completeSubCommandArgs(result.command, intermediateWords, currentWord);
       }
     }
 
@@ -120,9 +101,7 @@ export default class DefaultCompletionService implements CompletionService {
     if (currentWord.includes(":")) {
       const colonIdx = currentWord.indexOf(":");
       const groupPart = currentWord.substring(0, colonIdx);
-      const groupCommand = this.#commandRegistry!.getGroupCommandByName(
-        groupPart,
-      );
+      const groupCommand = this.#commandRegistry!.getGroupCommandByName(groupPart);
       if (groupCommand) {
         return groupCommand.memberSubCommands
           .filter((sc) => `${groupPart}:${sc.name}`.startsWith(currentWord))
@@ -136,17 +115,11 @@ export default class DefaultCompletionService implements CompletionService {
     // Check sub-command
     const subCommand = this.#commandRegistry!.getSubCommandByName(commandWord);
     if (subCommand) {
-      return this.#completeSubCommandArgs(
-        subCommand,
-        intermediateWords,
-        currentWord,
-      );
+      return this.#completeSubCommandArgs(subCommand, intermediateWords, currentWord);
     }
 
     // Check group command (suggest members)
-    const groupCommand = this.#commandRegistry!.getGroupCommandByName(
-      commandWord,
-    );
+    const groupCommand = this.#commandRegistry!.getGroupCommandByName(commandWord);
     if (groupCommand) {
       return groupCommand.memberSubCommands
         .filter((sc) => sc.name.startsWith(currentWord))
@@ -171,8 +144,7 @@ export default class DefaultCompletionService implements CompletionService {
     }
 
     // Group:member joined names
-    const groupAndMembers = this.#commandRegistry!
-      .getGroupAndMemberCommandsByJoinedName();
+    const groupAndMembers = this.#commandRegistry!.getGroupAndMemberCommandsByJoinedName();
     for (const [joinedName, entry] of groupAndMembers) {
       if (joinedName.startsWith(prefix)) {
         completions.push({
@@ -203,8 +175,7 @@ export default class DefaultCompletionService implements CompletionService {
     }
 
     // Global modifier commands (with -- prefix)
-    const modifierCommands = this.#commandRegistry!
-      .getGlobalModifierCommands();
+    const modifierCommands = this.#commandRegistry!.getGlobalModifierCommands();
     for (const cmd of modifierCommands) {
       const prefixed = `--${cmd.name}`;
       if (prefixed.startsWith(prefix)) {
@@ -270,9 +241,7 @@ export default class DefaultCompletionService implements CompletionService {
     for (const opt of subCommand.options) {
       if ("name" in opt) {
         const optName = `--${(opt as Option).name}`;
-        if (
-          !previousArgs.includes(optName) && optName.startsWith(currentWord)
-        ) {
+        if (!previousArgs.includes(optName) && optName.startsWith(currentWord)) {
           completions.push({
             value: optName,
             description: (opt as Option).description,
@@ -282,10 +251,7 @@ export default class DefaultCompletionService implements CompletionService {
     }
 
     // Suggest positional allowable values
-    const positionalIndex = this.#countPositionalArgs(
-      previousArgs,
-      subCommand,
-    );
+    const positionalIndex = this.#countPositionalArgs(previousArgs, subCommand);
     if (positionalIndex < subCommand.positionals.length) {
       const positional = subCommand.positionals[positionalIndex]!;
       if (positional.allowableValues) {
@@ -300,10 +266,7 @@ export default class DefaultCompletionService implements CompletionService {
     return completions;
   }
 
-  #countPositionalArgs(
-    args: ReadonlyArray<string>,
-    subCommand: SubCommand,
-  ): number {
+  #countPositionalArgs(args: ReadonlyArray<string>, subCommand: SubCommand): number {
     let count = 0;
     let i = 0;
     while (i < args.length) {
@@ -312,9 +275,7 @@ export default class DefaultCompletionService implements CompletionService {
         // Skip option and its value
         const optName = arg.startsWith("--") ? arg.substring(2) : undefined;
         const option = optName
-          ? subCommand.options.find(
-            (o) => "name" in o && (o as Option).name === optName,
-          )
+          ? subCommand.options.find((o) => "name" in o && (o as Option).name === optName)
           : undefined;
         if (option && option.type !== undefined) {
           i++; // skip the option value

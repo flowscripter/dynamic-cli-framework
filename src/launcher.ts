@@ -27,7 +27,8 @@ export async function launchSingleCommandCLI(
 
   const mergedOptions: BaseCLIFeatureOptions = {
     ...options,
-    validateAllCommands: (options?.validateAllCommands ?? false) ||
+    validateAllCommands:
+      (options?.validateAllCommands ?? false) ||
       process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined,
   };
   const cli = new DefaultRuntimeCLI(cliConfig, mergedOptions);
@@ -58,7 +59,8 @@ export async function launchMultiCommandCLI(
 
   const mergedOptions: BaseCLIFeatureOptions = {
     ...options,
-    validateAllCommands: (options?.validateAllCommands ?? false) ||
+    validateAllCommands:
+      (options?.validateAllCommands ?? false) ||
       process.env.DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL !== undefined,
   };
   const cli = new DefaultRuntimeCLI(cliConfig, mergedOptions);

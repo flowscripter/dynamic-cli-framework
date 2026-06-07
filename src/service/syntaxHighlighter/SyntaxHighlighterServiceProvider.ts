@@ -1,11 +1,6 @@
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import DefaultSyntaxHighlighterService from "./DefaultSyntaxHighlighterService.ts";
-import {
-  SYNTAX_HIGHLIGHTER_SERVICE_ID,
-} from "../../api/service/core/SyntaxHighlighterService.ts";
+import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "../../api/service/core/SyntaxHighlighterService.ts";
 import type Context from "../../api/Context.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
@@ -14,8 +9,7 @@ import type CLIConfig from "../../api/CLIConfig.ts";
 /**
  * Provides a {@link SyntaxHighlighterService}.
  */
-export default class SyntaxHighlighterServiceProvider
-  implements ServiceProvider {
+export default class SyntaxHighlighterServiceProvider implements ServiceProvider {
   readonly serviceId: string = SYNTAX_HIGHLIGHTER_SERVICE_ID;
   readonly #defaultSyntaxHighlighterService: DefaultSyntaxHighlighterService;
 
@@ -24,11 +18,8 @@ export default class SyntaxHighlighterServiceProvider
    *
    * @param servicePriority the priority of the service.
    */
-  public constructor(
-    readonly servicePriority: number,
-  ) {
-    this.#defaultSyntaxHighlighterService =
-      new DefaultSyntaxHighlighterService();
+  public constructor(readonly servicePriority: number) {
+    this.#defaultSyntaxHighlighterService = new DefaultSyntaxHighlighterService();
   }
 
   public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
@@ -39,14 +30,10 @@ export default class SyntaxHighlighterServiceProvider
   }
 
   initService(context: Context): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
-    this.#defaultSyntaxHighlighterService.colorEnabled =
-      printerService.colorEnabled;
-    this.#defaultSyntaxHighlighterService.colorFunction = printerService.color
-      .bind(printerService);
+    this.#defaultSyntaxHighlighterService.colorEnabled = printerService.colorEnabled;
+    this.#defaultSyntaxHighlighterService.colorFunction = printerService.color.bind(printerService);
 
     return Promise.resolve(undefined);
   }

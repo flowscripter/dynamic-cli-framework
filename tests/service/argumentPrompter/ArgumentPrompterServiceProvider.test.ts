@@ -13,20 +13,14 @@ function getMockArgumentPrompterService(): ArgumentPrompterService {
 
 describe("ArgumentPrompterServiceProvider tests", () => {
   test("ArgumentPrompterServiceProvider has correct serviceId", () => {
-    const provider = new ArgumentPrompterServiceProvider(
-      100,
-      getMockArgumentPrompterService(),
-    );
+    const provider = new ArgumentPrompterServiceProvider(100, getMockArgumentPrompterService());
 
     expect(provider.serviceId).toEqual(ARGUMENT_PROMPTER_SERVICE_ID);
   });
 
   test("ArgumentPrompterServiceProvider getServiceInfo returns no commands", async () => {
     const argPrompterService = getMockArgumentPrompterService();
-    const provider = new ArgumentPrompterServiceProvider(
-      100,
-      argPrompterService,
-    );
+    const provider = new ArgumentPrompterServiceProvider(100, argPrompterService);
     const cliConfig = getCLIConfig();
 
     const serviceInfo = await provider.getServiceInfo(cliConfig);
@@ -36,10 +30,7 @@ describe("ArgumentPrompterServiceProvider tests", () => {
   });
 
   test("ArgumentPrompterServiceProvider initService resolves", async () => {
-    const provider = new ArgumentPrompterServiceProvider(
-      100,
-      getMockArgumentPrompterService(),
-    );
+    const provider = new ArgumentPrompterServiceProvider(100, getMockArgumentPrompterService());
     const context = new DefaultContext(getCLIConfig());
 
     await expect(provider.initService(context)).resolves.toBeUndefined();

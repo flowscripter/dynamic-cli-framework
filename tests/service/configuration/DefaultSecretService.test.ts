@@ -36,15 +36,11 @@ describe("DefaultSecretService tests", () => {
 
   test("Constructor throws if sanitized service name exceeds 255 chars", () => {
     const api = createMockSecretsApi();
-    expect(() => new DefaultSecretService("a".repeat(256), api)).toThrow(
-      "exceeds 255 characters",
-    );
+    expect(() => new DefaultSecretService("a".repeat(256), api)).toThrow("exceeds 255 characters");
   });
 
   test("setSecret throws without scope", async () => {
-    await expect(service.setSecret("key", "value")).rejects.toThrow(
-      "without a scope",
-    );
+    await expect(service.setSecret("key", "value")).rejects.toThrow("without a scope");
   });
 
   test("setSecret constructs correct name and returns it", async () => {
@@ -71,16 +67,14 @@ describe("DefaultSecretService tests", () => {
 
   test("setSecret throws if name exceeds 255 chars", async () => {
     service.setScope("command_test");
-    await expect(
-      service.setSecret("a".repeat(250), "value"),
-    ).rejects.toThrow("exceeds 255 characters");
+    await expect(service.setSecret("a".repeat(250), "value")).rejects.toThrow(
+      "exceeds 255 characters",
+    );
   });
 
   test("setSecret throws if value exceeds 2047 bytes", async () => {
     service.setScope("command_test");
-    await expect(
-      service.setSecret("key", "a".repeat(2048)),
-    ).rejects.toThrow("exceeds 2047 bytes");
+    await expect(service.setSecret("key", "a".repeat(2048))).rejects.toThrow("exceeds 2047 bytes");
   });
 
   test("getSecret delegates to secrets API", async () => {
@@ -130,9 +124,7 @@ describe("DefaultSecretService tests", () => {
   test("clearScope resets scope", async () => {
     service.setScope("command_test");
     service.clearScope();
-    await expect(service.setSecret("key", "value")).rejects.toThrow(
-      "without a scope",
-    );
+    await expect(service.setSecret("key", "value")).rejects.toThrow("without a scope");
   });
 
   test("setScope updates scope for subsequent calls", async () => {

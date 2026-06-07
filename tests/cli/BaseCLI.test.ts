@@ -12,13 +12,8 @@ import { RunState } from "../../src/api/RunResult.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
 import type KeyValueService from "../../src/api/service/core/KeyValueService.ts";
-import {
-  KEY_VALUE_SERVICE_ID,
-} from "../../src/api/service/core/KeyValueService.ts";
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../src/api/service/ServiceProvider.ts";
+import { KEY_VALUE_SERVICE_ID } from "../../src/api/service/core/KeyValueService.ts";
+import type { ServiceInfo, ServiceProvider } from "../../src/api/service/ServiceProvider.ts";
 import type Context from "../../src/api/Context.ts";
 import type CLIConfig from "../../src/api/CLIConfig.ts";
 import StreamString from "../fixtures/StreamString.ts";
@@ -76,14 +71,9 @@ describe("BaseCLI tests", () => {
     let modifierHasRun = false;
     let subHasRun = false;
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -103,13 +93,7 @@ describe("BaseCLI tests", () => {
     baseCLI.addCommand(modifierCommand);
     baseCLI.addCommand(subCommand);
 
-    const runResult = await baseCLI.run([
-      "unused",
-      "--modifier=bar",
-      "command",
-      "--foo",
-      "bar",
-    ]);
+    const runResult = await baseCLI.run(["unused", "--modifier=bar", "command", "--foo", "bar"]);
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(modifierHasRun).toBeTrue();
@@ -158,24 +142,13 @@ describe("BaseCLI tests", () => {
 
       async serviceMethod(context: Context): Promise<void> {
         expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(
-          await this.copyOfKeyValueService!.getKey("name"),
-        ).toEqual(
-          "modifierCommand",
-        );
-        await this.copyOfKeyValueService!.setKey(
-          "name",
-          "defaultService1+modifierCommand",
-        );
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual("modifierCommand");
+        await this.copyOfKeyValueService!.setKey("name", "defaultService1+modifierCommand");
 
-        const keyValueService = context.getServiceById(
-          KEY_VALUE_SERVICE_ID,
-        ) as KeyValueService;
+        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.hasKey("name")).toBeTrue();
-        expect(
-          await this.copyOfKeyValueService!.getKey("name"),
-        ).toEqual(
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
           "defaultService1+modifierCommand",
         );
 
@@ -188,22 +161,13 @@ describe("BaseCLI tests", () => {
 
       async serviceMethod(context: Context): Promise<void> {
         expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
-          "subCommand",
-        );
-        await this.copyOfKeyValueService!.setKey(
-          "name",
-          "defaultService2+subCommand",
-        );
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual("subCommand");
+        await this.copyOfKeyValueService!.setKey("name", "defaultService2+subCommand");
 
-        const keyValueService = context.getServiceById(
-          KEY_VALUE_SERVICE_ID,
-        ) as KeyValueService;
+        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.hasKey("name")).toBeTrue();
-        expect(
-          await this.copyOfKeyValueService!.getKey("name"),
-        ).toEqual(
+        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
           "defaultService2+subCommand",
         );
 
@@ -226,9 +190,7 @@ describe("BaseCLI tests", () => {
       }
 
       async initService(context: Context): Promise<void> {
-        const keyValueService = context.getServiceById(
-          KEY_VALUE_SERVICE_ID,
-        ) as KeyValueService;
+        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.hasKey("name")).toBeFalse();
         await keyValueService.setKey("name", "defaultService2");
@@ -254,9 +216,7 @@ describe("BaseCLI tests", () => {
       }
 
       async initService(context: Context): Promise<void> {
-        const keyValueService = context.getServiceById(
-          KEY_VALUE_SERVICE_ID,
-        ) as KeyValueService;
+        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.hasKey("name")).toBeFalse();
         await keyValueService.setKey("name", "defaultService2");
@@ -267,14 +227,9 @@ describe("BaseCLI tests", () => {
       }
     }
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -283,9 +238,7 @@ describe("BaseCLI tests", () => {
     const subCommand = getSubCommand("command", [option], []);
 
     modifierCommand.execute = async (context): Promise<void> => {
-      const keyValueService = context.getServiceById(
-        KEY_VALUE_SERVICE_ID,
-      ) as KeyValueService;
+      const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
       expect(await keyValueService.hasKey("name")).toBeFalse();
       await keyValueService.setKey("name", "modifierCommand");
@@ -297,9 +250,7 @@ describe("BaseCLI tests", () => {
       modifierHasRun = true;
     };
     subCommand.execute = async (context): Promise<void> => {
-      const keyValueService = context.getServiceById(
-        KEY_VALUE_SERVICE_ID,
-      ) as KeyValueService;
+      const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
       expect(await keyValueService.hasKey("name")).toBeFalse();
       await keyValueService.setKey("name", "subCommand");
@@ -316,13 +267,7 @@ describe("BaseCLI tests", () => {
     baseCLI.addCommand(modifierCommand);
     baseCLI.addCommand(subCommand);
 
-    const runResult = await baseCLI.run([
-      "unused",
-      "--modifier=bar",
-      "command",
-      "--foo",
-      "bar",
-    ]);
+    const runResult = await baseCLI.run(["unused", "--modifier=bar", "command", "--foo", "bar"]);
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(serviceProvider1Initialised).toBeTrue();
@@ -333,8 +278,6 @@ describe("BaseCLI tests", () => {
     expect(service2MethodInvoked).toBeTrue();
 
     // cleanup
-    await fs.rm(
-      path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`),
-    );
+    await fs.rm(path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`));
   });
 });

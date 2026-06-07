@@ -14,10 +14,6 @@ export default class DefaultImagePrinterService implements ImagePrinterService {
     widthPercentage: number = 100,
     hexFormattedBackgroundColor?: string,
   ): Promise<string> {
-    return this.#renderer.renderImage(
-      imageBuffer,
-      widthPercentage,
-      hexFormattedBackgroundColor,
-    );
+    return this.#renderer.renderImage(imageBuffer, widthPercentage, hexFormattedBackgroundColor);
   }
 }

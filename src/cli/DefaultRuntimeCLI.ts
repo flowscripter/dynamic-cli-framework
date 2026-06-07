@@ -15,10 +15,7 @@ import supportsHyperlinks from "../terminal/supportsHyperlinks.ts";
  * Default Bun implementation of a {@link CLI} using `process.stdout`, `process.stderr` and `process.argv`.
  */
 export default class DefaultRuntimeCLI extends BaseCLI {
-  constructor(
-    cliConfig: CLIConfig,
-    options?: BaseCLIFeatureOptions,
-  ) {
+  constructor(cliConfig: CLIConfig, options?: BaseCLIFeatureOptions) {
     super(
       cliConfig,
       Writable.toWeb(process.stdout),

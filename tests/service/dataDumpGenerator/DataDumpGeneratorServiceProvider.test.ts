@@ -10,13 +10,10 @@ import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 
 describe("DataDumpGeneratorServiceProvider tests", () => {
   test("getServiceInfo returns service and empty commands", async () => {
-    const dataDumpGeneratorServiceProvider =
-      new DataDumpGeneratorServiceProvider(100);
+    const dataDumpGeneratorServiceProvider = new DataDumpGeneratorServiceProvider(100);
     const cliConfig = getCLIConfig();
 
-    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
     expect(serviceInfo.service).toBeDefined();
   });
@@ -24,8 +21,7 @@ describe("DataDumpGeneratorServiceProvider tests", () => {
   test("initService sets colorEnabled and colorFunction from PrinterService", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const dataDumpGeneratorServiceProvider =
-      new DataDumpGeneratorServiceProvider(100);
+    const dataDumpGeneratorServiceProvider = new DataDumpGeneratorServiceProvider(100);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
@@ -42,15 +38,13 @@ describe("DataDumpGeneratorServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await dataDumpGeneratorServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
 
     await dataDumpGeneratorServiceProvider.initService(context);
 
-    const service = serviceInfo
-      .service as import("../../../src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts").default;
+    const service =
+      serviceInfo.service as import("../../../src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts").default;
     expect(service.colorEnabled).toBe(true);
     expect(typeof service.colorFunction).toBe("function");
   });

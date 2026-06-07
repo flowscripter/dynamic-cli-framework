@@ -48,21 +48,23 @@ export default class TtyStyler implements Styler {
     }
 
     if (this.colorLevel === 3) {
-      const r = (colorValue >> 16) & 0xFF;
-      const g = (colorValue >> 8) & 0xFF;
-      const b = colorValue & 0xFF;
+      const r = (colorValue >> 16) & 0xff;
+      const g = (colorValue >> 8) & 0xff;
+      const b = colorValue & 0xff;
       return `\x1b[48;2;${r};${g};${b}m${text}${BACKGROUND_COLOR_END}`;
     }
 
     if (this.colorLevel === 2) {
-      return Bun.color(colorValue, "ansi-256")!.replace("[38;", "[48;") + text +
-        BACKGROUND_COLOR_END;
+      return (
+        Bun.color(colorValue, "ansi-256")!.replace("[38;", "[48;") + text + BACKGROUND_COLOR_END
+      );
     }
 
-    return Bun.color(colorValue, "ansi-16")!.replace(
-      /\[(\d+)m/,
-      (_, n) => `[${Number(n) + 10}m`,
-    ) + text + BACKGROUND_COLOR_END;
+    return (
+      Bun.color(colorValue, "ansi-16")!.replace(/\[(\d+)m/, (_, n) => `[${Number(n) + 10}m`) +
+      text +
+      BACKGROUND_COLOR_END
+    );
   }
 
   italicText(text: string): string {

@@ -22,10 +22,7 @@ import {
 import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
-import {
-  Icon,
-  PRINTER_SERVICE_ID,
-} from "../api/service/core/PrinterService.ts";
+import { Icon, PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
 import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
 import { TABLE_GENERATOR_SERVICE_ID } from "../api/service/core/TableGeneratorService.ts";
 
@@ -38,10 +35,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
   readonly #includeEnvVars: boolean;
   readonly #commandRegistry: CommandRegistry;
 
-  constructor(
-    includeEnvVars: boolean,
-    commandRegistry: CommandRegistry,
-  ) {
+  constructor(includeEnvVars: boolean, commandRegistry: CommandRegistry) {
     this.#includeEnvVars = includeEnvVars;
     this.#commandRegistry = commandRegistry;
   }
@@ -72,9 +66,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
         });
       }
     });
-    globalCommandsSection.helpEntries.sort((a, b) =>
-      a.syntax.localeCompare(b.syntax)
-    );
+    globalCommandsSection.helpEntries.sort((a, b) => a.syntax.localeCompare(b.syntax));
     return globalCommandsSection;
   }
 
@@ -85,8 +77,7 @@ abstract class MultiCommandCliAbstractHelpCommand {
     groupCommands: ReadonlyArray<GroupCommand>,
     subCommands: ReadonlyArray<SubCommand>,
   ): Array<HelpSection> {
-    const globalPrefix =
-      ((groupCommands.length > 0) || (subCommands.length > 0)) ? "Global " : "";
+    const globalPrefix = groupCommands.length > 0 || subCommands.length > 0 ? "Global " : "";
     const helpSections: HelpSection[] = [];
     if (globalModifierCommands.length > 0) {
       helpSections.push(
@@ -99,18 +90,12 @@ abstract class MultiCommandCliAbstractHelpCommand {
     }
     if (globalCommands.length > 0) {
       helpSections.push(
-        this.#getGlobalCommandsHelpSection(
-          context,
-          `${globalPrefix}Commands`,
-          globalCommands,
-        ),
+        this.#getGlobalCommandsHelpSection(context, `${globalPrefix}Commands`, globalCommands),
       );
     }
     groupCommands.forEach((groupCommand) => {
       const topicSection: HelpSection = {
-        title: `${
-          groupCommand.name.charAt(0).toUpperCase() + groupCommand.name.slice(1)
-        } Commands`,
+        title: `${groupCommand.name.charAt(0).toUpperCase() + groupCommand.name.slice(1)} Commands`,
         helpEntries: [],
       };
       groupCommand.memberSubCommands.forEach((memberCommand) => {
@@ -156,9 +141,10 @@ abstract class MultiCommandCliAbstractHelpCommand {
 
       if (otherSubCommands.length > 0) {
         const topicSection: HelpSection = {
-          title: (subCommandsByTopic.size > 0 || groupCommands.length > 0)
-            ? "Other Commands"
-            : "Sub-Commands",
+          title:
+            subCommandsByTopic.size > 0 || groupCommands.length > 0
+              ? "Other Commands"
+              : "Sub-Commands",
           helpEntries: [],
         };
         otherSubCommands.sort((a, b) => a.name.localeCompare(b.name));
@@ -174,18 +160,13 @@ abstract class MultiCommandCliAbstractHelpCommand {
     return helpSections;
   }
 
-  protected async printGenericHelp(
-    context: Context,
-  ): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+  protected async printGenericHelp(context: Context): Promise<void> {
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const tableGeneratorService = context.getServiceById(
       TABLE_GENERATOR_SERVICE_ID,
     ) as TableGeneratorService;
 
-    const globalModifierCommands = this.#commandRegistry
-      .getGlobalModifierCommands();
+    const globalModifierCommands = this.#commandRegistry.getGlobalModifierCommands();
     const globalCommands = this.#commandRegistry.getGlobalCommands();
     const groupCommands = this.#commandRegistry.getGroupCommands();
     const subCommands = this.#commandRegistry.getSubCommands();
@@ -215,20 +196,11 @@ abstract class MultiCommandCliAbstractHelpCommand {
       ),
     );
 
-    await printHelpSections(
-      printerService,
-      tableGeneratorService,
-      helpSections,
-    );
+    await printHelpSections(printerService, tableGeneratorService, helpSections);
   }
 
-  protected async printUsageHelp(
-    context: Context,
-    commandName: string,
-  ): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+  protected async printUsageHelp(context: Context, commandName: string): Promise<void> {
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const tableGeneratorService = context.getServiceById(
       TABLE_GENERATOR_SERVICE_ID,
     ) as TableGeneratorService;
@@ -242,8 +214,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
     let groupCommand: GroupCommand | undefined;
 
     if (subCommand === undefined) {
-      const result = this.#commandRegistry
-        .getGroupCommandAndMemberSubCommandByJoinedName(commandName);
+      const result =
+        this.#commandRegistry.getGroupCommandAndMemberSubCommandByJoinedName(commandName);
       if (result !== undefined) {
         groupCommand = result.groupCommand;
         subCommand = result.command;
@@ -273,50 +245,39 @@ abstract class MultiCommandCliAbstractHelpCommand {
     }
 
     // display command help
-    const name = (groupCommand === undefined)
-      ? subCommand.name
-      : `${groupCommand.name}:${subCommand.name}`;
+    const name =
+      groupCommand === undefined ? subCommand.name : `${groupCommand.name}:${subCommand.name}`;
     const helpSections: HelpSection[] = [];
 
-    if (
-      (subCommand.description !== undefined) &&
-      (subCommand.description.length > 0)
-    ) {
+    if (subCommand.description !== undefined && subCommand.description.length > 0) {
       helpSections.push({
         title: "Command",
-        helpEntries: [{
-          syntax: subCommand.name,
-          description: subCommand.description,
-        }],
+        helpEntries: [
+          {
+            syntax: subCommand.name,
+            description: subCommand.description,
+          },
+        ],
       });
     }
     helpSections.push({
       title: "Usage",
-      helpEntries: [{
-        syntax: `${context.cliConfig.name}${name.length > 0 ? ` ${name}` : ""}${
-          getSubCommandArgumentsSyntax(subCommand)
-        }`,
-      }],
+      helpEntries: [
+        {
+          syntax: `${context.cliConfig.name}${
+            name.length > 0 ? ` ${name}` : ""
+          }${getSubCommandArgumentsSyntax(subCommand)}`,
+        },
+      ],
     });
 
     helpSections.push(
-      ...getCommandArgsHelpSections(
-        context.cliConfig,
-        this.#includeEnvVars,
-        subCommand,
-        false,
-      ),
+      ...getCommandArgsHelpSections(context.cliConfig, this.#includeEnvVars, subCommand, false),
     );
 
-    helpSections.push(
-      ...getCommandExamplesHelpSections(printerService, context, subCommand),
-    );
+    helpSections.push(...getCommandExamplesHelpSections(printerService, context, subCommand));
 
-    await printHelpSections(
-      printerService,
-      tableGeneratorService,
-      helpSections,
-    );
+    await printHelpSections(printerService, tableGeneratorService, helpSections);
   }
 }
 
@@ -325,7 +286,8 @@ abstract class MultiCommandCliAbstractHelpCommand {
  */
 export class MultiCommandCliHelpGlobalCommand
   extends MultiCommandCliAbstractHelpCommand
-  implements GlobalCommand {
+  implements GlobalCommand
+{
   readonly shortAlias = "h";
 
   readonly argument = {
@@ -334,13 +296,8 @@ export class MultiCommandCliHelpGlobalCommand
     isOptional: true,
   };
 
-  public async execute(
-    context: Context,
-    argumentValue?: ArgumentSingleValueType,
-  ): Promise<void> {
-    const commandName = argumentValue as
-      | string
-      | undefined;
+  public async execute(context: Context, argumentValue?: ArgumentSingleValueType): Promise<void> {
+    const commandName = argumentValue as string | undefined;
     if (commandName !== undefined) {
       await this.printUsageHelp(context, commandName);
     } else {
@@ -354,7 +311,8 @@ export class MultiCommandCliHelpGlobalCommand
  */
 export class MultiCommandCliHelpSubCommand
   extends MultiCommandCliAbstractHelpCommand
-  implements SubCommand {
+  implements SubCommand
+{
   public readonly options: ReadonlyArray<Option> = [];
 
   public readonly positionals: ReadonlyArray<Positional> = [
@@ -366,13 +324,8 @@ export class MultiCommandCliHelpSubCommand
     },
   ];
 
-  public async execute(
-    context: Context,
-    argumentValues: ArgumentValues,
-  ): Promise<void> {
-    const commandName = argumentValues["command"] as
-      | string
-      | undefined;
+  public async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
+    const commandName = argumentValues["command"] as string | undefined;
     if (commandName !== undefined) {
       await this.printUsageHelp(context, commandName);
     } else {

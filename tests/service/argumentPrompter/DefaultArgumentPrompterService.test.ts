@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import DefaultArgumentPrompterService from "../../../src/service/argumentPrompter/DefaultArgumentPrompterService.ts";
 import type PrompterService from "../../../src/api/service/core/PrompterService.ts";
-import type {
-  Prompt,
-  PromptResult,
-} from "../../../src/api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "../../../src/api/service/core/PrompterService.ts";
 import type { ParseResult } from "../../../src/runtime/parser.ts";
 import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
 import {
@@ -26,16 +23,12 @@ class MockPrompterService implements PrompterService {
   prompt(promptDef: Prompt): Promise<PromptResult> {
     const result = this.#responses.get(promptDef.name);
     if (!result) {
-      return Promise.reject(
-        new Error(`No mock response for prompt: ${promptDef.name}`),
-      );
+      return Promise.reject(new Error(`No mock response for prompt: ${promptDef.name}`));
     }
     return Promise.resolve(result);
   }
 
-  async promptAll(
-    prompts: ReadonlyArray<Prompt>,
-  ): Promise<ReadonlyArray<PromptResult>> {
+  async promptAll(prompts: ReadonlyArray<Prompt>): Promise<ReadonlyArray<PromptResult>> {
     const results: PromptResult[] = [];
     for (const p of prompts) {
       results.push(await this.prompt(p));
@@ -168,9 +161,7 @@ describe("DefaultArgumentPrompterService tests", () => {
 
     const result = await service.promptForMissingArguments(parseResult);
     expect(result.invalidArguments.length).toEqual(0);
-    expect(
-      (result.populatedArgumentValues as Record<string, unknown>)["foo"],
-    ).toEqual("bar");
+    expect((result.populatedArgumentValues as Record<string, unknown>)["foo"]).toEqual("bar");
   });
 
   test("missing BOOLEAN option prompts TOGGLE", async () => {
@@ -201,9 +192,7 @@ describe("DefaultArgumentPrompterService tests", () => {
 
     const result = await service.promptForMissingArguments(parseResult);
     expect(result.invalidArguments.length).toEqual(0);
-    expect(
-      (result.populatedArgumentValues as Record<string, unknown>)["flag"],
-    ).toEqual(true);
+    expect((result.populatedArgumentValues as Record<string, unknown>)["flag"]).toEqual(true);
   });
 
   test("missing option with allowableValues prompts SINGLE_SELECT", async () => {
@@ -235,9 +224,7 @@ describe("DefaultArgumentPrompterService tests", () => {
 
     const result = await service.promptForMissingArguments(parseResult);
     expect(result.invalidArguments.length).toEqual(0);
-    expect(
-      (result.populatedArgumentValues as Record<string, unknown>)["color"],
-    ).toEqual("blue");
+    expect((result.populatedArgumentValues as Record<string, unknown>)["color"]).toEqual("blue");
   });
 
   test("missing INTEGER option coerces string to number", async () => {
@@ -268,9 +255,7 @@ describe("DefaultArgumentPrompterService tests", () => {
 
     const result = await service.promptForMissingArguments(parseResult);
     expect(result.invalidArguments.length).toEqual(0);
-    expect(
-      (result.populatedArgumentValues as Record<string, unknown>)["count"],
-    ).toEqual(42);
+    expect((result.populatedArgumentValues as Record<string, unknown>)["count"]).toEqual(42);
   });
 
   test("SubCommand with multiple missing values prompts for each", async () => {
@@ -417,10 +402,9 @@ describe("DefaultArgumentPrompterService tests", () => {
       ],
     };
 
-    const command = makeSubCommand(
-      "test",
-      [complexOption as unknown as SubCommand["options"][number]],
-    );
+    const command = makeSubCommand("test", [
+      complexOption as unknown as SubCommand["options"][number],
+    ]);
 
     const parseResult: ParseResult = {
       command,
@@ -468,10 +452,9 @@ describe("DefaultArgumentPrompterService tests", () => {
       ],
     };
 
-    const command = makeSubCommand(
-      "test",
-      [complexOption as unknown as SubCommand["options"][number]],
-    );
+    const command = makeSubCommand("test", [
+      complexOption as unknown as SubCommand["options"][number],
+    ]);
 
     const parseResult: ParseResult = {
       command,
@@ -546,13 +529,17 @@ describe("DefaultArgumentPrompterService tests", () => {
     prompter.addResponse("file", "/tmp/data.txt");
     const service = new DefaultArgumentPrompterService(prompter);
 
-    const command = makeSubCommand("test", [], [
-      {
-        name: "file",
-        description: "file path",
-        type: ArgumentValueTypeName.STRING,
-      },
-    ]);
+    const command = makeSubCommand(
+      "test",
+      [],
+      [
+        {
+          name: "file",
+          description: "file path",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
+    );
 
     const parseResult: ParseResult = {
       command,
@@ -725,14 +712,18 @@ describe("DefaultArgumentPrompterService tests", () => {
       return Promise.resolve(resp as PromptResult);
     };
 
-    const command = makeSubCommand("test", [], [
-      {
-        name: "files",
-        description: "file paths",
-        type: ArgumentValueTypeName.STRING,
-        isVarargMultiple: true,
-      },
-    ]);
+    const command = makeSubCommand(
+      "test",
+      [],
+      [
+        {
+          name: "files",
+          description: "file paths",
+          type: ArgumentValueTypeName.STRING,
+          isVarargMultiple: true,
+        },
+      ],
+    );
 
     const parseResult: ParseResult = {
       command,

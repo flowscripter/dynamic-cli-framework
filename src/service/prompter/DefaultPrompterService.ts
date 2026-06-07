@@ -53,9 +53,7 @@ export default class DefaultPrompterService implements PrompterService {
         });
       }
       return Promise.reject(
-        new Error(
-          `Prompting is disabled and no default for prompt: ${promptDef.name}`,
-        ),
+        new Error(`Prompting is disabled and no default for prompt: ${promptDef.name}`),
       );
     }
 
@@ -75,9 +73,7 @@ export default class DefaultPrompterService implements PrompterService {
     }
   }
 
-  async promptAll(
-    prompts: ReadonlyArray<Prompt>,
-  ): Promise<ReadonlyArray<PromptResult>> {
+  async promptAll(prompts: ReadonlyArray<Prompt>): Promise<ReadonlyArray<PromptResult>> {
     const results: PromptResult[] = [];
     for (const p of prompts) {
       results.push(await this.prompt(p));

@@ -13,9 +13,7 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   public setKeyValueData(keyValueData: Map<string, string>) {
     if (this.#keyValueData) {
-      throw new Error(
-        "Attempt to overwrite key-value data, it should be cleared first",
-      );
+      throw new Error("Attempt to overwrite key-value data, it should be cleared first");
     }
     this.#keyValueData = keyValueData;
     this.#dirty = false;
@@ -41,16 +39,12 @@ export default class DefaultKeyValueService implements KeyValueService {
 
     if (value.startsWith(SECRET_SENTINEL_PREFIX)) {
       if (!this.#secretService) {
-        throw new Error(
-          "Secret sentinel found but no secret service is available",
-        );
+        throw new Error("Secret sentinel found but no secret service is available");
       }
       const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
       const secretValue = await this.#secretService.getSecret(bunSecretName);
       if (secretValue === null) {
-        throw new Error(
-          `Secret not found in OS secret store for key: '${key}'`,
-        );
+        throw new Error(`Secret not found in OS secret store for key: '${key}'`);
       }
       return secretValue;
     }
@@ -60,26 +54,18 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   public hasKey(key: string): Promise<boolean> {
     if (this.#keyValueData === undefined) {
-      return Promise.reject(
-        new Error("Attempt to access undefined key-value data"),
-      );
+      return Promise.reject(new Error("Attempt to access undefined key-value data"));
     }
     return Promise.resolve(this.#keyValueData.has(key));
   }
 
-  public async setKey(
-    key: string,
-    value: string,
-    isSecret = false,
-  ): Promise<void> {
+  public async setKey(key: string, value: string, isSecret = false): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
     if (isSecret) {
       if (!this.#secretService) {
-        throw new Error(
-          "Attempt to set a secret but no secret service is available",
-        );
+        throw new Error("Attempt to set a secret but no secret service is available");
       }
       const bunSecretName = await this.#secretService.setSecret(key, value);
       this.#keyValueData.set(key, SECRET_SENTINEL_PREFIX + bunSecretName);

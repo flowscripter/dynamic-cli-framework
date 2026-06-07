@@ -13,23 +13,17 @@ export default class UsageCommand implements GlobalCommand {
 
   readonly #helpCommand: Command;
 
-  public constructor(
-    helpCommand: Command,
-  ) {
+  public constructor(helpCommand: Command) {
     this.#helpCommand = helpCommand;
   }
 
-  public async execute(
-    context: Context,
-  ): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+  public async execute(context: Context): Promise<void> {
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     await printerService.print(
-      `${printerService.secondary("Try running:")}\n\n  ${
-        printerService.primary(context.cliConfig.name)
-      } --${printerService.primary(this.#helpCommand.name)}\n\n`,
+      `${printerService.secondary("Try running:")}\n\n  ${printerService.primary(
+        context.cliConfig.name,
+      )} --${printerService.primary(this.#helpCommand.name)}\n\n`,
     );
   }
 }

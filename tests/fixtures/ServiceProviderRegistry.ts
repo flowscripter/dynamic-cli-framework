@@ -9,7 +9,7 @@ export function getServiceProviderRegistry(
 
   if (serviceProviders) {
     serviceProviders.forEach((serviceProvider) =>
-      serviceProviderRegistry.addServiceProvider(serviceProvider)
+      serviceProviderRegistry.addServiceProvider(serviceProvider),
     );
   }
   return serviceProviderRegistry;

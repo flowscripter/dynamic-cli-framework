@@ -33,7 +33,9 @@ describe("DefaultTreePrinterService tests", () => {
       label: "Root",
       children: [
         { label: "Child1", children: ["Leaf1", "Leaf2"] },
-        { label: "Child2" },
+        {
+          label: "Child2",
+        },
       ],
     });
 
@@ -51,11 +53,7 @@ describe("DefaultTreePrinterService tests", () => {
 
     const result = service.print({
       label: "Root",
-      children: [
-        "StringChild",
-        { label: "NodeChild", children: ["Nested"] },
-        "Last",
-      ],
+      children: ["StringChild", { label: "NodeChild", children: ["Nested"] }, "Last"],
     });
 
     const lines = result.split("\n");

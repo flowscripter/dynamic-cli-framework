@@ -1,10 +1,7 @@
 import { distance } from "fastest-levenshtein";
 import type GlobalCommand from "../api/command/GlobalCommand.ts";
 import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "../api/argument/ArgumentValueTypes.ts";
+import { ArgumentValueTypeName, ComplexValueTypeName } from "../api/argument/ArgumentValueTypes.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type Context from "../api/Context.ts";
 import type UsageExample from "../api/command/UsageExample.ts";
@@ -62,7 +59,8 @@ function flattenHelpEntry(
       if (indentText.length > 0) {
         syntaxTreeChars = isLastSibling ? "└╴" : "├╴";
       }
-      syntax = HELP_SYNTAX_INDENT +
+      syntax =
+        HELP_SYNTAX_INDENT +
         printerService.secondary(indentText + syntaxTreeChars) +
         printerService.primary(helpEntry.syntax);
     }
@@ -75,9 +73,8 @@ function flattenHelpEntry(
   rows.push({ syntax, description });
 
   if (helpEntry.helpSubEntries !== undefined) {
-    const nextIndent = indentText +
-      (isLastSibling ? "  " : "│ ") +
-      " ".repeat(helpEntry.subEntryIndent || 0);
+    const nextIndent =
+      indentText + (isLastSibling ? "  " : "│ ") + " ".repeat(helpEntry.subEntryIndent || 0);
     for (let i = 0; i < helpEntry.helpSubEntries.length; i++) {
       const sub = helpEntry.helpSubEntries[i]!;
       flattenHelpEntry(
@@ -102,23 +99,14 @@ export async function printHelpSections(
   for (let i = 0; i < sections.length; i++) {
     const section = sections[i]!;
     if (section.title.length > 0) {
-      await printerService.print(
-        `${printerService.emphasised(section.title)}\n\n`,
-      );
+      await printerService.print(`${printerService.emphasised(section.title)}\n\n`);
     }
 
     if (section.helpEntries.length === 0) continue;
 
     const rows: FlattenedRow[] = [];
     for (const helpEntry of section.helpEntries) {
-      flattenHelpEntry(
-        printerService,
-        helpEntry,
-        "",
-        true,
-        true,
-        rows,
-      );
+      flattenHelpEntry(printerService, helpEntry, "", true, true, rows);
     }
 
     const hasDescriptions = rows.some((r) => r.description !== undefined);
@@ -150,9 +138,7 @@ export async function printHelpSections(
   }
 }
 
-function getGlobalCommandArgumentForm(
-  globalCommandArgument: GlobalCommandArgument,
-): string {
+function getGlobalCommandArgumentForm(globalCommandArgument: GlobalCommandArgument): string {
   let argumentSyntax = "";
 
   switch (globalCommandArgument.type) {
@@ -195,10 +181,7 @@ export function getGlobalArgumentHelpEntry(
   const syntax = getGlobalCommandArgumentForm(argument);
 
   const notesItems: Array<string> = [];
-  if (
-    (argument.allowableValues !== undefined) &&
-    (argument.allowableValues.length > 0)
-  ) {
+  if (argument.allowableValues !== undefined && argument.allowableValues.length > 0) {
     notesItems.push(`valid values: ${argument.allowableValues.join("|")}`);
   } else {
     switch (argument.type) {
@@ -212,10 +195,7 @@ export function getGlobalArgumentHelpEntry(
         notesItems.push("number value");
         break;
     }
-    if (
-      (argument.minValueInclusive !== undefined) ||
-      (argument.maxValueInclusive !== undefined)
-    ) {
+    if (argument.minValueInclusive !== undefined || argument.maxValueInclusive !== undefined) {
       let range = "..";
 
       if (argument.minValueInclusive !== undefined) {
@@ -275,7 +255,7 @@ export function getSubCommandArgumentsSyntax(subCommand: SubCommand): string {
         optionSyntax = `${optionSyntax} <complex_value>`;
         break;
     }
-    if (option.isOptional || (option.defaultValue !== undefined)) {
+    if (option.isOptional || option.defaultValue !== undefined) {
       optionSyntax = ` [${optionSyntax}]`;
     } else {
       optionSyntax = ` ${optionSyntax}`;
@@ -325,21 +305,14 @@ function getOptionHelpEntry(
     subEntries = [];
     option.properties.forEach((property) => {
       subEntries!.push(
-        getOptionHelpEntry(
-          cliConfig,
-          includeEnvVars,
-          command,
-          property,
-          newSubEntryIndent,
-          [...optionAncestry, option],
-        ),
+        getOptionHelpEntry(cliConfig, includeEnvVars, command, property, newSubEntryIndent, [
+          ...optionAncestry,
+          option,
+        ]),
       );
     });
   } else {
-    if (
-      (option.allowableValues !== undefined) &&
-      (option.allowableValues.length > 0)
-    ) {
+    if (option.allowableValues !== undefined && option.allowableValues.length > 0) {
       notesItems.push(`valid values: ${option.allowableValues.join("|")}`);
     } else {
       switch (option.type) {
@@ -358,10 +331,7 @@ function getOptionHelpEntry(
       }
     }
   }
-  if (
-    (option.minValueInclusive !== undefined) ||
-    (option.maxValueInclusive !== undefined)
-  ) {
+  if (option.minValueInclusive !== undefined || option.maxValueInclusive !== undefined) {
     let range = "..";
 
     if (option.minValueInclusive !== undefined) {
@@ -390,15 +360,11 @@ function getOptionHelpEntry(
     notesItems.push("array");
   }
 
-  if (includeEnvVars && (option.type !== ComplexValueTypeName.COMPLEX)) {
-    const configurationKey = getSubCommandArgumentConfigurationKey(
-      cliConfig,
-      command,
-      [
-        ...(optionAncestry as Array<SubCommandArgument>),
-        option as unknown as SubCommandArgument,
-      ],
-    );
+  if (includeEnvVars && option.type !== ComplexValueTypeName.COMPLEX) {
+    const configurationKey = getSubCommandArgumentConfigurationKey(cliConfig, command, [
+      ...(optionAncestry as Array<SubCommandArgument>),
+      option as unknown as SubCommandArgument,
+    ]);
     if (configurationKey !== undefined) {
       notesItems.push(`env var: ${configurationKey}`);
     }
@@ -416,9 +382,7 @@ function getOptionHelpEntry(
 
   return {
     syntax: `${optionCharacters}${option.name}${
-      (option.shortAlias !== undefined)
-        ? `, ${aliasCharacter}${option.shortAlias}`
-        : ""
+      option.shortAlias !== undefined ? `, ${aliasCharacter}${option.shortAlias}` : ""
     }`,
     description,
     subEntryIndent: newSubEntryIndent,
@@ -433,10 +397,7 @@ function getPositionalHelpEntry(
   positional: Positional,
 ): HelpEntry {
   const notesItems: Array<string> = [];
-  if (
-    (positional.allowableValues !== undefined) &&
-    (positional.allowableValues.length > 0)
-  ) {
+  if (positional.allowableValues !== undefined && positional.allowableValues.length > 0) {
     notesItems.push(`valid values: ${positional.allowableValues.join("|")}`);
   } else {
     switch (positional.type) {
@@ -454,10 +415,7 @@ function getPositionalHelpEntry(
         break;
     }
   }
-  if (
-    (positional.minValueInclusive !== undefined) ||
-    (positional.maxValueInclusive !== undefined)
-  ) {
+  if (positional.minValueInclusive !== undefined || positional.maxValueInclusive !== undefined) {
     let range = "..";
 
     if (positional.minValueInclusive !== undefined) {
@@ -477,13 +435,9 @@ function getPositionalHelpEntry(
   }
 
   if (includeEnvVars) {
-    const configurationKey = getSubCommandArgumentConfigurationKey(
-      cliConfig,
-      command,
-      [
-        positional,
-      ],
-    );
+    const configurationKey = getSubCommandArgumentConfigurationKey(cliConfig, command, [
+      positional,
+    ]);
     if (configurationKey !== undefined) {
       notesItems.push(`env var: ${configurationKey}`);
     }
@@ -511,29 +465,19 @@ export function getCommandArgsHelpSections(
   isSingleCommandApp: boolean,
 ): Array<HelpSection> {
   const helpSections: Array<HelpSection> = [];
-  if ((subCommand.options.length > 0) || (subCommand.positionals.length > 0)) {
+  if (subCommand.options.length > 0 || subCommand.positionals.length > 0) {
     const argumentsSection: HelpSection = {
       title: `${isSingleCommandApp ? "Command " : ""}Arguments`,
       helpEntries: [],
     };
     subCommand.options.forEach((option) => {
       argumentsSection.helpEntries.push(
-        getOptionHelpEntry(
-          cliConfig,
-          includeEnvVars,
-          subCommand,
-          option as Option,
-        ),
+        getOptionHelpEntry(cliConfig, includeEnvVars, subCommand, option as Option),
       );
     });
     subCommand.positionals.forEach((positional) => {
       argumentsSection.helpEntries.push(
-        getPositionalHelpEntry(
-          cliConfig,
-          includeEnvVars,
-          subCommand,
-          positional,
-        ),
+        getPositionalHelpEntry(cliConfig, includeEnvVars, subCommand, positional),
       );
     });
     helpSections.push(argumentsSection);
@@ -546,27 +490,20 @@ export function getCommandExamplesHelpSections(
   subCommand: SubCommand,
 ): Array<HelpSection> {
   const helpSections: Array<HelpSection> = [];
-  if (
-    (subCommand.usageExamples !== undefined) &&
-    (subCommand.usageExamples.length > 0)
-  ) {
+  if (subCommand.usageExamples !== undefined && subCommand.usageExamples.length > 0) {
     const usageSection: HelpSection = {
       title: subCommand.usageExamples.length > 1 ? "Examples" : "Example",
       helpEntries: [],
     };
     helpSections.push(usageSection);
     subCommand.usageExamples.forEach((usageExample: UsageExample, index) => {
-      if (
-        (usageExample.description != null) &&
-        (usageExample.description.length > 0)
-      ) {
+      if (usageExample.description != null && usageExample.description.length > 0) {
         usageSection.helpEntries.push({
           syntax: `${printerService.italic(usageExample.description)}:\n`,
         });
       }
       usageSection.helpEntries.push({
-        syntax:
-          `$ ${context.cliConfig.name} ${subCommand.name} ${usageExample.exampleArguments}`,
+        syntax: `$ ${context.cliConfig.name} ${subCommand.name} ${usageExample.exampleArguments}`,
       });
       if (usageExample.output !== undefined) {
         usageExample.output.forEach((output) => {
@@ -592,23 +529,20 @@ export function getMultiCommandAppSyntax(
   groupCommands: ReadonlyArray<GroupCommand>,
   subCommands: ReadonlyArray<SubCommand>,
 ): string {
-  const globalPrefix = ((groupCommands.length > 0) || (subCommands.length > 0))
-    ? "global_"
-    : "";
+  const globalPrefix = groupCommands.length > 0 || subCommands.length > 0 ? "global_" : "";
   let syntax = context.cliConfig.name || "";
   if (globalModifierCommands.length > 0) {
     syntax += ` [<${globalPrefix}option>`;
     // dont render global_option arg if none defined
-    const noArg = globalModifierCommands.every((
-      modifier,
-    ) => (modifier.argument === undefined));
+    const noArg = globalModifierCommands.every((modifier) => modifier.argument === undefined);
     if (!noArg) {
       // render global_option arg in [] if all modifiers have non-optional, non-boolean arg with no default
-      const optionArgMandatory = globalModifierCommands.every((modifier) =>
-        (modifier.argument !== undefined) &&
-        !modifier.argument.isOptional &&
-        (modifier.argument.defaultValue === undefined) &&
-        modifier.argument.type !== ArgumentValueTypeName.BOOLEAN
+      const optionArgMandatory = globalModifierCommands.every(
+        (modifier) =>
+          modifier.argument !== undefined &&
+          !modifier.argument.isOptional &&
+          modifier.argument.defaultValue === undefined &&
+          modifier.argument.type !== ArgumentValueTypeName.BOOLEAN,
       );
       syntax += optionArgMandatory ? " <value>" : " [<value>]";
     }
@@ -624,94 +558,96 @@ export function getMultiCommandAppSyntax(
   const commandClauses: string[] = [];
   if (globalCommands.length > 0) {
     commandClauses.push(`<${globalPrefix}command>`);
-    arg = globalCommands.some((
-      globalCommand,
-    ) => (globalCommand.argument !== undefined));
+    arg = globalCommands.some((globalCommand) => globalCommand.argument !== undefined);
     if (arg) {
-      argOptional = globalCommands.some((globalCommand) =>
-        (globalCommand.argument !== undefined) &&
-        (((globalCommand.argument.isOptional !== undefined) &&
-          globalCommand.argument.isOptional) ||
-          (globalCommand.argument.defaultValue !== undefined))
+      argOptional = globalCommands.some(
+        (globalCommand) =>
+          globalCommand.argument !== undefined &&
+          ((globalCommand.argument.isOptional !== undefined && globalCommand.argument.isOptional) ||
+            globalCommand.argument.defaultValue !== undefined),
       );
-      argValueOptional = globalCommands.some((globalCommand) =>
-        (globalCommand.argument !== undefined) &&
-        (globalCommand.argument.type === ArgumentValueTypeName.BOOLEAN)
+      argValueOptional = globalCommands.some(
+        (globalCommand) =>
+          globalCommand.argument !== undefined &&
+          globalCommand.argument.type === ArgumentValueTypeName.BOOLEAN,
       );
     }
   }
-  if ((groupCommands.length > 0) || (subCommands.length > 0)) {
+  if (groupCommands.length > 0 || subCommands.length > 0) {
     commandClauses.push("<command>");
-    arg = arg || groupCommands.some((groupCommand) =>
-      groupCommand.memberSubCommands.some((memberCommand) =>
-        memberCommand.options.length > 0 || memberCommand.positionals.length > 0
-      )
-    ) ||
-      subCommands.some((subCommand) =>
-        subCommand.options.length > 0 || subCommand.positionals.length > 0
+    arg =
+      arg ||
+      groupCommands.some((groupCommand) =>
+        groupCommand.memberSubCommands.some(
+          (memberCommand) =>
+            memberCommand.options.length > 0 || memberCommand.positionals.length > 0,
+        ),
+      ) ||
+      subCommands.some(
+        (subCommand) => subCommand.options.length > 0 || subCommand.positionals.length > 0,
       );
     if (arg) {
-      argOptional = argOptional || groupCommands.some((groupCommand) =>
-        groupCommand.memberSubCommands.some((memberCommand) =>
-          memberCommand.options.some((option) =>
-            ((option.isOptional !== undefined) && option.isOptional) ||
-            (option.defaultValue !== undefined)
-          ) ||
-          memberCommand.positionals.some((
-            positional,
-          ) => ((positional.isVarargOptional !== undefined) &&
-            positional.isVarargOptional)
-          )
-        )
-      ) ||
-        subCommands.some((subCommand) =>
-          subCommand.options.some((option) =>
-            ((option.isOptional !== undefined) && option.isOptional) ||
-            (option.defaultValue !== undefined)
-          ) ||
-          subCommand.positionals.some((
-            positional,
-          ) => ((positional.isVarargOptional !== undefined) &&
-            positional.isVarargOptional)
-          )
+      argOptional =
+        argOptional ||
+        groupCommands.some((groupCommand) =>
+          groupCommand.memberSubCommands.some(
+            (memberCommand) =>
+              memberCommand.options.some(
+                (option) =>
+                  (option.isOptional !== undefined && option.isOptional) ||
+                  option.defaultValue !== undefined,
+              ) ||
+              memberCommand.positionals.some(
+                (positional) =>
+                  positional.isVarargOptional !== undefined && positional.isVarargOptional,
+              ),
+          ),
+        ) ||
+        subCommands.some(
+          (subCommand) =>
+            subCommand.options.some(
+              (option) =>
+                (option.isOptional !== undefined && option.isOptional) ||
+                option.defaultValue !== undefined,
+            ) ||
+            subCommand.positionals.some(
+              (positional) =>
+                positional.isVarargOptional !== undefined && positional.isVarargOptional,
+            ),
         );
-      argValueOptional = argValueOptional ||
+      argValueOptional =
+        argValueOptional ||
         groupCommands.some((groupCommand) =>
           groupCommand.memberSubCommands.some((memberCommand) =>
-            memberCommand.options.some((option) =>
-              option.type === ArgumentValueTypeName.BOOLEAN ||
-              memberCommand.positionals.some((positional) =>
-                positional.type === ArgumentValueTypeName.BOOLEAN
-              )
-            )
-          )
+            memberCommand.options.some(
+              (option) =>
+                option.type === ArgumentValueTypeName.BOOLEAN ||
+                memberCommand.positionals.some(
+                  (positional) => positional.type === ArgumentValueTypeName.BOOLEAN,
+                ),
+            ),
+          ),
         ) ||
-        subCommands.some((subCommand) =>
-          subCommand.options.some((option) =>
-            option.type ===
-              ArgumentValueTypeName.BOOLEAN
-          ) ||
-          subCommand.positionals.some((positional) =>
-            positional.type === ArgumentValueTypeName.BOOLEAN
-          )
+        subCommands.some(
+          (subCommand) =>
+            subCommand.options.some((option) => option.type === ArgumentValueTypeName.BOOLEAN) ||
+            subCommand.positionals.some(
+              (positional) => positional.type === ArgumentValueTypeName.BOOLEAN,
+            ),
         );
-      multipleArg = multipleArg || groupCommands.some((groupCommand) =>
-        groupCommand.memberSubCommands.some((memberCommand) =>
-          memberCommand.options.some((option) =>
-            option.isArray
-          ) ||
-          memberCommand.positionals.some((positional) =>
-            positional.isVarargMultiple
-          )
-        )
-      ) ||
-        subCommands.some((subCommand) =>
-          subCommand.options.some((option) =>
-            option.isArray
-          ) ||
-          subCommand.positionals.some((positional) =>
-            positional.isVarargMultiple
-          )
+      multipleArg =
+        multipleArg ||
+        groupCommands.some((groupCommand) =>
+          groupCommand.memberSubCommands.some(
+            (memberCommand) =>
+              memberCommand.options.some((option) => option.isArray) ||
+              memberCommand.positionals.some((positional) => positional.isVarargMultiple),
+          ),
+        ) ||
+        subCommands.some(
+          (subCommand) =>
+            subCommand.options.some((option) => option.isArray) ||
+            subCommand.positionals.some((positional) => positional.isVarargMultiple),
         );
     }
   }
@@ -726,8 +662,8 @@ export function getMultiCommandAppSyntax(
       subSyntax += argOptional
         ? ` [${argSyntax}]`
         : multipleArg
-        ? ` <${argSyntax}>`
-        : ` ${argSyntax}`;
+          ? ` <${argSyntax}>`
+          : ` ${argSyntax}`;
       // check to render multiple arg
       if (multipleArg) {
         subSyntax += "...";
@@ -745,18 +681,12 @@ export function findPossibleCommandNames(
 ): string[] {
   const levenCommandArray = new Array<[number, string]>();
   subCommands.forEach((subCommand) => {
-    levenCommandArray.push([
-      distance(subCommand.name, commandName),
-      subCommand.name,
-    ]);
+    levenCommandArray.push([distance(subCommand.name, commandName), subCommand.name]);
   });
   groupCommands.forEach((groupCommand) => {
     groupCommand.memberSubCommands.forEach((memberCommand) => {
       const memberName = `${groupCommand.name}:${memberCommand.name}`;
-      levenCommandArray.push([
-        distance(memberName, commandName),
-        memberName,
-      ]);
+      levenCommandArray.push([distance(memberName, commandName), memberName]);
     });
   });
   return levenCommandArray
