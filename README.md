@@ -1,12 +1,3 @@
----
-children:
-  - ./README/key-concepts.md
-  - ./README/implementation-details.md
-  - ./README/core-service-providers.md
-  - ./README/core-commands.md
-  - ./README/development.md
----
-
 # dynamic-cli-framework
 
 [![version](https://img.shields.io/github/v/release/flowscripter/dynamic-cli-framework?sort=semver)](https://github.com/flowscripter/dynamic-cli-framework/releases)
