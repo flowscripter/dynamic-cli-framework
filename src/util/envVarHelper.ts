@@ -129,7 +129,9 @@ function getOptionValuesFromEnvVars(
               (envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>)[index] ===
               undefined
             ) {
-              (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] = {};
+              (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] = Object.create(
+                null,
+              ) as PopulatedArgumentValues;
             }
             (option as ComplexOption).properties.forEach((property) => {
               const propertySegment = property.configurationKey || getKeySegment(property.name);
@@ -180,7 +182,7 @@ function getOptionValuesFromEnvVars(
   } else if (option.type === ComplexValueTypeName.COMPLEX) {
     (option as ComplexOption).properties.forEach((property) => {
       if (envVarValues[option.name] === undefined) {
-        envVarValues[option.name] = {};
+        envVarValues[option.name] = Object.create(null) as PopulatedArgumentValues;
       }
       const propertySegment = property.configurationKey || getKeySegment(property.name);
       getOptionValuesFromEnvVars(
@@ -219,7 +221,7 @@ export function getSubCommandValuesFromEnvVars(
   cliConfig: CLIConfig,
   command: SubCommand,
 ): PopulatedArgumentValues | undefined {
-  const envVarValues: PopulatedArgumentValues = {};
+  const envVarValues = Object.create(null) as PopulatedArgumentValues;
   if (command.options) {
     for (const option of command.options) {
       const potentialEnvVarNames = Object.keys(process.env);
@@ -235,6 +237,15 @@ export function getSubCommandValuesFromEnvVars(
   }
   if (command.positionals) {
     for (const positional of command.positionals) {
+      if (
+        positional.name === "__proto__" ||
+        positional.name === "constructor" ||
+        positional.name === "prototype"
+      ) {
+        throw new Error(
+          `Unsafe key name in use: ${positional.name}, CodeQL Rule ID: js/prototype-polluting-assignment`,
+        );
+      }
       let envVarNamePrefix = getSubCommandArgumentKeyPrefix(cliConfig, command, positional);
 
       if (positional.isVarargMultiple) {
