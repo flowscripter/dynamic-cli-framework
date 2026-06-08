@@ -12,16 +12,12 @@ import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
-import smallFont from "../asciiBannerGenerator/small.flf.json" with {
-  type: "json",
-};
+import smallFont from "../asciiBannerGenerator/small.flf.json" with { type: "json" };
 
 describe("BannerServiceProvider tests", () => {
   test("BannerServiceProvider getServiceInfo works", async () => {
     const bannerServiceProvider = new BannerServiceProvider(100);
-    const serviceInfo = await bannerServiceProvider.getServiceInfo(
-      getCLIConfig(),
-    );
+    const serviceInfo = await bannerServiceProvider.getServiceInfo(getCLIConfig());
     expect(serviceInfo.commands.length).toEqual(1);
   });
 
@@ -43,10 +39,7 @@ describe("BannerServiceProvider tests", () => {
     const context = new DefaultContext(getCLIConfig());
 
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
-    context.addServiceInstance(
-      ASCII_BANNER_GENERATOR_SERVICE_ID,
-      asciiBannerGenerator,
-    );
+    context.addServiceInstance(ASCII_BANNER_GENERATOR_SERVICE_ID, asciiBannerGenerator);
 
     const bannerServiceProvider = new BannerServiceProvider(100);
     await bannerServiceProvider.initService(context);
@@ -74,17 +67,11 @@ describe("BannerServiceProvider tests", () => {
     const context = new DefaultContext(getCLIConfig("mpeg-sdl-tool"));
 
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
-    context.addServiceInstance(
-      ASCII_BANNER_GENERATOR_SERVICE_ID,
-      asciiBannerGenerator,
-    );
+    context.addServiceInstance(ASCII_BANNER_GENERATOR_SERVICE_ID, asciiBannerGenerator);
 
     asciiBannerGenerator.registerFont("small", smallFont.font);
 
-    const configurationServiceProvider = getConfigurationServiceProvider(
-      100,
-      new Map(),
-    );
+    const configurationServiceProvider = getConfigurationServiceProvider(100, new Map());
     configurationServiceProvider.configLocation = "config.yaml";
 
     const bannerServiceProvider = new BannerServiceProvider(

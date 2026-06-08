@@ -16,7 +16,9 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h * 6) % 2) - 1));
   const m = l - c / 2;
-  let r = 0, g = 0, b = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
   if (h < 1 / 6) {
     r = c;
     g = x;
@@ -42,16 +44,12 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
     g = 0;
     b = x;
   }
-  return [
-    Math.round((r + m) * 255),
-    Math.round((g + m) * 255),
-    Math.round((b + m) * 255),
-  ];
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 
 function parseHex(hex: string): [number, number, number] {
   const v = parseInt(hex.slice(1), 16);
-  return [(v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF];
+  return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff];
 }
 
 function interpolateColors(
@@ -84,13 +82,11 @@ function rainbowColor(
   x: number,
   y: number,
 ): [number, number, number] {
-  const h = ((freq * (x / spread) + seed + y * freq / spread) % 1.0 + 1.0) %
-    1.0;
+  const h = (((freq * (x / spread) + seed + (y * freq) / spread) % 1.0) + 1.0) % 1.0;
   return hslToRgb(h, 1.0, 0.5);
 }
 
-export default class DefaultAsciiBannerGeneratorService
-  implements AsciiBannerGeneratorService {
+export default class DefaultAsciiBannerGeneratorService implements AsciiBannerGeneratorService {
   #registeredFontNames: Array<string> = [];
 
   constructor() {
@@ -110,47 +106,39 @@ export default class DefaultAsciiBannerGeneratorService
     figlet.parseFont(fontName, fontDefinition);
   }
 
-  protected applyForegroundEffect(
-    lines: string[],
-    effect: ColorEffect,
-  ): string[] {
+  protected applyForegroundEffect(lines: string[], effect: ColorEffect): string[] {
     if (effect.type === "fixed") {
       const [r, g, b] = parseHex(effect.color);
       const code = foregroundColorStart(r, g, b);
       return lines.map((line) =>
-        line.split("").map((ch) =>
-          ch === " " ? ch : code + ch + FOREGROUND_COLOR_END
-        ).join(
-          "",
-        )
+        line
+          .split("")
+          .map((ch) => (ch === " " ? ch : code + ch + FOREGROUND_COLOR_END))
+          .join(""),
       );
     }
     if (effect.type === "gradient") {
       const colorStops = effect.colors.map(parseHex);
       return lines.map((line, yi) => {
         if (effect.direction === "vertical") {
-          const [r, g, b] = interpolateColors(
-            colorStops,
-            yi,
-            Math.max(lines.length, 1),
-          );
+          const [r, g, b] = interpolateColors(colorStops, yi, Math.max(lines.length, 1));
           const code = foregroundColorStart(r, g, b);
-          return line.split("").map((ch) =>
-            ch === " " ? ch : code + ch + FOREGROUND_COLOR_END
-          ).join("");
+          return line
+            .split("")
+            .map((ch) => (ch === " " ? ch : code + ch + FOREGROUND_COLOR_END))
+            .join("");
         }
         const nonSpaceCount = line.split("").filter((c) => c !== " ").length;
         let charIdx = 0;
-        return line.split("").map((ch) => {
-          if (ch === " ") return ch;
-          const [r, g, b] = interpolateColors(
-            colorStops,
-            charIdx,
-            Math.max(nonSpaceCount, 1),
-          );
-          charIdx++;
-          return foregroundColorStart(r, g, b) + ch + FOREGROUND_COLOR_END;
-        }).join("");
+        return line
+          .split("")
+          .map((ch) => {
+            if (ch === " ") return ch;
+            const [r, g, b] = interpolateColors(colorStops, charIdx, Math.max(nonSpaceCount, 1));
+            charIdx++;
+            return foregroundColorStart(r, g, b) + ch + FOREGROUND_COLOR_END;
+          })
+          .join("");
       });
     }
     const freq = effect.frequency ?? 0.3;
@@ -160,24 +148,25 @@ export default class DefaultAsciiBannerGeneratorService
       if (effect.direction === "vertical") {
         const [r, g, b] = rainbowColor(freq, spread, seed, 0, yi);
         const code = foregroundColorStart(r, g, b);
-        return line.split("").map((ch) =>
-          ch === " " ? ch : code + ch + FOREGROUND_COLOR_END
-        ).join("");
+        return line
+          .split("")
+          .map((ch) => (ch === " " ? ch : code + ch + FOREGROUND_COLOR_END))
+          .join("");
       }
       let charIdx = 0;
-      return line.split("").map((ch) => {
-        if (ch === " ") return ch;
-        const [r, g, b] = rainbowColor(freq, spread, seed, charIdx, yi);
-        charIdx++;
-        return foregroundColorStart(r, g, b) + ch + FOREGROUND_COLOR_END;
-      }).join("");
+      return line
+        .split("")
+        .map((ch) => {
+          if (ch === " ") return ch;
+          const [r, g, b] = rainbowColor(freq, spread, seed, charIdx, yi);
+          charIdx++;
+          return foregroundColorStart(r, g, b) + ch + FOREGROUND_COLOR_END;
+        })
+        .join("");
     });
   }
 
-  protected applyBackgroundEffect(
-    lines: string[],
-    effect: ColorEffect,
-  ): string[] {
+  protected applyBackgroundEffect(lines: string[], effect: ColorEffect): string[] {
     if (effect.type === "fixed") {
       const [r, g, b] = parseHex(effect.color);
       const code = backgroundColorStart(r, g, b);
@@ -187,18 +176,17 @@ export default class DefaultAsciiBannerGeneratorService
       const colorStops = effect.colors.map(parseHex);
       return lines.map((line, yi) => {
         if (effect.direction === "vertical") {
-          const [r, g, b] = interpolateColors(
-            colorStops,
-            yi,
-            Math.max(lines.length, 1),
-          );
+          const [r, g, b] = interpolateColors(colorStops, yi, Math.max(lines.length, 1));
           return backgroundColorStart(r, g, b) + line + BACKGROUND_COLOR_END;
         }
         const totalChars = Math.max(line.length, 1);
-        return line.split("").map((ch, xi) => {
-          const [r, g, b] = interpolateColors(colorStops, xi, totalChars);
-          return backgroundColorStart(r, g, b) + ch + BACKGROUND_COLOR_END;
-        }).join("");
+        return line
+          .split("")
+          .map((ch, xi) => {
+            const [r, g, b] = interpolateColors(colorStops, xi, totalChars);
+            return backgroundColorStart(r, g, b) + ch + BACKGROUND_COLOR_END;
+          })
+          .join("");
       });
     }
     const freq = effect.frequency ?? 0.3;
@@ -209,17 +197,17 @@ export default class DefaultAsciiBannerGeneratorService
         const [r, g, b] = rainbowColor(freq, spread, seed, 0, yi);
         return backgroundColorStart(r, g, b) + line + BACKGROUND_COLOR_END;
       }
-      return line.split("").map((ch, xi) => {
-        const [r, g, b] = rainbowColor(freq, spread, seed, xi, yi);
-        return backgroundColorStart(r, g, b) + ch + BACKGROUND_COLOR_END;
-      }).join("");
+      return line
+        .split("")
+        .map((ch, xi) => {
+          const [r, g, b] = rainbowColor(freq, spread, seed, xi, yi);
+          return backgroundColorStart(r, g, b) + ch + BACKGROUND_COLOR_END;
+        })
+        .join("");
     });
   }
 
-  async generate(
-    message: string,
-    options?: BannerGenerateOptions,
-  ): Promise<string> {
+  async generate(message: string, options?: BannerGenerateOptions): Promise<string> {
     const fontName = (options?.fontName ?? "standard").toLowerCase();
     if (!this.getRegisteredFonts().includes(fontName)) {
       throw new Error(`Font name is not registered: ${fontName}`);
@@ -239,7 +227,7 @@ export default class DefaultAsciiBannerGeneratorService
       subMessageLine = options.subMessage
         .toUpperCase()
         .split("")
-        .map((c) => c === " " ? "  " : c + " ")
+        .map((c) => (c === " " ? "  " : c + " "))
         .join("")
         .trimEnd();
 
@@ -258,20 +246,14 @@ export default class DefaultAsciiBannerGeneratorService
     const colorEffects = options?.colorEffects;
 
     if (colorEffects?.messageForeground) {
-      titleLines = this.applyForegroundEffect(
-        titleLines,
-        colorEffects.messageForeground,
-      );
+      titleLines = this.applyForegroundEffect(titleLines, colorEffects.messageForeground);
     }
 
     let subLines: string[] | undefined;
     if (subMessageLine !== undefined) {
       subLines = [subMessageLine];
       if (colorEffects?.subMessageForeground) {
-        subLines = this.applyForegroundEffect(
-          subLines,
-          colorEffects.subMessageForeground,
-        );
+        subLines = this.applyForegroundEffect(subLines, colorEffects.subMessageForeground);
       }
     }
 

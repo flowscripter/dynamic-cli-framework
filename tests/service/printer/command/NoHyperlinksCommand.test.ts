@@ -22,31 +22,23 @@ describe("NoHyperlinksCommand tests", () => {
       new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService =
-      (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
+    const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);
 
     const command = new NoHyperlinksCommand(printerServiceProvider, 100);
 
-    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(
-      true,
-    );
+    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(true);
 
     await command.execute(context, true);
 
-    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(
-      false,
-    );
+    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(false);
 
     await ShutdownServiceProvider.shutdown();
   });
@@ -62,16 +54,12 @@ describe("NoHyperlinksCommand tests", () => {
       new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService =
-      (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
+    const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);
@@ -80,9 +68,7 @@ describe("NoHyperlinksCommand tests", () => {
 
     await command.execute(context, false);
 
-    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(
-      true,
-    );
+    expect(printerServiceProvider.printerService!.hyperlinksEnabled).toEqual(true);
 
     await ShutdownServiceProvider.shutdown();
   });

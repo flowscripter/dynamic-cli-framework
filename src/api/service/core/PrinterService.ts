@@ -1,5 +1,4 @@
-export const PRINTER_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/printer-service";
+export const PRINTER_SERVICE_ID = "@flowscripter/dynamic-cli-framework/printer-service";
 import { WritableStream } from "node:stream/web";
 
 /**
@@ -276,7 +275,7 @@ export default interface PrinterService {
   print(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print a {@link DEBUG} level message on `stderr`.
+   * Print a {@link Level.DEBUG} level message on `stderr`.
    * Will be displayed as secondary content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -285,7 +284,7 @@ export default interface PrinterService {
   debug(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print an {@link INFO} level message on `stderr`.
+   * Print an {@link Level.INFO} level message on `stderr`.
    * Will be displayed as primary content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -294,7 +293,7 @@ export default interface PrinterService {
   info(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print a {@link WARN} level message on `stderr`.
+   * Print a {@link Level.WARN} level message on `stderr`.
    * Will be displayed as yellow content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -303,7 +302,7 @@ export default interface PrinterService {
   warn(message: string, icon?: Icon): Promise<void>;
 
   /**
-   * Print an {@link ERROR} level message on `stderr`.
+   * Print an {@link Level.ERROR} level message on `stderr`.
    * Will be displayed as red content if {@link colorEnabled} is `true`.
    *
    * @param message the message to output.
@@ -314,7 +313,7 @@ export default interface PrinterService {
   /**
    * Set the output threshold {@link Level} for `stderr`.
    *
-   * Default level is {@link INFO}.
+   * Default level is {@link Level.INFO}.
    *
    * @param level any message below this level will be filtered from output,
    */
@@ -331,7 +330,7 @@ export default interface PrinterService {
    * The spinner will be displayed as emphasised content and the message will
    * be displayed as primary content if {@link colorEnabled} is `true`.
    *
-   * NOTE: The spinner and message will be displayed at {@link INFO} level.
+   * NOTE: The spinner and message will be displayed at {@link Level.INFO} level.
    *
    * NOTE: If the spinner is already displayed the message will be updated to that specified.
    *
@@ -354,7 +353,7 @@ export default interface PrinterService {
    *
    * The progress will be displayed in green if {@link colorEnabled} is `true`.
    *
-   * NOTE: The progress bar and message will be displayed at {@link INFO} level.
+   * NOTE: The progress bar and message will be displayed at {@link Level.INFO} level.
    *
    * NOTE: If the spinner is currently displayed it will be hidden.
    *

@@ -1,7 +1,4 @@
-import type {
-  Prompt,
-  PromptResult,
-} from "../../../api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "../../../api/service/core/PrompterService.ts";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
 import { headerLineCount, renderPromptHeader } from "./PromptContext.ts";
@@ -19,10 +16,7 @@ export default async function promptMultiSelect(
   let focusIndex = 0;
   const checked = new Set<number>();
   let scrollOffset = 0;
-  const visibleCount = Math.min(
-    ctx.config.scrollVisibleOptions,
-    options.length,
-  );
+  const visibleCount = Math.min(ctx.config.scrollVisibleOptions, options.length);
 
   ctx.keyReader.enableRawMode();
   try {
@@ -51,15 +45,11 @@ export default async function promptMultiSelect(
         const isChecked = checked.has(i);
         const checkbox = isChecked
           ? ctx.printerService.green(ctx.config.checkboxCheckedChars)
-          : ctx.printerService.secondary(
-            ctx.config.checkboxUncheckedChars,
-          );
+          : ctx.printerService.secondary(ctx.config.checkboxUncheckedChars);
         const text = option.displayValue;
         await ctx.terminal.write(
           `${checkbox} ${
-            isFocused
-              ? ctx.printerService.cyan(text)
-              : ctx.printerService.secondary(text)
+            isFocused ? ctx.printerService.cyan(text) : ctx.printerService.secondary(text)
           }\n`,
         );
       }
@@ -67,10 +57,7 @@ export default async function promptMultiSelect(
       const keyEvent = await ctx.keyReader.readKey();
       if (keyEvent.specialKey === SpecialKey.UP && focusIndex > 0) {
         focusIndex--;
-      } else if (
-        keyEvent.specialKey === SpecialKey.DOWN &&
-        focusIndex < options.length - 1
-      ) {
+      } else if (keyEvent.specialKey === SpecialKey.DOWN && focusIndex < options.length - 1) {
         focusIndex++;
       } else if (keyEvent.specialKey === SpecialKey.SPACE) {
         if (checked.has(focusIndex)) {
@@ -80,9 +67,7 @@ export default async function promptMultiSelect(
         }
       } else if (keyEvent.specialKey === SpecialKey.ENTER) {
         await ctx.terminal.showCursor();
-        const values = [...checked].sort().map(
-          (i) => options[i]!.returnedValue,
-        );
+        const values = [...checked].sort().map((i) => options[i]!.returnedValue);
         return { name: promptDef.name, value: values };
       } else if (keyEvent.specialKey === SpecialKey.ESCAPE) {
         await ctx.terminal.showCursor();

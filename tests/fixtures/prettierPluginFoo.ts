@@ -17,7 +17,7 @@ const parsers: Record<string, Parser> = {
 };
 
 const printers: Record<string, Printer> = {
-  "foo": {
+  foo: {
     print: () => "foo",
   },
 };

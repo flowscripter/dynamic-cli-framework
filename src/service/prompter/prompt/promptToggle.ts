@@ -6,10 +6,7 @@ import {
 import type { PromptContext } from "./PromptContext.ts";
 import promptSingleSelect from "./promptSingleSelect.ts";
 
-export default function promptToggle(
-  ctx: PromptContext,
-  promptDef: Prompt,
-): Promise<PromptResult> {
+export default function promptToggle(ctx: PromptContext, promptDef: Prompt): Promise<PromptResult> {
   const trueFalse: Prompt = {
     name: promptDef.name,
     promptText: promptDef.promptText,
@@ -19,10 +16,13 @@ export default function promptToggle(
       displayValue: "False",
       returnedValue: false,
     },
-    options: promptDef.options.length > 0 ? promptDef.options : [
-      { displayValue: "True", returnedValue: true },
-      { displayValue: "False", returnedValue: false },
-    ],
+    options:
+      promptDef.options.length > 0
+        ? promptDef.options
+        : [
+            { displayValue: "True", returnedValue: true },
+            { displayValue: "False", returnedValue: false },
+          ],
   };
   return promptSingleSelect(ctx, trueFalse);
 }

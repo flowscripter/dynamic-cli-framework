@@ -1,9 +1,6 @@
 import type Context from "../../api/Context.ts";
 import LogLevelCommand from "./command/LogLevelCommand.ts";
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import DarkModeCommand from "./command/DarkModeCommand.ts";
@@ -27,10 +24,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
    * @param servicePriority the priority of the service.
    * @param printerService the PrinterService implementation to use.
    */
-  public constructor(
-    servicePriority: number,
-    printerService: PrinterService,
-  ) {
+  public constructor(servicePriority: number, printerService: PrinterService) {
     this.servicePriority = servicePriority;
     this.printerService = printerService;
   }
@@ -48,9 +42,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
   }
 
   initService(context: Context): Promise<void> {
-    const shutdownService = context.getServiceById(
-      SHUTDOWN_SERVICE_ID,
-    ) as ShutdownService;
+    const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
     shutdownService.addShutdownListener(async () => {
       await this.printerService.hideSpinner();
       await this.printerService.hideAllProgressBars();

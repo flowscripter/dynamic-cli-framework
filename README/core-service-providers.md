@@ -149,8 +149,8 @@ Handles SIGINT (Ctrl-C) and SIGTERM signals:
 - **Long-running mode**: Commands can opt in via `enterLongRunningMode()`. In
   this mode, the first SIGINT sets a cooperative `isShutdownRequested` flag that
   the command can poll. A third SIGINT forces graceful shutdown and exit.
-- **SIGTERM**: Always triggers immediate graceful shutdown and exits with code
-  143.
+- **SIGTERM**: Always triggers immediate graceful shutdown and exits with
+  code 143.
 
 Cooperative cancellation pattern which can be used in a long running command:
 

@@ -3,19 +3,10 @@ import type SubCommand from "../api/command/SubCommand.ts";
 import type Option from "../api/argument/Option.ts";
 import type Positional from "../api/argument/Positional.ts";
 import type Context from "../api/Context.ts";
-import {
-  type ArgumentValues,
-  ArgumentValueTypeName,
-} from "../api/argument/ArgumentValueTypes.ts";
-import {
-  COMPLETION_SERVICE_ID,
-  ShellType,
-} from "../api/service/core/CompletionService.ts";
+import { type ArgumentValues, ArgumentValueTypeName } from "../api/argument/ArgumentValueTypes.ts";
+import { COMPLETION_SERVICE_ID, ShellType } from "../api/service/core/CompletionService.ts";
 import type DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
-import {
-  Icon,
-  PRINTER_SERVICE_ID,
-} from "../api/service/core/PrinterService.ts";
+import { Icon, PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
 import type PrinterService from "../api/service/core/PrinterService.ts";
 
 export class CompletionIntegrationSubCommand implements SubCommand {
@@ -41,16 +32,11 @@ export class CompletionIntegrationSubCommand implements SubCommand {
     },
   ];
 
-  async execute(
-    context: Context,
-    argumentValues: ArgumentValues,
-  ): Promise<void> {
+  async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
     const completionService = context.getServiceById(
       COMPLETION_SERVICE_ID,
     ) as DefaultCompletionService;
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     const shellType = argumentValues.shell as ShellType;
     const configPathArg = argumentValues["config-path"] as string | undefined;
@@ -63,13 +49,9 @@ export class CompletionIntegrationSubCommand implements SubCommand {
       );
     }
 
-    const configPath = configPathArg ||
-      completionService.getDefaultConfigPath(shellType);
+    const configPath = configPathArg || completionService.getDefaultConfigPath(shellType);
     const cliName = context.cliConfig.name;
-    const bootstrapScript = completionService.getBootstrapScript(
-      shellType,
-      cliName,
-    );
+    const bootstrapScript = completionService.getBootstrapScript(shellType, cliName);
 
     const beginMarker = `# BEGIN ${cliName} completion`;
     const endMarker = `# END ${cliName} completion`;
@@ -86,16 +68,17 @@ export class CompletionIntegrationSubCommand implements SubCommand {
     const beginIdx = existingContent.indexOf(beginMarker);
     const endIdx = existingContent.indexOf(endMarker);
     if (beginIdx !== -1 && endIdx !== -1) {
-      newContent = existingContent.substring(0, beginIdx) +
+      newContent =
+        existingContent.substring(0, beginIdx) +
         block +
         existingContent.substring(endIdx + endMarker.length);
     } else {
-      const separator = existingContent.length > 0 &&
-          !existingContent.endsWith("\n")
-        ? "\n\n"
-        : existingContent.length > 0
-        ? "\n"
-        : "";
+      const separator =
+        existingContent.length > 0 && !existingContent.endsWith("\n")
+          ? "\n\n"
+          : existingContent.length > 0
+            ? "\n"
+            : "";
       newContent = existingContent + separator + block + "\n";
     }
 
@@ -130,24 +113,16 @@ export class CompletionCompleteSubCommand implements SubCommand {
     },
   ];
 
-  async execute(
-    context: Context,
-    argumentValues: ArgumentValues,
-  ): Promise<void> {
+  async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
     const completionService = context.getServiceById(
       COMPLETION_SERVICE_ID,
     ) as DefaultCompletionService;
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     const shellType = argumentValues.shell as ShellType;
     const args = (argumentValues.args || []) as string[];
 
-    const completionContext = completionService.parseCompletionContext(
-      shellType,
-      args,
-    );
+    const completionContext = completionService.parseCompletionContext(shellType, args);
     const completions = await completionService.generateCompletions(
       shellType,
       completionContext.line,
@@ -174,6 +149,5 @@ export class CompletionGroupCommand implements GroupCommand {
     this.memberSubCommands = [integrationCommand, completeCommand];
   }
 
-  async execute(_context: Context): Promise<void> {
-  }
+  async execute(_context: Context): Promise<void> {}
 }

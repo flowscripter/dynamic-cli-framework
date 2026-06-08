@@ -5,10 +5,7 @@ import {
   getGlobalModifierCommand,
   getSubCommandWithOption,
 } from "../fixtures/Command.ts";
-import {
-  expectStringIncludes,
-  expectStringNotIncludes,
-} from "../fixtures/util.ts";
+import { expectStringIncludes, expectStringNotIncludes } from "../fixtures/util.ts";
 import { getContext } from "../fixtures/Context.ts";
 import {
   MultiCommandCliHelpGlobalCommand,
@@ -24,15 +21,11 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry();
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    streamString.getString().includes;
     expectStringIncludes(streamString.getString(), "Usage");
     expectStringIncludes(streamString.getString(), "foo <command>");
   });
@@ -41,10 +34,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry();
-    const help = new MultiCommandCliHelpSubCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpSubCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -58,19 +48,13 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const context = getContext(streamString);
     const subCommand = getSubCommandWithOption("command_a");
     const commandRegistry = getCommandRegistry([subCommand]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context, "command_a");
     expectStringIncludes(streamString.getString(), "Usage");
-    expectStringIncludes(
-      streamString.getString(),
-      subCommand.description!,
-    );
+    expectStringIncludes(streamString.getString(), subCommand.description!);
   });
 
   test("MultiCommandCliHelpSubCommand with command specified works", async () => {
@@ -78,37 +62,25 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const context = getContext(streamString);
     const subCommand = getSubCommandWithOption("command_a");
     const commandRegistry = getCommandRegistry([subCommand]);
-    const help = new MultiCommandCliHelpSubCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpSubCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context, { command: "command_a" });
     expectStringIncludes(streamString.getString(), "Usage");
-    expectStringIncludes(
-      streamString.getString(),
-      subCommand.description!,
-    );
+    expectStringIncludes(streamString.getString(), subCommand.description!);
   });
 
   test("MultiCommandCliHelpGlobalCommand with unknown command specified error warning and generic help", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry();
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context, "hello");
-    expectStringIncludes(
-      streamString.getString(),
-      "Unknown command: hello",
-    );
+    expectStringIncludes(streamString.getString(), "Unknown command: hello");
     expectStringIncludes(streamString.getString(), "Usage");
   });
 
@@ -116,18 +88,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry();
-    const help = new MultiCommandCliHelpSubCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpSubCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context, { command: "hello" });
-    expectStringIncludes(
-      streamString.getString(),
-      "Unknown command: hello",
-    );
+    expectStringIncludes(streamString.getString(), "Unknown command: hello");
     expectStringIncludes(streamString.getString(), "Usage");
   });
 
@@ -139,22 +105,13 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getSubCommandWithOption("command_a"),
       getSubCommandWithOption("other2"),
     ]);
-    const help = new MultiCommandCliHelpSubCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpSubCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context, { command: "command_b" });
-    expectStringIncludes(
-      streamString.getString(),
-      "Possible matches: command_a",
-    );
-    expectStringIncludes(
-      streamString.getString(),
-      "Unknown command: command_b",
-    );
+    expectStringIncludes(streamString.getString(), "Possible matches: command_a");
+    expectStringIncludes(streamString.getString(), "Unknown command: command_b");
     expectStringIncludes(streamString.getString(), "Usage");
   });
 
@@ -165,10 +122,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("zzz", "z", true),
       getGlobalModifierCommand("aaa", "a", true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -194,10 +148,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
         execute: async (): Promise<void> => {},
       } as GroupCommand,
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -229,10 +180,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
         execute: async (): Promise<void> => {},
       } as GroupCommand,
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -258,10 +206,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
         execute: async (): Promise<void> => {},
       } as GroupCommand,
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -281,10 +226,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
         execute: async (): Promise<void> => {},
       } as SubCommand,
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -299,10 +241,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("zzz"),
       getGlobalModifierCommand("aaa"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -321,10 +260,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("aaa", "a", true),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -339,19 +275,13 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry();
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
     expectStringIncludes(streamString.getString(), "foo");
-    expectStringNotIncludes(
-      streamString.getString(),
-      "global_option",
-    );
+    expectStringNotIncludes(streamString.getString(), "global_option");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: render global_option arg if global modifiers defined", async () => {
@@ -362,18 +292,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2"),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "[<global_option> [<value>]]...",
-    );
+    expectStringIncludes(streamString.getString(), "[<global_option> [<value>]]...");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render global_option multiplicity if only one defined", async () => {
@@ -383,18 +307,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier1"),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "[<global_option>] <global_command>",
-    );
+    expectStringIncludes(streamString.getString(), "[<global_option>] <global_command>");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render global_option arg if none defined", async () => {
@@ -405,18 +323,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2"),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "[<global_option>]... <global_command>",
-    );
+    expectStringIncludes(streamString.getString(), "[<global_option>]... <global_command>");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render global_option arg as optional if none are optional and have no default or not boolean", async () => {
@@ -427,18 +339,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2", "2", true, true),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "[<global_option> <value>]",
-    );
+    expectStringIncludes(streamString.getString(), "[<global_option> <value>]");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: render global_option arg as optional if at least one modifier has no arg", async () => {
@@ -449,18 +355,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2"),
       getSubCommandWithOption("command_a"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "[<global_option> [<value>]]",
-    );
+    expectStringIncludes(streamString.getString(), "[<global_option> [<value>]]");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render command if none defined (e.g. default command is configured)", async () => {
@@ -470,10 +370,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier1"),
       getGlobalModifierCommand("modifier2"),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -484,33 +381,20 @@ describe("MultiCommandCliHelpCommand tests", () => {
   test("Ensure multi-command CLI usage syntax is rendered correctly: render command and global command", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
-    const commandRegistry = getCommandRegistry([
-      getSubCommandWithOption("command_a"),
-    ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const commandRegistry = getCommandRegistry([getSubCommandWithOption("command_a")]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "<global_command>|<command>",
-    );
+    expectStringIncludes(streamString.getString(), "<global_command>|<command>");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render arg if none defined", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
-    const commandRegistry = getCommandRegistry([
-      getSubCommandWithOption("command_a"),
-    ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const commandRegistry = getCommandRegistry([getSubCommandWithOption("command_a")]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -521,13 +405,8 @@ describe("MultiCommandCliHelpCommand tests", () => {
   test("Ensure multi-command CLI usage syntax is rendered correctly: render arg if at least one defined", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
-    const commandRegistry = getCommandRegistry([
-      getSubCommandWithOption("command_a", true, true),
-    ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const commandRegistry = getCommandRegistry([getSubCommandWithOption("command_a", true, true)]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
@@ -542,18 +421,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getSubCommandWithOption("command_a", true, true),
       getSubCommandWithOption("command_b", true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "<command> [<arg> <value>]",
-    );
+    expectStringIncludes(streamString.getString(), "<command> [<arg> <value>]");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: render arg as multiple if at least one multiple", async () => {
@@ -563,18 +436,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getSubCommandWithOption("command_a", true, true, true),
       getSubCommandWithOption("command_b", true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "<command> [<arg> <value>]...",
-    );
+    expectStringIncludes(streamString.getString(), "<command> [<arg> <value>]...");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: do not render arg value in [] if none are optional and have no default or not boolean", async () => {
@@ -584,16 +451,10 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getSubCommandWithOption("command_a", true, true, true),
       getSubCommandWithOption("command_b", true, true, true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "<command> <<arg> <value>>...",
-    );
+    expectStringIncludes(streamString.getString(), "<command> <<arg> <value>>...");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: multiple global and sub commands", async () => {
@@ -605,18 +466,12 @@ describe("MultiCommandCliHelpCommand tests", () => {
       getSubCommandWithOption("command_a", true, true),
       getSubCommandWithOption("command_b", true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "<global_command>|<command> [<arg> <value>]",
-    );
+    expectStringIncludes(streamString.getString(), "<global_command>|<command> [<arg> <value>]");
   });
 
   test("Ensure multi-command CLI usage syntax is rendered correctly: multiple global and sub commands with multiple args and optional values", async () => {
@@ -625,19 +480,10 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry([
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true),
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        true,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithOption("command_a", true, true, true, ArgumentValueTypeName.BOOLEAN),
       getSubCommandWithOption("command_b", true),
     ]);
-    const help = new MultiCommandCliHelpGlobalCommand(
-      true,
-      commandRegistry,
-    );
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
 
     commandRegistry.addCommand(help);
 

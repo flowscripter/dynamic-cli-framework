@@ -13,9 +13,7 @@ function getComplexOption(): ComplexOption {
   return {
     name: "option",
     type: ComplexValueTypeName.COMPLEX,
-    properties: [
-      getOption(),
-    ],
+    properties: [getOption()],
   };
 }
 

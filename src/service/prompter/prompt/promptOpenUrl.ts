@@ -1,18 +1,11 @@
-import type {
-  Prompt,
-  PromptResult,
-} from "../../../api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "../../../api/service/core/PrompterService.ts";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
 import { renderPromptHeader } from "./PromptContext.ts";
 import type { PromptContext } from "./PromptContext.ts";
 
 function isRemoteSession(): boolean {
-  return !!(
-    process.env.SSH_CONNECTION ||
-    process.env.SSH_CLIENT ||
-    process.env.SSH_TTY
-  );
+  return !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY);
 }
 
 async function defaultOpenUrl(url: string): Promise<void> {
@@ -53,16 +46,12 @@ export default async function promptOpenUrl(
   try {
     await renderPromptHeader(ctx, promptDef);
 
-    await ctx.terminal.write(
-      `${displayLabel}: ${ctx.printerService.cyan(url)}\n`,
-    );
+    await ctx.terminal.write(`${displayLabel}: ${ctx.printerService.cyan(url)}\n`);
 
     const instruction = canOpenBrowser
       ? "Press ENTER to open in the browser..."
       : "Copy the URL above and open it in your local browser, then press ENTER to continue...";
-    await ctx.terminal.write(
-      `${ctx.printerService.secondary(instruction)}\n`,
-    );
+    await ctx.terminal.write(`${ctx.printerService.secondary(instruction)}\n`);
 
     while (true) {
       const keyEvent = await ctx.keyReader.readKey();
@@ -73,13 +62,9 @@ export default async function promptOpenUrl(
             await openUrlFn(url);
           } catch (e) {
             await ctx.terminal.write(
-              `${
-                ctx.printerService.red(
-                  `Failed to open URL: ${
-                    e instanceof Error ? e.message : String(e)
-                  }`,
-                )
-              }\n`,
+              `${ctx.printerService.red(
+                `Failed to open URL: ${e instanceof Error ? e.message : String(e)}`,
+              )}\n`,
             );
           }
         }

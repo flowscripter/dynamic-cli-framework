@@ -50,9 +50,5 @@ export default interface SyntaxHighlighterService {
    * @param syntaxName the syntax to use.
    * @param colorScheme the color scheme to use.
    */
-  highlight(
-    text: string,
-    syntaxName: string,
-    colorScheme?: ColorScheme,
-  ): string;
+  highlight(text: string, syntaxName: string, colorScheme?: ColorScheme): string;
 }

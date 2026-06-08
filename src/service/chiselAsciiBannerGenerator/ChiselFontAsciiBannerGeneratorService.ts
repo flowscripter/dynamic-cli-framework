@@ -19,7 +19,8 @@ export interface ChiselBannerGenerateOptions extends BannerGenerateOptions {
 
 export default class ChiselFontAsciiBannerGeneratorService
   extends DefaultAsciiBannerGeneratorService
-  implements AsciiBannerGeneratorService {
+  implements AsciiBannerGeneratorService
+{
   private _ready = false;
 
   constructor() {
@@ -40,10 +41,7 @@ export default class ChiselFontAsciiBannerGeneratorService
     return ["chisel"];
   }
 
-  override async generate(
-    message: string,
-    options?: ChiselBannerGenerateOptions,
-  ): Promise<string> {
+  override async generate(message: string, options?: ChiselBannerGenerateOptions): Promise<string> {
     const chiselOptions: BannerGenerateOptions = {
       ...options,
       fontName: "chisel",
@@ -73,11 +71,8 @@ export default class ChiselFontAsciiBannerGeneratorService
         colorMap["100"] = colors.shadowBackground;
       }
 
-      result = result.replace(
-        // deno-lint-ignore no-control-regex
-        /\x1b\[(\d+)m/g,
-        (_, n) => `\x1b[${colorMap[n] ?? n}m`,
-      );
+      const ansiCodeRe = /\x1b\[(\d+)m/g; // oxlint-disable-line no-control-regex
+      result = result.replace(ansiCodeRe, (_, n) => `\x1b[${colorMap[n] ?? n}m`);
     }
 
     return result;

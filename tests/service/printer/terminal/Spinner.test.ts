@@ -1,12 +1,6 @@
 import { describe, test } from "bun:test";
-import Spinner, {
-  SpinnerStyle,
-} from "../../../../src/service/printer/terminal/Spinner.ts";
-import {
-  expectStringEquals,
-  expectStringIncludes,
-  sleep,
-} from "../../../fixtures/util.ts";
+import Spinner, { SpinnerStyle } from "../../../../src/service/printer/terminal/Spinner.ts";
+import { expectStringEquals, expectStringIncludes, sleep } from "../../../fixtures/util.ts";
 import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import TtyStyler from "../../../../src/terminal/TtyStyler.ts";

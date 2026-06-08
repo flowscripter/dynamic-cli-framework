@@ -26,8 +26,5 @@ export default interface GlobalCommand extends Command {
    * @param argumentValue optional argument value for the command. This will be populated unless
    * the command's {@link GlobalCommandArgument} is optional and the argument value was not provided.
    */
-  execute(
-    context: Context,
-    argumentValue?: ArgumentSingleValueType,
-  ): Promise<void>;
+  execute(context: Context, argumentValue?: ArgumentSingleValueType): Promise<void>;
 }

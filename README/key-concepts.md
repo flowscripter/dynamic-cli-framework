@@ -65,7 +65,7 @@ classDiagram
     CLI --> CommandRegistry
 
     CommandRegistry --> "*" Command : registers
-    
+
     ServiceProviderRegistry --> "*" ServiceProvider : registers
 
     CLI --> "1..*" Command : executes
@@ -75,12 +75,12 @@ classDiagram
     Context --> CLIConfig
 
     Context --> "*" Service : access to
-    
+
     ServiceProvider --> "*" Service : provides
 
     class PluginManager {
     }
-    
+
     class Plugin {
         <<interface>>
     }
@@ -102,9 +102,9 @@ classDiagram
     Plugin --> "*" CommandFactory: implements
 
     Plugin --> "*" ServiceProviderFactory: implements
- 
+
     CommandFactory --> "*" Command : provides
-    
+
     ServiceProviderFactory --> "*" ServiceProvider : provides
 ```
 
@@ -198,31 +198,31 @@ classDiagram
     Argument <|-- SubCommandArgument
 
     Argument <|-- GlobalCommandArgument
-    
+
     SubCommandArgument <|-- Option
 
     SubCommandArgument <|-- Positional
-    
+
     Option <|-- ComplexOption
 
     Option "1..*" <-- ComplexOption : properties
 
     Command <|-- GroupCommand
-    
+
     Option "0..*" <-- SubCommand
 
     Positional "0..*" <-- SubCommand
 
     GlobalCommand --> "0..1" GlobalCommandArgument
-    
-    Command <|-- SubCommand 
-    
-    GlobalCommand <|-- GlobalModifierCommand 
 
-    Command <|-- GlobalCommand 
-    
-    GroupCommand --> "1..*" SubCommand : memberSubCommands  
-    
+    Command <|-- SubCommand
+
+    GlobalCommand <|-- GlobalModifierCommand
+
+    Command <|-- GlobalCommand
+
+    GroupCommand --> "1..*" SubCommand : memberSubCommands
+
     SubCommand --> "0..*" UsageExample
 ```
 

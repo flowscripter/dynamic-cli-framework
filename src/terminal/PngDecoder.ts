@@ -11,19 +11,17 @@ function paethPredictor(a: number, b: number, c: number): number {
   return c;
 }
 
-export function decodePngToRGBA(
-  pngBytes: Uint8Array,
-): { width: number; height: number; pixels: Uint8Array } {
+export function decodePngToRGBA(pngBytes: Uint8Array): {
+  width: number;
+  height: number;
+  pixels: Uint8Array;
+} {
   const sig = [137, 80, 78, 71, 13, 10, 26, 10];
   for (let i = 0; i < 8; i++) {
     if (pngBytes[i] !== sig[i]) throw new Error("Invalid PNG signature");
   }
 
-  const view = new DataView(
-    pngBytes.buffer,
-    pngBytes.byteOffset,
-    pngBytes.byteLength,
-  );
+  const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
   let offset = 8;
 
   let width = 0;
@@ -49,14 +47,10 @@ export function decodePngToRGBA(
       colorType = pngBytes[dataStart + 9]!;
       const interlace = pngBytes[dataStart + 12]!;
       if (bitDepth !== 8) {
-        throw new Error(
-          `Unsupported bit depth: ${bitDepth} (only 8 supported)`,
-        );
+        throw new Error(`Unsupported bit depth: ${bitDepth} (only 8 supported)`);
       }
       if (colorType !== 2 && colorType !== 6) {
-        throw new Error(
-          `Unsupported color type: ${colorType} (only RGB=2 and RGBA=6 supported)`,
-        );
+        throw new Error(`Unsupported color type: ${colorType} (only RGB=2 and RGBA=6 supported)`);
       }
       if (interlace !== 0) {
         throw new Error("Interlaced PNGs are not supported");
@@ -74,9 +68,7 @@ export function decodePngToRGBA(
   if (idatChunks.length === 0) throw new Error("Missing IDAT chunks");
 
   const bpp = colorType === 6 ? 4 : 3;
-  const compressed = new Uint8Array(
-    idatChunks.reduce((sum, c) => sum + c.length, 0),
-  );
+  const compressed = new Uint8Array(idatChunks.reduce((sum, c) => sum + c.length, 0));
   let pos = 0;
   for (const chunk of idatChunks) {
     compressed.set(chunk, pos);
@@ -116,8 +108,7 @@ export function decodePngToRGBA(
           currRow[x] = (currRow[x]! + ((left + up) >> 1)) & 0xff;
           break;
         case 4:
-          currRow[x] = (currRow[x]! + paethPredictor(left, up, upperLeft)) &
-            0xff;
+          currRow[x] = (currRow[x]! + paethPredictor(left, up, upperLeft)) & 0xff;
           break;
         default:
           throw new Error(`Unknown filter type: ${filterType}`);

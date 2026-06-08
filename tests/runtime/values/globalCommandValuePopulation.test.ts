@@ -24,15 +24,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    const result = populateGlobalCommandValue(
-      command,
-      ["bar"],
-      undefined,
-    );
+    const result = populateGlobalCommandValue(command, ["bar"], undefined);
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -43,15 +38,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.NUMBER,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      ["1.1"],
-      undefined,
-    );
+    let result = populateGlobalCommandValue(command, ["1.1"], undefined);
     expectExtractResult(result, "1.1", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -60,15 +50,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.INTEGER,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["1"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["1"], undefined);
     expectExtractResult(result, "1", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -77,15 +62,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.SECRET,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["xxx"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["xxx"], undefined);
     expectExtractResult(result, "xxx", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -94,15 +74,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["bar"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["bar"], undefined);
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -111,23 +86,14 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["false"], undefined);
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -138,15 +104,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    let result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -155,15 +116,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["true"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["true"], undefined);
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -172,15 +128,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["false"], undefined);
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -190,15 +141,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: true,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, true, []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -208,15 +154,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: true,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["false"], undefined);
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -226,15 +167,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -244,15 +180,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["false"], undefined);
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -262,15 +193,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["true"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["true"], undefined);
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -281,31 +207,18 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      ["--bar"],
-      undefined,
-    );
+    let result = populateGlobalCommandValue(command, ["--bar"], undefined);
     expectExtractResult(result, "true", ["--bar"]);
     expect(result.invalidArgument).toBeUndefined();
 
-    result = populateGlobalCommandValue(
-      command,
-      ["True"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["True"], undefined);
     expectExtractResult(result, "True", []);
     expect(result.invalidArgument).toBeUndefined();
 
-    result = populateGlobalCommandValue(
-      command,
-      ["FALSE"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["FALSE"], undefined);
     expectExtractResult(result, "FALSE", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -316,15 +229,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    let result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, undefined, []);
     expect(result.invalidArgument).toEqual({
       name: "foo",
@@ -337,15 +245,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         isOptional: true,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, undefined, []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -355,15 +258,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         defaultValue: "bar",
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, [], undefined);
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -374,15 +272,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    const result = populateGlobalCommandValue(
-      command,
-      ["bar", "--goo", "gar"],
-      undefined,
-    );
+    const result = populateGlobalCommandValue(command, ["bar", "--goo", "gar"], undefined);
     expectExtractResult(result, "bar", ["--goo", "gar"]);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -393,15 +286,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    const result = populateGlobalCommandValue(
-      command,
-      ["bar", "goo"],
-      undefined,
-    );
+    const result = populateGlobalCommandValue(command, ["bar", "goo"], undefined);
     expectExtractResult(result, "bar", ["goo"]);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -413,14 +301,9 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.NUMBER,
         defaultValue: 0,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
-    let result = populateGlobalCommandValue(
-      command,
-      ["1"],
-      undefined,
-    );
+    let result = populateGlobalCommandValue(command, ["1"], undefined);
     expectExtractResult(result, "1", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -430,15 +313,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         defaultValue: "foo",
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["bar"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["bar"], undefined);
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -448,15 +326,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      undefined,
-    );
+    result = populateGlobalCommandValue(command, ["false"], undefined);
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -467,15 +340,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.NUMBER,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      ["1"],
-      0,
-    );
+    let result = populateGlobalCommandValue(command, ["1"], 0);
     expectExtractResult(result, "1", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -484,15 +352,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["bar"],
-      "foo",
-    );
+    result = populateGlobalCommandValue(command, ["bar"], "foo");
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -501,15 +364,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["true"],
-      "false",
-    );
+    result = populateGlobalCommandValue(command, ["true"], "false");
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -518,15 +376,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.BOOLEAN,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      ["false"],
-      "true",
-    );
+    result = populateGlobalCommandValue(command, ["false"], "true");
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -538,15 +391,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.NUMBER,
         defaultValue: 0,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      [],
-      1,
-    );
+    let result = populateGlobalCommandValue(command, [], 1);
     expectExtractResult(result, 1, []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -556,15 +404,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         defaultValue: "foo",
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      "bar",
-    );
+    result = populateGlobalCommandValue(command, [], "bar");
     expectExtractResult(result, "bar", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -574,15 +417,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: false,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      "true",
-    );
+    result = populateGlobalCommandValue(command, [], "true");
     expectExtractResult(result, "true", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -592,15 +430,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.BOOLEAN,
         defaultValue: true,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      "false",
-    );
+    result = populateGlobalCommandValue(command, [], "false");
     expectExtractResult(result, "false", []);
     expect(result.invalidArgument).toBeUndefined();
   });
@@ -611,15 +444,10 @@ describe("globalCommandValuePopulation tests", () => {
       argument: {
         type: ArgumentValueTypeName.STRING,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    let result = populateGlobalCommandValue(
-      command,
-      [],
-      1,
-    );
+    let result = populateGlobalCommandValue(command, [], 1);
     expectExtractResult(result, 1, []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -629,15 +457,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         isOptional: true,
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      "foo",
-    );
+    result = populateGlobalCommandValue(command, [], "foo");
     expectExtractResult(result, "foo", []);
     expect(result.invalidArgument).toBeUndefined();
 
@@ -647,15 +470,10 @@ describe("globalCommandValuePopulation tests", () => {
         type: ArgumentValueTypeName.STRING,
         defaultValue: "bar",
       },
-      execute: async (): Promise<void> => {
-      },
+      execute: async (): Promise<void> => {},
     };
 
-    result = populateGlobalCommandValue(
-      command,
-      [],
-      "foo",
-    );
+    result = populateGlobalCommandValue(command, [], "foo");
     expectExtractResult(result, "foo", []);
     expect(result.invalidArgument).toBeUndefined();
   });

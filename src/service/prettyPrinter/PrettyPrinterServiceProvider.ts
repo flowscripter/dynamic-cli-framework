@@ -1,11 +1,6 @@
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import DefaultPrettyPrinterService from "./DefaultPrettyPrinterService.ts";
-import {
-  PRETTY_PRINTER_SERVICE_ID,
-} from "../../api/service/core/PrettyPrinterService.ts";
+import { PRETTY_PRINTER_SERVICE_ID } from "../../api/service/core/PrettyPrinterService.ts";
 import type Context from "../../api/Context.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
 
@@ -21,9 +16,7 @@ export default class PrettyPrinterServiceProvider implements ServiceProvider {
    *
    * @param servicePriority the priority of the service.
    */
-  public constructor(
-    readonly servicePriority: number,
-  ) {
+  public constructor(readonly servicePriority: number) {
     this.#defaultPrettyPrinterService = new DefaultPrettyPrinterService();
   }
 

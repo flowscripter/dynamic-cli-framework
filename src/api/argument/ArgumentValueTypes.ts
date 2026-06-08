@@ -9,9 +9,7 @@ export type ArgumentSingleValueType = number | string | boolean;
 /**
  * The type of the value to be parsed as an argument can be: `boolean`, `number` or `string` or an array of these.
  */
-export type ArgumentValueType =
-  | ArgumentSingleValueType
-  | Array<ArgumentSingleValueType>;
+export type ArgumentValueType = ArgumentSingleValueType | Array<ArgumentSingleValueType>;
 
 /**
  * A container object for populated argument values.
@@ -34,10 +32,7 @@ export type ArgumentValueType =
  * * `{ foo: [ [ 1, 2 ], [3, 4 ] ] }`
  */
 export type ArgumentValues = {
-  [argName: string]:
-    | ArgumentValueType
-    | ArgumentValues
-    | Array<ArgumentValues>;
+  [argName: string]: ArgumentValueType | ArgumentValues | Array<ArgumentValues>;
 };
 
 /**
@@ -62,9 +57,7 @@ export enum ComplexValueTypeName {
  * Populated single value type is very similar to {@link ArgumentSingleValueType} but allows for an illegal
  * undefined value.
  */
-export type PopulatedArgumentSingleValueType =
-  | ArgumentSingleValueType
-  | undefined;
+export type PopulatedArgumentSingleValueType = ArgumentSingleValueType | undefined;
 
 /**
  * Populated argument value types are very similar to {@link ArgumentValueType} but allow for illegal

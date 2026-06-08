@@ -22,17 +22,11 @@ describe("PrinterServiceProvider tests", () => {
       new TtyStyler(3),
     );
 
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
-    context.addServiceInstance(
-      SHUTDOWN_SERVICE_ID,
-      new DefaultShutdownService(),
-    );
+    context.addServiceInstance(SHUTDOWN_SERVICE_ID, new DefaultShutdownService());
 
     const serviceInfo = await printerServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(4);

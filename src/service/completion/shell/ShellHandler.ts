@@ -10,7 +10,5 @@ export default interface ShellHandler {
   getBootstrapScript(cliName: string): string;
   validateEnvironment(): Promise<boolean>;
   formatCompletions(completions: ReadonlyArray<CompletionItem>): string;
-  parseCompletionContext(
-    args: ReadonlyArray<string>,
-  ): CompletionContext;
+  parseCompletionContext(args: ReadonlyArray<string>): CompletionContext;
 }

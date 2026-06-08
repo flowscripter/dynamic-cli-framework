@@ -1,8 +1,5 @@
 import process from "node:process";
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import DefaultShutdownService from "./DefaultShutdownService.ts";
 import type ShutdownService from "../../api/service/core/ShutdownService.ts";
 import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
@@ -18,9 +15,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
   readonly #shutdownService: ShutdownService;
   static #shutdownInProgress = false;
 
-  public constructor(
-    readonly servicePriority: number,
-  ) {
+  public constructor(readonly servicePriority: number) {
     this.#shutdownService = new DefaultShutdownService();
     process.on("beforeExit", ShutdownServiceProvider.shutdown);
     process.on("SIGINT", ShutdownServiceProvider.onInterrupt);
@@ -40,9 +35,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
 
   static onInterrupt(): void {
     shutdownState.interruptCount++;
-    if (
-      !shutdownState.longRunningMode || shutdownState.interruptCount >= 3
-    ) {
+    if (!shutdownState.longRunningMode || shutdownState.interruptCount >= 3) {
       ShutdownServiceProvider.shutdown().then(() => {
         process.exit(130);
       });

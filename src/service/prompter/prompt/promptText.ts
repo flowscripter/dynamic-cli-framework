@@ -1,7 +1,4 @@
-import type {
-  Prompt,
-  PromptResult,
-} from "../../../api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "../../../api/service/core/PrompterService.ts";
 import type { ArgumentSingleValueType } from "../../../api/argument/ArgumentValueTypes.ts";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
@@ -16,14 +13,10 @@ export default async function promptText(
   try {
     while (true) {
       await renderPromptHeader(ctx, promptDef);
-      const promptMarker = ctx.printerService.cyan(
-        ctx.config.inputPromptCharacters,
-      );
+      const promptMarker = ctx.printerService.cyan(ctx.config.inputPromptCharacters);
       await ctx.terminal.write(promptMarker);
 
-      let buffer = promptDef.defaultOption
-        ? String(promptDef.defaultOption.returnedValue)
-        : "";
+      let buffer = promptDef.defaultOption ? String(promptDef.defaultOption.returnedValue) : "";
       if (buffer.length > 0) {
         await ctx.terminal.write(buffer);
       }
@@ -48,30 +41,24 @@ export default async function promptText(
           }
         } else if (keyEvent.key) {
           buffer += keyEvent.key;
-          const isSecret = promptDef.options.length > 0 &&
-            promptDef.options[0]!.displayValue === "__SECRET__";
+          const isSecret =
+            promptDef.options.length > 0 && promptDef.options[0]!.displayValue === "__SECRET__";
           await ctx.terminal.write(isSecret ? "*" : keyEvent.key);
         }
       }
 
       if (buffer.length === 0 && !promptDef.defaultOption) {
-        await ctx.terminal.write(
-          ctx.printerService.red("Value required\n"),
-        );
+        await ctx.terminal.write(ctx.printerService.red("Value required\n"));
         continue;
       }
 
       const value: ArgumentSingleValueType = buffer;
 
-      const validationOption = promptDef.options.length > 0
-        ? promptDef.options[0]
-        : undefined;
+      const validationOption = promptDef.options.length > 0 ? promptDef.options[0] : undefined;
       if (validationOption?.validate) {
         const error = validationOption.validate(value);
         if (error) {
-          await ctx.terminal.write(
-            `${ctx.printerService.red(error)}\n`,
-          );
+          await ctx.terminal.write(`${ctx.printerService.red(error)}\n`);
           continue;
         }
       }
@@ -80,9 +67,7 @@ export default async function promptText(
         const num = Number(value);
         if (!isNaN(num) && num < validationOption.min) {
           await ctx.terminal.write(
-            ctx.printerService.red(
-              `Value must be at least ${validationOption.min}\n`,
-            ),
+            ctx.printerService.red(`Value must be at least ${validationOption.min}\n`),
           );
           continue;
         }
@@ -91,9 +76,7 @@ export default async function promptText(
         const num = Number(value);
         if (!isNaN(num) && num > validationOption.max) {
           await ctx.terminal.write(
-            ctx.printerService.red(
-              `Value must be at most ${validationOption.max}\n`,
-            ),
+            ctx.printerService.red(`Value must be at most ${validationOption.max}\n`),
           );
           continue;
         }

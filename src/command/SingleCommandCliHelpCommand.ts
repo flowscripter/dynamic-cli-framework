@@ -107,23 +107,21 @@ abstract class SingleCommandCliAbstractHelpCommand {
         });
       });
     }
-    helpSection.helpEntries.sort((a: HelpEntry, b: HelpEntry) =>
-      a.syntax.localeCompare(b.syntax)
-    );
+    helpSection.helpEntries.sort((a: HelpEntry, b: HelpEntry) => a.syntax.localeCompare(b.syntax));
     return helpSection;
   }
 
-  public async execute(
-    context: Context,
-  ): Promise<void> {
+  public async execute(context: Context): Promise<void> {
     const helpSections: Array<HelpSection> = [];
     helpSections.push({
       title: "Usage",
-      helpEntries: [{
-        syntax: `${context.cliConfig.name || ""}${
-          getSubCommandArgumentsSyntax(this.#defaultCommand)
-        }`,
-      }],
+      helpEntries: [
+        {
+          syntax: `${context.cliConfig.name || ""}${getSubCommandArgumentsSyntax(
+            this.#defaultCommand,
+          )}`,
+        },
+      ],
     });
 
     helpSections.push(
@@ -135,8 +133,7 @@ abstract class SingleCommandCliAbstractHelpCommand {
       ),
     );
 
-    const globalModifierCommands = this.#commandRegistry
-      .getGlobalModifierCommands();
+    const globalModifierCommands = this.#commandRegistry.getGlobalModifierCommands();
     const globalCommands = this.#commandRegistry.getGlobalCommands();
     helpSections.push(
       this.#getAmalgamatedGenericHelpSection(
@@ -148,26 +145,16 @@ abstract class SingleCommandCliAbstractHelpCommand {
       ),
     );
 
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const tableGeneratorService = context.getServiceById(
       TABLE_GENERATOR_SERVICE_ID,
     ) as TableGeneratorService;
 
     helpSections.push(
-      ...getCommandExamplesHelpSections(
-        printerService,
-        context,
-        this.#defaultCommand,
-      ),
+      ...getCommandExamplesHelpSections(printerService, context, this.#defaultCommand),
     );
 
-    await printHelpSections(
-      printerService,
-      tableGeneratorService,
-      helpSections,
-    );
+    await printHelpSections(printerService, tableGeneratorService, helpSections);
   }
 }
 
@@ -176,7 +163,8 @@ abstract class SingleCommandCliAbstractHelpCommand {
  */
 export class SingleCommandCliHelpGlobalCommand
   extends SingleCommandCliAbstractHelpCommand
-  implements GlobalCommand {
+  implements GlobalCommand
+{
   readonly shortAlias = "h";
 }
 
@@ -185,7 +173,8 @@ export class SingleCommandCliHelpGlobalCommand
  */
 export class SingleCommandCliHelpSubCommand
   extends SingleCommandCliAbstractHelpCommand
-  implements SubCommand {
+  implements SubCommand
+{
   public readonly options: ReadonlyArray<Option> = [];
 
   public readonly positionals: ReadonlyArray<Positional> = [];

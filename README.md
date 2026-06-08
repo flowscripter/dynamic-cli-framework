@@ -9,7 +9,7 @@
 > A framework for developing CLI applications which supports dynamic discovery
 > and installation of new commands
 
-[//]: # (TODO: Remove this when plugin support.)
+[//]: # "TODO: Remove this when plugin support."
 
 NOTE: The dynamic aspect is still in development as it relies upon:
 
@@ -68,9 +68,9 @@ The following example projects are available:
 - [mpeg-sdl-tool](https://github.com/flowscripter/mpeg-sdl-tool) is a real world
   use case CLI application based on this framework.
 
-[//]: # (TODO: Add this when implemented.)
-[//]: # (- [example-cli-plugin]&#40;https://github.com/flowscripter/example-cli-plugin&#41; is an)
-[//]: # (  example command and service plugin based on this framework.)
+[//]: # "TODO: Add this when implemented."
+[//]: # "- [example-cli-plugin](https://github.com/flowscripter/example-cli-plugin) is an"
+[//]: # "example command and service plugin based on this framework."
 
 ## Further Details
 

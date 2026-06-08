@@ -12,10 +12,7 @@ describe("SyntaxHighlighterServiceProvider tests", () => {
   test("SyntaxHighlighterServiceProvider getServiceInfo and initService works", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
-    const syntaxHighlighterServiceProvider =
-      new SyntaxHighlighterServiceProvider(
-        100,
-      );
+    const syntaxHighlighterServiceProvider = new SyntaxHighlighterServiceProvider(100);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
@@ -32,9 +29,7 @@ describe("SyntaxHighlighterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await syntaxHighlighterServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await syntaxHighlighterServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
 
     await syntaxHighlighterServiceProvider.initService(context);

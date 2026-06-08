@@ -22,16 +22,12 @@ describe("NoColorCommand tests", () => {
       new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService =
-      (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
+    const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);
@@ -58,16 +54,12 @@ describe("NoColorCommand tests", () => {
       new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService =
-      (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
+    const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);

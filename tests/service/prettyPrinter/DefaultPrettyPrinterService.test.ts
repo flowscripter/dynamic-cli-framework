@@ -6,16 +6,13 @@ describe("DefaultPrettyPrinterService tests", () => {
   test("JSON registered by default", async () => {
     const prettyPrinterService = new DefaultPrettyPrinterService();
 
-    expect(await prettyPrinterService.getRegisteredSyntaxes()).toContain(
-      "json",
-    );
+    expect(await prettyPrinterService.getRegisteredSyntaxes()).toContain("json");
   });
 
   test("Cannot register a syntax if already registered", () => {
     const prettyPrinterService = new DefaultPrettyPrinterService();
 
-    expect(prettyPrinterService.registerSyntax("jSon", FooSyntax)).rejects
-      .toThrow();
+    expect(prettyPrinterService.registerSyntax("jSon", FooSyntax)).rejects.toThrow();
   });
 
   test("Can register new syntax", async () => {
@@ -28,17 +25,13 @@ describe("DefaultPrettyPrinterService tests", () => {
   test("Cannot pretty print with unknown syntax", () => {
     const prettyPrinterService = new DefaultPrettyPrinterService();
 
-    expect(() => prettyPrinterService.prettify("foo: 1", "bar"))
-      .toThrow();
+    expect(() => prettyPrinterService.prettify("foo: 1", "bar")).toThrow();
   });
 
   test("Can pretty print with JSON syntax", async () => {
     const prettyPrinterService = new DefaultPrettyPrinterService();
 
-    const prettified = await prettyPrinterService.prettify(
-      "{foo:1}",
-      "json",
-    );
+    const prettified = await prettyPrinterService.prettify("{foo:1}", "json");
     expect(prettified).toEqual('{ "foo": 1 }\n');
   });
 

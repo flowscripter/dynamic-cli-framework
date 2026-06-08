@@ -23,20 +23,13 @@ export default class NoColorCommand implements GlobalModifierCommand {
 
   readonly #printerServiceProvider: PrinterServiceProvider;
 
-  public constructor(
-    printerServiceProvider: PrinterServiceProvider,
-    executePriority: number,
-  ) {
+  public constructor(printerServiceProvider: PrinterServiceProvider, executePriority: number) {
     this.#printerServiceProvider = printerServiceProvider;
     this.executePriority = executePriority;
   }
 
-  public execute(
-    _context: Context,
-    argumentValue: ArgumentSingleValueType,
-  ): Promise<void> {
-    this.#printerServiceProvider.printerService!.colorEnabled =
-      !argumentValue as boolean;
+  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+    this.#printerServiceProvider.printerService!.colorEnabled = !argumentValue as boolean;
 
     return Promise.resolve();
   }

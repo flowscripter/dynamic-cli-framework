@@ -6,17 +6,11 @@ import {
   type HexDumpGenerateOptions,
 } from "../../api/service/core/DataDumpGeneratorService.ts";
 
-export default class DefaultDataDumpGeneratorService
-  implements DataDumpGeneratorService {
+export default class DefaultDataDumpGeneratorService implements DataDumpGeneratorService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string = (text) =>
-    text;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
 
-  #colorByte(
-    text: string,
-    byteValue: number,
-    colorScheme?: ByteRangeColor[],
-  ): string {
+  #colorByte(text: string, byteValue: number, colorScheme?: ByteRangeColor[]): string {
     if (!this.colorEnabled || !colorScheme) {
       return text;
     }
@@ -56,9 +50,8 @@ export default class DefaultDataDumpGeneratorService
             const byteValue = data[byteIndex]!;
             let rendered: string;
             if (format === DumpFormat.ASCII) {
-              rendered = byteValue >= 0x20 && byteValue <= 0x7e
-                ? String.fromCharCode(byteValue)
-                : ".";
+              rendered =
+                byteValue >= 0x20 && byteValue <= 0x7e ? String.fromCharCode(byteValue) : ".";
             } else {
               rendered = byteValue.toString(16).toUpperCase().padStart(2, "0");
             }

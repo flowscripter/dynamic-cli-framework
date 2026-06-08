@@ -40,16 +40,7 @@ describe("DefaultDataDumpGeneratorService tests", () => {
       format: DumpFormat.ASCII,
     });
     // "A" + 3 space padding in first group, then 7 groups of 4 spaces
-    const groups = [
-      "A   ",
-      "    ",
-      "    ",
-      "    ",
-      "    ",
-      "    ",
-      "    ",
-      "    ",
-    ];
+    const groups = ["A   ", "    ", "    ", "    ", "    ", "    ", "    ", "    "];
     expect(result).toEqual(groups.join(" "));
   });
 

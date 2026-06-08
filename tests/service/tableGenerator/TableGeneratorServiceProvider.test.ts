@@ -38,8 +38,8 @@ describe("TableGeneratorServiceProvider tests", () => {
     const serviceInfo = await provider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
     await provider.initService(context);
-    const service = serviceInfo
-      .service as import("../../../src/service/tableGenerator/DefaultTableGeneratorService.ts").default;
+    const service =
+      serviceInfo.service as import("../../../src/service/tableGenerator/DefaultTableGeneratorService.ts").default;
     expect(service.colorEnabled).toBe(true);
     expect(typeof service.colorFunction).toBe("function");
     expect(typeof service.backgroundColorFunction).toBe("function");

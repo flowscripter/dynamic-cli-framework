@@ -2,10 +2,7 @@ import process from "node:process";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { Stats } from "node:fs";
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import ConfigCommand from "./command/ConfigCommand.ts";
 import type {
   ArgumentSingleValueType,
@@ -131,7 +128,7 @@ const logger = getLogger("ConfigurationServiceProvider");
  * are stored under a top level `key-values` property. These are expected to not be modified by the user of the CLI.
  *
  * The second and third level of properties is used to scope the key-values to specific command names
- * (via {@link Command.name} values) and specific service IDs (via {@link ServiceInfo.serviceId} values).
+ * (via {@link Command.name} values) and specific service IDs (via {@link ServiceProvider.serviceId} values).
  * Both keys and values are string based.
  *
  * Values may be stored as OS-native secrets via {@link KeyValueService.setKey} with `isSecret=true`.
@@ -183,10 +180,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   // the configuration data to be used by the CLI runner implementation when setting command defaults.
   // ArgumentSingleValueType is for GlobalCommandArgument values, ArgumentValues is for
   // SubCommandArgument values.
-  public defaultsData: Map<
-    string,
-    ArgumentValues | ArgumentSingleValueType
-  > = new Map();
+  public defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType> = new Map();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
@@ -222,14 +216,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     secretServiceEnabled = false,
   ) {
     if (!configEnabled && keyValueServiceEnabled) {
-      throw new Error(
-        "configEnabled must be true if keyValueServiceEnabled is true",
-      );
+      throw new Error("configEnabled must be true if keyValueServiceEnabled is true");
     }
     if (!configEnabled && secretServiceEnabled) {
-      throw new Error(
-        "configEnabled must be true if secretServiceEnabled is true",
-      );
+      throw new Error("configEnabled must be true if secretServiceEnabled is true");
     }
     this.servicePriority = servicePriority;
     this.envVarsEnabled = envVarsEnabled;
@@ -249,9 +239,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       this.#defaultSecretService = new DefaultSecretService(cliConfig.name);
     }
     if (this.keyValueServiceEnabled || this.secretServiceEnabled) {
-      this.#defaultKeyValueService = new DefaultKeyValueService(
-        this.#defaultSecretService,
-      );
+      this.#defaultKeyValueService = new DefaultKeyValueService(this.#defaultSecretService);
     }
     return Promise.resolve({
       // this may be undefined if keyValueServiceEnabled and secretServiceEnabled are false
@@ -276,68 +264,39 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public async getDefaultArgumentValues(
     cliConfig: CLIConfig,
     command: Command,
-  ): Promise<
-    PopulatedArgumentValues | PopulatedArgumentValueType | undefined
-  > {
+  ): Promise<PopulatedArgumentValues | PopulatedArgumentValueType | undefined> {
     if (!this.configEnabled) {
-      logger.debug(
-        "configuration of default values is not enabled",
-      );
+      logger.debug("configuration of default values is not enabled");
       return undefined;
     }
 
-    logger.debug(
-      "getting default argument values for command: %s",
-      command.name,
-    );
+    logger.debug("getting default argument values for command: %s", command.name);
 
-    if (
-      (command.enableConfiguration === undefined) ||
-      (command.enableConfiguration !== true)
-    ) {
-      logger.debug(
-        "enableConfiguration for command: %s is not true",
-        command.name,
-      );
+    if (command.enableConfiguration === undefined || command.enableConfiguration !== true) {
+      logger.debug("enableConfiguration for command: %s is not true", command.name);
       return undefined;
     }
 
-    let result:
-      | PopulatedArgumentValues
-      | PopulatedArgumentValueType
-      | undefined;
+    let result: PopulatedArgumentValues | PopulatedArgumentValueType | undefined;
 
     if (isGlobalModifierCommand(command) || isGlobalCommand(command)) {
-      const configuredValue = this.defaultsData.get(
-        command.name,
-      ) as ArgumentSingleValueType;
+      const configuredValue = this.defaultsData.get(command.name) as ArgumentSingleValueType;
       const envVarValue = this.envVarsEnabled
-        ? getGlobalCommandValueFromEnvVars(
-          cliConfig,
-          command,
-        )
+        ? getGlobalCommandValueFromEnvVars(cliConfig, command)
         : undefined;
       // default to environment variable value
       result = envVarValue !== undefined ? envVarValue : configuredValue;
     } else if (isSubCommand(command)) {
-      const configuredValues = this.defaultsData.get(
-        command.name,
-      ) as ArgumentValues;
+      const configuredValues = this.defaultsData.get(command.name) as ArgumentValues;
       const envVarValues = this.envVarsEnabled
-        ? getSubCommandValuesFromEnvVars(
-          cliConfig,
-          command,
-        )
+        ? getSubCommandValuesFromEnvVars(cliConfig, command)
         : undefined;
       if (envVarValues === undefined) {
         result = configuredValues;
       } else if (configuredValues === undefined) {
         result = envVarValues;
       } else {
-        result = argumentValueMerge(
-          envVarValues,
-          configuredValues,
-        ) as PopulatedArgumentValues;
+        result = argumentValueMerge(envVarValues, configuredValues) as PopulatedArgumentValues;
       }
     }
 
@@ -353,17 +312,13 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   ): Promise<PopulatedArgumentValues | PopulatedArgumentValueType> {
     if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
       const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
-      const secretValue = await this.#defaultSecretService!.getSecret(
-        bunSecretName,
-      );
+      const secretValue = await this.#defaultSecretService!.getSecret(bunSecretName);
       if (secretValue === null) {
-        throw new Error(
-          `Secret not found in OS secret store for sentinel: '${value}'`,
-        );
+        throw new Error(`Secret not found in OS secret store for sentinel: '${value}'`);
       }
       return secretValue;
     }
-    if ((typeof value === "object") && (value !== null)) {
+    if (typeof value === "object" && value !== null) {
       if (Array.isArray(value)) {
         const resolved = [];
         for (const item of value) {
@@ -373,9 +328,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       }
       const resolved: Record<string, unknown> = {};
       for (const [key, val] of Object.entries(value)) {
-        resolved[key] = await this.#resolveSecrets(
-          val as PopulatedArgumentValueType,
-        );
+        resolved[key] = await this.#resolveSecrets(val as PopulatedArgumentValueType);
       }
       return resolved as unknown as PopulatedArgumentValues;
     }
@@ -392,9 +345,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    */
   public setCommandKeyValueScope(commandName: string): void {
     if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(
-        `Attempt to use KeyValueService/SecretService which is not enabled`,
-      );
+      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
     }
     if (this.#currentCommandNameKeyValueScope) {
       throw new Error(
@@ -414,9 +365,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       if (!this.#commandKeyValueData.has(commandName)) {
         this.#commandKeyValueData.set(commandName, new Map());
       }
-      this.#defaultKeyValueService.setKeyValueData(
-        this.#commandKeyValueData.get(commandName)!,
-      );
+      this.#defaultKeyValueService.setKeyValueData(this.#commandKeyValueData.get(commandName)!);
     }
     if (this.#defaultSecretService) {
       this.#defaultSecretService.setScope("command_" + commandName);
@@ -433,9 +382,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    */
   public setServiceKeyValueScope(serviceId: string): void {
     if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(
-        `Attempt to use KeyValueService/SecretService which is not enabled`,
-      );
+      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
     }
     if (this.#currentServiceIdKeyValueScope) {
       throw new Error(
@@ -455,9 +402,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       if (!this.#serviceKeyValueData.has(serviceId)) {
         this.#serviceKeyValueData.set(serviceId, new Map());
       }
-      this.#defaultKeyValueService.setKeyValueData(
-        this.#serviceKeyValueData.get(serviceId)!,
-      );
+      this.#defaultKeyValueService.setKeyValueData(this.#serviceKeyValueData.get(serviceId)!);
     }
     if (this.#defaultSecretService) {
       this.#defaultSecretService.setScope("service_" + serviceId);
@@ -472,18 +417,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    */
   public async clearKeyValueScope(): Promise<void> {
     if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(
-        `Attempt to use KeyValueService/SecretService which is not enabled`,
-      );
+      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
     }
-    if (
-      this.#defaultKeyValueService &&
-      this.#defaultKeyValueService.isDirty()
-    ) {
+    if (this.#defaultKeyValueService && this.#defaultKeyValueService.isDirty()) {
       if (this.configLocation === undefined) {
-        throw new Error(
-          "Attempt to write updated config with no configLocation set",
-        );
+        throw new Error("Attempt to write updated config with no configLocation set");
       }
       await this.#writeConfig(this.configLocation);
     }
@@ -509,10 +447,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       // default to `$HOME/.<application_name>.json`
       const home = process.env["HOME"];
       if (home) {
-        this.configLocation = path.join(
-          home,
-          `.${context.cliConfig.name.replace(/\W/g, "")}.json`,
-        );
+        this.configLocation = path.join(home, `.${context.cliConfig.name.replace(/\W/g, "")}.json`);
       }
     }
     if (this.configLocation === undefined) {
@@ -561,14 +496,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       if (config.defaults !== undefined) {
         const defaults = config.defaults;
         Object.keys(defaults).forEach((commandName) => {
-          this.defaultsData.set(
-            commandName,
-            defaults[commandName] as ArgumentValues,
-          );
-          logger.debug(
-            "Set default argument values for command name: %s",
-            commandName,
-          );
+          this.defaultsData.set(commandName, defaults[commandName] as ArgumentValues);
+          logger.debug("Set default argument values for command name: %s", commandName);
         });
       }
       if (config["key-values"] !== undefined) {
@@ -580,10 +509,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
               commandName,
               new Map(Object.entries(commandKeyValues[commandName])),
             );
-            logger.debug(
-              "Set default argument values for command name: %s",
-              commandName,
-            );
+            logger.debug("Set default argument values for command name: %s", commandName);
           });
         }
         if (keyValues.services !== undefined) {
@@ -593,17 +519,12 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
               serviceId,
               new Map(Object.entries(serviceKeyValues[serviceId])),
             );
-            logger.debug(
-              "Set default argument values for service ID: %s",
-              serviceId,
-            );
+            logger.debug("Set default argument values for service ID: %s", serviceId);
           });
         }
       }
     } catch (err) {
-      throw new Error(
-        `Failed to read config at location: '${this.configLocation}': ${err}`,
-      );
+      throw new Error(`Failed to read config at location: '${this.configLocation}': ${err}`);
     }
   }
 
@@ -613,9 +534,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     try {
       await fs.writeFile(location, this.getConfigString());
     } catch (err) {
-      throw new Error(
-        `Failed to write config at location: '${this.configLocation}': ${err}`,
-      );
+      throw new Error(`Failed to write config at location: '${this.configLocation}': ${err}`);
     }
   }
 
@@ -631,33 +550,21 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     if (this.defaultsData.size > 0) {
       config.defaults = Object.fromEntries(this.defaultsData);
     }
-    if (
-      (this.#commandKeyValueData.size > 0) ||
-      (this.#serviceKeyValueData.size > 0)
-    ) {
+    if (this.#commandKeyValueData.size > 0 || this.#serviceKeyValueData.size > 0) {
       config["key-values"] = {};
       if (this.#commandKeyValueData.size > 0) {
         config["key-values"].commands = {};
-        for (
-          const [commandName, keyValueData] of this.#commandKeyValueData
-            .entries()
-        ) {
+        for (const [commandName, keyValueData] of this.#commandKeyValueData.entries()) {
           if (keyValueData.size > 0) {
-            config["key-values"].commands[commandName] = Object.fromEntries(
-              keyValueData,
-            );
+            config["key-values"].commands[commandName] = Object.fromEntries(keyValueData);
           }
         }
       }
       if (this.#serviceKeyValueData.size > 0) {
         config["key-values"].services = {};
-        for (
-          const [serviceId, keyValueData] of this.#serviceKeyValueData.entries()
-        ) {
+        for (const [serviceId, keyValueData] of this.#serviceKeyValueData.entries()) {
           if (keyValueData.size > 0) {
-            config["key-values"].services[serviceId] = Object.fromEntries(
-              keyValueData,
-            );
+            config["key-values"].services[serviceId] = Object.fromEntries(keyValueData);
           }
         }
       }

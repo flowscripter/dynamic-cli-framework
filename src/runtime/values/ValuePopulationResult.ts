@@ -32,8 +32,7 @@ export interface SubCommandValuePopulationResult extends ValuePopulationResult {
 /**
  * A container holding the result of argument value population for a {@link GlobalCommand} or by extension a {@link GlobalModifierCommand}.
  */
-export interface GlobalCommandValuePopulationResult
-  extends ValuePopulationResult {
+export interface GlobalCommandValuePopulationResult extends ValuePopulationResult {
   /**
    * Populated argument value.
    */

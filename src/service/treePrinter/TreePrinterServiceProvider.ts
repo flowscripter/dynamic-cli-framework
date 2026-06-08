@@ -1,7 +1,4 @@
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import DefaultTreePrinterService from "./DefaultTreePrinterService.ts";
 import { TREE_PRINTER_SERVICE_ID } from "../../api/service/core/TreePrinterService.ts";
 import type Context from "../../api/Context.ts";
@@ -13,9 +10,7 @@ export default class TreePrinterServiceProvider implements ServiceProvider {
   readonly serviceId: string = TREE_PRINTER_SERVICE_ID;
   readonly #defaultTreePrinterService: DefaultTreePrinterService;
 
-  public constructor(
-    readonly servicePriority: number,
-  ) {
+  public constructor(readonly servicePriority: number) {
     this.#defaultTreePrinterService = new DefaultTreePrinterService();
   }
 
@@ -27,13 +22,10 @@ export default class TreePrinterServiceProvider implements ServiceProvider {
   }
 
   initService(context: Context): Promise<void> {
-    const printerService = context.getServiceById(
-      PRINTER_SERVICE_ID,
-    ) as PrinterService;
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     this.#defaultTreePrinterService.colorEnabled = printerService.colorEnabled;
-    this.#defaultTreePrinterService.colorFunction = printerService.color
-      .bind(printerService);
+    this.#defaultTreePrinterService.colorFunction = printerService.color.bind(printerService);
 
     return Promise.resolve(undefined);
   }

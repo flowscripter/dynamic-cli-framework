@@ -61,7 +61,7 @@ function validatePrimitiveValue(
   let castValue: string | undefined;
   switch (argument.type) {
     case ArgumentValueTypeName.BOOLEAN:
-      if ((value === true) || (value === false)) {
+      if (value === true || value === false) {
         convertedValue = value;
         break;
       }
@@ -116,14 +116,9 @@ function validatePrimitiveValue(
     let searchValue = convertedValue;
     let allowableValues = argument.allowableValues;
 
-    if (
-      (argument.type === ArgumentValueTypeName.STRING) &&
-      argument.isCaseInsensitive
-    ) {
+    if (argument.type === ArgumentValueTypeName.STRING && argument.isCaseInsensitive) {
       searchValue = (convertedValue as string).toLowerCase();
-      allowableValues = argument.allowableValues.map((v) =>
-        (v as string).toLowerCase()
-      );
+      allowableValues = argument.allowableValues.map((v) => (v as string).toLowerCase());
     }
     if (!allowableValues.includes(searchValue)) {
       return {
@@ -164,12 +159,9 @@ function validatePrimitiveValue(
 
 function validateArrayValue(
   subCommandArgument: SubCommandArgument | ComplexOption,
-  arrayValue: Array<
-    PopulatedArgumentSingleValueType | PopulatedArgumentValues | undefined
-  >,
+  arrayValue: Array<PopulatedArgumentSingleValueType | PopulatedArgumentValues | undefined>,
 ): ArrayValueValidationResult {
-  const convertedArrayValue: Array<ArgumentSingleValueType | ArgumentValues> =
-    [];
+  const convertedArrayValue: Array<ArgumentSingleValueType | ArgumentValues> = [];
 
   for (let i = 0; i < arrayValue.length; i += 1) {
     const singleValue = arrayValue[i];
@@ -185,9 +177,7 @@ function validateArrayValue(
       };
     }
 
-    let validationResult:
-      | SingleValueValidationResult
-      | ObjectValueValidationResult;
+    let validationResult: SingleValueValidationResult | ObjectValueValidationResult;
 
     if (Array.isArray(singleValue)) {
       throw new Error(
@@ -205,10 +195,7 @@ function validateArrayValue(
           },
         };
       }
-      validationResult = validateObjectValue(
-        subCommandArgument as ComplexOption,
-        singleValue,
-      );
+      validationResult = validateObjectValue(subCommandArgument as ComplexOption, singleValue);
     } // if not array and not object, then must be primitive
     else {
       if (isComplexOption(subCommandArgument)) {
@@ -239,9 +226,7 @@ function validateArrayValue(
           invalidArgument: {
             argument: validationResult.invalidArgument.argument,
             name: `[${i}]${
-              validationResult.invalidArgument.name
-                ? validationResult.invalidArgument.name
-                : ""
+              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
             }`,
             value: validationResult.invalidArgument.value,
             reason: validationResult.invalidArgument.reason,
@@ -253,9 +238,7 @@ function validateArrayValue(
           invalidArgument: {
             argument: validationResult.invalidArgument.argument,
             name: `[${i}]${
-              validationResult.invalidArgument.name
-                ? validationResult.invalidArgument.name
-                : ""
+              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
             }`,
             reason: validationResult.invalidArgument.reason,
           },
@@ -339,10 +322,7 @@ function validateObjectValue(
           },
         };
       }
-      validationResult = validatePrimitiveValue(
-        propertyArg as SubCommandArgument,
-        propertyValue,
-      );
+      validationResult = validatePrimitiveValue(propertyArg as SubCommandArgument, propertyValue);
     }
     if (validationResult.validValue !== undefined) {
       convertedObjectValue[propertyArg.name] = validationResult.validValue as
@@ -358,9 +338,7 @@ function validateObjectValue(
           invalidArgument: {
             argument: validationResult.invalidArgument.argument,
             name: `.${propertyArg.name}${
-              validationResult.invalidArgument.name
-                ? validationResult.invalidArgument.name
-                : ""
+              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
             }`,
             value: validationResult.invalidArgument.value,
             reason: validationResult.invalidArgument.reason,
@@ -372,9 +350,7 @@ function validateObjectValue(
           invalidArgument: {
             argument: validationResult.invalidArgument.argument,
             name: `.${propertyArg.name}${
-              validationResult.invalidArgument.name
-                ? validationResult.invalidArgument.name
-                : ""
+              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
             }`,
             reason: validationResult.invalidArgument.reason,
           },
@@ -396,10 +372,7 @@ function doSubCommandArgumentValidation(
   isArray: boolean,
   isOptional: boolean,
   invalidArguments: Array<InvalidArgument>,
-):
-  | PopulatedArgumentValueType
-  | PopulatedArgumentValues
-  | Array<PopulatedArgumentValues> {
+): PopulatedArgumentValueType | PopulatedArgumentValues | Array<PopulatedArgumentValues> {
   // if there is a value, check if it is valid
   if (value !== undefined) {
     let validationResult;
@@ -436,10 +409,7 @@ function doSubCommandArgumentValidation(
         });
         return undefined;
       }
-      validationResult = validatePrimitiveValue(
-        argument as SubCommandArgument,
-        value,
-      );
+      validationResult = validatePrimitiveValue(argument as SubCommandArgument, value);
     }
 
     if (validationResult.invalidArgument !== undefined) {
@@ -447,9 +417,7 @@ function doSubCommandArgumentValidation(
         validationResult.invalidArgument = {
           argument: validationResult.invalidArgument.argument,
           name: `${argument.name}${
-            validationResult.invalidArgument.name
-              ? validationResult.invalidArgument.name
-              : ""
+            validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
           }`,
           value: validationResult.invalidArgument.value,
           reason: validationResult.invalidArgument.reason,
@@ -458,9 +426,7 @@ function doSubCommandArgumentValidation(
         validationResult.invalidArgument = {
           argument: validationResult.invalidArgument.argument,
           name: `${argument.name}${
-            validationResult.invalidArgument.name
-              ? validationResult.invalidArgument.name
-              : ""
+            validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
           }`,
           reason: validationResult.invalidArgument.reason,
         };
@@ -473,10 +439,7 @@ function doSubCommandArgumentValidation(
     }
     if (argument.validate && validationResult.validValue !== undefined) {
       const customError = argument.validate(
-        validationResult.validValue as
-          | ArgumentValueType
-          | ArgumentValues
-          | Array<ArgumentValues>,
+        validationResult.validValue as ArgumentValueType | ArgumentValues | Array<ArgumentValues>,
       );
       if (customError !== undefined) {
         invalidArguments.push({
@@ -520,10 +483,7 @@ export function validateOptionValue(
     | PopulatedArgumentValues
     | Array<PopulatedArgumentValues | undefined>,
   invalidArguments: Array<InvalidArgument>,
-):
-  | PopulatedArgumentValueType
-  | PopulatedArgumentValues
-  | Array<PopulatedArgumentValues> {
+): PopulatedArgumentValueType | PopulatedArgumentValues | Array<PopulatedArgumentValues> {
   return doSubCommandArgumentValidation(
     option,
     value,
@@ -572,10 +532,7 @@ export function validateGlobalCommandArgumentValue(
 
   // if there is a value, check if it is valid
   if (value !== undefined) {
-    const validationResult = validatePrimitiveValue(
-      globalCommandArgument,
-      value,
-    );
+    const validationResult = validatePrimitiveValue(globalCommandArgument, value);
 
     if (validationResult.invalidArgument) {
       if (validationResult.invalidArgument.value !== undefined) {
@@ -595,10 +552,7 @@ export function validateGlobalCommandArgumentValue(
       return undefined;
     }
 
-    if (
-      globalCommandArgument.validate &&
-      validationResult.validValue !== undefined
-    ) {
+    if (globalCommandArgument.validate && validationResult.validValue !== undefined) {
       const customError = globalCommandArgument.validate(
         validationResult.validValue as ArgumentValueType,
       );
@@ -632,7 +586,7 @@ export function getInvalidArgumentString(
   skipArgName: boolean,
 ): string {
   let nameString = "";
-  if (!skipArgName && (invalidArgument.name !== undefined)) {
+  if (!skipArgName && invalidArgument.name !== undefined) {
     nameString = invalidArgument.name;
   }
   let valueString = "";

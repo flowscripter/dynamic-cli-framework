@@ -113,13 +113,10 @@ export default class BaseCLI implements CLI {
         `Invalid CLI name starting with a digit or dash provided: '${cliConfig.name}'`,
       );
     }
-    if (
-      (cliConfig.description !== undefined) &&
-      (cliConfig.description.length === 0)
-    ) {
+    if (cliConfig.description !== undefined && cliConfig.description.length === 0) {
       throw new Error("Invalid empty CLI description provided");
     }
-    if ((cliConfig.version !== undefined) && (cliConfig.version.length === 0)) {
+    if (cliConfig.version !== undefined && cliConfig.version.length === 0) {
       throw new Error("Invalid empty CLI version provided");
     }
     this.#cliConfig = cliConfig;
@@ -197,13 +194,11 @@ export default class BaseCLI implements CLI {
 
   async run(args: ReadonlyArray<string>): Promise<RunResult> {
     if (this.#addedNonModifierCommands.length === 0) {
-      throw new Error(
-        "No non-modifier commands added to the CLI, nothing to run!",
-      );
+      throw new Error("No non-modifier commands added to the CLI, nothing to run!");
     }
 
     if (
-      (this.#addedNonModifierCommands.length === 1) &&
+      this.#addedNonModifierCommands.length === 1 &&
       !isSubCommand(this.#addedNonModifierCommands[0]!) &&
       !isGlobalCommand(this.#addedNonModifierCommands[0]!) &&
       !isGroupCommand(this.#addedNonModifierCommands[0]!)
@@ -215,12 +210,7 @@ export default class BaseCLI implements CLI {
 
     // create and add core services
     this.addServiceProvider(new ShutdownServiceProvider(100));
-    this.addServiceProvider(
-      new PrinterServiceProvider(
-        80,
-        this.#printerService,
-      ),
-    );
+    this.addServiceProvider(new PrinterServiceProvider(80, this.#printerService));
     this.addServiceProvider(new TableGeneratorServiceProvider(70));
 
     const prompterService = new DefaultPrompterService(
@@ -232,26 +222,18 @@ export default class BaseCLI implements CLI {
     this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
 
     if (this.#options.argumentPrompterServiceEnabled) {
-      const argumentPrompterService = new DefaultArgumentPrompterService(
-        prompterService,
-      );
-      this.addServiceProvider(
-        new ArgumentPrompterServiceProvider(65, argumentPrompterService),
-      );
+      const argumentPrompterService = new DefaultArgumentPrompterService(prompterService);
+      this.addServiceProvider(new ArgumentPrompterServiceProvider(65, argumentPrompterService));
     }
 
     if (this.#options.imagePrinterServiceEnabled) {
-      this.addServiceProvider(
-        new ImagePrinterServiceProvider(55, this.#stdoutTerminal),
-      );
+      this.addServiceProvider(new ImagePrinterServiceProvider(55, this.#stdoutTerminal));
     }
 
     let completionService: DefaultCompletionService | undefined;
     if (this.#options.completionServiceEnabled) {
       completionService = new DefaultCompletionService();
-      this.addServiceProvider(
-        new CompletionServiceProvider(60, completionService),
-      );
+      this.addServiceProvider(new CompletionServiceProvider(60, completionService));
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
@@ -263,17 +245,11 @@ export default class BaseCLI implements CLI {
     );
     this.addServiceProvider(configurationServiceProvider);
 
-    for (
-      const serviceProvider of this.#serviceProviderRegistry
-        .getServiceProviders()
-    ) {
+    for (const serviceProvider of this.#serviceProviderRegistry.getServiceProviders()) {
       const serviceInfo = await serviceProvider.getServiceInfo(this.#cliConfig);
 
       if (serviceInfo.service) {
-        this.#context.addServiceInstance(
-          serviceProvider.serviceId,
-          serviceInfo.service,
-        );
+        this.#context.addServiceInstance(serviceProvider.serviceId, serviceInfo.service);
       }
 
       serviceInfo.commands.forEach((command) => {
@@ -349,16 +325,13 @@ export default class BaseCLI implements CLI {
         await new UsageCommand(helpGlobalCommand).execute(this.#context);
       } else if (runResult.runState === RunState.PARSE_ERROR) {
         if (
-          (runResult.command !== undefined) && (
-            isSubCommand(runResult.command) ||
-            isGlobalCommand(runResult.command)
-          )
+          runResult.command !== undefined &&
+          (isSubCommand(runResult.command) || isGlobalCommand(runResult.command))
         ) {
           // print help on specific command
-          await helpSubCommand.execute(
-            this.#context,
-            { command: runResult.command!.name },
-          );
+          await helpSubCommand.execute(this.#context, {
+            command: runResult.command!.name,
+          });
         } else {
           // print usage
           await new UsageCommand(helpGlobalCommand).execute(this.#context);
@@ -366,10 +339,7 @@ export default class BaseCLI implements CLI {
       }
       return runResult;
     } catch (error) {
-      if (
-        shutdownState.shutdownRequested ||
-        (error as Error).message === "Interrupted"
-      ) {
+      if (shutdownState.shutdownRequested || (error as Error).message === "Interrupted") {
         return { runState: RunState.INTERRUPTED };
       }
       logger.error("Runtime error: %s", (error as Error).message);

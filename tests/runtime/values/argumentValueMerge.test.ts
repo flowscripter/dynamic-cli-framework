@@ -78,44 +78,56 @@ describe("argumentValueMerge tests", () => {
   });
 
   test("Complex object and arrays merge", () => {
-    const result = argumentValueMerge({ a: { b: { c: "foo" } } }, {
-      d: [{ e: [{ f: 1 }] }],
-    });
+    const result = argumentValueMerge(
+      { a: { b: { c: "foo" } } },
+      {
+        d: [{ e: [{ f: 1 }] }],
+      },
+    );
     expect(result).toEqual({ a: { b: { c: "foo" } }, d: [{ e: [{ f: 1 }] }] });
   });
 
   test("Complex object and arrays merge and override", () => {
-    let result = argumentValueMerge({
-      a: { b: { c: "foo", c1: "bar", c2: "car" } },
-      d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
-    }, {
-      a: { b: { c: "boo", c1: "bar" } },
-      d: [{ e: [{ f: 0 }, { g: 0 }, { g1: 2 }] }],
-    });
+    let result = argumentValueMerge(
+      {
+        a: { b: { c: "foo", c1: "bar", c2: "car" } },
+        d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
+      },
+      {
+        a: { b: { c: "boo", c1: "bar" } },
+        d: [{ e: [{ f: 0 }, { g: 0 }, { g1: 2 }] }],
+      },
+    );
     expect(result).toEqual({
       a: { b: { c: "foo", c1: "bar", c2: "car" } },
       d: [{ e: [{ f: 1 }, { g: 2 }, { g1: 2, g2: 3 }] }],
     });
 
-    result = argumentValueMerge({
-      a: { b: { c: "foo", c1: "bar", c2: "car" } },
-      d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
-    }, {
-      a: { b: { c: "boo", c1: "bar" } },
-      d: [{ e: [{ f: 0 }, { g: 0 }, { g1: 2 }, { g3: 4 }] }],
-    });
+    result = argumentValueMerge(
+      {
+        a: { b: { c: "foo", c1: "bar", c2: "car" } },
+        d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
+      },
+      {
+        a: { b: { c: "boo", c1: "bar" } },
+        d: [{ e: [{ f: 0 }, { g: 0 }, { g1: 2 }, { g3: 4 }] }],
+      },
+    );
     expect(result).toEqual({
       a: { b: { c: "foo", c1: "bar", c2: "car" } },
       d: [{ e: [{ f: 1 }, { g: 2 }, { g1: 2, g2: 3 }, { g3: 4 }] }],
     });
 
-    result = argumentValueMerge({
-      a: { b: { c: "foo", c1: "bar", c2: "car" } },
-      d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
-    }, {
-      a: { b: { c: "boo", c1: "bar" } },
-      d: [{ e: [{ f: 0 }, { g: 0 }, { g2: 2 }, { g3: 4 }] }],
-    });
+    result = argumentValueMerge(
+      {
+        a: { b: { c: "foo", c1: "bar", c2: "car" } },
+        d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }] }],
+      },
+      {
+        a: { b: { c: "boo", c1: "bar" } },
+        d: [{ e: [{ f: 0 }, { g: 0 }, { g2: 2 }, { g3: 4 }] }],
+      },
+    );
     expect(result).toEqual({
       a: { b: { c: "foo", c1: "bar", c2: "car" } },
       d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }, { g3: 4 }] }],
@@ -137,54 +149,78 @@ describe("argumentValueMerge tests", () => {
   });
 
   test("Complex object array merge and insert", () => {
-    let result = argumentValueMerge({ a: [{ b: 1 }, { c: 2 }, { d: 3 }] }, {
-      a: [{ b: 1 }, { c: 2 }, { d: 3 }],
-    });
+    let result = argumentValueMerge(
+      { a: [{ b: 1 }, { c: 2 }, { d: 3 }] },
+      {
+        a: [{ b: 1 }, { c: 2 }, { d: 3 }],
+      },
+    );
     expect(result).toEqual({ a: [{ b: 1 }, { c: 2 }, { d: 3 }] });
 
-    result = argumentValueMerge({
-      a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }],
-    }, { a: [{ b: 1 }, { c: 2 }, { d: 3 }] });
+    result = argumentValueMerge(
+      {
+        a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }],
+      },
+      { a: [{ b: 1 }, { c: 2 }, { d: 3 }] },
+    );
     expect(result).toEqual({ a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }] });
 
-    result = argumentValueMerge({ a: [{ b: 1 }, { c: 2 }, { d: 3 }] }, {
-      a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }],
-    });
+    result = argumentValueMerge(
+      { a: [{ b: 1 }, { c: 2 }, { d: 3 }] },
+      {
+        a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }],
+      },
+    );
     expect(result).toEqual({ a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 4 }] });
 
-    result = argumentValueMerge({ a: [{ b: 1 }, { c: 2 }, { d: 3 }] }, {
-      a: [{ b: 4 }, { c: 5 }, { d: 6 }, { e: 7 }],
-    });
+    result = argumentValueMerge(
+      { a: [{ b: 1 }, { c: 2 }, { d: 3 }] },
+      {
+        a: [{ b: 4 }, { c: 5 }, { d: 6 }, { e: 7 }],
+      },
+    );
     expect(result).toEqual({ a: [{ b: 1 }, { c: 2 }, { d: 3 }, { e: 7 }] });
 
-    result = argumentValueMerge({ a: [{ b: 1 }, { c: 2 }, { d: 3 }] }, {
-      a: [{ b1: 4 }, { c1: 5 }, { d1: 6 }, { e1: 7 }],
-    });
+    result = argumentValueMerge(
+      { a: [{ b: 1 }, { c: 2 }, { d: 3 }] },
+      {
+        a: [{ b1: 4 }, { c1: 5 }, { d1: 6 }, { e1: 7 }],
+      },
+    );
     expect(result).toEqual({
       a: [{ b: 1, b1: 4 }, { c: 2, c1: 5 }, { d: 3, d1: 6 }, { e1: 7 }],
     });
 
-    result = argumentValueMerge({ a: [{ a: 1 }, { a: 2 }, { a: 3 }] }, {
-      a: [{ a: 4 }, { a: 5 }, { a: 6 }, { a: 7 }],
-    });
+    result = argumentValueMerge(
+      { a: [{ a: 1 }, { a: 2 }, { a: 3 }] },
+      {
+        a: [{ a: 4 }, { a: 5 }, { a: 6 }, { a: 7 }],
+      },
+    );
     expect(result).toEqual({
       a: [{ a: 1 }, { a: 2 }, { a: 3 }, { a: 7 }],
     });
   });
 
   test("Complex object and arrays merge with no defaults", () => {
-    const result = argumentValueMerge({
-      a: { b: { c: "foo" } },
-      d: [{ e: [{ f: 1 }] }],
-    }, {});
+    const result = argumentValueMerge(
+      {
+        a: { b: { c: "foo" } },
+        d: [{ e: [{ f: 1 }] }],
+      },
+      {},
+    );
     expect(result).toEqual({ a: { b: { c: "foo" } }, d: [{ e: [{ f: 1 }] }] });
   });
 
   test("Complex object and arrays merge with no overrides", () => {
-    const result = argumentValueMerge({}, {
-      a: { b: { c: "foo" } },
-      d: [{ e: [{ f: 1 }] }],
-    });
+    const result = argumentValueMerge(
+      {},
+      {
+        a: { b: { c: "foo" } },
+        d: [{ e: [{ f: 1 }] }],
+      },
+    );
     expect(result).toEqual({ a: { b: { c: "foo" } }, d: [{ e: [{ f: 1 }] }] });
   });
 
@@ -211,27 +247,36 @@ describe("argumentValueMerge tests", () => {
   });
 
   test("Primitive array merge with undefined values", () => {
-    const result = argumentValueMerge({ a: [1, 2, 3, undefined] }, {
-      a: [1, 2, 3],
-    });
+    const result = argumentValueMerge(
+      { a: [1, 2, 3, undefined] },
+      {
+        a: [1, 2, 3],
+      },
+    );
     expect(result).toEqual({ a: [1, 2, 3, undefined] });
   });
 
   test("Primitive array merge and override with undefined values", () => {
-    const result = argumentValueMerge({ a: [1, 2, undefined] }, {
-      a: [1, 2, 3],
-    });
+    const result = argumentValueMerge(
+      { a: [1, 2, undefined] },
+      {
+        a: [1, 2, 3],
+      },
+    );
     expect(result).toEqual({ a: [1, 2, 3] });
   });
 
   test("Complex object and arrays merge undefined values", () => {
-    const result = argumentValueMerge({
-      a: { b: { c: undefined } },
-      d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }, undefined] }],
-    }, {
-      a: { b: { c1: "foo" } },
-      d: [{ e: [{ f: 0 }, { g: 2 }, { g1: 2 }] }],
-    });
+    const result = argumentValueMerge(
+      {
+        a: { b: { c: undefined } },
+        d: [{ e: [{ f: 1 }, { g: 2 }, { g2: 3 }, undefined] }],
+      },
+      {
+        a: { b: { c1: "foo" } },
+        d: [{ e: [{ f: 0 }, { g: 2 }, { g1: 2 }] }],
+      },
+    );
     expect(result).toEqual({
       a: { b: { c: undefined, c1: "foo" } },
       d: [{ e: [{ f: 1 }, { g: 2 }, { g1: 2, g2: 3 }, undefined] }],
@@ -239,10 +284,13 @@ describe("argumentValueMerge tests", () => {
   });
 
   test("Complex object and arrays merge and override with undefined values", () => {
-    const result = argumentValueMerge({
-      a: { b: { c: undefined } },
-      d: [{ e: [{ f: 1 }, undefined, { g2: 3 }] }],
-    }, { a: { b: { c: "foo" } }, d: [{ e: [{ f: 0 }, { g: 2 }, { g1: 2 }] }] });
+    const result = argumentValueMerge(
+      {
+        a: { b: { c: undefined } },
+        d: [{ e: [{ f: 1 }, undefined, { g2: 3 }] }],
+      },
+      { a: { b: { c: "foo" } }, d: [{ e: [{ f: 0 }, { g: 2 }, { g1: 2 }] }] },
+    );
     expect(result).toEqual({
       a: { b: { c: "foo" } },
       d: [{ e: [{ f: 1 }, { g: 2 }, { g1: 2, g2: 3 }] }],
@@ -250,16 +298,22 @@ describe("argumentValueMerge tests", () => {
   });
 
   test("Complex object merge with undefined objects", () => {
-    const result = argumentValueMerge({ a: { b1: undefined } }, {
-      a: { b2: { c: "foo" } },
-    });
+    const result = argumentValueMerge(
+      { a: { b1: undefined } },
+      {
+        a: { b2: { c: "foo" } },
+      },
+    );
     expect(result).toEqual({ a: { b1: undefined, b2: { c: "foo" } } });
   });
 
   test("Complex object merge and override with undefined objects", () => {
-    const result = argumentValueMerge({ a: { b: undefined } }, {
-      a: { b: { c: "foo" } },
-    });
+    const result = argumentValueMerge(
+      { a: { b: undefined } },
+      {
+        a: { b: { c: "foo" } },
+      },
+    );
     expect(result).toEqual({ a: { b: { c: "foo" } } });
   });
 
@@ -268,14 +322,12 @@ describe("argumentValueMerge tests", () => {
     for (let i = 0; i <= MAXIMUM_ARGUMENT_ARRAY_SIZE; i++) {
       illegal.push(i);
     }
-    expect(() => argumentValueMerge({ a: illegal }, { a: [1, 2] }))
-      .toThrowError(
-        "Maximum array size exceeded: 256",
-      );
-    expect(() => argumentValueMerge({ a: [1, 2] }, { a: illegal }))
-      .toThrowError(
-        "Maximum array size exceeded:",
-      );
+    expect(() => argumentValueMerge({ a: illegal }, { a: [1, 2] })).toThrowError(
+      "Maximum array size exceeded: 256",
+    );
+    expect(() => argumentValueMerge({ a: [1, 2] }, { a: illegal })).toThrowError(
+      "Maximum array size exceeded:",
+    );
   });
 
   test("Maximum nesting depth asserted", () => {

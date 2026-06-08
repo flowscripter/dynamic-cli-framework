@@ -12,14 +12,9 @@ export default class Table {
 
   readonly #columnOptions: Map<number, ColumnOptions> = new Map();
   readonly #rowOptions: Map<number, RowOptions> = new Map();
-  readonly #cells: Map<string, { contents: string; options?: CellOptions }> =
-    new Map();
+  readonly #cells: Map<string, { contents: string; options?: CellOptions }> = new Map();
 
-  constructor(
-    rowCount: number,
-    columnCount: number,
-    options?: TableOptions,
-  ) {
+  constructor(rowCount: number, columnCount: number, options?: TableOptions) {
     this.rowCount = rowCount;
     this.columnCount = columnCount;
     this.options = options ?? {};
@@ -27,9 +22,7 @@ export default class Table {
 
   row(rowIndex: number, rowOptions: RowOptions): Table {
     if (rowIndex < 0 || rowIndex >= this.rowCount) {
-      throw new Error(
-        `Row index ${rowIndex} out of bounds [0, ${this.rowCount})`,
-      );
+      throw new Error(`Row index ${rowIndex} out of bounds [0, ${this.rowCount})`);
     }
     this.#rowOptions.set(rowIndex, rowOptions);
     return this;
@@ -37,29 +30,18 @@ export default class Table {
 
   column(columnIndex: number, columnOptions: ColumnOptions): Table {
     if (columnIndex < 0 || columnIndex >= this.columnCount) {
-      throw new Error(
-        `Column index ${columnIndex} out of bounds [0, ${this.columnCount})`,
-      );
+      throw new Error(`Column index ${columnIndex} out of bounds [0, ${this.columnCount})`);
     }
     this.#columnOptions.set(columnIndex, columnOptions);
     return this;
   }
 
-  cell(
-    rowIndex: number,
-    columnIndex: number,
-    contents: string,
-    cellOptions?: CellOptions,
-  ): Table {
+  cell(rowIndex: number, columnIndex: number, contents: string, cellOptions?: CellOptions): Table {
     if (rowIndex < 0 || rowIndex >= this.rowCount) {
-      throw new Error(
-        `Row index ${rowIndex} out of bounds [0, ${this.rowCount})`,
-      );
+      throw new Error(`Row index ${rowIndex} out of bounds [0, ${this.rowCount})`);
     }
     if (columnIndex < 0 || columnIndex >= this.columnCount) {
-      throw new Error(
-        `Column index ${columnIndex} out of bounds [0, ${this.columnCount})`,
-      );
+      throw new Error(`Column index ${columnIndex} out of bounds [0, ${this.columnCount})`);
     }
     this.#cells.set(`${rowIndex},${columnIndex}`, {
       contents,

@@ -56,14 +56,9 @@ describe("runner tests", () => {
     let modifierHasRun = false;
     let subHasRun = false;
 
-    const globalModifierCommand = getGlobalModifierCommandWithArgument(
-      "modifierCommand",
-      "c",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const globalModifierCommand = getGlobalModifierCommandWithArgument("modifierCommand", "c", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const subCommand = getSubCommand("subCommand", [], []);
 
     globalModifierCommand.execute = (): Promise<void> => {
@@ -75,10 +70,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      globalModifierCommand,
-      subCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([globalModifierCommand, subCommand]);
     let runResult = await run(
       ["--modifierCommand=bar", "subCommand"],
       commandRegistry,
@@ -191,14 +183,9 @@ describe("runner tests", () => {
     let modifierHasRun = false;
     let subHasRun = false;
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const option = {
       name: "foo",
       type: ArgumentValueTypeName.STRING,
@@ -215,10 +202,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      modifierCommand,
-      subCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, subCommand]);
     const runResult = await run(
       ["--modifier=bar", "command", "--foo", "bar"],
       commandRegistry,
@@ -236,14 +220,9 @@ describe("runner tests", () => {
     let modifierHasRun = false;
     let globalHasRun = false;
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
       type: ArgumentValueTypeName.STRING,
     });
@@ -257,10 +236,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      modifierCommand,
-      globalCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
     const runResult = await run(
       ["--modifier=bar", "-g", "bar"],
       commandRegistry,
@@ -279,22 +255,12 @@ describe("runner tests", () => {
     let modifier2HasRun = false;
     let globalHasRun = false;
 
-    const modifierCommand1 = getGlobalModifierCommandWithArgument(
-      "modifier1",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
-    const modifierCommand2 = getGlobalModifierCommandWithArgument(
-      "modifier2",
-      "n",
-      2,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand1 = getGlobalModifierCommandWithArgument("modifier1", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
+    const modifierCommand2 = getGlobalModifierCommandWithArgument("modifier2", "n", 2, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
       type: ArgumentValueTypeName.STRING,
     });
@@ -337,22 +303,12 @@ describe("runner tests", () => {
     let groupHasRun = false;
     let subHasRun = false;
 
-    const modifierCommand1 = getGlobalModifierCommandWithArgument(
-      "modifier1",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
-    const modifierCommand2 = getGlobalModifierCommandWithArgument(
-      "modifier2",
-      "n",
-      2,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand1 = getGlobalModifierCommandWithArgument("modifier1", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
+    const modifierCommand2 = getGlobalModifierCommandWithArgument("modifier2", "n", 2, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const subCommand = getSubCommandWithOption("subCommand", true);
     const groupCommand = getGroupCommand("group", [subCommand]);
 
@@ -382,14 +338,7 @@ describe("runner tests", () => {
       groupCommand,
     ]);
     const runResult = await run(
-      [
-        "--modifier1=bar1",
-        "group",
-        "subCommand",
-        "--foo",
-        "subfoo",
-        "--modifier2=bar2",
-      ],
+      ["--modifier1=bar1", "group", "subCommand", "--foo", "subfoo", "--modifier2=bar2"],
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
@@ -407,14 +356,9 @@ describe("runner tests", () => {
     let modifierHasRun = false;
     let defaultHasRun = false;
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g");
 
     modifierCommand.execute = (): Promise<void> => {
@@ -426,10 +370,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      modifierCommand,
-      globalCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
     const runResult = await run(
       ["--modifier=bar"],
       commandRegistry,
@@ -450,14 +391,9 @@ describe("runner tests", () => {
     let modifierHasRun = false;
     let defaultHasRun = false;
 
-    const modifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g");
 
     modifierCommand.execute = (): Promise<void> => {
@@ -469,10 +405,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      modifierCommand,
-      globalCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
     const runResult = await run(
       ["--modifier"],
       commandRegistry,
@@ -569,11 +502,7 @@ describe("runner tests", () => {
 
     let globalHasRun = false;
 
-    const globalModifierCommand = getGlobalModifierCommandWithArgument(
-      "modifier",
-      "m",
-      1,
-    );
+    const globalModifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1);
     const globalCommand = getGlobalCommandWithShortAlias("global", "g");
 
     globalModifierCommand.execute = (): Promise<void> => {
@@ -584,10 +513,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      globalCommand,
-      globalModifierCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([globalCommand, globalModifierCommand]);
     const runResult = await run(
       ["--global", "--modifier"],
       commandRegistry,
@@ -627,10 +553,7 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.PARSE_ERROR);
-    expectStringIncludes(
-      streamString.getString(),
-      "-f (missing value)",
-    );
+    expectStringIncludes(streamString.getString(), "-f (missing value)");
     expect(hasRun).toBeFalse();
   });
 
@@ -682,10 +605,7 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.NO_COMMAND);
-    expectStringIncludes(
-      streamString.getString(),
-      "No command specified",
-    );
+    expectStringIncludes(streamString.getString(), "No command specified");
     expect(hasRun).toBeFalse();
   });
 
@@ -714,14 +634,8 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.NO_COMMAND);
-    expectStringIncludes(
-      streamString.getString(),
-      "No command recognised",
-    );
-    expectStringIncludes(
-      streamString.getString(),
-      "Possible matches: command\n",
-    );
+    expectStringIncludes(streamString.getString(), "No command recognised");
+    expectStringIncludes(streamString.getString(), "Possible matches: command\n");
     expect(hasRun).toBeFalse();
   });
 
@@ -797,13 +711,20 @@ describe("runner tests", () => {
   });
 
   test("Run default based on all args", async () => {
-    const command = getSubCommand("command", [{
-      name: "foo",
-      type: ArgumentValueTypeName.STRING,
-    }, {
-      name: "goo",
-      type: ArgumentValueTypeName.STRING,
-    }], []);
+    const command = getSubCommand(
+      "command",
+      [
+        {
+          name: "foo",
+          type: ArgumentValueTypeName.STRING,
+        },
+        {
+          name: "goo",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
+      [],
+    );
     const runResult = await run(
       ["--foo=f", "--goo=g"],
       new DefaultCommandRegistry([]),
@@ -820,13 +741,16 @@ describe("runner tests", () => {
     const streamString = new StreamString();
     const command = getSubCommand(
       "command",
-      [{
-        name: "foo",
-        type: ArgumentValueTypeName.STRING,
-      }, {
-        name: "goo",
-        type: ArgumentValueTypeName.STRING,
-      }],
+      [
+        {
+          name: "foo",
+          type: ArgumentValueTypeName.STRING,
+        },
+        {
+          name: "goo",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
       [],
       true,
     );
@@ -837,10 +761,13 @@ describe("runner tests", () => {
       getConfigurationServiceProvider(
         90,
         new Map([
-          ["command", {
-            foo: "f",
-            goo: "g",
-          }],
+          [
+            "command",
+            {
+              foo: "f",
+              goo: "g",
+            },
+          ],
         ]),
       ),
       getContext(streamString),
@@ -848,23 +775,23 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
-    expectStringIncludes(
-      streamString.getString(),
-      "Unused args: --bip=b --bop=b",
-    );
+    expectStringIncludes(streamString.getString(), "Unused args: --bip=b --bop=b");
   });
 
   test("Run default command based on some args and treating some args as unused", async () => {
     const streamString = new StreamString();
     const command = getSubCommand(
       "command",
-      [{
-        name: "foo",
-        type: ArgumentValueTypeName.STRING,
-      }, {
-        name: "goo",
-        type: ArgumentValueTypeName.STRING,
-      }],
+      [
+        {
+          name: "foo",
+          type: ArgumentValueTypeName.STRING,
+        },
+        {
+          name: "goo",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
       [],
       true,
     );
@@ -876,9 +803,12 @@ describe("runner tests", () => {
       getConfigurationServiceProvider(
         90,
         new Map([
-          ["command", {
-            foo: "f",
-          }],
+          [
+            "command",
+            {
+              foo: "f",
+            },
+          ],
         ]),
       ),
       getContext(streamString),
@@ -886,21 +816,25 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
-    expectStringIncludes(
-      streamString.getString(),
-      "Unused arg: --bip=b",
-    );
+    expectStringIncludes(streamString.getString(), "Unused arg: --bip=b");
   });
 
   test("Fail to parse default command with some unused args and missing required values", async () => {
     const streamString = new StreamString();
-    const command = getSubCommand("command", [{
-      name: "foo",
-      type: ArgumentValueTypeName.STRING,
-    }, {
-      name: "goo",
-      type: ArgumentValueTypeName.STRING,
-    }], []);
+    const command = getSubCommand(
+      "command",
+      [
+        {
+          name: "foo",
+          type: ArgumentValueTypeName.STRING,
+        },
+        {
+          name: "goo",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
+      [],
+    );
 
     const runResult = await run(
       ["--bip=b", "--goo=g"],
@@ -916,14 +850,21 @@ describe("runner tests", () => {
 
   test("Fail to parse default command with some unused args", async () => {
     const streamString = new StreamString();
-    const command = getSubCommand("command", [{
-      name: "foo",
-      type: ArgumentValueTypeName.STRING,
-      isOptional: true,
-    }, {
-      name: "goo",
-      type: ArgumentValueTypeName.STRING,
-    }], []);
+    const command = getSubCommand(
+      "command",
+      [
+        {
+          name: "foo",
+          type: ArgumentValueTypeName.STRING,
+          isOptional: true,
+        },
+        {
+          name: "goo",
+          type: ArgumentValueTypeName.STRING,
+        },
+      ],
+      [],
+    );
 
     const runResult = await run(
       ["--bip=b", "--goo=g"],
@@ -953,10 +894,7 @@ describe("runner tests", () => {
     };
 
     const subCommand2 = getSubCommand("command2", [], []);
-    const commandRegistry = new DefaultCommandRegistry([
-      subCommand1,
-      subCommand2,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([subCommand1, subCommand2]);
     const runResult = await run(
       ["command1", "--foo", "bar", "command2"],
       commandRegistry,
@@ -966,31 +904,18 @@ describe("runner tests", () => {
     );
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
-    expectStringIncludes(
-      streamString.getString(),
-      "Unused arg: command2",
-    );
+    expectStringIncludes(streamString.getString(), "Unused arg: command2");
     expect(hasRun).toBeTrue();
   });
 
   test("Ensure global modifier and global run priority order", async () => {
     const hasRun: string[] = [];
-    const modifier1Command = getGlobalModifierCommandWithArgument(
-      "modifier1",
-      "1",
-      2,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
-    const modifier2Command = getGlobalModifierCommandWithArgument(
-      "modifier2",
-      "2",
-      1,
-      {
-        type: ArgumentValueTypeName.STRING,
-      },
-    );
+    const modifier1Command = getGlobalModifierCommandWithArgument("modifier1", "1", 2, {
+      type: ArgumentValueTypeName.STRING,
+    });
+    const modifier2Command = getGlobalModifierCommandWithArgument("modifier2", "2", 1, {
+      type: ArgumentValueTypeName.STRING,
+    });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
       type: ArgumentValueTypeName.STRING,
     });
@@ -1071,41 +996,52 @@ describe("runner tests", () => {
 
   test("Sub-Command run with complex options and explicit arrays", async () => {
     let hasRun = false;
-    const options = [{
-      name: "alpha",
-      shortAlias: "a",
-      type: ComplexValueTypeName.COMPLEX,
-      isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
+    const options = [
+      {
+        name: "alpha",
+        shortAlias: "a",
         type: ComplexValueTypeName.COMPLEX,
         isArray: true,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-          isArray: true,
-        }],
-      }],
-    }, {
-      name: "epsilon",
-      shortAlias: "e",
-      type: ComplexValueTypeName.COMPLEX,
-      properties: [{
-        name: "gamma",
-        shortAlias: "g",
-        type: ArgumentValueTypeName.STRING,
-      }, {
-        name: "delta",
-        shortAlias: "d",
-        type: ArgumentValueTypeName.NUMBER,
-      }],
-    }];
+        properties: [
+          {
+            name: "beta",
+            shortAlias: "b",
+            type: ComplexValueTypeName.COMPLEX,
+            isArray: true,
+            properties: [
+              {
+                name: "gamma",
+                shortAlias: "g",
+                type: ArgumentValueTypeName.STRING,
+              },
+              {
+                name: "delta",
+                shortAlias: "d",
+                type: ArgumentValueTypeName.NUMBER,
+                isArray: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "epsilon",
+        shortAlias: "e",
+        type: ComplexValueTypeName.COMPLEX,
+        properties: [
+          {
+            name: "gamma",
+            shortAlias: "g",
+            type: ArgumentValueTypeName.STRING,
+          },
+          {
+            name: "delta",
+            shortAlias: "d",
+            type: ArgumentValueTypeName.NUMBER,
+          },
+        ],
+      },
+    ];
     const command = getSubCommand("command", options, []);
 
     command.execute = (): Promise<void> => {
@@ -1138,50 +1074,64 @@ describe("runner tests", () => {
 
   test("Sub-Command run with complex options and positionals", async () => {
     let hasRun = false;
-    const options = [{
-      name: "alpha",
-      shortAlias: "a",
-      type: ComplexValueTypeName.COMPLEX,
-      isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
+    const options = [
+      {
+        name: "alpha",
+        shortAlias: "a",
         type: ComplexValueTypeName.COMPLEX,
         isArray: true,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-          isArray: true,
-        }],
-      }],
-    }, {
-      name: "epsilon",
-      shortAlias: "e",
-      type: ComplexValueTypeName.COMPLEX,
-      properties: [{
-        name: "gamma",
-        shortAlias: "g",
+        properties: [
+          {
+            name: "beta",
+            shortAlias: "b",
+            type: ComplexValueTypeName.COMPLEX,
+            isArray: true,
+            properties: [
+              {
+                name: "gamma",
+                shortAlias: "g",
+                type: ArgumentValueTypeName.STRING,
+              },
+              {
+                name: "delta",
+                shortAlias: "d",
+                type: ArgumentValueTypeName.NUMBER,
+                isArray: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "epsilon",
+        shortAlias: "e",
+        type: ComplexValueTypeName.COMPLEX,
+        properties: [
+          {
+            name: "gamma",
+            shortAlias: "g",
+            type: ArgumentValueTypeName.STRING,
+          },
+          {
+            name: "delta",
+            shortAlias: "d",
+            type: ArgumentValueTypeName.NUMBER,
+          },
+        ],
+      },
+    ];
+    const positionals = [
+      {
+        name: "foo",
         type: ArgumentValueTypeName.STRING,
-      }, {
-        name: "delta",
-        shortAlias: "d",
-        type: ArgumentValueTypeName.NUMBER,
-      }],
-    }];
-    const positionals = [{
-      name: "foo",
-      type: ArgumentValueTypeName.STRING,
-    }, {
-      name: "bar",
-      type: ArgumentValueTypeName.INTEGER,
-      isVarargMultiple: true,
-      isVarargOptional: true,
-    }];
+      },
+      {
+        name: "bar",
+        type: ArgumentValueTypeName.INTEGER,
+        isVarargMultiple: true,
+        isVarargOptional: true,
+      },
+    ];
 
     const command = getSubCommand("command", options, positionals);
 
@@ -1308,10 +1258,7 @@ describe("runner tests", () => {
       return Promise.resolve();
     };
 
-    const commandRegistry = new DefaultCommandRegistry([
-      modifierCommand,
-      globalCommand,
-    ]);
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
     const runResult = await run(
       ["-g", "bar"],
       commandRegistry,
@@ -1320,9 +1267,12 @@ describe("runner tests", () => {
         90,
         new Map<string, ArgumentValues | ArgumentSingleValueType>([
           ["modifier", "foo"],
-          ["irrelevant", {
-            name: "value",
-          }],
+          [
+            "irrelevant",
+            {
+              name: "value",
+            },
+          ],
         ]),
       ),
       getContext(new WritableStreamString()),

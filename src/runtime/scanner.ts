@@ -67,14 +67,14 @@ function normaliseFirstArgumentIfRequired(
   // --<global_[modifier_]command_name>=<value>
   // -<global_[modifier_]command_short_alias>
   // -<global_[modifier_]command_short_alias>=<value>
-  if ((firstArg!.length < 2) || (firstArg!.charAt(0) !== "-")) {
+  if (firstArg!.length < 2 || firstArg!.charAt(0) !== "-") {
     return args;
   }
 
   // looking for:
   // --<global_[modifier_]command_name>
   // --<global_[modifier_]command_name>=<value>
-  if ((firstArg!.length > 2) && (firstArg!.charAt(1) === "-")) {
+  if (firstArg!.length > 2 && firstArg!.charAt(1) === "-") {
     let potentialGlobalCommandName = firstArg!.slice(2);
 
     // looking for:
@@ -82,9 +82,10 @@ function normaliseFirstArgumentIfRequired(
     // <global_modifier_command_name>=<value>
     let nextArg: string | undefined;
     if (potentialGlobalCommandName.includes("=")) {
-      [potentialGlobalCommandName, nextArg] = potentialGlobalCommandName.split(
-        /=(.*)/,
-      ) as [string, string | undefined];
+      [potentialGlobalCommandName, nextArg] = potentialGlobalCommandName.split(/=(.*)/) as [
+        string,
+        string | undefined,
+      ];
     }
 
     if (!globalCommandsByName.has(potentialGlobalCommandName)) {
@@ -95,8 +96,8 @@ function normaliseFirstArgumentIfRequired(
       // nothing changed
       return args;
     }
-    logger.debug(() =>
-      `Normalised arg: '${firstArg}' to: '--${potentialGlobalCommandName} ${nextArg}'`
+    logger.debug(
+      () => `Normalised arg: '${firstArg}' to: '--${potentialGlobalCommandName} ${nextArg}'`,
     );
     return [`--${potentialGlobalCommandName}`, nextArg, ...args.slice(1)];
   }
@@ -111,11 +112,9 @@ function normaliseFirstArgumentIfRequired(
   // <global_[modifier_]command_short_alias>=<value>
   let nextArg: string | undefined;
   if (potentialGlobalCommandShortAlias.includes("=")) {
-    [potentialGlobalCommandShortAlias, nextArg] =
-      potentialGlobalCommandShortAlias.split(/=(.*)/) as [
-        string,
-        string | undefined,
-      ];
+    [potentialGlobalCommandShortAlias, nextArg] = potentialGlobalCommandShortAlias.split(
+      /=(.*)/,
+    ) as [string, string | undefined];
   }
 
   if (!globalCommandsByShortAlias) {
@@ -124,23 +123,17 @@ function normaliseFirstArgumentIfRequired(
   }
 
   // looking for <global_[modifier_]command_short_alias>
-  const globalCommand = globalCommandsByShortAlias.get(
-    potentialGlobalCommandShortAlias,
-  );
+  const globalCommand = globalCommandsByShortAlias.get(potentialGlobalCommandShortAlias);
   if (!globalCommand) {
     // nothing changed
     return args;
   }
 
   if (nextArg) {
-    logger.debug(() =>
-      `Normalised arg: '${firstArg}' to: '--${globalCommand.name} ${nextArg}'`
-    );
+    logger.debug(() => `Normalised arg: '${firstArg}' to: '--${globalCommand.name} ${nextArg}'`);
     return [`--${globalCommand.name}`, nextArg, ...args.slice(1)];
   }
-  logger.debug(() =>
-    `Normalised arg: '${firstArg}' to: '--${globalCommand.name}'`
-  );
+  logger.debug(() => `Normalised arg: '${firstArg}' to: '--${globalCommand.name}'`);
   return [`--${globalCommand.name}`, ...args.slice(1)];
 }
 
@@ -178,10 +171,7 @@ function scanForNextCommandClause(
       // check for Global[Modifier]Command name
       const command = commandsByName.get(potentialCommandName);
       if (command) {
-        logger.debug(
-          "Found global [modifier] command name: %s",
-          potentialCommandName,
-        );
+        logger.debug("Found global [modifier] command name: %s", potentialCommandName);
         return {
           commandClause: {
             command,
@@ -191,7 +181,7 @@ function scanForNextCommandClause(
         };
       }
     }
-    if (!includeSubCommands || (currentArg![0] === "-")) {
+    if (!includeSubCommands || currentArg![0] === "-") {
       unusedArgs.push(currentArg!);
       continue;
     }
@@ -240,10 +230,7 @@ function scanForNextCommandClause(
         }
       }
       // if group parsing was not needed, revert state if necessary
-      if (
-        potentialMemberCommandNameArgumentUsed &&
-        (potentialMemberSubCommandName !== undefined)
-      ) {
+      if (potentialMemberCommandNameArgumentUsed && potentialMemberSubCommandName !== undefined) {
         pendingArgs.unshift(potentialMemberSubCommandName!);
       }
     }
@@ -286,17 +273,13 @@ function scanForNextCommandClause(
 export function scanForGlobalModifierCommandClauses(
   argSequences: ReadonlyArray<ReadonlyArray<string>>,
   globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand>,
-  globalModifierCommandsByShortAlias: ReadonlyMap<
-    string,
-    GlobalModifierCommand
-  >,
+  globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand>,
 ): ScanResult {
-  logger.debug(() =>
-    `Scanning args: '${
-      JSON.stringify(argSequences)
-    }' for global modifier commands: '${
-      Array.from(globalModifierCommandsByName.keys()).join(" ")
-    }'`
+  logger.debug(
+    () =>
+      `Scanning args: '${JSON.stringify(argSequences)}' for global modifier commands: '${Array.from(
+        globalModifierCommandsByName.keys(),
+      ).join(" ")}'`,
   );
 
   const scanResult: ScanResult = {
@@ -375,12 +358,11 @@ export function scanForNonModifierCommandClause(
     { groupCommand: GroupCommand; command: SubCommand }
   >,
 ): ScanResult {
-  logger.debug(() =>
-    `Scanning args: '${
-      JSON.stringify(argSequences)
-    }' for non-modifier commands: '${
-      Array.from(nonModifierCommandsByName.keys()).join(" ")
-    }'`
+  logger.debug(
+    () =>
+      `Scanning args: '${JSON.stringify(argSequences)}' for non-modifier commands: '${Array.from(
+        nonModifierCommandsByName.keys(),
+      ).join(" ")}'`,
   );
 
   const scanResult: ScanResult = {

@@ -5,8 +5,7 @@ const DEFAULT_NODE_COLOR = "#839496";
 
 export default class DefaultTreePrinterService implements TreePrinterService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string = (text) =>
-    text;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
 
   readonly #nodeColor: string;
 
@@ -21,11 +20,7 @@ export default class DefaultTreePrinterService implements TreePrinterService {
     return label;
   }
 
-  #renderChildren(
-    children: Array<TreeNode | string>,
-    prefix: string,
-    lines: string[],
-  ): void {
+  #renderChildren(children: Array<TreeNode | string>, prefix: string, lines: string[]): void {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]!;
       const isLast = i === children.length - 1;

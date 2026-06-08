@@ -30,29 +30,24 @@ export default class ImageRenderer {
         return this.#renderITerm2(imageBuffer, widthPercentage);
       }
     }
-    return this.#renderAnsiBlocks(
-      imageBuffer,
-      widthPercentage,
-      hexFormattedBackgroundColor,
-    );
+    return this.#renderAnsiBlocks(imageBuffer, widthPercentage, hexFormattedBackgroundColor);
   }
 
   #isMultiplexer(): boolean {
     const term = (process.env.TERM || "").toLowerCase();
     const termProgram = (process.env.TERM_PROGRAM || "").toLowerCase();
-    return termProgram === "tmux" || termProgram === "screen" ||
-      term.startsWith("tmux") || term.startsWith("screen");
+    return (
+      termProgram === "tmux" ||
+      termProgram === "screen" ||
+      term.startsWith("tmux") ||
+      term.startsWith("screen")
+    );
   }
 
   // https://sw.kovidgoyal.net/kitty/graphics-protocol/
-  async #renderKitty(
-    imageBuffer: Uint8Array,
-    widthPercentage: number,
-  ): Promise<string> {
+  async #renderKitty(imageBuffer: Uint8Array, widthPercentage: number): Promise<string> {
     const pngBytes = await new Bun.Image(imageBuffer).png().bytes();
-    const columns = Math.floor(
-      this.#terminal.columns() * widthPercentage / 100,
-    );
+    const columns = Math.floor((this.#terminal.columns() * widthPercentage) / 100);
     const base64 = Buffer.from(pngBytes).toString("base64");
     const chunks: string[] = [];
     for (let i = 0; i < base64.length; i += 4096) {
@@ -62,9 +57,7 @@ export default class ImageRenderer {
     for (let i = 0; i < chunks.length; i++) {
       const isLast = i === chunks.length - 1;
       if (i === 0) {
-        result += `\x1b_Gf=100,a=T,c=${columns},m=${isLast ? 0 : 1};${
-          chunks[i]
-        }\x1b\\`;
+        result += `\x1b_Gf=100,a=T,c=${columns},m=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
       } else {
         result += `\x1b_Gm=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
       }
@@ -73,18 +66,13 @@ export default class ImageRenderer {
   }
 
   // https://iterm2.com/documentation-images.html
-  async #renderITerm2(
-    imageBuffer: Uint8Array,
-    widthPercentage: number,
-  ): Promise<string> {
+  async #renderITerm2(imageBuffer: Uint8Array, widthPercentage: number): Promise<string> {
     const pngBytes = await new Bun.Image(imageBuffer).png().bytes();
     const base64 = Buffer.from(pngBytes).toString("base64");
     return `\x1b]1337;File=inline=1;width=${widthPercentage}%:${base64}\x07`;
   }
 
-  static #parseHexColor(
-    hex: string,
-  ): { r: number; g: number; b: number } | undefined {
+  static #parseHexColor(hex: string): { r: number; g: number; b: number } | undefined {
     const match = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
     if (!match) return undefined;
     return {
@@ -104,7 +92,7 @@ export default class ImageRenderer {
       : undefined;
     const columns = this.#terminal.columns();
     const rows = this.#terminal.rows();
-    const targetWidth = Math.floor(columns * widthPercentage / 100);
+    const targetWidth = Math.floor((columns * widthPercentage) / 100);
 
     const meta = await new Bun.Image(imageBuffer).metadata();
     const aspectRatio = meta.height! / meta.width!;
@@ -139,51 +127,44 @@ export default class ImageRenderer {
 
           if (a === 0 && a2 === 0) {
             if (bg) {
-              line += backgroundColorStart(
-                bg.r,
-                bg.g,
-                bg.b,
-              ) + " " + BACKGROUND_COLOR_END;
+              line += backgroundColorStart(bg.r, bg.g, bg.b) + " " + BACKGROUND_COLOR_END;
             } else {
               line += " ";
             }
           } else if (a === 0) {
             if (bg) {
-              line += backgroundColorStart(
-                bg.r,
-                bg.g,
-                bg.b,
-              ) + foregroundColorStart(r2, g2, b2) + "▄" +
-                FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
+              line +=
+                backgroundColorStart(bg.r, bg.g, bg.b) +
+                foregroundColorStart(r2, g2, b2) +
+                "▄" +
+                FOREGROUND_COLOR_END +
+                BACKGROUND_COLOR_END;
             } else {
-              line += foregroundColorStart(r2, g2, b2) + "▄" +
-                FOREGROUND_COLOR_END;
+              line += foregroundColorStart(r2, g2, b2) + "▄" + FOREGROUND_COLOR_END;
             }
           } else if (a2 === 0) {
             if (bg) {
-              line += backgroundColorStart(
-                bg.r,
-                bg.g,
-                bg.b,
-              ) + foregroundColorStart(r, g, b) + "▀" +
-                FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
+              line +=
+                backgroundColorStart(bg.r, bg.g, bg.b) +
+                foregroundColorStart(r, g, b) +
+                "▀" +
+                FOREGROUND_COLOR_END +
+                BACKGROUND_COLOR_END;
             } else {
-              line += foregroundColorStart(r, g, b) + "▀" +
-                FOREGROUND_COLOR_END;
+              line += foregroundColorStart(r, g, b) + "▀" + FOREGROUND_COLOR_END;
             }
           } else {
-            line += backgroundColorStart(r, g, b) +
-              foregroundColorStart(r2, g2, b2) + "▄" +
-              FOREGROUND_COLOR_END + BACKGROUND_COLOR_END;
+            line +=
+              backgroundColorStart(r, g, b) +
+              foregroundColorStart(r2, g2, b2) +
+              "▄" +
+              FOREGROUND_COLOR_END +
+              BACKGROUND_COLOR_END;
           }
         } else {
           if (a === 0) {
             if (bg) {
-              line += backgroundColorStart(
-                bg.r,
-                bg.g,
-                bg.b,
-              ) + " " + BACKGROUND_COLOR_END;
+              line += backgroundColorStart(bg.r, bg.g, bg.b) + " " + BACKGROUND_COLOR_END;
             } else {
               line += " ";
             }

@@ -1,16 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../../src/api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../../src/api/service/ServiceProvider.ts";
 import DefaultServiceProviderRegistry from "../../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
 import type Context from "../../../src/api/Context.ts";
 import type CLIConfig from "../../../src/api/CLIConfig.ts";
 
-function getServiceProvider(
-  serviceId: string,
-  servicePriority: number,
-): ServiceProvider {
+function getServiceProvider(serviceId: string, servicePriority: number): ServiceProvider {
   return {
     serviceId,
     servicePriority,

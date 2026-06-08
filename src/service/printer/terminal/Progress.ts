@@ -6,10 +6,7 @@ const RATE_SMOOTHING_FACTOR = 0.005;
 export { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
 import { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
 
-const STYLE_CHARS: Record<
-  ProgressStyle,
-  { complete: string; remaining: string }
-> = {
+const STYLE_CHARS: Record<ProgressStyle, { complete: string; remaining: string }> = {
   [ProgressStyle.STROKE]: { complete: "=", remaining: "-" },
   [ProgressStyle.FILL]: { complete: "▰", remaining: "▱" },
 };
@@ -44,12 +41,7 @@ export default class Progress {
     this.#styler = styler;
   }
 
-  public add(
-    units: string,
-    message: string,
-    total: number,
-    current: number,
-  ): number {
+  public add(units: string, message: string, total: number, current: number): number {
     if (total < 0) {
       total = 100;
     }
@@ -86,13 +78,11 @@ export default class Progress {
     if (bar.lastMillis === undefined) {
       bar.rate = ((current - bar.current) * 1000) / (now - bar.startMillis!);
     } else {
-      let currentRate = ((current - bar.current) * 1000) /
-        (now - bar.lastMillis!);
+      let currentRate = ((current - bar.current) * 1000) / (now - bar.lastMillis!);
       if (!isFinite(currentRate)) {
         currentRate = 0;
       }
-      bar.rate = (currentRate * RATE_SMOOTHING_FACTOR) +
-        (bar.rate! * (1 - RATE_SMOOTHING_FACTOR));
+      bar.rate = currentRate * RATE_SMOOTHING_FACTOR + bar.rate! * (1 - RATE_SMOOTHING_FACTOR);
     }
     bar.lastMillis = now;
   }
@@ -108,7 +98,7 @@ export default class Progress {
     if (current > bar.total) {
       current = bar.total;
     }
-    if ((current === bar.total) && (bar.endMillis === undefined)) {
+    if (current === bar.total && bar.endMillis === undefined) {
       bar.endMillis = Date.now();
     }
 
@@ -189,7 +179,7 @@ export default class Progress {
     const now = Date.now();
 
     // force render after one second to update newly calculated eta
-    if ((now - this.#lastRenderTime >= 1000) && !this.#isDirty) {
+    if (now - this.#lastRenderTime >= 1000 && !this.#isDirty) {
       this.#bars.forEach((bar) => this.#updateRate(bar, bar.current));
       this.#isDirty = true;
     }
@@ -204,69 +194,80 @@ export default class Progress {
     const consoleWidth = this.#terminal.columns();
     const lines: Array<string> = [];
 
-    const barInfo: Array<
-      {
-        name: string;
-        prefix: string;
-        available: number;
-        suffix: string;
-        bar: Bar;
-      }
-    > = [];
+    const barInfo: Array<{
+      name: string;
+      prefix: string;
+      available: number;
+      suffix: string;
+      bar: Bar;
+    }> = [];
 
     this.#bars.forEach((bar) => {
-      const name = `${this.#styler.colorText(bar.name, this.#valColor)}${
-        this.#styler.colorText(":", this.#labColor)
-      }`;
+      const name = `${this.#styler.colorText(bar.name, this.#valColor)}${this.#styler.colorText(
+        ":",
+        this.#labColor,
+      )}`;
       const prefix = `${this.#styler.colorText("[", this.#labColor)}`;
       let visibleWidth = 1;
       const percentString = ((bar.current / bar.total) * 100).toFixed(2);
-      const percent = this.#styler.colorText(
-        percentString,
-        this.#valColor,
-      ) + this.#styler.colorText("%,", this.#labColor);
+      const percent =
+        this.#styler.colorText(percentString, this.#valColor) +
+        this.#styler.colorText("%,", this.#labColor);
       visibleWidth += percentString.length + 1;
 
-      const rate = `${
-        this.#styler.colorText(
-          (bar.rate === undefined) ? "-" : bar.rate.toFixed(2) + "",
-          this.#valColor,
-        )
-      }`;
+      const rateText = bar.rate === undefined ? "-" : bar.rate.toFixed(2) + "";
+      const rate = `${this.#styler.colorText(rateText, this.#valColor)}`;
 
       let suffix = `${this.#styler.colorText("]", this.#labColor)} ${percent} `;
       visibleWidth += 3;
       if (bar.current === bar.total) {
         const taken = this.#formatTime(bar.endMillis! - bar.startMillis!);
         const totalString = bar.total + "";
-        suffix += `${this.#styler.colorText(totalString, this.#valColor)}${
-          this.#styler.colorText(bar.units + ", rate:", this.#labColor)
-        } ${rate}${
-          this.#styler.colorText(
-            bar.units + "/s, time taken:",
-            this.#labColor,
-          )
-        } ${taken}`;
-        visibleWidth + totalString.length + bar.units.length + 7 + 1 +
-          rate.length + bar.units.length + 15 + 1 + taken.length;
+        suffix += `${this.#styler.colorText(totalString, this.#valColor)}${this.#styler.colorText(
+          bar.units + ", rate:",
+          this.#labColor,
+        )} ${rate}${this.#styler.colorText(
+          bar.units + "/s, time taken:",
+          this.#labColor,
+        )} ${taken}`;
+        visibleWidth +=
+          totalString.length +
+          bar.units.length +
+          7 +
+          1 +
+          rateText.length +
+          bar.units.length +
+          15 +
+          1 +
+          taken.length;
       } else {
-        const remaining = ((bar.rate === undefined) || (bar.rate === 0))
-          ? "-"
-          : this.#formatTime(((bar.total - bar.current) / bar.rate) * 1000);
+        const remaining =
+          bar.rate === undefined || bar.rate === 0
+            ? "-"
+            : this.#formatTime(((bar.total - bar.current) / bar.rate) * 1000);
         const currentString = bar.current + "";
         const totalString = bar.total + "";
-        suffix += `${this.#styler.colorText(currentString, this.#valColor)}${
-          this.#styler.colorText("/", this.#labColor)
-        }${this.#styler.colorText(totalString, this.#valColor)}${
-          this.#styler.colorText(bar.units + ", rate:", this.#labColor)
-        } ${rate}${
-          this.#styler.colorText(
-            bar.units + "/s, time remaining:",
-            this.#labColor,
-          )
-        } ${remaining}`;
-        visibleWidth + currentString.length + 1 + totalString.length +
-          bar.units.length + 7 + 1 + rate.length + bar.units.length + 19 + 1 +
+        suffix += `${this.#styler.colorText(currentString, this.#valColor)}${this.#styler.colorText(
+          "/",
+          this.#labColor,
+        )}${this.#styler.colorText(totalString, this.#valColor)}${this.#styler.colorText(
+          bar.units + ", rate:",
+          this.#labColor,
+        )} ${rate}${this.#styler.colorText(
+          bar.units + "/s, time remaining:",
+          this.#labColor,
+        )} ${remaining}`;
+        visibleWidth +=
+          currentString.length +
+          1 +
+          totalString.length +
+          bar.units.length +
+          7 +
+          1 +
+          rateText.length +
+          bar.units.length +
+          19 +
+          1 +
           remaining.length;
       }
       let available = consoleWidth - visibleWidth;
@@ -291,9 +292,7 @@ export default class Progress {
     totalLength = Math.min(50, totalLength);
 
     barInfo.forEach((barInfo) => {
-      const completeLength = Math.floor(
-        totalLength * barInfo.bar.current / barInfo.bar.total,
-      );
+      const completeLength = Math.floor((totalLength * barInfo.bar.current) / barInfo.bar.total);
       const chars = STYLE_CHARS[this.#style];
       const complete = this.#styler.colorText(
         chars.complete.repeat(completeLength),
@@ -351,40 +350,50 @@ export default class Progress {
   #formatTime(millis: number): string {
     let sec = millis / 1000;
     if (sec < 60) {
-      return `${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("s", this.#labColor)
-      }`;
+      return `${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "s",
+        this.#labColor,
+      )}`;
     }
     let min = Math.floor(sec / 60);
     sec %= 60;
     if (min < 60) {
-      return `${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("m", this.#labColor)
-      } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("s", this.#labColor)
-      }`;
+      return `${this.#styler.colorText(min.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "m",
+        this.#labColor,
+      )} ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "s",
+        this.#labColor,
+      )}`;
     }
     let hour = Math.floor(min / 60);
     min %= 60;
     if (hour < 24) {
-      return `${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("h", this.#labColor)
-      } ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("m", this.#labColor)
-      } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
-        this.#styler.colorText("s", this.#labColor)
-      }`;
+      return `${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "h",
+        this.#labColor,
+      )} ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "m",
+        this.#labColor,
+      )} ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${this.#styler.colorText(
+        "s",
+        this.#labColor,
+      )}`;
     }
     const day = Math.floor(hour / 24);
     hour %= 24;
-    return `${this.#styler.colorText(day.toFixed(0), this.#valColor)}${
-      this.#styler.colorText("d", this.#labColor)
-    } ${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${
-      this.#styler.colorText("h", this.#labColor)
-    } ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${
-      this.#styler.colorText("m", this.#labColor)
-    } ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${
-      this.#styler.colorText("s", this.#labColor)
-    }`;
+    return `${this.#styler.colorText(day.toFixed(0), this.#valColor)}${this.#styler.colorText(
+      "d",
+      this.#labColor,
+    )} ${this.#styler.colorText(hour.toFixed(0), this.#valColor)}${this.#styler.colorText(
+      "h",
+      this.#labColor,
+    )} ${this.#styler.colorText(min.toFixed(0), this.#valColor)}${this.#styler.colorText(
+      "m",
+      this.#labColor,
+    )} ${this.#styler.colorText(sec.toFixed(0), this.#valColor)}${this.#styler.colorText(
+      "s",
+      this.#labColor,
+    )}`;
   }
 }

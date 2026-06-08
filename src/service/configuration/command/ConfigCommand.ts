@@ -30,10 +30,7 @@ export default class ConfigCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(
-    _context: Context,
-    argumentValue: ArgumentSingleValueType,
-  ): Promise<void> {
+  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
     const configLocation = argumentValue as string;
 
     this.#configurationServiceProvider.setConfigLocation(configLocation);

@@ -15,10 +15,7 @@ function getMockPrompterService(): PrompterService {
 
 describe("PrompterServiceProvider tests", () => {
   test("PrompterServiceProvider has correct serviceId", () => {
-    const provider = new PrompterServiceProvider(
-      100,
-      getMockPrompterService(),
-    );
+    const provider = new PrompterServiceProvider(100, getMockPrompterService());
 
     expect(provider.serviceId).toEqual(PROMPTER_SERVICE_ID);
   });
@@ -36,10 +33,7 @@ describe("PrompterServiceProvider tests", () => {
   });
 
   test("PrompterServiceProvider initService resolves", async () => {
-    const provider = new PrompterServiceProvider(
-      100,
-      getMockPrompterService(),
-    );
+    const provider = new PrompterServiceProvider(100, getMockPrompterService());
     const context = new DefaultContext(getCLIConfig());
 
     await expect(provider.initService(context)).resolves.toBeUndefined();
