@@ -4,9 +4,7 @@ import type GlobalCommand from "../../api/command/GlobalCommand.ts";
 import type Argument from "../../api/argument/Argument.ts";
 import type GroupCommand from "../../api/command/GroupCommand.ts";
 import type SubCommand from "../../api/command/SubCommand.ts";
-import type {
-  ArgumentSingleValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
+import type { ArgumentSingleValueType } from "../../api/argument/ArgumentValueTypes.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
@@ -49,7 +47,7 @@ function validateValueType(
       }
       break;
     case ArgumentValueTypeName.NUMBER:
-      if ((typeof value !== "number") || !Number.isFinite(value)) {
+      if (typeof value !== "number" || !Number.isFinite(value)) {
         throw new Error(
           `Specified ${
             isDefaultValue ? "default" : isRangeValue ? "range" : "allowable"
@@ -58,7 +56,7 @@ function validateValueType(
       }
       break;
     case ArgumentValueTypeName.INTEGER:
-      if ((typeof value !== "number") || !Number.isInteger(value)) {
+      if (typeof value !== "number" || !Number.isInteger(value)) {
         throw new Error(
           `Specified ${
             isDefaultValue ? "default" : isRangeValue ? "range" : "allowable"
@@ -91,26 +89,25 @@ function isUppercaseAlphaNumericOrUnderscore(value: string): boolean {
 }
 
 function isNameLegal(name: string): boolean {
-  return (name.length > 0) && isAlphaNumericOrDashOrUnderscore(name) &&
-    (name[0] !== "-");
+  return name.length > 0 && isAlphaNumericOrDashOrUnderscore(name) && name[0] !== "-";
 }
 
 function isConfigurationKeyLegal(configurationKey: string): boolean {
-  return (configurationKey.length > 0) &&
+  return (
+    configurationKey.length > 0 &&
     isUppercaseAlphaNumericOrUnderscore(configurationKey) &&
-    !configurationKey[0]!.match(/[0-9]/);
+    !configurationKey[0]!.match(/[0-9]/)
+  );
 }
 
 function validateArgument(argument: Argument, name: string): void {
   if (
-    (argument.type !== ArgumentValueTypeName.NUMBER) &&
-    (argument.type !== ArgumentValueTypeName.INTEGER) &&
-    (argument.type !== ArgumentValueTypeName.STRING) &&
-    (argument.type !== ArgumentValueTypeName.BOOLEAN)
+    argument.type !== ArgumentValueTypeName.NUMBER &&
+    argument.type !== ArgumentValueTypeName.INTEGER &&
+    argument.type !== ArgumentValueTypeName.STRING &&
+    argument.type !== ArgumentValueTypeName.BOOLEAN
   ) {
-    throw new Error(
-      `Illegal type: '${argument.type}' for argument: '${name}'`,
-    );
+    throw new Error(`Illegal type: '${argument.type}' for argument: '${name}'`);
   }
   if (argument.allowableValues) {
     if (argument.type === ArgumentValueTypeName.BOOLEAN) {
@@ -123,10 +120,7 @@ function validateArgument(argument: Argument, name: string): void {
     });
   }
   if (argument.isCaseInsensitive !== undefined) {
-    if (
-      (argument.type === ArgumentValueTypeName.BOOLEAN) &&
-      (argument.isCaseInsensitive === false)
-    ) {
+    if (argument.type === ArgumentValueTypeName.BOOLEAN && argument.isCaseInsensitive === false) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' must always be case insensitive`,
       );
@@ -138,8 +132,8 @@ function validateArgument(argument: Argument, name: string): void {
   }
   if (argument.minValueInclusive !== undefined) {
     if (
-      (argument.type !== ArgumentValueTypeName.NUMBER) &&
-      (argument.type !== ArgumentValueTypeName.INTEGER)
+      argument.type !== ArgumentValueTypeName.NUMBER &&
+      argument.type !== ArgumentValueTypeName.INTEGER
     ) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with min value specified`,
@@ -150,18 +144,12 @@ function validateArgument(argument: Argument, name: string): void {
         `Illegal combination of allowable values and min value for argument: '${name}'`,
       );
     }
-    validateValueType(
-      argument.type,
-      argument.minValueInclusive,
-      name,
-      false,
-      true,
-    );
+    validateValueType(argument.type, argument.minValueInclusive, name, false, true);
   }
   if (argument.maxValueInclusive !== undefined) {
     if (
-      (argument.type !== ArgumentValueTypeName.NUMBER) &&
-      (argument.type !== ArgumentValueTypeName.INTEGER)
+      argument.type !== ArgumentValueTypeName.NUMBER &&
+      argument.type !== ArgumentValueTypeName.INTEGER
     ) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with max value specified`,
@@ -172,19 +160,11 @@ function validateArgument(argument: Argument, name: string): void {
         `Illegal combination of allowable values and max value for argument: '${name}'`,
       );
     }
-    validateValueType(
-      argument.type,
-      argument.maxValueInclusive,
-      name,
-      false,
-      true,
-    );
+    validateValueType(argument.type, argument.maxValueInclusive, name, false, true);
   }
 }
 
-function validateSubCommandArgument(
-  subCommandArgument: SubCommandArgument,
-): void {
+function validateSubCommandArgument(subCommandArgument: SubCommandArgument): void {
   if (!isNameLegal(subCommandArgument.name)) {
     throw new Error(`Illegal argument name: '${subCommandArgument.name}'`);
   }
@@ -236,8 +216,7 @@ export default class CommandValidator {
     }
     if (
       globalCommand.shortAlias &&
-      (globalCommand.shortAlias.length !== 1 ||
-        !isAlphaNumeric(globalCommand.shortAlias))
+      (globalCommand.shortAlias.length !== 1 || !isAlphaNumeric(globalCommand.shortAlias))
     ) {
       throw new Error(
         `Illegal short alias: '${globalCommand.shortAlias}' for global command: '${globalCommand.name}'`,
@@ -248,25 +227,16 @@ export default class CommandValidator {
       validateArgument(argument, globalCommand.name);
       if (argument.defaultValue) {
         const invalidArguments: Array<InvalidArgument> = [];
-        validateGlobalCommandArgumentValue(
-          globalCommand,
-          argument.defaultValue,
-          invalidArguments,
-        );
+        validateGlobalCommandArgumentValue(globalCommand, argument.defaultValue, invalidArguments);
         if (invalidArguments.length > 0) {
           throw new Error(
-            `Illegal default value for global command: '${globalCommand.name}' => ${
-              invalidArguments.map((invalidArgument) =>
-                getInvalidArgumentString(invalidArgument, true)
-              ).join(", ")
-            }`,
+            `Illegal default value for global command: '${globalCommand.name}' => ${invalidArguments
+              .map((invalidArgument) => getInvalidArgumentString(invalidArgument, true))
+              .join(", ")}`,
           );
         }
       }
-      this.#validateGlobalCommandArgumentConfigurationKey(
-        globalCommand,
-        argument,
-      );
+      this.#validateGlobalCommandArgumentConfigurationKey(globalCommand, argument);
     }
   }
 
@@ -289,9 +259,7 @@ export default class CommandValidator {
       throw new Error(`Illegal group command name: '${groupCommand.name}'`);
     }
     if (groupCommand.memberSubCommands.length === 0) {
-      throw new Error(
-        `Group command: '${groupCommand.name}' has no member sub-commands`,
-      );
+      throw new Error(`Group command: '${groupCommand.name}' has no member sub-commands`);
     }
     const subCommandNames: Array<string> = [];
     groupCommand.memberSubCommands.forEach((subCommand) => {
@@ -378,16 +346,14 @@ export default class CommandValidator {
         argumentNames.push(positional.name);
 
         if (
-          (i < subCommand.positionals.length - 1) &&
+          i < subCommand.positionals.length - 1 &&
           (positional.isVarargOptional || positional.isVarargMultiple)
         ) {
           throw new Error(
             `Positional: '${positional.name}' for the command: '${subCommand.name}' is defined as a vararg but it is not the last positional argument`,
           );
         }
-        this.#validateSubCommandArgumentConfigurationKey(subCommand, [
-          positional,
-        ]);
+        this.#validateSubCommandArgumentConfigurationKey(subCommand, [positional]);
       }
     }
   }
@@ -399,12 +365,10 @@ export default class CommandValidator {
     const argument = argumentAncestry[argumentAncestry.length - 1]!;
     if (command.enableConfiguration === true) {
       if (
-        (argument.configurationKey !== undefined) &&
+        argument.configurationKey !== undefined &&
         !isConfigurationKeyLegal(argument.configurationKey)
       ) {
-        throw new Error(
-          `Illegal configuration key: '${argument.configurationKey}'`,
-        );
+        throw new Error(`Illegal configuration key: '${argument.configurationKey}'`);
       }
       const configurationKey = getSubCommandArgumentConfigurationKey(
         this.#cliConfig,
@@ -433,12 +397,10 @@ export default class CommandValidator {
   ) {
     if (command.enableConfiguration === true) {
       if (
-        (globalCommandArgument.configurationKey !== undefined) &&
+        globalCommandArgument.configurationKey !== undefined &&
         !isConfigurationKeyLegal(globalCommandArgument.configurationKey)
       ) {
-        throw new Error(
-          `Illegal configuration key: '${globalCommandArgument.configurationKey}'`,
-        );
+        throw new Error(`Illegal configuration key: '${globalCommandArgument.configurationKey}'`);
       }
       const configurationKey = getGlobalCommandArgumentConfigurationKey(
         this.#cliConfig,
@@ -472,24 +434,16 @@ export default class CommandValidator {
       option.shortAlias &&
       (option.shortAlias.length !== 1 || !isAlphaNumeric(option.shortAlias))
     ) {
-      throw new Error(
-        `Illegal short alias: '${option.shortAlias}' for option: '${option.name}'`,
-      );
+      throw new Error(`Illegal short alias: '${option.shortAlias}' for option: '${option.name}'`);
     }
     if (isComplexOption(option)) {
-      this.#validateComplexOption(
-        subCommand,
-        option,
-        currentOptionPaths,
-        allOptionPaths,
-        [...argumentAncestry, option as unknown as SubCommandArgument],
-      );
+      this.#validateComplexOption(subCommand, option, currentOptionPaths, allOptionPaths, [
+        ...argumentAncestry,
+        option as unknown as SubCommandArgument,
+      ]);
     } else {
       this.#validateOption(option, currentOptionPaths, allOptionPaths);
-      this.#validateSubCommandArgumentConfigurationKey(subCommand, [
-        ...argumentAncestry,
-        option,
-      ]);
+      this.#validateSubCommandArgumentConfigurationKey(subCommand, [...argumentAncestry, option]);
     }
   }
 
@@ -501,25 +455,19 @@ export default class CommandValidator {
     validateSubCommandArgument(option);
     if (Array.isArray(option.defaultValue) && !option.isArray) {
       throw new Error(
-        `Illegal array default value: '${
-          option.defaultValue.join(",")
-        }' for non-array option: '${option.name}'`,
+        `Illegal array default value: '${option.defaultValue.join(
+          ",",
+        )}' for non-array option: '${option.name}'`,
       );
     }
     if (option.defaultValue) {
       const invalidArguments: Array<InvalidArgument> = [];
-      validateOptionValue(
-        option,
-        option.defaultValue,
-        invalidArguments,
-      );
+      validateOptionValue(option, option.defaultValue, invalidArguments);
       if (invalidArguments.length > 0) {
         throw new Error(
-          `Illegal default value for option: '${option.name}' => ${
-            invalidArguments.map((invalidArgument) =>
-              getInvalidArgumentString(invalidArgument, true)
-            ).join(", ")
-          }`,
+          `Illegal default value for option: '${option.name}' => ${invalidArguments
+            .map((invalidArgument) => getInvalidArgumentString(invalidArgument, true))
+            .join(", ")}`,
         );
       }
     }
@@ -562,32 +510,24 @@ export default class CommandValidator {
     }
     if (Array.isArray(complexOption.defaultValue) && !complexOption.isArray) {
       throw new Error(
-        `Illegal array default value: '${
-          JSON.stringify(complexOption.defaultValue)
-        }' for non-array option: '${complexOption.name}'`,
+        `Illegal array default value: '${JSON.stringify(
+          complexOption.defaultValue,
+        )}' for non-array option: '${complexOption.name}'`,
       );
     }
     if (complexOption.defaultValue) {
       const invalidArguments: Array<InvalidArgument> = [];
-      validateOptionValue(
-        complexOption,
-        complexOption.defaultValue,
-        invalidArguments,
-      );
+      validateOptionValue(complexOption, complexOption.defaultValue, invalidArguments);
       if (invalidArguments.length > 0) {
         throw new Error(
-          `Illegal default value for option: '${complexOption.name}' => ${
-            invalidArguments.map((invalidArgument) =>
-              getInvalidArgumentString(invalidArgument, true)
-            ).join(", ")
-          }`,
+          `Illegal default value for option: '${complexOption.name}' => ${invalidArguments
+            .map((invalidArgument) => getInvalidArgumentString(invalidArgument, true))
+            .join(", ")}`,
         );
       }
     }
     if (complexOption.properties.length === 0) {
-      throw new Error(
-        `Complex option: '${complexOption.name}' has no properties`,
-      );
+      throw new Error(`Complex option: '${complexOption.name}' has no properties`);
     }
     complexOption.properties.forEach((property) => {
       const newCurrentOptionPaths: Array<string> = [];
@@ -596,9 +536,7 @@ export default class CommandValidator {
       });
       if (property.shortAlias) {
         currentOptionPaths.forEach((currentOptionPath) => {
-          newCurrentOptionPaths.push(
-            `${currentOptionPath}.${property.shortAlias}`,
-          );
+          newCurrentOptionPaths.push(`${currentOptionPath}.${property.shortAlias}`);
         });
       }
       this.#validateOptionOrComplexOption(

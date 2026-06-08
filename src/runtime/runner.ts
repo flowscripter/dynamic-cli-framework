@@ -17,16 +17,9 @@ import {
   printParseResultError,
   printUnusedArgsWarning,
 } from "../util/runnerHelper.ts";
-import {
-  scanForGlobalModifierCommandClauses,
-  scanForNonModifierCommandClause,
-} from "./scanner.ts";
+import { scanForGlobalModifierCommandClauses, scanForNonModifierCommandClause } from "./scanner.ts";
 import type ServiceProviderRegistry from "./registry/ServiceProviderRegistry.ts";
-import {
-  parseGlobalCommandClause,
-  type ParseResult,
-  parseSubCommandClause,
-} from "./parser.ts";
+import { parseGlobalCommandClause, type ParseResult, parseSubCommandClause } from "./parser.ts";
 import type ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
 import type GroupCommand from "../api/command/GroupCommand.ts";
@@ -45,9 +38,7 @@ async function attemptPromptForMissingArguments(
   if (!context.doesServiceExist(ARGUMENT_PROMPTER_SERVICE_ID)) {
     return undefined;
   }
-  const service = context.getServiceById(
-    ARGUMENT_PROMPTER_SERVICE_ID,
-  ) as ArgumentPrompterService;
+  const service = context.getServiceById(ARGUMENT_PROMPTER_SERVICE_ID) as ArgumentPrompterService;
   try {
     const updated = await service.promptForMissingArguments(parseResult);
     if (updated.invalidArguments.length === 0) {
@@ -78,17 +69,12 @@ async function executeParsedCommand(
 ): Promise<RunResult> {
   try {
     if (parseResult.groupCommand !== undefined) {
-      logger.debug(
-        "Executing group command with name: %s",
-        parseResult!.groupCommand!.name,
-      );
+      logger.debug("Executing group command with name: %s", parseResult!.groupCommand!.name);
       if (
         configurationServiceProvider?.keyValueServiceEnabled ||
         configurationServiceProvider?.secretServiceEnabled
       ) {
-        configurationServiceProvider.setCommandKeyValueScope(
-          parseResult!.groupCommand!.name,
-        );
+        configurationServiceProvider.setCommandKeyValueScope(parseResult!.groupCommand!.name);
       }
       await parseResult.groupCommand.execute(context);
       if (
@@ -109,9 +95,7 @@ async function executeParsedCommand(
       configurationServiceProvider?.keyValueServiceEnabled ||
       configurationServiceProvider?.secretServiceEnabled
     ) {
-      configurationServiceProvider.setCommandKeyValueScope(
-        parseResult.command.name,
-      );
+      configurationServiceProvider.setCommandKeyValueScope(parseResult.command.name);
     }
     if (isSubCommand(parseResult.command)) {
       await parseResult.command.execute(
@@ -134,12 +118,7 @@ async function executeParsedCommand(
     if ((err as Error).message === "Interrupted") {
       throw err;
     }
-    await printCommandExecutionError(
-      context,
-      parseResult,
-      err as Error,
-      isDefaultCommand,
-    );
+    await printCommandExecutionError(context, parseResult, err as Error, isDefaultCommand);
     return {
       runState: RunState.EXECUTION_ERROR,
       command: parseResult.command,
@@ -166,10 +145,7 @@ async function findAndExecuteGlobalModifierCommands(
   availableArgSequences: ReadonlyArray<ReadonlyArray<string>>,
   unusedArgSequences: Array<ReadonlyArray<string>>,
   globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand>,
-  globalModifierCommandsByShortAlias: ReadonlyMap<
-    string,
-    GlobalModifierCommand
-  >,
+  globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand>,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
@@ -177,9 +153,7 @@ async function findAndExecuteGlobalModifierCommands(
   const globalModifierCommandParseResults: Array<ParseResult> = [];
 
   // maintain a list of remaining GlobalModifierCommands to scan
-  let remainingGlobalModifierCommands = Array.from(
-    globalModifierCommandsByName.values(),
-  );
+  let remainingGlobalModifierCommands = Array.from(globalModifierCommandsByName.values());
   const scanResult = scanForGlobalModifierCommandClauses(
     availableArgSequences,
     globalModifierCommandsByName,
@@ -190,14 +164,10 @@ async function findAndExecuteGlobalModifierCommands(
   unusedArgSequences.push(...scanResult.unusedArgSequences);
 
   if (scanResult.globalModifierCommandClauses) {
-    for (
-      const globalModifierCommandClause of scanResult
-        .globalModifierCommandClauses
-    ) {
+    for (const globalModifierCommandClause of scanResult.globalModifierCommandClauses) {
       // parse and fast fail on error
       const defaultArgumentValues = configurationServiceProvider
-        ? await configurationServiceProvider
-          .getDefaultArgumentValues(
+        ? await configurationServiceProvider.getDefaultArgumentValues(
             context.cliConfig,
             globalModifierCommandClause.command,
           )
@@ -226,9 +196,9 @@ async function findAndExecuteGlobalModifierCommands(
 
       // remove current GlobalModifierCommand from the list which we will later continue to
       // scan for as a default command in the ConfigurationServiceProvider
-      remainingGlobalModifierCommands = remainingGlobalModifierCommands.filter((
-        command,
-      ) => command.name !== globalModifierCommandClause.command.name);
+      remainingGlobalModifierCommands = remainingGlobalModifierCommands.filter(
+        (command) => command.name !== globalModifierCommandClause.command.name,
+      );
     }
   }
 
@@ -236,16 +206,21 @@ async function findAndExecuteGlobalModifierCommands(
   for (const globalModifierCommand of remainingGlobalModifierCommands) {
     // if there is a config entry run this by default even though no arguments were provided on the command line
     const defaultArgumentValues = configurationServiceProvider
-      ? await configurationServiceProvider
-        .getDefaultArgumentValues(context.cliConfig, globalModifierCommand)
+      ? await configurationServiceProvider.getDefaultArgumentValues(
+          context.cliConfig,
+          globalModifierCommand,
+        )
       : undefined;
 
     if (defaultArgumentValues !== undefined) {
       // parse and fast fail on error
-      const parseResult = parseGlobalCommandClause({
-        command: globalModifierCommand,
-        potentialArgs: [],
-      }, defaultArgumentValues as PopulatedArgumentSingleValueType);
+      const parseResult = parseGlobalCommandClause(
+        {
+          command: globalModifierCommand,
+          potentialArgs: [],
+        },
+        defaultArgumentValues as PopulatedArgumentSingleValueType,
+      );
 
       if (parseResult.invalidArguments.length > 0) {
         await printParseResultError(context, parseResult);
@@ -262,9 +237,10 @@ async function findAndExecuteGlobalModifierCommands(
   }
 
   // execute GlobalModifierCommand clauses in executePriority order
-  globalModifierCommandParseResults.sort((a, b) =>
-    (b.command as GlobalModifierCommand).executePriority -
-    (a.command as GlobalModifierCommand).executePriority
+  globalModifierCommandParseResults.sort(
+    (a, b) =>
+      (b.command as GlobalModifierCommand).executePriority -
+      (a.command as GlobalModifierCommand).executePriority,
   );
   for (const parseResult of globalModifierCommandParseResults) {
     // execute and fast fail on error
@@ -315,8 +291,7 @@ async function findAndExecuteNonModifierCommand(
 
   if (scanResult.nonModifierCommandClause) {
     const defaultArgumentValues = configurationServiceProvider
-      ? await configurationServiceProvider
-        .getDefaultArgumentValues(
+      ? await configurationServiceProvider.getDefaultArgumentValues(
           context.cliConfig,
           scanResult.nonModifierCommandClause.command,
         )
@@ -335,10 +310,7 @@ async function findAndExecuteNonModifierCommand(
     }
 
     if (parseResult.invalidArguments.length > 0) {
-      const prompted = await attemptPromptForMissingArguments(
-        parseResult,
-        context,
-      );
+      const prompted = await attemptPromptForMissingArguments(parseResult, context);
       if (prompted) {
         parseResult = prompted;
       } else {
@@ -360,28 +332,33 @@ async function findAndExecuteNonModifierCommand(
     for (const nonModifierCommand of nonModifierCommandsByName.values()) {
       // if there is a config entry run this by default even though no arguments were provided on the command line
       const defaultArgumentValues = configurationServiceProvider
-        ? await configurationServiceProvider
-          .getDefaultArgumentValues(context.cliConfig, nonModifierCommand)
+        ? await configurationServiceProvider.getDefaultArgumentValues(
+            context.cliConfig,
+            nonModifierCommand,
+          )
         : undefined;
 
       if (defaultArgumentValues !== undefined) {
         if (isGlobalCommand(nonModifierCommand)) {
-          parseResult = parseGlobalCommandClause({
-            command: nonModifierCommand,
-            potentialArgs: [],
-          }, defaultArgumentValues as PopulatedArgumentSingleValueType);
+          parseResult = parseGlobalCommandClause(
+            {
+              command: nonModifierCommand,
+              potentialArgs: [],
+            },
+            defaultArgumentValues as PopulatedArgumentSingleValueType,
+          );
         } else {
-          parseResult = parseSubCommandClause({
-            command: nonModifierCommand,
-            potentialArgs: [],
-          }, defaultArgumentValues as PopulatedArgumentValues);
+          parseResult = parseSubCommandClause(
+            {
+              command: nonModifierCommand,
+              potentialArgs: [],
+            },
+            defaultArgumentValues as PopulatedArgumentValues,
+          );
         }
 
         if (parseResult.invalidArguments.length > 0) {
-          const prompted = await attemptPromptForMissingArguments(
-            parseResult,
-            context,
-          );
+          const prompted = await attemptPromptForMissingArguments(parseResult, context);
           if (prompted) {
             parseResult = prompted;
           } else {
@@ -409,11 +386,7 @@ async function findAndExecuteNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(
-    parseResult,
-    context,
-    configurationServiceProvider,
-  );
+  return executeParsedCommand(parseResult, context, configurationServiceProvider);
 }
 
 /**
@@ -433,8 +406,10 @@ async function findAndExecuteDefaultNonModifierCommand(
   context: Context,
 ): Promise<RunResult | undefined> {
   const defaultArgumentValues = configurationServiceProvider
-    ? await configurationServiceProvider
-      .getDefaultArgumentValues(context.cliConfig, defaultNonModifierCommand)
+    ? await configurationServiceProvider.getDefaultArgumentValues(
+        context.cliConfig,
+        defaultNonModifierCommand,
+      )
     : undefined;
   const isGlobal = isGlobalCommand(defaultNonModifierCommand);
   let parseResult: ParseResult | undefined;
@@ -450,15 +425,21 @@ async function findAndExecuteDefaultNonModifierCommand(
       continue;
     }
     if (isGlobal) {
-      parseResult = parseGlobalCommandClause({
-        command: defaultNonModifierCommand,
-        potentialArgs: [...argSequence],
-      }, defaultArgumentValues as PopulatedArgumentSingleValueType);
+      parseResult = parseGlobalCommandClause(
+        {
+          command: defaultNonModifierCommand,
+          potentialArgs: [...argSequence],
+        },
+        defaultArgumentValues as PopulatedArgumentSingleValueType,
+      );
     } else {
-      parseResult = parseSubCommandClause({
-        command: defaultNonModifierCommand,
-        potentialArgs: [...argSequence],
-      }, defaultArgumentValues as PopulatedArgumentValues);
+      parseResult = parseSubCommandClause(
+        {
+          command: defaultNonModifierCommand,
+          potentialArgs: [...argSequence],
+        },
+        defaultArgumentValues as PopulatedArgumentValues,
+      );
     }
 
     // add any unused args back to the list of still unused args
@@ -476,27 +457,29 @@ async function findAndExecuteDefaultNonModifierCommand(
   // if there are no arguments for the command or there is a config entry
   let commandHasNoArgs;
   if (isGlobal) {
-    commandHasNoArgs =
-      (defaultNonModifierCommand as GlobalCommand).argument === undefined;
+    commandHasNoArgs = (defaultNonModifierCommand as GlobalCommand).argument === undefined;
   } else {
     commandHasNoArgs =
-      ((defaultNonModifierCommand as SubCommand).options.length === 0) &&
-      ((defaultNonModifierCommand as SubCommand).positionals.length === 0);
+      (defaultNonModifierCommand as SubCommand).options.length === 0 &&
+      (defaultNonModifierCommand as SubCommand).positionals.length === 0;
   }
-  if (
-    (parseResult === undefined) &&
-    (commandHasNoArgs || (defaultArgumentValues !== undefined))
-  ) {
+  if (parseResult === undefined && (commandHasNoArgs || defaultArgumentValues !== undefined)) {
     if (isGlobal) {
-      parseResult = parseGlobalCommandClause({
-        command: defaultNonModifierCommand,
-        potentialArgs: [],
-      }, defaultArgumentValues as PopulatedArgumentSingleValueType);
+      parseResult = parseGlobalCommandClause(
+        {
+          command: defaultNonModifierCommand,
+          potentialArgs: [],
+        },
+        defaultArgumentValues as PopulatedArgumentSingleValueType,
+      );
     } else {
-      parseResult = parseSubCommandClause({
-        command: defaultNonModifierCommand,
-        potentialArgs: [],
-      }, defaultArgumentValues as PopulatedArgumentValues);
+      parseResult = parseSubCommandClause(
+        {
+          command: defaultNonModifierCommand,
+          potentialArgs: [],
+        },
+        defaultArgumentValues as PopulatedArgumentValues,
+      );
     }
 
     if (parseResult.invalidArguments.length > 0) {
@@ -507,10 +490,7 @@ async function findAndExecuteDefaultNonModifierCommand(
 
   // if there were invalid arguments, attempt prompting before treating as error
   if (lastErroneousParseResult) {
-    const prompted = await attemptPromptForMissingArguments(
-      lastErroneousParseResult,
-      context,
-    );
+    const prompted = await attemptPromptForMissingArguments(lastErroneousParseResult, context);
     if (prompted) {
       parseResult = prompted;
       lastErroneousParseResult = undefined;
@@ -534,12 +514,7 @@ async function findAndExecuteDefaultNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(
-    parseResult,
-    context,
-    configurationServiceProvider,
-    true,
-  );
+  return executeParsedCommand(parseResult, context, configurationServiceProvider, true);
 }
 
 /**
@@ -618,10 +593,7 @@ export async function run(
   context: Context,
   defaultCommand?: Command,
 ): Promise<RunResult> {
-  if (
-    defaultCommand && !isSubCommand(defaultCommand) &&
-    !isGlobalCommand(defaultCommand)
-  ) {
+  if (defaultCommand && !isSubCommand(defaultCommand) && !isGlobalCommand(defaultCommand)) {
     throw new Error(
       "If a default command is provided, if must be a global command or sub-command!",
     );
@@ -635,12 +607,10 @@ export async function run(
   // for each ServiceProvider (they are returned in servicePriority order)
   for (const serviceProvider of serviceProviderRegistry.getServiceProviders()) {
     // using the GlobalModifierCommands instances provided by the ServiceProvider...
-    const globalModifierCommandsByName = commandRegistry
-      .getGlobalModifierCommandsByNameProvidedByService(
-        serviceProvider.serviceId,
-      );
-    const globalModifierCommandsByShortAlias = commandRegistry
-      .getGlobalModifierCommandsByShortAliasProvidedByService(
+    const globalModifierCommandsByName =
+      commandRegistry.getGlobalModifierCommandsByNameProvidedByService(serviceProvider.serviceId);
+    const globalModifierCommandsByShortAlias =
+      commandRegistry.getGlobalModifierCommandsByShortAliasProvidedByService(
         serviceProvider.serviceId,
       );
 
@@ -674,9 +644,7 @@ export async function run(
       configurationServiceProvider?.keyValueServiceEnabled ||
       configurationServiceProvider?.secretServiceEnabled
     ) {
-      configurationServiceProvider.setServiceKeyValueScope(
-        serviceProvider.serviceId,
-      );
+      configurationServiceProvider.setServiceKeyValueScope(serviceProvider.serviceId);
     }
 
     await serviceProvider.initService(context);
@@ -689,10 +657,10 @@ export async function run(
   }
 
   // using the GlobalModifierCommands instances which are NOT provided by a ServiceProvider...
-  const globalModifierCommandsByName = commandRegistry
-    .getGlobalModifierCommandsByNameNotProvidedByService();
-  const globalModifierCommandsByShortAlias = commandRegistry
-    .getGlobalModifierCommandsByShortAliasNotProvidedByService();
+  const globalModifierCommandsByName =
+    commandRegistry.getGlobalModifierCommandsByNameNotProvidedByService();
+  const globalModifierCommandsByShortAlias =
+    commandRegistry.getGlobalModifierCommandsByShortAliasNotProvidedByService();
 
   // if there are GlobalModifierCommands NOT provided by the ServiceProvider...
   if (globalModifierCommandsByName.size > 0) {
@@ -717,13 +685,10 @@ export async function run(
   }
 
   // using the non-modifier Command instances...
-  const nonModifierCommandsByName = commandRegistry
-    .getNonModifierCommandsByName();
-  const globalCommandsByShortAlias = commandRegistry
-    .getGlobalCommandsByShortAlias();
+  const nonModifierCommandsByName = commandRegistry.getNonModifierCommandsByName();
+  const globalCommandsByShortAlias = commandRegistry.getGlobalCommandsByShortAlias();
   // and any group/member instance combinations...
-  const groupAndMemberCommandByJoinedName = commandRegistry
-    .getGroupAndMemberCommandsByJoinedName();
+  const groupAndMemberCommandByJoinedName = commandRegistry.getGroupAndMemberCommandsByJoinedName();
 
   // ...scan arguments, parse a resulting clause and execute a resulting parsed non-modifier Command
   let runResult = await findAndExecuteNonModifierCommand(
@@ -764,11 +729,7 @@ export async function run(
 
   // give up if we haven't successfully parsed a non-modifier Command by now
   if (availableArgs.length > 0) {
-    await printNoCommandRecognisedError(
-      context,
-      commandRegistry,
-      availableArgs.flat(),
-    );
+    await printNoCommandRecognisedError(context, commandRegistry, availableArgs.flat());
   } else {
     await printNoCommandSpecifiedError(context);
   }

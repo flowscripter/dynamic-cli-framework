@@ -34,9 +34,9 @@ export function getGlobalModifierCommand(
     executePriority: 1,
     argument: withArg
       ? {
-        type: ArgumentValueTypeName.STRING,
-        isOptional: !mandatoryArg,
-      }
+          type: ArgumentValueTypeName.STRING,
+          isOptional: !mandatoryArg,
+        }
       : undefined,
     execute: async (): Promise<void> => {},
   };
@@ -71,10 +71,10 @@ export function getGlobalCommand(
     enableConfiguration,
     argument: withArg
       ? {
-        type: ArgumentValueTypeName.STRING,
-        isOptional: !mandatoryArg,
-        configurationKey,
-      }
+          type: ArgumentValueTypeName.STRING,
+          isOptional: !mandatoryArg,
+          configurationKey,
+        }
       : undefined,
     execute: async (): Promise<void> => {},
   };
@@ -96,15 +96,19 @@ export function getGlobalCommandWithShortAlias(
 export function getSubCommandWithOptionAndPositional(): SubCommand {
   return {
     name: "subCommand",
-    options: [{
-      name: "goo",
-      shortAlias: "g",
-      type: ArgumentValueTypeName.STRING,
-    }],
-    positionals: [{
-      name: "foo",
-      type: ArgumentValueTypeName.STRING,
-    }],
+    options: [
+      {
+        name: "goo",
+        shortAlias: "g",
+        type: ArgumentValueTypeName.STRING,
+      },
+    ],
+    positionals: [
+      {
+        name: "foo",
+        type: ArgumentValueTypeName.STRING,
+      },
+    ],
     execute: async (): Promise<void> => {},
   };
 }
@@ -139,14 +143,16 @@ export function getSubCommandWithOption(
     description: "good",
     enableConfiguration,
     options: withArg
-      ? [{
-        name: "foo",
-        type,
-        isOptional: !mandatoryArg,
-        isArray: multiple,
-        defaultValue,
-        configurationKey,
-      }]
+      ? [
+          {
+            name: "foo",
+            type,
+            isOptional: !mandatoryArg,
+            isArray: multiple,
+            defaultValue,
+            configurationKey,
+          },
+        ]
       : [],
     positionals: [],
     execute: async (): Promise<void> => {},
@@ -166,13 +172,15 @@ export function getSubCommandWithPositional(
     description: "good",
     enableConfiguration,
     options: [],
-    positionals: [{
-      name: "foo",
-      type,
-      isVarargOptional: optional,
-      isVarargMultiple: multiple,
-      configurationKey,
-    }],
+    positionals: [
+      {
+        name: "foo",
+        type,
+        isVarargOptional: optional,
+        isVarargMultiple: multiple,
+        configurationKey,
+      },
+    ],
     execute: async (): Promise<void> => {},
   };
 }
@@ -185,44 +193,55 @@ export function getSubCommandWithComplexOptions(
   return {
     name: "subCommand",
     enableConfiguration,
-    options: [{
-      name: "alpha",
-      shortAlias: "a",
-      type: ComplexValueTypeName.COMPLEX,
-      isArray: true,
-      properties: [{
-        name: "beta",
-        shortAlias: "b",
+    options: [
+      {
+        name: "alpha",
+        shortAlias: "a",
         type: ComplexValueTypeName.COMPLEX,
-        isArray: betaIsArray,
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-          isArray: true,
-        }],
-      }],
-    }, {
-      name: "epsilon",
-      shortAlias: "e",
-      type: ComplexValueTypeName.COMPLEX,
-      properties: [{
-        name: "gamma",
-        shortAlias: "g",
-        type: ArgumentValueTypeName.STRING,
-        configurationKey: "FOO_BAR_A",
-      }, {
-        name: "delta",
-        shortAlias: "d",
-        type: ArgumentValueTypeName.NUMBER,
-        configurationKey: "FOO_BAR_B",
-        isArray: deltaIsArray,
-      }],
-    }],
+        isArray: true,
+        properties: [
+          {
+            name: "beta",
+            shortAlias: "b",
+            type: ComplexValueTypeName.COMPLEX,
+            isArray: betaIsArray,
+            properties: [
+              {
+                name: "gamma",
+                shortAlias: "g",
+                type: ArgumentValueTypeName.STRING,
+              },
+              {
+                name: "delta",
+                shortAlias: "d",
+                type: ArgumentValueTypeName.NUMBER,
+                isArray: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "epsilon",
+        shortAlias: "e",
+        type: ComplexValueTypeName.COMPLEX,
+        properties: [
+          {
+            name: "gamma",
+            shortAlias: "g",
+            type: ArgumentValueTypeName.STRING,
+            configurationKey: "FOO_BAR_A",
+          },
+          {
+            name: "delta",
+            shortAlias: "d",
+            type: ArgumentValueTypeName.NUMBER,
+            configurationKey: "FOO_BAR_B",
+            isArray: deltaIsArray,
+          },
+        ],
+      },
+    ],
     positionals: [],
     execute: async (): Promise<void> => {},
   };

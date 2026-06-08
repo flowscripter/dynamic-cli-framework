@@ -10,19 +10,9 @@ import type { CompletionContext } from "./ShellHandler.ts";
 export default class PowerShellShellHandler implements ShellHandler {
   getDefaultConfigPath(): string {
     if (process.platform === "win32") {
-      return join(
-        homedir(),
-        "Documents",
-        "PowerShell",
-        "Microsoft.PowerShell_profile.ps1",
-      );
+      return join(homedir(), "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1");
     }
-    return join(
-      homedir(),
-      ".config",
-      "powershell",
-      "Microsoft.PowerShell_profile.ps1",
-    );
+    return join(homedir(), ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
   }
 
   getBootstrapScript(cliName: string): string {

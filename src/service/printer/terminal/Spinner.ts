@@ -1,29 +1,9 @@
 import type Styler from "../../../terminal/Styler.ts";
 import type Terminal from "../../../terminal/Terminal.ts";
 
-const BOX_FRAMES = [
-  "⠋",
-  "⠙",
-  "⠹",
-  "⠸",
-  "⠼",
-  "⠴",
-  "⠦",
-  "⠧",
-  "⠇",
-  "⠏",
-];
+const BOX_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-const STAR_FRAMES = [
-  "★",
-  "✶",
-  "✷",
-  "✹",
-  "✷",
-  "✶",
-  "★",
-  "✦",
-];
+const STAR_FRAMES = ["★", "✶", "✷", "✹", "✷", "✶", "★", "✦"];
 
 export { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
 import { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
@@ -56,9 +36,10 @@ export default class Spinner {
     await this.#terminal.clearLine();
     if (this.#message) {
       await this.#terminal.write(
-        `${
-          this.#styler.colorText(frames[this.#frameIndex]!, this.#spinColor)
-        } ${this.#styler.colorText(this.#message!, this.#msgColor)}`,
+        `${this.#styler.colorText(
+          frames[this.#frameIndex]!,
+          this.#spinColor,
+        )} ${this.#styler.colorText(this.#message!, this.#msgColor)}`,
       );
     } else {
       await this.#terminal.write(
@@ -102,7 +83,7 @@ export default class Spinner {
   }
 
   public resume(): void {
-    if ((!this.#isShown) || (this.#timer !== undefined)) {
+    if (!this.#isShown || this.#timer !== undefined) {
       return;
     }
     this.#timer = setInterval(async () => {

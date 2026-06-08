@@ -23,17 +23,12 @@ describe("LogLevelCommand tests", () => {
       new TtyTerminal(streamString.writeStream),
       new TtyStyler(3),
     );
-    const printerServiceProvider = new PrinterServiceProvider(
-      100,
-      printerService,
-    );
+    const printerServiceProvider = new PrinterServiceProvider(100, printerService);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
-    const shutdownService =
-      (await shutdownServiceProvider.getServiceInfo(cliConfig))
-        .service!;
+    const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
 
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
 
@@ -41,19 +36,11 @@ describe("LogLevelCommand tests", () => {
 
     const logLevelCommand = new LogLevelCommand(printerServiceProvider, 100);
 
-    expect(
-      printerServiceProvider.printerService!.getLevel(),
-    ).toEqual(
-      Level.INFO,
-    );
+    expect(printerServiceProvider.printerService!.getLevel()).toEqual(Level.INFO);
 
     await logLevelCommand.execute(context, "eRror");
 
-    expect(
-      printerServiceProvider.printerService!.getLevel(),
-    ).toEqual(
-      Level.ERROR,
-    );
+    expect(printerServiceProvider.printerService!.getLevel()).toEqual(Level.ERROR);
 
     await ShutdownServiceProvider.shutdown();
   });

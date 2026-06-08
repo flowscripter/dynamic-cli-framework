@@ -28,14 +28,8 @@ export default class DefaultCommandRegistry implements CommandRegistry {
   > = new Map();
   readonly #globalCommandsByName: Map<string, GlobalCommand> = new Map();
   readonly #globalCommandsByShortAlias: Map<string, GlobalCommand> = new Map();
-  readonly #globalModifierCommandsByName: Map<
-    string,
-    GlobalModifierCommand
-  > = new Map();
-  readonly #globalModifierCommandsByShortAlias: Map<
-    string,
-    GlobalModifierCommand
-  > = new Map();
+  readonly #globalModifierCommandsByName: Map<string, GlobalModifierCommand> = new Map();
+  readonly #globalModifierCommandsByShortAlias: Map<string, GlobalModifierCommand> = new Map();
   readonly #globalModifierCommandsByNameByServiceId: Map<
     string,
     Map<string, GlobalModifierCommand>
@@ -44,14 +38,10 @@ export default class DefaultCommandRegistry implements CommandRegistry {
     string,
     Map<string, GlobalModifierCommand>
   > = new Map();
-  readonly #globalModifierCommandsByNameWithoutServiceId: Map<
-    string,
-    GlobalModifierCommand
-  > = new Map();
-  readonly #globalModifierCommandsByShortAliasWithoutServiceId: Map<
-    string,
-    GlobalModifierCommand
-  > = new Map();
+  readonly #globalModifierCommandsByNameWithoutServiceId: Map<string, GlobalModifierCommand> =
+    new Map();
+  readonly #globalModifierCommandsByShortAliasWithoutServiceId: Map<string, GlobalModifierCommand> =
+    new Map();
   readonly #nonModifierCommandsByName: Map<string, Command> = new Map();
 
   /**
@@ -60,10 +50,7 @@ export default class DefaultCommandRegistry implements CommandRegistry {
    * @param commands optional list of {@link Command} instances.
    * @param commandValidator optional {@link CommandValidator} to use for all registered {@link Command} instances.
    */
-  public constructor(
-    commands?: ReadonlyArray<Command>,
-    commandValidator?: CommandValidator,
-  ) {
+  public constructor(commands?: ReadonlyArray<Command>, commandValidator?: CommandValidator) {
     this.#commandValidator = commandValidator;
     commands?.forEach((command) => this.addCommand(command));
   }
@@ -73,9 +60,7 @@ export default class DefaultCommandRegistry implements CommandRegistry {
    *
    * @throws {Error} if the name of the provided {@link GlobalCommand} is already registered.
    */
-  #validateGlobalCommandWithOtherGlobalCommands(
-    globalCommand: GlobalCommand,
-  ): void {
+  #validateGlobalCommandWithOtherGlobalCommands(globalCommand: GlobalCommand): void {
     if (this.#globalCommandsByName.has(globalCommand.name)) {
       throw new Error(
         `Command name: ${globalCommand.name} duplicates the name of an existing command`,
@@ -92,9 +77,7 @@ export default class DefaultCommandRegistry implements CommandRegistry {
           `Command name: ${globalCommand.shortAlias} duplicates the short alias of an existing command`,
         );
       }
-      if (
-        this.#globalModifierCommandsByShortAlias.has(globalCommand.shortAlias)
-      ) {
+      if (this.#globalModifierCommandsByShortAlias.has(globalCommand.shortAlias)) {
         throw new Error(
           `Command name: ${globalCommand.shortAlias} duplicates the short alias of an existing command`,
         );
@@ -107,18 +90,12 @@ export default class DefaultCommandRegistry implements CommandRegistry {
    *
    * @throws {Error} if the name of the provided {@link Command} is already registered.
    */
-  #validateNonGlobalCommandWithOtherNonGlobalCommands(
-    command: Command,
-  ): void {
+  #validateNonGlobalCommandWithOtherNonGlobalCommands(command: Command): void {
     if (this.#subCommandsByName.has(command.name)) {
-      throw new Error(
-        `Command name: ${command.name} duplicates the name of an existing command`,
-      );
+      throw new Error(`Command name: ${command.name} duplicates the name of an existing command`);
     }
     if (this.#groupCommandsByName.has(command.name)) {
-      throw new Error(
-        `Command name: ${command.name} duplicates the name of an existing command`,
-      );
+      throw new Error(`Command name: ${command.name} duplicates the name of an existing command`);
     }
   }
 
@@ -165,13 +142,10 @@ export default class DefaultCommandRegistry implements CommandRegistry {
       this.#nonModifierCommandsByName.set(command.name, command);
       const groupCommand = command as GroupCommand;
       groupCommand.memberSubCommands.forEach((command) => {
-        this.#groupCommandsAndMemberSubCommandsByName.set(
-          `${groupCommand.name}:${command.name}`,
-          {
-            groupCommand,
-            command,
-          },
-        );
+        this.#groupCommandsAndMemberSubCommandsByName.set(`${groupCommand.name}:${command.name}`, {
+          groupCommand,
+          command,
+        });
       });
       return;
     }
@@ -190,43 +164,24 @@ export default class DefaultCommandRegistry implements CommandRegistry {
       this.#validateGlobalCommandWithOtherGlobalCommands(command);
       this.#globalModifierCommandsByName.set(command.name, command);
       if (command.shortAlias !== undefined) {
-        this.#globalModifierCommandsByShortAlias.set(
-          command.shortAlias,
-          command,
-        );
+        this.#globalModifierCommandsByShortAlias.set(command.shortAlias, command);
       }
       if (serviceId === undefined) {
-        this.#globalModifierCommandsByNameWithoutServiceId.set(
-          command.name,
-          command,
-        );
+        this.#globalModifierCommandsByNameWithoutServiceId.set(command.name, command);
         if (command.shortAlias !== undefined) {
-          this.#globalModifierCommandsByShortAliasWithoutServiceId.set(
-            command.shortAlias,
-            command,
-          );
+          this.#globalModifierCommandsByShortAliasWithoutServiceId.set(command.shortAlias, command);
         }
       } else {
         if (!this.#globalModifierCommandsByNameByServiceId.has(serviceId)) {
-          this.#globalModifierCommandsByNameByServiceId.set(
-            serviceId,
-            new Map(),
-          );
+          this.#globalModifierCommandsByNameByServiceId.set(serviceId, new Map());
         }
-        this.#globalModifierCommandsByNameByServiceId.get(serviceId)!.set(
-          command.name,
-          command,
-        );
+        this.#globalModifierCommandsByNameByServiceId.get(serviceId)!.set(command.name, command);
         if (command.shortAlias !== undefined) {
-          if (
-            !this.#globalModifierCommandsByShortAliasByServiceId.has(serviceId)
-          ) {
-            this.#globalModifierCommandsByShortAliasByServiceId.set(
-              serviceId,
-              new Map(),
-            );
+          if (!this.#globalModifierCommandsByShortAliasByServiceId.has(serviceId)) {
+            this.#globalModifierCommandsByShortAliasByServiceId.set(serviceId, new Map());
           }
-          this.#globalModifierCommandsByShortAliasByServiceId.get(serviceId)!
+          this.#globalModifierCommandsByShortAliasByServiceId
+            .get(serviceId)!
             .set(command.shortAlias, command);
         }
       }
@@ -245,18 +200,14 @@ export default class DefaultCommandRegistry implements CommandRegistry {
   public getGroupCommandAndMemberSubCommandByJoinedName(
     groupAndMemberSubCommandName: string,
   ): { groupCommand: GroupCommand; command: SubCommand } | undefined {
-    return this.#groupCommandsAndMemberSubCommandsByName.get(
-      groupAndMemberSubCommandName,
-    );
+    return this.#groupCommandsAndMemberSubCommandsByName.get(groupAndMemberSubCommandName);
   }
 
   public getGlobalCommandByName(name: string): GlobalCommand | undefined {
     return this.#globalCommandsByName.get(name);
   }
 
-  public getGlobalModifierCommandByName(
-    name: string,
-  ): GlobalModifierCommand | undefined {
+  public getGlobalModifierCommandByName(name: string): GlobalModifierCommand | undefined {
     return this.#globalModifierCommandsByName.get(name);
   }
 
@@ -270,8 +221,8 @@ export default class DefaultCommandRegistry implements CommandRegistry {
   public getGlobalModifierCommandsByNameProvidedByService(
     serviceId: string,
   ): ReadonlyMap<string, GlobalModifierCommand> {
-    const getGlobalModifierCommandByName = this
-      .#globalModifierCommandsByNameByServiceId.get(serviceId);
+    const getGlobalModifierCommandByName =
+      this.#globalModifierCommandsByNameByServiceId.get(serviceId);
 
     if (getGlobalModifierCommandByName !== undefined) {
       return getGlobalModifierCommandByName;
@@ -282,8 +233,8 @@ export default class DefaultCommandRegistry implements CommandRegistry {
   public getGlobalModifierCommandsByShortAliasProvidedByService(
     serviceId: string,
   ): ReadonlyMap<string, GlobalModifierCommand> {
-    const getGlobalModifierCommandByShortAlias = this
-      .#globalModifierCommandsByShortAliasByServiceId.get(serviceId);
+    const getGlobalModifierCommandByShortAlias =
+      this.#globalModifierCommandsByShortAliasByServiceId.get(serviceId);
 
     if (getGlobalModifierCommandByShortAlias !== undefined) {
       return getGlobalModifierCommandByShortAlias;
@@ -305,10 +256,7 @@ export default class DefaultCommandRegistry implements CommandRegistry {
     return this.#globalModifierCommandsByShortAliasWithoutServiceId;
   }
 
-  public getNonModifierCommandsByName(): ReadonlyMap<
-    string,
-    Command
-  > {
+  public getNonModifierCommandsByName(): ReadonlyMap<string, Command> {
     return this.#nonModifierCommandsByName;
   }
 

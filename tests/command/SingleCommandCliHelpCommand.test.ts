@@ -7,10 +7,7 @@ import {
   getSubCommandWithPositional,
 } from "../fixtures/Command.ts";
 import { getContext } from "../fixtures/Context.ts";
-import {
-  expectStringIncludes,
-  expectStringNotIncludes,
-} from "../fixtures/util.ts";
+import { expectStringIncludes, expectStringNotIncludes } from "../fixtures/util.ts";
 import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
 import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleCommandCliHelpCommand.ts";
 import type SubCommand from "../../src/api/command/SubCommand.ts";
@@ -36,13 +33,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry([
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true),
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        true,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithOption("command_a", true, true, true, ArgumentValueTypeName.BOOLEAN),
       getSubCommandWithOption("command_b", true),
       {
         name: "topic",
@@ -107,10 +98,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo --foo <string_value>...",
-    );
+    expectStringIncludes(streamString.getString(), "foo --foo <string_value>...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: simple default command with non-multiple arg", async () => {
@@ -124,10 +112,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo --foo <string_value>",
-    );
+    expectStringIncludes(streamString.getString(), "foo --foo <string_value>");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: simple default command with optional arg", async () => {
@@ -141,10 +126,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo <string_value>]",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo <string_value>]");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with mandatory arg global modifier", async () => {
@@ -160,18 +142,13 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo --foo <string_value>...",
-    );
+    expectStringIncludes(streamString.getString(), "foo --foo <string_value>...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with global modifier with no arg", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-    ]);
+    const commandRegistry = getCommandRegistry([getGlobalModifierCommand("modifier1")]);
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
       getSubCommandWithOption("command_a", true, true, true),
@@ -179,18 +156,13 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo --foo <string_value>...",
-    );
+    expectStringIncludes(streamString.getString(), "foo --foo <string_value>...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with singular optional arg and global modifier", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);
-    const commandRegistry = getCommandRegistry([
-      getGlobalModifierCommand("modifier1"),
-    ]);
+    const commandRegistry = getCommandRegistry([getGlobalModifierCommand("modifier1")]);
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
       getSubCommandWithOption("command_a", true),
@@ -198,10 +170,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo <string_value>]",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo <string_value>]");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with multiple optional arg and multiple global modifiers and multiple global commands", async () => {
@@ -220,10 +189,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo <string_value>]...",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo <string_value>]...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with optional arg, multiple global modifiers, multiple global commands, multiple sub-commands", async () => {
@@ -243,10 +209,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo <string_value>]...",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo <string_value>]...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: also with boolean args", async () => {
@@ -257,31 +220,16 @@ describe("SingleCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2", "m", true, true),
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true, true),
-      getSubCommandWithOption(
-        "sub1",
-        true,
-        true,
-        false,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithOption("sub1", true, true, false, ArgumentValueTypeName.BOOLEAN),
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        false,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithOption("command_a", true, false, true, ArgumentValueTypeName.BOOLEAN),
       commandRegistry,
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo [true|false]]...",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo [true|false]]...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: also with default value", async () => {
@@ -290,22 +238,12 @@ describe("SingleCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry();
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithOption(
-        "command_a",
-        true,
-        false,
-        true,
-        ArgumentValueTypeName.STRING,
-        "foo",
-      ),
+      getSubCommandWithOption("command_a", true, false, true, ArgumentValueTypeName.STRING, "foo"),
       commandRegistry,
     );
 
     await help.execute(context);
-    expectStringIncludes(
-      streamString.getString(),
-      "foo [--foo <string_value>]...",
-    );
+    expectStringIncludes(streamString.getString(), "foo [--foo <string_value>]...");
   });
 
   test("Ensure single command CLI usage syntax is rendered correctly: with positionals", async () => {
@@ -331,12 +269,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional(
-        "command_a",
-        true,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithPositional("command_a", true, true, ArgumentValueTypeName.BOOLEAN),
       commandRegistry,
     );
     await help.execute(context);
@@ -344,12 +277,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional(
-        "command_a",
-        true,
-        true,
-        ArgumentValueTypeName.STRING,
-      ),
+      getSubCommandWithPositional("command_a", true, true, ArgumentValueTypeName.STRING),
       commandRegistry,
     );
     await help.execute(context);
@@ -357,12 +285,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional(
-        "command_a",
-        false,
-        false,
-        ArgumentValueTypeName.STRING,
-      ),
+      getSubCommandWithPositional("command_a", false, false, ArgumentValueTypeName.STRING),
       commandRegistry,
     );
     await help.execute(context);
@@ -370,12 +293,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional(
-        "command_a",
-        false,
-        true,
-        ArgumentValueTypeName.BOOLEAN,
-      ),
+      getSubCommandWithPositional("command_a", false, true, ArgumentValueTypeName.BOOLEAN),
       commandRegistry,
     );
     await help.execute(context);

@@ -17,12 +17,7 @@ export default class LogLevelCommand implements GlobalModifierCommand {
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
     type: ArgumentValueTypeName.STRING,
-    allowableValues: [
-      "DEBUG",
-      "INFO",
-      "WARN",
-      "ERROR",
-    ],
+    allowableValues: ["DEBUG", "INFO", "WARN", "ERROR"],
     isCaseInsensitive: true,
     defaultValue: "INFO",
     configurationKey: "LOG_LEVEL",
@@ -31,40 +26,26 @@ export default class LogLevelCommand implements GlobalModifierCommand {
 
   readonly #printerServiceProvider: PrinterServiceProvider;
 
-  public constructor(
-    printerServiceProvider: PrinterServiceProvider,
-    executePriority: number,
-  ) {
+  public constructor(printerServiceProvider: PrinterServiceProvider, executePriority: number) {
     this.#printerServiceProvider = printerServiceProvider;
     this.executePriority = executePriority;
   }
 
-  public execute(
-    _context: Context,
-    argumentValue: ArgumentSingleValueType,
-  ): Promise<void> {
+  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
     const logLevel = argumentValue as string;
 
     switch (logLevel.toUpperCase()) {
       case "DEBUG":
-        this.#printerServiceProvider.printerService!.setLevel(
-          Level.DEBUG,
-        );
+        this.#printerServiceProvider.printerService!.setLevel(Level.DEBUG);
         break;
       case "INFO":
-        this.#printerServiceProvider.printerService!.setLevel(
-          Level.INFO,
-        );
+        this.#printerServiceProvider.printerService!.setLevel(Level.INFO);
         break;
       case "WARN":
-        this.#printerServiceProvider.printerService!.setLevel(
-          Level.WARN,
-        );
+        this.#printerServiceProvider.printerService!.setLevel(Level.WARN);
         break;
       case "ERROR":
-        this.#printerServiceProvider.printerService!.setLevel(
-          Level.ERROR,
-        );
+        this.#printerServiceProvider.printerService!.setLevel(Level.ERROR);
         break;
     }
 

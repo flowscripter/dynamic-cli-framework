@@ -32,23 +32,17 @@ describe("UsageCommand tests", () => {
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
 
     const usageCommand = new UsageCommand(
-      new class implements Command {
+      new (class implements Command {
         readonly name = "help";
 
-        execute(
-          _argumentValues: ArgumentValues,
-          _context: Context,
-        ): Promise<void> {
+        execute(_argumentValues: ArgumentValues, _context: Context): Promise<void> {
           return Promise.resolve(undefined);
         }
-      }(),
+      })(),
     );
 
     await usageCommand.execute(context);
 
-    expectStringEquals(
-      dummyStdout.getString(),
-      "Try running:\n\n  foo --help\n\n",
-    );
+    expectStringEquals(dummyStdout.getString(), "Try running:\n\n  foo --help\n\n");
   });
 });

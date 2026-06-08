@@ -7,14 +7,11 @@ import type CLIConfig from "../api/CLIConfig.ts";
 export default class DefaultContext implements Context {
   readonly #serviceInstancesById: Map<string, unknown> = new Map();
 
-  public constructor(readonly cliConfig: CLIConfig) {
-  }
+  public constructor(readonly cliConfig: CLIConfig) {}
 
   public addServiceInstance(id: string, serviceInstance: unknown) {
     if (this.#serviceInstancesById.has(id)) {
-      throw new Error(
-        `Service ID: ${id} duplicates the ID of an existing service`,
-      );
+      throw new Error(`Service ID: ${id} duplicates the ID of an existing service`);
     }
     this.#serviceInstancesById.set(id, serviceInstance);
   }

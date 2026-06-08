@@ -1,7 +1,4 @@
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import DefaultImagePrinterService from "./DefaultImagePrinterService.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "../../api/service/core/ImagePrinterService.ts";
 import type Context from "../../api/Context.ts";

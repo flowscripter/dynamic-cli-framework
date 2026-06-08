@@ -1,5 +1,4 @@
-export const COMPLETION_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/completion-service";
+export const COMPLETION_SERVICE_ID = "@flowscripter/dynamic-cli-framework/completion-service";
 
 export enum ShellType {
   BASH = "bash",
@@ -29,8 +28,5 @@ export default interface CompletionService {
 
   validateShellEnvironment(shellType: ShellType): Promise<boolean>;
 
-  formatCompletions(
-    shellType: ShellType,
-    completions: ReadonlyArray<CompletionItem>,
-  ): string;
+  formatCompletions(shellType: ShellType, completions: ReadonlyArray<CompletionItem>): string;
 }

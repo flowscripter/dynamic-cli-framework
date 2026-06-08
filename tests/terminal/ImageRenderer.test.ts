@@ -31,11 +31,7 @@ function crc32(data: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function buildValidPng(
-  width: number,
-  height: number,
-  colorType: number = 6,
-): Uint8Array {
+function buildValidPng(width: number, height: number, colorType: number = 6): Uint8Array {
   const parts: number[] = [];
 
   // PNG signature
@@ -44,12 +40,7 @@ function buildValidPng(
   function addChunk(type: string, data: Uint8Array) {
     // Length (4 bytes big-endian)
     const len = data.length;
-    parts.push(
-      (len >>> 24) & 0xff,
-      (len >>> 16) & 0xff,
-      (len >>> 8) & 0xff,
-      len & 0xff,
-    );
+    parts.push((len >>> 24) & 0xff, (len >>> 16) & 0xff, (len >>> 8) & 0xff, len & 0xff);
 
     // Type (4 bytes)
     const typeBytes = new TextEncoder().encode(type);

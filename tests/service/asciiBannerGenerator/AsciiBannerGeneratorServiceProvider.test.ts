@@ -5,17 +5,11 @@ import AsciiBannerGeneratorServiceProvider from "../../../src/service/asciiBanne
 
 describe("AsciiBannerGeneratorServiceProvider tests", () => {
   test("AsciiBannerGeneratorServiceProvider getServiceInfo and initService works", async () => {
-    const asciiBannerGeneratorServiceProvider =
-      new AsciiBannerGeneratorServiceProvider(
-        100,
-      );
+    const asciiBannerGeneratorServiceProvider = new AsciiBannerGeneratorServiceProvider(100);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
-    const serviceInfo = await asciiBannerGeneratorServiceProvider
-      .getServiceInfo(
-        cliConfig,
-      );
+    const serviceInfo = await asciiBannerGeneratorServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
 
     await asciiBannerGeneratorServiceProvider.initService(context);

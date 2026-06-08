@@ -59,9 +59,7 @@ export default interface CommandRegistry {
   /**
    * Get a registered {@link GlobalModifierCommand} by name.
    */
-  getGlobalModifierCommandByName(
-    name: string,
-  ): GlobalModifierCommand | undefined;
+  getGlobalModifierCommandByName(name: string): GlobalModifierCommand | undefined;
 
   /**
    * Get a registered {@link GlobalModifierCommand} by short alias.
@@ -96,10 +94,7 @@ export default interface CommandRegistry {
   /**
    * Get a map of all registered {@link GlobalModifierCommand} instances by name not provided by a service.
    */
-  getGlobalModifierCommandsByNameNotProvidedByService(): ReadonlyMap<
-    string,
-    GlobalModifierCommand
-  >;
+  getGlobalModifierCommandsByNameNotProvidedByService(): ReadonlyMap<string, GlobalModifierCommand>;
 
   /**
    * Get a map of all registered {@link GlobalModifierCommand} instances by short alias not provided by a service.

@@ -38,7 +38,7 @@ export default interface Argument {
    * Optional configuration key to use for the argument. Must consist of alphanumeric non-whitespace uppercase
    * ASCII or `_` characters. Must not start with a digit.
    *
-   * If not specified a default configuration key is determined as follows: The {@link Argument.name} is capitalized
+   * If not specified a default configuration key is determined as follows: The {@link SubCommandArgument.name} is capitalized
    * and any `-` characters are replaced with `_` characters. If the result starts with a digit, it is
    * prefixed with `_`. Some examples:
    *

@@ -38,7 +38,7 @@ export default class ZshShellHandler implements ShellHandler {
 
   formatCompletions(completions: ReadonlyArray<CompletionItem>): string {
     return completions
-      .map((c) => c.description ? `${c.value}:${c.description}` : c.value)
+      .map((c) => (c.description ? `${c.value}:${c.description}` : c.value))
       .join("\n");
   }
 

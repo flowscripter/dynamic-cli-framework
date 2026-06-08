@@ -11,9 +11,7 @@ import TtyStyler from "../../src/terminal/TtyStyler.ts";
 import { TABLE_GENERATOR_SERVICE_ID } from "../../src/api/service/core/TableGeneratorService.ts";
 import DefaultTableGeneratorService from "../../src/service/tableGenerator/DefaultTableGeneratorService.ts";
 
-export function getContext(
-  streamString: WritableStreamString,
-): Context {
+export function getContext(streamString: WritableStreamString): Context {
   const defaultContext = new DefaultContext(getCLIConfig());
   const defaultPrinterService = new DefaultPrinterService(
     streamString.writableStream,
@@ -27,14 +25,8 @@ export function getContext(
 
   defaultPrinterService.colorEnabled = false;
   defaultContext.addServiceInstance(PRINTER_SERVICE_ID, defaultPrinterService);
-  defaultContext.addServiceInstance(
-    KEY_VALUE_SERVICE_ID,
-    new DefaultKeyValueService(),
-  );
-  defaultContext.addServiceInstance(
-    TABLE_GENERATOR_SERVICE_ID,
-    new DefaultTableGeneratorService(),
-  );
+  defaultContext.addServiceInstance(KEY_VALUE_SERVICE_ID, new DefaultKeyValueService());
+  defaultContext.addServiceInstance(TABLE_GENERATOR_SERVICE_ID, new DefaultTableGeneratorService());
 
   return defaultContext;
 }

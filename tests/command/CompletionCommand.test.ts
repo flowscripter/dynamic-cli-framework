@@ -15,12 +15,7 @@ describe("CompletionIntegrationSubCommand", () => {
     const cmd = new CompletionIntegrationSubCommand();
     expect(cmd.positionals.length).toEqual(1);
     expect(cmd.positionals[0]!.name).toEqual("shell");
-    expect(cmd.positionals[0]!.allowableValues).toEqual([
-      "bash",
-      "zsh",
-      "fish",
-      "powershell",
-    ]);
+    expect(cmd.positionals[0]!.allowableValues).toEqual(["bash", "zsh", "fish", "powershell"]);
   });
 
   test("has optional config-path option", () => {

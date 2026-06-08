@@ -32,10 +32,7 @@ export function getSubCommandArgumentConfigurationKey(
   command: Command,
   argumentAncestry: Array<SubCommandArgument>,
 ): string | undefined {
-  if (
-    (command.enableConfiguration === undefined) ||
-    (command.enableConfiguration !== true)
-  ) {
+  if (command.enableConfiguration === undefined || command.enableConfiguration !== true) {
     return undefined;
   }
   if (argumentAncestry.length === 0) {
@@ -50,8 +47,7 @@ export function getSubCommandArgumentConfigurationKey(
   }
 
   argumentAncestry.forEach((argument) => {
-    const isArray = (argument as Option).isArray ||
-      (argument as Positional).isVarargMultiple;
+    const isArray = (argument as Option).isArray || (argument as Positional).isVarargMultiple;
     keySegments.push(
       getKeySegment(
         argument.configurationKey || argument.name,
@@ -76,10 +72,7 @@ export function getGlobalCommandArgumentConfigurationKey(
   command: Command,
   globalCommandArgument: GlobalCommandArgument,
 ): string | undefined {
-  if (
-    (command.enableConfiguration === undefined) ||
-    (command.enableConfiguration !== true)
-  ) {
+  if (command.enableConfiguration === undefined || command.enableConfiguration !== true) {
     return undefined;
   }
 

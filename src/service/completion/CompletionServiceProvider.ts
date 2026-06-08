@@ -10,10 +10,7 @@ import { PromptType } from "../../api/service/core/PrompterService.ts";
 import type PrompterService from "../../api/service/core/PrompterService.ts";
 import { KEY_VALUE_SERVICE_ID } from "../../api/service/core/KeyValueService.ts";
 import type KeyValueService from "../../api/service/core/KeyValueService.ts";
-import {
-  Icon,
-  PRINTER_SERVICE_ID,
-} from "../../api/service/core/PrinterService.ts";
+import { Icon, PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import getLogger from "../../util/logger.ts";
 
@@ -25,10 +22,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
   readonly #completionService: DefaultCompletionService;
   #cliName = "";
 
-  public constructor(
-    servicePriority: number,
-    completionService: DefaultCompletionService,
-  ) {
+  public constructor(servicePriority: number, completionService: DefaultCompletionService) {
     this.servicePriority = servicePriority;
     this.#completionService = completionService;
   }
@@ -47,28 +41,20 @@ export default class CompletionServiceProvider implements ServiceProvider {
       return;
     }
     if (!context.doesServiceExist(KEY_VALUE_SERVICE_ID)) {
-      logger.debug(
-        () => "KeyValueService not available, skipping auto-prompt",
-      );
+      logger.debug(() => "KeyValueService not available, skipping auto-prompt");
       return;
     }
 
-    const keyValueService = context.getServiceById(
-      KEY_VALUE_SERVICE_ID,
-    ) as KeyValueService;
+    const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
     if (await keyValueService.hasKey("completion-status")) {
       const status = await keyValueService.getKey("completion-status");
       if (status === "installed" || status === "declined") {
-        logger.debug(
-          () => `Completion status is '${status}', skipping auto-prompt`,
-        );
+        logger.debug(() => `Completion status is '${status}', skipping auto-prompt`);
         return;
       }
     }
 
-    const prompterService = context.getServiceById(
-      PROMPTER_SERVICE_ID,
-    ) as PrompterService;
+    const prompterService = context.getServiceById(PROMPTER_SERVICE_ID) as PrompterService;
     if (!prompterService.promptEnabled) {
       logger.debug(() => "Prompting is disabled, skipping auto-prompt");
       return;
@@ -76,9 +62,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
 
     const detectedShells = await this.#detectAvailableShells();
     if (detectedShells.length === 0) {
-      logger.debug(
-        () => "No supported shells detected, skipping auto-prompt",
-      );
+      logger.debug(() => "No supported shells detected, skipping auto-prompt");
       return;
     }
 
@@ -134,14 +118,9 @@ export default class CompletionServiceProvider implements ServiceProvider {
       await this.#installCompletion(context, shellType);
       await keyValueService.setKey("completion-status", "installed");
     } catch (error) {
-      logger.error(
-        "Failed to install completion: %s",
-        (error as Error).message,
-      );
+      logger.error("Failed to install completion: %s", (error as Error).message);
       if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
-        const printerService = context.getServiceById(
-          PRINTER_SERVICE_ID,
-        ) as PrinterService;
+        const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
         await printerService.error(
           `Failed to install completion: ${(error as Error).message}`,
           Icon.FAILURE,
@@ -160,15 +139,9 @@ export default class CompletionServiceProvider implements ServiceProvider {
     return available;
   }
 
-  async #installCompletion(
-    context: Context,
-    shellType: ShellType,
-  ): Promise<void> {
+  async #installCompletion(context: Context, shellType: ShellType): Promise<void> {
     const configPath = this.#completionService.getDefaultConfigPath(shellType);
-    const bootstrapScript = this.#completionService.getBootstrapScript(
-      shellType,
-      this.#cliName,
-    );
+    const bootstrapScript = this.#completionService.getBootstrapScript(shellType, this.#cliName);
     const beginMarker = `# BEGIN ${this.#cliName} completion`;
     const endMarker = `# END ${this.#cliName} completion`;
     const block = `${beginMarker}\n${bootstrapScript}\n${endMarker}`;
@@ -184,25 +157,24 @@ export default class CompletionServiceProvider implements ServiceProvider {
     const beginIdx = existingContent.indexOf(beginMarker);
     const endIdx = existingContent.indexOf(endMarker);
     if (beginIdx !== -1 && endIdx !== -1) {
-      newContent = existingContent.substring(0, beginIdx) +
+      newContent =
+        existingContent.substring(0, beginIdx) +
         block +
         existingContent.substring(endIdx + endMarker.length);
     } else {
-      const separator = existingContent.length > 0 &&
-          !existingContent.endsWith("\n")
-        ? "\n\n"
-        : existingContent.length > 0
-        ? "\n"
-        : "";
+      const separator =
+        existingContent.length > 0 && !existingContent.endsWith("\n")
+          ? "\n\n"
+          : existingContent.length > 0
+            ? "\n"
+            : "";
       newContent = existingContent + separator + block + "\n";
     }
 
     await Bun.write(configPath, newContent);
 
     if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
-      const printerService = context.getServiceById(
-        PRINTER_SERVICE_ID,
-      ) as PrinterService;
+      const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
       await printerService.info(
         `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.`,
         Icon.SUCCESS,

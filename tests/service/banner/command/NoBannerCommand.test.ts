@@ -11,10 +11,7 @@ describe("NoBannerCommand tests", () => {
 
     expect(bannerServiceProvider.printBanner).toBeTrue();
 
-    await noBannerCommand.execute(
-      new DefaultContext(getCLIConfig()),
-      true,
-    );
+    await noBannerCommand.execute(new DefaultContext(getCLIConfig()), true);
 
     expect(bannerServiceProvider.printBanner).toBeFalse();
   });

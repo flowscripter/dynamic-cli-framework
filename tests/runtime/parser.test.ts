@@ -21,11 +21,7 @@ import {
 import type SubCommand from "../../src/api/command/SubCommand.ts";
 
 function expectParseResult(result: ParseResult, expected: ParseResult) {
-  expect(
-    result.populatedArgumentValues,
-  ).toEqual(
-    expected.populatedArgumentValues!,
-  );
+  expect(result.populatedArgumentValues).toEqual(expected.populatedArgumentValues!);
   expect(result.unusedArgs).toEqual(expected.unusedArgs);
   expect(result.invalidArguments).toEqual(expected.invalidArguments);
 }
@@ -111,12 +107,7 @@ describe("parser tests", () => {
   });
 
   test("Arguments parsed for global modifier command", () => {
-    const globalModifierCommand = getGlobalModifierCommand(
-      "modifierCommand",
-      "m",
-      true,
-      true,
-    );
+    const globalModifierCommand = getGlobalModifierCommand("modifierCommand", "m", true, true);
 
     const parseResult = parseGlobalCommandClause({
       command: globalModifierCommand,
@@ -151,13 +142,16 @@ describe("parser tests", () => {
   test("All arguments provided in config", () => {
     const subCommand = getSubCommandWithOptionAndPositional();
 
-    const parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: [],
-    }, {
-      goo: "g",
-      foo: "bar",
-    });
+    const parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: [],
+      },
+      {
+        goo: "g",
+        foo: "bar",
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -172,12 +166,15 @@ describe("parser tests", () => {
   test("Some arguments provided in config", () => {
     const subCommand = getSubCommandWithOptionAndPositional();
 
-    let parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: ["--goo", "g"],
-    }, {
-      foo: "bar",
-    });
+    let parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: ["--goo", "g"],
+      },
+      {
+        foo: "bar",
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -188,12 +185,15 @@ describe("parser tests", () => {
       invalidArguments: [],
     });
 
-    parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: ["bar"],
-    }, {
-      goo: "g",
-    });
+    parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: ["bar"],
+      },
+      {
+        goo: "g",
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -208,13 +208,16 @@ describe("parser tests", () => {
   test("Extra config provided", () => {
     const subCommand = getSubCommandWithOptionAndPositional();
 
-    const parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: ["--goo", "g"],
-    }, {
-      foo: "bar",
-      yee: "ha",
-    });
+    const parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: ["--goo", "g"],
+      },
+      {
+        foo: "bar",
+        yee: "ha",
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -249,16 +252,11 @@ describe("parser tests", () => {
           {
             beta: [
               {
-                delta: [
-                  1,
-                ],
+                delta: [1],
                 gamma: "foo1",
               },
               {
-                delta: [
-                  3,
-                  2,
-                ],
+                delta: [3, 2],
                 gamma: "foo2",
               },
             ],
@@ -295,26 +293,21 @@ describe("parser tests", () => {
         alpha: [
           {
             beta: {
-              delta: [
-                "1",
-              ],
+              delta: ["1"],
               gamma: "foo1",
             },
           },
         ],
       },
-      unusedArgs: [
-        "-a.b.d=2",
-        "-a.b.d=3",
-        "-e.g=bar",
-        "-e.d=1",
+      unusedArgs: ["-a.b.d=2", "-a.b.d=3", "-e.g=bar", "-e.d=1"],
+      invalidArguments: [
+        {
+          argument: ((subCommand.options[0] as ComplexOption).properties[0] as ComplexOption)
+            .properties[0],
+          reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
+          name: "gamma",
+        },
       ],
-      invalidArguments: [{
-        argument: ((subCommand.options[0] as ComplexOption)
-          .properties[0] as ComplexOption).properties[0],
-        reason: InvalidArgumentReason.ILLEGAL_MULTIPLE_VALUES,
-        name: "gamma",
-      }],
     });
 
     parseResult = parseSubCommandClause({
@@ -335,11 +328,7 @@ describe("parser tests", () => {
         alpha: [
           {
             beta: {
-              delta: [
-                "1",
-                "2",
-                "3",
-              ],
+              delta: ["1", "2", "3"],
               gamma: "foo1",
             },
           },
@@ -365,13 +354,7 @@ describe("parser tests", () => {
 
     let parseResult = parseSubCommandClause({
       command: subCommand,
-      potentialArgs: [
-        "-e.g=bar",
-        "-e.d=1",
-        "-a.b[1].g=foo2",
-        "-a.b[1].d[1]=2",
-        "-a.b[1].d[0]=3",
-      ],
+      potentialArgs: ["-e.g=bar", "-e.d=1", "-a.b[1].g=foo2", "-a.b[1].d[1]=2", "-a.b[1].d[0]=3"],
     });
 
     let argumentValues: PopulatedArgumentValues = {
@@ -386,9 +369,10 @@ describe("parser tests", () => {
       },
     };
 
-    ((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!.beta as Array<
-      PopulatedArgumentValues
-    >)[1] = {
+    (
+      (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
+        .beta as Array<PopulatedArgumentValues>
+    )[1] = {
       gamma: "foo2",
       delta: ["3", "2"], // these are still stored as strings as the validation (and type conversion) failed fast
     };
@@ -420,18 +404,20 @@ describe("parser tests", () => {
     });
 
     argumentValues = {
-      alpha: [{
-        beta: [
-          {
-            gamma: "foo1",
-            delta: ["1"], // this is still stored as strings as the validation (and type conversion) failed fast
-          },
-          {
-            gamma: "foo2",
-            delta: [],
-          },
-        ],
-      }],
+      alpha: [
+        {
+          beta: [
+            {
+              gamma: "foo1",
+              delta: ["1"], // this is still stored as strings as the validation (and type conversion) failed fast
+            },
+            {
+              gamma: "foo2",
+              delta: [],
+            },
+          ],
+        },
+      ],
       epsilon: {
         gamma: "bar",
         delta: 1,
@@ -439,14 +425,18 @@ describe("parser tests", () => {
     };
 
     // these are still stored as strings as the validation (and type conversion) failed fast
-    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
-      .beta as Array<
-        PopulatedArgumentValues
-      >)[1]!.delta as Array<ArgumentValueType>)[0] = "0";
-    (((argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
-      .beta as Array<
-        PopulatedArgumentValues
-      >)[1]!.delta as Array<ArgumentValueType>)[2] = "2";
+    (
+      (
+        (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
+          .beta as Array<PopulatedArgumentValues>
+      )[1]!.delta as Array<ArgumentValueType>
+    )[0] = "0";
+    (
+      (
+        (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
+          .beta as Array<PopulatedArgumentValues>
+      )[1]!.delta as Array<ArgumentValueType>
+    )[2] = "2";
 
     expectParseResult(parseResult, {
       command: subCommand,
@@ -454,8 +444,8 @@ describe("parser tests", () => {
       unusedArgs: [],
       invalidArguments: [
         {
-          argument: ((subCommand.options[0] as ComplexOption)
-            .properties[0] as ComplexOption).properties[1],
+          argument: ((subCommand.options[0] as ComplexOption).properties[0] as ComplexOption)
+            .properties[1],
           name: "alpha[0].beta[1].delta[1]",
           reason: InvalidArgumentReason.ILLEGAL_SPARSE_ARRAY,
         },
@@ -468,23 +458,19 @@ describe("parser tests", () => {
 
     const parseResult = parseSubCommandClause({
       command: subCommand,
-      potentialArgs: [
-        "-a.b.g=foo1",
-        "-a.b.d=1",
-        "-a.b.d=2",
-        "-a.b.d=3",
-        "-e.d=1",
-      ],
+      potentialArgs: ["-a.b.g=foo1", "-a.b.d=1", "-a.b.d=2", "-a.b.d=3", "-e.d=1"],
     });
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
-        alpha: [{
-          beta: {
-            gamma: "foo1",
-            delta: [1, 2, 3],
+        alpha: [
+          {
+            beta: {
+              gamma: "foo1",
+              delta: [1, 2, 3],
+            },
           },
-        }],
+        ],
         epsilon: {
           delta: "1",
         },
@@ -503,21 +489,24 @@ describe("parser tests", () => {
   test("Arguments parsed for sub-command with complex options and some values provided by config", () => {
     const subCommand = getSubCommandWithComplexOptions(false, true);
 
-    const parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: [
-        "-a.b[1].g=foo2",
-        "--alpha.beta[0].gamma=foo1",
-        "-a.b[1].d[1]=2",
-        "-a.b[0].d=1",
-        "-a.b[1].d[0]=3",
-      ],
-    }, {
-      epsilon: {
-        gamma: "bar",
-        delta: 1,
+    const parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: [
+          "-a.b[1].g=foo2",
+          "--alpha.beta[0].gamma=foo1",
+          "-a.b[1].d[1]=2",
+          "-a.b[0].d=1",
+          "-a.b[1].d[0]=3",
+        ],
       },
-    });
+      {
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -525,16 +514,11 @@ describe("parser tests", () => {
           {
             beta: [
               {
-                delta: [
-                  1,
-                ],
+                delta: [1],
                 gamma: "foo1",
               },
               {
-                delta: [
-                  3,
-                  2,
-                ],
+                delta: [3, 2],
                 gamma: "foo2",
               },
             ],
@@ -553,23 +537,26 @@ describe("parser tests", () => {
   test("Arguments parsed for sub-command with complex options and some values provided by config but overridden", () => {
     const subCommand = getSubCommandWithComplexOptions(false, true);
 
-    const parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: [
-        "-e.g=bar2",
-        "-e.d=2",
-        "-a.b[1].g=foo2",
-        "--alpha.beta[0].gamma=foo1",
-        "-a.b[1].d[1]=2",
-        "-a.b[0].d=1",
-        "-a.b[1].d[0]=3",
-      ],
-    }, {
-      epsilon: {
-        gamma: "bar",
-        delta: 1,
+    const parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: [
+          "-e.g=bar2",
+          "-e.d=2",
+          "-a.b[1].g=foo2",
+          "--alpha.beta[0].gamma=foo1",
+          "-a.b[1].d[1]=2",
+          "-a.b[0].d=1",
+          "-a.b[1].d[0]=3",
+        ],
       },
-    });
+      {
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -577,16 +564,11 @@ describe("parser tests", () => {
           {
             beta: [
               {
-                delta: [
-                  1,
-                ],
+                delta: [1],
                 gamma: "foo1",
               },
               {
-                delta: [
-                  3,
-                  2,
-                ],
+                delta: [3, 2],
                 gamma: "foo2",
               },
             ],
@@ -605,34 +587,32 @@ describe("parser tests", () => {
   test("Arguments parsed for sub-command with complex options and all values provided by config", () => {
     const subCommand = getSubCommandWithComplexOptions(false, true);
 
-    const parseResult = parseSubCommandClause({
-      command: subCommand,
-      potentialArgs: [],
-    }, {
-      alpha: [
-        {
-          beta: [
-            {
-              delta: [
-                1,
-              ],
-              gamma: "foo1",
-            },
-            {
-              delta: [
-                3,
-                2,
-              ],
-              gamma: "foo2",
-            },
-          ],
-        },
-      ],
-      epsilon: {
-        gamma: "bar",
-        delta: 1,
+    const parseResult = parseSubCommandClause(
+      {
+        command: subCommand,
+        potentialArgs: [],
       },
-    });
+      {
+        alpha: [
+          {
+            beta: [
+              {
+                delta: [1],
+                gamma: "foo1",
+              },
+              {
+                delta: [3, 2],
+                gamma: "foo2",
+              },
+            ],
+          },
+        ],
+        epsilon: {
+          gamma: "bar",
+          delta: 1,
+        },
+      },
+    );
     expectParseResult(parseResult, {
       command: subCommand,
       populatedArgumentValues: {
@@ -640,16 +620,11 @@ describe("parser tests", () => {
           {
             beta: [
               {
-                delta: [
-                  1,
-                ],
+                delta: [1],
                 gamma: "foo1",
               },
               {
-                delta: [
-                  3,
-                  2,
-                ],
+                delta: [3, 2],
                 gamma: "foo2",
               },
             ],
@@ -668,64 +643,70 @@ describe("parser tests", () => {
   test("Arguments parsed for sub-command with complex options and all values provided by default value", () => {
     const subCommand: SubCommand = {
       name: "subCommand",
-      options: [{
-        name: "alpha",
-        shortAlias: "a",
-        type: ComplexValueTypeName.COMPLEX,
-        isArray: true,
-        defaultValue: [
-          {
-            beta: [
-              {
-                delta: [
-                  1,
-                ],
-                gamma: "foo1",
-              },
-              {
-                delta: [
-                  3,
-                  2,
-                ],
-                gamma: "foo2",
-              },
-            ],
-          },
-        ],
-        properties: [{
-          name: "beta",
-          shortAlias: "b",
+      options: [
+        {
+          name: "alpha",
+          shortAlias: "a",
           type: ComplexValueTypeName.COMPLEX,
           isArray: true,
-          properties: [{
-            name: "gamma",
-            shortAlias: "g",
-            type: ArgumentValueTypeName.STRING,
-          }, {
-            name: "delta",
-            shortAlias: "d",
-            type: ArgumentValueTypeName.NUMBER,
-            isArray: true,
-          }],
-        }],
-      }, {
-        name: "epsilon",
-        shortAlias: "e",
-        type: ComplexValueTypeName.COMPLEX,
-        defaultValue: {
-          gamma: "bar",
-          delta: 1,
+          defaultValue: [
+            {
+              beta: [
+                {
+                  delta: [1],
+                  gamma: "foo1",
+                },
+                {
+                  delta: [3, 2],
+                  gamma: "foo2",
+                },
+              ],
+            },
+          ],
+          properties: [
+            {
+              name: "beta",
+              shortAlias: "b",
+              type: ComplexValueTypeName.COMPLEX,
+              isArray: true,
+              properties: [
+                {
+                  name: "gamma",
+                  shortAlias: "g",
+                  type: ArgumentValueTypeName.STRING,
+                },
+                {
+                  name: "delta",
+                  shortAlias: "d",
+                  type: ArgumentValueTypeName.NUMBER,
+                  isArray: true,
+                },
+              ],
+            },
+          ],
         },
-        properties: [{
-          name: "gamma",
-          shortAlias: "g",
-          type: ArgumentValueTypeName.STRING,
-        }, {
-          name: "delta",
-          shortAlias: "d",
-          type: ArgumentValueTypeName.NUMBER,
-        }],
-      }],
+        {
+          name: "epsilon",
+          shortAlias: "e",
+          type: ComplexValueTypeName.COMPLEX,
+          defaultValue: {
+            gamma: "bar",
+            delta: 1,
+          },
+          properties: [
+            {
+              name: "gamma",
+              shortAlias: "g",
+              type: ArgumentValueTypeName.STRING,
+            },
+            {
+              name: "delta",
+              shortAlias: "d",
+              type: ArgumentValueTypeName.NUMBER,
+            },
+          ],
+        },
+      ],
       positionals: [],
       execute: async (): Promise<void> => {},
     };
@@ -741,16 +722,11 @@ describe("parser tests", () => {
           {
             beta: [
               {
-                delta: [
-                  1,
-                ],
+                delta: [1],
                 gamma: "foo1",
               },
               {
-                delta: [
-                  3,
-                  2,
-                ],
+                delta: [3, 2],
                 gamma: "foo2",
               },
             ],

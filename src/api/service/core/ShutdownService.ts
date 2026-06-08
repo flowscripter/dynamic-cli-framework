@@ -1,5 +1,4 @@
-export const SHUTDOWN_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/shutdown-service";
+export const SHUTDOWN_SERVICE_ID = "@flowscripter/dynamic-cli-framework/shutdown-service";
 
 /**
  * Service allowing registration of callbacks for CLI shutdown.

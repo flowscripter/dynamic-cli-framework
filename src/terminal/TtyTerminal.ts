@@ -1,13 +1,7 @@
 import { WriteStream } from "node:tty";
 import type Terminal from "./Terminal.ts";
 
-import {
-  CLEAR_LINE,
-  CURSOR_LEFT,
-  CURSOR_UP,
-  HIDE_CURSOR,
-  SHOW_CURSOR,
-} from "./Ansi.ts";
+import { CLEAR_LINE, CURSOR_LEFT, CURSOR_UP, HIDE_CURSOR, SHOW_CURSOR } from "./Ansi.ts";
 
 export default class TtyTerminal implements Terminal {
   readonly #ttyWriteStream: WriteStream;
@@ -34,9 +28,7 @@ export default class TtyTerminal implements Terminal {
   }
 
   clearUpLines(count: number): Promise<void> {
-    this.#writeAll(
-      (CURSOR_UP + CLEAR_LINE).repeat(count) + CLEAR_LINE + CURSOR_LEFT,
-    );
+    this.#writeAll((CURSOR_UP + CLEAR_LINE).repeat(count) + CLEAR_LINE + CURSOR_LEFT);
     return Promise.resolve();
   }
 

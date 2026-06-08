@@ -53,26 +53,22 @@ function wrapDefaultLogger(
   return (message, ...optionalParams) => {
     if (message instanceof Function) {
       loggerFunction(
-        `${levelPadding} [${loggerName}]${
-          LOGGER_NAME_PADDINGS[loggerName]
-        } ${message()}`,
+        `${levelPadding} [${loggerName}]${LOGGER_NAME_PADDINGS[loggerName]} ${message()}`,
         ...optionalParams,
       );
       return;
     }
     if (message instanceof Object) {
       loggerFunction(
-        `${levelPadding} [${loggerName}]${LOGGER_NAME_PADDINGS[loggerName]} ${
-          JSON.stringify(message)
-        }`,
+        `${levelPadding} [${loggerName}]${LOGGER_NAME_PADDINGS[loggerName]} ${JSON.stringify(
+          message,
+        )}`,
         ...optionalParams,
       );
       return;
     }
     loggerFunction(
-      `${levelPadding} [${loggerName}]${
-        LOGGER_NAME_PADDINGS[loggerName]
-      } ${message}`,
+      `${levelPadding} [${loggerName}]${LOGGER_NAME_PADDINGS[loggerName]} ${message}`,
       ...optionalParams,
     );
   };
@@ -101,38 +97,16 @@ export default function getLogger(loggerName: string): Logger {
 
     LOGGER_NAME_PADDINGS[loggerName] = "";
   } else if (LOGGER_NAME_PADDINGS[loggerName] === undefined) {
-    LOGGER_NAME_PADDINGS[loggerName] = " ".repeat(
-      maxLoggerNameLength - loggerName.length,
-    );
+    LOGGER_NAME_PADDINGS[loggerName] = " ".repeat(maxLoggerNameLength - loggerName.length);
   }
 
   if (debugEnabled) {
     return {
-      trace: wrapDefaultLogger(
-        loggerName,
-        LEVEL_PADDINGS.TRACE!,
-        defaultLogger.trace,
-      ),
-      debug: wrapDefaultLogger(
-        loggerName,
-        LEVEL_PADDINGS.DEBUG!,
-        defaultLogger.debug,
-      ),
-      info: wrapDefaultLogger(
-        loggerName,
-        LEVEL_PADDINGS.INFO!,
-        defaultLogger.info,
-      ),
-      warn: wrapDefaultLogger(
-        loggerName,
-        LEVEL_PADDINGS.WARN!,
-        defaultLogger.warn,
-      ),
-      error: wrapDefaultLogger(
-        loggerName,
-        LEVEL_PADDINGS.ERROR!,
-        defaultLogger.error,
-      ),
+      trace: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.TRACE!, defaultLogger.trace),
+      debug: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.DEBUG!, defaultLogger.debug),
+      info: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.INFO!, defaultLogger.info),
+      warn: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.WARN!, defaultLogger.warn),
+      error: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.ERROR!, defaultLogger.error),
     };
   }
   return {
@@ -140,10 +114,6 @@ export default function getLogger(loggerName: string): Logger {
     debug: () => {},
     info: () => {},
     warn: () => {},
-    error: wrapDefaultLogger(
-      loggerName,
-      LEVEL_PADDINGS.ERROR!,
-      defaultLogger.error,
-    ),
+    error: wrapDefaultLogger(loggerName, LEVEL_PADDINGS.ERROR!, defaultLogger.error),
   };
 }

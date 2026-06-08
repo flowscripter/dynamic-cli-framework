@@ -23,18 +23,12 @@ export default class NoBannerCommand implements GlobalModifierCommand {
 
   readonly #bannerServiceProvider: BannerServiceProvider;
 
-  public constructor(
-    bannerServiceProvider: BannerServiceProvider,
-    executePriority: number,
-  ) {
+  public constructor(bannerServiceProvider: BannerServiceProvider, executePriority: number) {
     this.#bannerServiceProvider = bannerServiceProvider;
     this.executePriority = executePriority;
   }
 
-  public execute(
-    _context: Context,
-    argumentValue: ArgumentSingleValueType,
-  ): Promise<void> {
+  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
     this.#bannerServiceProvider.printBanner = !(argumentValue as boolean);
 
     return Promise.resolve();

@@ -13,7 +13,9 @@ export {
   ComplexValueTypeName,
 } from "./src/api/argument/ArgumentValueTypes.ts";
 export type { default as ComplexOption } from "./src/api/argument/ComplexOption.ts";
+export { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "./src/api/argument/ComplexOption.ts";
 export type { default as SubCommandArgument } from "./src/api/argument/SubCommandArgument.ts";
+export { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "./src/api/argument/SubCommandArgument.ts";
 export type { default as GlobalCommandArgument } from "./src/api/argument/GlobalCommandArgument.ts";
 export type { default as Option } from "./src/api/argument/Option.ts";
 export type { default as Positional } from "./src/api/argument/Positional.ts";
@@ -27,10 +29,7 @@ export type { default as SubCommand } from "./src/api/command/SubCommand.ts";
 export type { default as UsageExample } from "./src/api/command/UsageExample.ts";
 
 // Service API
-export type {
-  ServiceInfo,
-  ServiceProvider,
-} from "./src/api/service/ServiceProvider.ts";
+export type { ServiceInfo, ServiceProvider } from "./src/api/service/ServiceProvider.ts";
 
 // Registry API
 export type { default as CommandRegistry } from "./src/runtime/registry/CommandRegistry.ts";
@@ -64,18 +63,13 @@ export type { default as KeyValueService } from "./src/api/service/core/KeyValue
 export type { default as SecretService } from "./src/api/service/core/SecretService.ts";
 export { default as DefaultKeyValueService } from "./src/service/configuration/DefaultKeyValueService.ts";
 export { default as DefaultSecretService } from "./src/service/configuration/DefaultSecretService.ts";
+export type { SecretsApi } from "./src/service/configuration/DefaultSecretService.ts";
+export { default as ConfigCommand } from "./src/service/configuration/command/ConfigCommand.ts";
 export { default as ConfigurationServiceProvider } from "./src/service/configuration/ConfigurationServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "./src/api/service/core/PrinterService.ts";
-export type {
-  default as PrinterService,
-} from "./src/api/service/core/PrinterService.ts";
-export {
-  Icon,
-  Level,
-  ProgressStyle,
-  SpinnerStyle,
-} from "./src/api/service/core/PrinterService.ts";
+export type { default as PrinterService } from "./src/api/service/core/PrinterService.ts";
+export { Icon, Level, ProgressStyle, SpinnerStyle } from "./src/api/service/core/PrinterService.ts";
 export { default as DefaultPrinterService } from "./src/service/printer/DefaultPrinterService.ts";
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
@@ -131,10 +125,7 @@ export { default as DataDumpGeneratorServiceProvider } from "./src/service/dataD
 
 export { COMPLETION_SERVICE_ID } from "./src/api/service/core/CompletionService.ts";
 export type { default as CompletionService } from "./src/api/service/core/CompletionService.ts";
-export {
-  type CompletionItem,
-  ShellType,
-} from "./src/api/service/core/CompletionService.ts";
+export { type CompletionItem, ShellType } from "./src/api/service/core/CompletionService.ts";
 export { default as DefaultCompletionService } from "./src/service/completion/DefaultCompletionService.ts";
 export { default as CompletionServiceProvider } from "./src/service/completion/CompletionServiceProvider.ts";
 
@@ -155,20 +146,27 @@ export { default as PrompterServiceProvider } from "./src/service/prompter/Promp
 
 export { ARGUMENT_PROMPTER_SERVICE_ID } from "./src/api/service/core/ArgumentPrompterService.ts";
 export type { default as ArgumentPrompterService } from "./src/api/service/core/ArgumentPrompterService.ts";
+export type { ParseResult } from "./src/runtime/parser.ts";
 export { default as DefaultArgumentPrompterService } from "./src/service/argumentPrompter/DefaultArgumentPrompterService.ts";
 export { default as ArgumentPrompterServiceProvider } from "./src/service/argumentPrompter/ArgumentPrompterServiceProvider.ts";
 
 // CLI API
 export type { InvalidArgument } from "./src/api/RunResult.ts";
 export type { default as Context } from "./src/api/Context.ts";
-export type {
-  default as RunResult,
-  InvalidArgumentReason,
-  RunState,
-} from "./src/api/RunResult.ts";
+export type { default as RunResult, InvalidArgumentReason, RunState } from "./src/api/RunResult.ts";
 export type { default as BaseCLIFeatureOptions } from "./src/api/BaseCLIFeatureOptions.ts";
 export type { default as CLIConfig } from "./src/api/CLIConfig.ts";
 export type { default as CLI } from "./src/api/CLI.ts";
+
+// Help Commands
+export {
+  SingleCommandCliHelpGlobalCommand,
+  SingleCommandCliHelpSubCommand,
+} from "./src/command/SingleCommandCliHelpCommand.ts";
+export {
+  MultiCommandCliHelpGlobalCommand,
+  MultiCommandCliHelpSubCommand,
+} from "./src/command/MultiCommandCliHelpCommand.ts";
 
 // Core CLI
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
@@ -177,15 +175,9 @@ export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
 // Terminal API
 export type { default as Terminal } from "./src/terminal/Terminal.ts";
 export type { default as Styler } from "./src/terminal/Styler.ts";
-export type {
-  default as KeyReader,
-  KeyEvent,
-} from "./src/terminal/KeyReader.ts";
+export type { default as KeyReader, KeyEvent } from "./src/terminal/KeyReader.ts";
 export { SpecialKey } from "./src/terminal/KeyReader.ts";
 export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
-export {
-  launchMultiCommandCLI,
-  launchSingleCommandCLI,
-} from "./src/launcher.ts";
+export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";

@@ -14,12 +14,9 @@ function getConfig() {
   return {
     defaults: {
       command1: {
-        arg1: [
-          1,
-          2,
-        ],
+        arg1: [1, 2],
         arg2: {
-          "arg3": "foo",
+          arg3: "foo",
         },
       },
       command2: {
@@ -52,31 +49,25 @@ function getSubCommand(): SubCommand {
   return {
     name: "command2",
     enableConfiguration: true,
-    options: [{
-      name: "arg4",
-      type: ArgumentValueTypeName.BOOLEAN,
-    }],
+    options: [
+      {
+        name: "arg4",
+        type: ArgumentValueTypeName.BOOLEAN,
+      },
+    ],
     positionals: [],
     execute: async (): Promise<void> => {},
   };
 }
 describe("ConfigurationServiceProvider tests", () => {
   test("ConfigurationServiceProvider getServiceInfo works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-      false,
-      true,
-    );
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(
-      getCLIConfig(),
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(getCLIConfig());
     expect(serviceInfo.commands.length).toEqual(2);
   });
 
   test("ConfigurationServiceProvider initService with no config works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100);
 
     const context = new DefaultContext(getCLIConfig());
 
@@ -86,11 +77,7 @@ describe("ConfigurationServiceProvider tests", () => {
   });
 
   test("ConfigurationServiceProvider initService with config works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-      false,
-      true,
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
 
     const context = new DefaultContext(getCLIConfig());
 
@@ -104,19 +91,11 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await configurationServiceProvider.initService(context);
 
-    expect(
-      configurationServiceProvider.getConfigString(),
-    ).toEqual(
-      JSON.stringify(config, null, 2),
-    );
+    expect(configurationServiceProvider.getConfigString()).toEqual(JSON.stringify(config, null, 2));
   });
 
   test("getDefaultArgumentValues works with config", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-      false,
-      true,
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
 
     const context = new DefaultContext(getCLIConfig());
 
@@ -134,22 +113,13 @@ describe("ConfigurationServiceProvider tests", () => {
     await configurationServiceProvider.getServiceInfo(getCLIConfig());
 
     expect(
-      await configurationServiceProvider.getDefaultArgumentValues(
-        getCLIConfig(),
-        subCommand,
-      ),
-    ).toEqual(
-      config.defaults.command2,
-    );
+      await configurationServiceProvider.getDefaultArgumentValues(getCLIConfig(), subCommand),
+    ).toEqual(config.defaults.command2);
   });
 
   test("getDefaultArgumentValues works with env vars", async () => {
     try {
-      const configurationServiceProvider = new ConfigurationServiceProvider(
-        100,
-        true,
-        true,
-      );
+      const configurationServiceProvider = new ConfigurationServiceProvider(100, true, true);
 
       const context = new DefaultContext(getCLIConfig());
 
@@ -161,25 +131,15 @@ describe("ConfigurationServiceProvider tests", () => {
       await configurationServiceProvider.getServiceInfo(getCLIConfig());
 
       expect(
-        await configurationServiceProvider.getDefaultArgumentValues(
-          getCLIConfig(),
-          subCommand,
-        ),
-      ).toEqual(
-        { arg4: "true" },
-      );
+        await configurationServiceProvider.getDefaultArgumentValues(getCLIConfig(), subCommand),
+      ).toEqual({ arg4: "true" });
     } finally {
       delete process.env["FOO_COMMAND2_ARG4"];
     }
   });
 
   test("setCommandKeyValueScope works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-      false,
-      true,
-      true,
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
@@ -191,9 +151,7 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
 
     await configurationServiceProvider.initService(context);
 
@@ -214,12 +172,7 @@ describe("ConfigurationServiceProvider tests", () => {
   });
 
   test("setServiceKeyValueScope works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(
-      100,
-      false,
-      true,
-      true,
-    );
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
 
@@ -231,9 +184,7 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
 
     await configurationServiceProvider.initService(context);
 
@@ -254,8 +205,8 @@ describe("ConfigurationServiceProvider tests", () => {
   });
 
   test("secretServiceEnabled requires configEnabled", () => {
-    expect(
-      () => new ConfigurationServiceProvider(100, false, false, false, true),
-    ).toThrow("configEnabled must be true");
+    expect(() => new ConfigurationServiceProvider(100, false, false, false, true)).toThrow(
+      "configEnabled must be true",
+    );
   });
 });

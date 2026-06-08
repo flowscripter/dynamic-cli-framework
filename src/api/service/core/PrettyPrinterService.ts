@@ -22,10 +22,7 @@ export default interface PrettyPrinterService {
    * @param syntaxName the name used to refer to the syntax.
    * @param syntaxDefinition the definition for the syntax conforming to the Prettier plugin interface.
    */
-  registerSyntax(
-    syntaxName: string,
-    syntaxDefinition: Plugin<unknown>,
-  ): Promise<void>;
+  registerSyntax(syntaxName: string, syntaxDefinition: Plugin<unknown>): Promise<void>;
 
   /**
    * Return the names of the currently registered syntaxes.

@@ -9,11 +9,7 @@ type Sheet = Record<string, (value: string) => string> | undefined;
 interface Emphasize {
   listLanguages(): ReadonlyArray<string>;
   registered(name: string): boolean;
-  highlight(
-    name: string,
-    text: string,
-    sheet: Sheet,
-  ): { value: string };
+  highlight(name: string, text: string, sheet: Sheet): { value: string };
   register(name: string, syntax: HighlightSyntax): void;
 }
 
@@ -21,30 +17,24 @@ interface Emphasize {
  * Default implementation of {@link SyntaxHighlighterService} which has a syntax definition
  * for JSON already registered.
  */
-export default class DefaultSyntaxHighlighterService
-  implements SyntaxHighlighterService {
+export default class DefaultSyntaxHighlighterService implements SyntaxHighlighterService {
   colorEnabled = true;
-  colorFunction: (text: string, hexFormattedColor: string) => string = (text) =>
-    text;
+  colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
 
-  emphasize: Emphasize;
+  #emphasize: Emphasize;
 
   constructor() {
-    this.emphasize = createEmphasize();
+    this.#emphasize = createEmphasize();
     this.registerSyntax("json", json);
   }
 
   getRegisteredSyntaxes(): ReadonlyArray<string> {
-    return this.emphasize.listLanguages();
+    return this.#emphasize.listLanguages();
   }
 
-  highlight(
-    text: string,
-    syntaxName: string,
-    colorScheme?: ColorScheme,
-  ): string {
+  highlight(text: string, syntaxName: string, colorScheme?: ColorScheme): string {
     const name = syntaxName.toLowerCase();
-    if (!this.emphasize.registered(name)) {
+    if (!this.#emphasize.registered(name)) {
       throw new Error(`Syntax name is not registered: ${name}`);
     }
 
@@ -62,30 +52,27 @@ export default class DefaultSyntaxHighlighterService
         if (!value) {
           throw new Error(`Invalid color for entry: ${key}`);
         }
-        if (
-          (value.length !== 7) ||
-          (!value.toLowerCase().startsWith("#"))
-        ) {
+        if (value.length !== 7 || !value.toLowerCase().startsWith("#")) {
           throw new Error(`Invalid color: ${value}`);
         }
 
         const colorValue = parseInt(value.slice(1), 16);
 
-        if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
+        if (isNaN(colorValue) || colorValue < 0 || colorValue > 0xffffff) {
           throw new Error(`Invalid color: ${value}`);
         }
         sheet[key] = (text: string) => this.colorFunction(text, value);
       }
     }
 
-    return this.emphasize.highlight(name, text, sheet).value;
+    return this.#emphasize.highlight(name, text, sheet).value;
   }
 
   registerSyntax(syntaxName: string, syntaxDefinition: HighlightSyntax): void {
     const name = syntaxName.toLowerCase();
-    if (this.emphasize.registered(name)) {
+    if (this.#emphasize.registered(name)) {
       throw new Error(`Syntax name already registered: ${name}`);
     }
-    this.emphasize.register(name, syntaxDefinition);
+    this.#emphasize.register(name, syntaxDefinition);
   }
 }

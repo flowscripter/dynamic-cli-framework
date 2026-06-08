@@ -1,20 +1,14 @@
-import type {
-  ServiceInfo,
-  ServiceProvider,
-} from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import type Context from "../../api/Context.ts";
 import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import {
-  ASCII_BANNER_GENERATOR_SERVICE_ID,
-} from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "../../api/service/core/AsciiBannerGeneratorService.ts";
 import DefaultAsciiBannerGeneratorService from "./DefaultAsciiBannerGeneratorService.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
 
 /**
  * Provides an {@link AsciiBannerGeneratorService}.
  */
-export default class AsciiBannerGeneratorServiceProvider
-  implements ServiceProvider {
+export default class AsciiBannerGeneratorServiceProvider implements ServiceProvider {
   readonly serviceId: string = ASCII_BANNER_GENERATOR_SERVICE_ID;
   readonly servicePriority: number;
   readonly #asciiBannerGeneratorService: AsciiBannerGeneratorService;
@@ -24,12 +18,9 @@ export default class AsciiBannerGeneratorServiceProvider
    *
    * @param servicePriority the priority of the service.
    */
-  public constructor(
-    servicePriority: number,
-  ) {
+  public constructor(servicePriority: number) {
     this.servicePriority = servicePriority;
-    this.#asciiBannerGeneratorService =
-      new DefaultAsciiBannerGeneratorService();
+    this.#asciiBannerGeneratorService = new DefaultAsciiBannerGeneratorService();
   }
 
   public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {

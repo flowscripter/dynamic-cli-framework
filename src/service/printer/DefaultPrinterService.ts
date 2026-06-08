@@ -27,20 +27,14 @@ export default class DefaultPrinterService implements PrinterService {
   #spinner: Spinner;
   #progress: Progress;
 
-  async #log(
-    level: number,
-    message: string,
-    icon?: Icon,
-  ): Promise<void> {
+  async #log(level: number, message: string, icon?: Icon): Promise<void> {
     if (this.#threshold > level) {
       return;
     }
     await this.#spinner.pause();
     await this.#progress.pause();
     await this.#stderrTerminal.write(
-      `${
-        (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
-      }${message}`,
+      `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${message}`,
     );
     this.#spinner.resume();
     this.#progress.resume();
@@ -65,31 +59,16 @@ export default class DefaultPrinterService implements PrinterService {
     this.#spinner = new Spinner(this.#stderrTerminal, this.#styler);
     this.#progress = new Progress(this.#stderrTerminal, this.#styler);
     this.darkMode = false;
-    this.#iconDefinitions = [
-      this.green("✔"),
-      this.red("✖"),
-      this.yellow("‼"),
-      this.blue("ℹ"),
-    ];
+    this.#iconDefinitions = [this.green("✔"), this.red("✖"), this.yellow("‼"), this.blue("ℹ")];
   }
 
   set colorEnabled(enabled: boolean) {
     this.#styler.colorEnabled = enabled;
     this.#stdoutIsColor = enabled;
     if (enabled) {
-      this.#iconDefinitions = [
-        this.green("✔"),
-        this.red("✖"),
-        this.yellow("‼"),
-        this.blue("ℹ"),
-      ];
+      this.#iconDefinitions = [this.green("✔"), this.red("✖"), this.yellow("‼"), this.blue("ℹ")];
     } else {
-      this.#iconDefinitions = [
-        "✔",
-        "✖",
-        "‼",
-        "ℹ",
-      ];
+      this.#iconDefinitions = ["✔", "✖", "‼", "ℹ"];
     }
   }
 
@@ -189,66 +168,42 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   #parseHexColor(hexFormattedColor: string): number {
-    if (
-      (hexFormattedColor.length !== 7) ||
-      (!hexFormattedColor.toLowerCase().startsWith("#"))
-    ) {
+    if (hexFormattedColor.length !== 7 || !hexFormattedColor.toLowerCase().startsWith("#")) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);
     }
     const colorValue = parseInt(hexFormattedColor.slice(1), 16);
-    if (isNaN(colorValue) || (colorValue < 0 || colorValue > 0xffffff)) {
+    if (isNaN(colorValue) || colorValue < 0 || colorValue > 0xffffff) {
       throw new Error(`Invalid color: ${hexFormattedColor}`);
     }
     return colorValue;
   }
 
   public color(message: string, hexFormattedColor: string): string {
-    return this.#styler.colorText(
-      message,
-      this.#parseHexColor(hexFormattedColor),
-    );
+    return this.#styler.colorText(message, this.#parseHexColor(hexFormattedColor));
   }
 
   public backgroundPrimary(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.PRIMARY]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.PRIMARY]!);
   }
 
   public backgroundSecondary(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.SECONDARY]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.SECONDARY]!);
   }
 
   public backgroundEmphasised(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.EMPHASISED]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.EMPHASISED]!);
   }
 
   public backgroundSelected(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.SELECTED]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.SELECTED]!);
   }
 
   public backgroundYellow(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.YELLOW]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.YELLOW]!);
   }
 
   public backgroundOrange(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.ORANGE]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.ORANGE]!);
   }
 
   public backgroundRed(message: string): string {
@@ -256,17 +211,11 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public backgroundMagenta(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.MAGENTA]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.MAGENTA]!);
   }
 
   public backgroundViolet(message: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#theme[Color.VIOLET]!,
-    );
+    return this.#styler.backgroundColorText(message, this.#theme[Color.VIOLET]!);
   }
 
   public backgroundBlue(message: string): string {
@@ -282,10 +231,7 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public backgroundColor(message: string, hexFormattedColor: string): string {
-    return this.#styler.backgroundColorText(
-      message,
-      this.#parseHexColor(hexFormattedColor),
-    );
+    return this.#styler.backgroundColorText(message, this.#parseHexColor(hexFormattedColor));
   }
 
   public async debug(message: string, icon?: Icon): Promise<void> {
@@ -311,9 +257,7 @@ export default class DefaultPrinterService implements PrinterService {
     const colorMessage = this.#stdoutIsColor ? this.primary(message) : message;
 
     const encoded = this.#encoder.encode(
-      `${
-        (icon !== undefined) ? `${this.#iconDefinitions[icon]} ` : ""
-      }${colorMessage}`,
+      `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${colorMessage}`,
     );
 
     await writer.ready;
@@ -336,10 +280,7 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#threshold;
   }
 
-  public async showSpinner(
-    message?: string,
-    style?: SpinnerStyle,
-  ): Promise<void> {
+  public async showSpinner(message?: string, style?: SpinnerStyle): Promise<void> {
     await this.#progress.hideAll();
     if (this.#threshold > Level.INFO) {
       return;
@@ -380,11 +321,7 @@ export default class DefaultPrinterService implements PrinterService {
     await this.#progress.hideAll();
   }
 
-  public updateProgressBar(
-    handle: number,
-    current: number,
-    message?: string,
-  ): void {
+  public updateProgressBar(handle: number, current: number, message?: string): void {
     if (this.#threshold > Level.INFO) {
       return;
     }

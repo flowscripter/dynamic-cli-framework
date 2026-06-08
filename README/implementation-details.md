@@ -100,11 +100,11 @@ classDiagram
     BaseCLI --> CLIConfig
 
     Context --> ServiceProviderRegistry
-    
+
     ServiceProvider --> ServiceXYZ : provides
 
     Context --> ServiceXYZ : access to
-        
+
     DefaultRuntimeCLI <-- launcher
 ```
 
@@ -189,26 +189,26 @@ flowchart TD
     subgraph 1 [for each ServiceProvider in servicePriority order:]
 
         B([scan args for provided\nGlobalModifierCommand clauses])
-    
+
         subgraph 2 [for each discovered clause:]
             C([set default\narg values])
             D([parse args])
             E([add to list of\nGlobalModifierCommands\nclauses to execute])
         end
-    
+
         F([scan default arg values for provided\nGlobalModifierCommand clauses])
-    
+
         subgraph 3 [for each discovered clause:]
             G([parse args])
             H([add to list of\nGlobalModifierCommands\nclauses to execute])
         end
-    
+
         I([order GlobalModifierCommands\nclauses by executePriority])
-    
+
         subgraph 4 [for each discovered clause:]
             J([execute GlobalModifierCommand])
         end
-    
+
         K([init service provided by ServiceProvider])
     end
 
@@ -259,7 +259,7 @@ flowchart TD
 
     M --> N
     N --> O
-    
+
     Q --> R
 
     A --> 1
@@ -281,27 +281,27 @@ flowchart TD
     V --> |no|W
     W --> |yes|W1
     W --> |no|Z
-    
+
     V1 --> V2
     V2 --> V3
     V3 --> Z
-    
+
     W1 --> W2
     W2 --> |yes|W21
     W2 --> |no|W3
-    
+
     W21 --> W22
     W22 --> W23
-    
+
     W23 --> |yes|W24
     W23 --> |no|Z
-    
+
     W24 --> Z
-    
+
     W3 --> W31
     W31 --> |yes|W32
     W31 --> |no|Z
-    
+
     W32 --> Z
 ```
 
@@ -356,7 +356,7 @@ Apart from global modifier commands, there is expected to be only one command
 specified i.e. these will **NOT** work as intended:
 
     // not valid - sub-command 2 and arguments will be treated as trailing arguments of sub-command 1.
-    executable <sub_command_1> [sub_command_1_arguments] <sub_command_2> [sub_command_2_arguments] 
+    executable <sub_command_1> [sub_command_1_arguments] <sub_command_2> [sub_command_2_arguments]
 
     // not valid - sub-command and arguments will be treated as trailing arguments of global command.
     executable --<global_command> <sub_command> [sub_command_arguments]

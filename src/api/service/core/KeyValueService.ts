@@ -1,5 +1,4 @@
-export const KEY_VALUE_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/key-value-service";
+export const KEY_VALUE_SERVICE_ID = "@flowscripter/dynamic-cli-framework/key-value-service";
 
 /**
  * The sentinel prefix used to indicate a value is stored as an OS-native secret.

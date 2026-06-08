@@ -15,9 +15,7 @@ function parseVersion(versionString = ""): {
     };
   }
 
-  const versions = (versionString ?? "").split(".").map((n) =>
-    Number.parseInt(n, 10)
-  );
+  const versions = (versionString ?? "").split(".").map((n) => Number.parseInt(n, 10));
   return {
     major: versions[0] ?? 0,
     minor: versions[1] ?? 0,
@@ -25,9 +23,7 @@ function parseVersion(versionString = ""): {
   };
 }
 
-export default function supportsHyperlinks(
-  stream: WriteStream | undefined,
-): boolean {
+export default function supportsHyperlinks(stream: WriteStream | undefined): boolean {
   const {
     CI,
     CURSOR_TRACE_ID,
@@ -40,8 +36,7 @@ export default function supportsHyperlinks(
   } = process.env;
 
   if (FORCE_HYPERLINK) {
-    return !(FORCE_HYPERLINK.length > 0 &&
-      Number.parseInt(FORCE_HYPERLINK, 10) === 0);
+    return !(FORCE_HYPERLINK.length > 0 && Number.parseInt(FORCE_HYPERLINK, 10) === 0);
   }
 
   if (stream && !stream.isTTY) {
@@ -81,8 +76,7 @@ export default function supportsHyperlinks(
         if (CURSOR_TRACE_ID) {
           return true;
         }
-        return version.major > 1 ||
-          (version.major === 1 && version.minor >= 72);
+        return version.major > 1 || (version.major === 1 && version.minor >= 72);
       }
       case "ghostty":
         return true;

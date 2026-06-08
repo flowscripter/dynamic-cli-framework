@@ -13,9 +13,7 @@ describe("TreePrinterServiceProvider tests", () => {
     const treePrinterServiceProvider = new TreePrinterServiceProvider(100);
     const cliConfig = getCLIConfig();
 
-    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
     expect(serviceInfo.service).toBeDefined();
   });
@@ -40,15 +38,13 @@ describe("TreePrinterServiceProvider tests", () => {
       ),
     );
 
-    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(
-      cliConfig,
-    );
+    const serviceInfo = await treePrinterServiceProvider.getServiceInfo(cliConfig);
     expect(serviceInfo.commands.length).toEqual(0);
 
     await treePrinterServiceProvider.initService(context);
 
-    const service = serviceInfo
-      .service as import("../../../src/service/treePrinter/DefaultTreePrinterService.ts").default;
+    const service =
+      serviceInfo.service as import("../../../src/service/treePrinter/DefaultTreePrinterService.ts").default;
     expect(service.colorEnabled).toBe(true);
     expect(typeof service.colorFunction).toBe("function");
   });

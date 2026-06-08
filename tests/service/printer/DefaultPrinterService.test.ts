@@ -50,64 +50,9 @@ describe("DefaultPrinterService tests", () => {
     expectBytesEquals(
       dummyStderr.getString(),
       new Uint8Array([
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        49,
-        51,
-        49,
-        59,
-        49,
-        52,
-        56,
-        59,
-        49,
-        53,
-        48,
-        109,
-        104,
-        101,
-        108,
-        108,
-        111,
-        32,
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        51,
-        56,
-        59,
-        49,
-        51,
-        57,
-        59,
-        50,
-        49,
-        48,
-        109,
-        119,
-        111,
-        114,
-        108,
-        100,
-        27,
-        91,
-        51,
-        57,
-        109,
-        27,
-        91,
-        51,
-        57,
-        109,
+        27, 91, 51, 56, 59, 50, 59, 49, 51, 49, 59, 49, 52, 56, 59, 49, 53, 48, 109, 104, 101, 108,
+        108, 111, 32, 27, 91, 51, 56, 59, 50, 59, 51, 56, 59, 49, 51, 57, 59, 50, 49, 48, 109, 119,
+        111, 114, 108, 100, 27, 91, 51, 57, 109, 27, 91, 51, 57, 109,
       ]),
     );
   });
@@ -129,53 +74,9 @@ describe("DefaultPrinterService tests", () => {
     expectBytesEquals(
       dummyStderr.getString(),
       new Uint8Array([
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        49,
-        48,
-        49,
-        59,
-        49,
-        50,
-        51,
-        59,
-        49,
-        51,
-        49,
-        109,
-        27,
-        91,
-        51,
-        56,
-        59,
-        50,
-        59,
-        48,
-        59,
-        48,
-        59,
-        48,
-        109,
-        104,
-        101,
-        108,
-        108,
-        111,
-        27,
-        91,
-        51,
-        57,
-        109,
-        27,
-        91,
-        51,
-        57,
-        109,
+        27, 91, 51, 56, 59, 50, 59, 49, 48, 49, 59, 49, 50, 51, 59, 49, 51, 49, 109, 27, 91, 51, 56,
+        59, 50, 59, 48, 59, 48, 59, 48, 109, 104, 101, 108, 108, 111, 27, 91, 51, 57, 109, 27, 91,
+        51, 57, 109,
       ]),
     );
   });
@@ -194,12 +95,8 @@ describe("DefaultPrinterService tests", () => {
     );
     printerService.colorEnabled = true;
 
-    expect(() => printerService.color("hello", "foo")).toThrow(
-      "Invalid color: foo",
-    );
-    expect(() => printerService.color("hello", "0x0")).toThrow(
-      "Invalid color: 0x0",
-    );
+    expect(() => printerService.color("hello", "foo")).toThrow("Invalid color: foo");
+    expect(() => printerService.color("hello", "0x0")).toThrow("Invalid color: 0x0");
   });
 
   test("stdout writable accessible", async () => {
@@ -257,14 +154,8 @@ describe("DefaultPrinterService tests", () => {
     await printerService.print("hello stdout\n");
     await printerService.info("hello stderr\n");
 
-    expectStringEquals(
-      dummyStdout.getString(),
-      "hello stdout\n",
-    );
-    expectStringEquals(
-      dummyStderr.getString(),
-      "hello stderr\n",
-    );
+    expectStringEquals(dummyStdout.getString(), "hello stdout\n");
+    expectStringEquals(dummyStderr.getString(), "hello stderr\n");
   });
 
   test("Level filtering works", async () => {
@@ -285,10 +176,7 @@ describe("DefaultPrinterService tests", () => {
     await printerService.info("hello info 1\n");
     await printerService.warn("hello warn 1\n");
 
-    expectStringEquals(
-      dummyStderr.getString(),
-      "hello info 1\nhello warn 1\n",
-    );
+    expectStringEquals(dummyStderr.getString(), "hello info 1\nhello warn 1\n");
 
     await printerService.setLevel(Level.WARN);
 
@@ -296,10 +184,7 @@ describe("DefaultPrinterService tests", () => {
     await printerService.info("hello info 2\n");
     await printerService.warn("hello warn 2\n");
 
-    expectStringEquals(
-      dummyStderr.getString(),
-      "hello info 1\nhello warn 1\nhello warn 2\n",
-    );
+    expectStringEquals(dummyStderr.getString(), "hello info 1\nhello warn 1\nhello warn 2\n");
 
     await printerService.setLevel(Level.DEBUG);
 
@@ -329,17 +214,11 @@ describe("DefaultPrinterService tests", () => {
 
     await printerService.info("hello info", Icon.INFORMATION);
 
-    expectStringEquals(
-      dummyStderr.getString(),
-      "ℹ hello info",
-    );
+    expectStringEquals(dummyStderr.getString(), "ℹ hello info");
 
     await printerService.info("hello success", Icon.SUCCESS);
 
-    expectStringEquals(
-      dummyStderr.getString(),
-      "ℹ hello info✔ hello success",
-    );
+    expectStringEquals(dummyStderr.getString(), "ℹ hello info✔ hello success");
   });
 
   test("Icons work on stdout", async () => {
@@ -358,17 +237,11 @@ describe("DefaultPrinterService tests", () => {
 
     await printerService.print("hello info", Icon.INFORMATION);
 
-    expectStringEquals(
-      dummyStdout.getString(),
-      "ℹ hello info",
-    );
+    expectStringEquals(dummyStdout.getString(), "ℹ hello info");
 
     await printerService.print("hello success", Icon.SUCCESS);
 
-    expectStringEquals(
-      dummyStdout.getString(),
-      "ℹ hello info✔ hello success",
-    );
+    expectStringEquals(dummyStdout.getString(), "ℹ hello info✔ hello success");
   });
 
   test("Spinner works", async () => {
@@ -392,47 +265,8 @@ describe("DefaultPrinterService tests", () => {
     expectBytesEquals(
       dummyStderr.getString(),
       new Uint8Array([
-        27,
-        91,
-        63,
-        50,
-        53,
-        108,
-        27,
-        91,
-        50,
-        75,
-        27,
-        91,
-        71,
-        226,
-        160,
-        139,
-        32,
-        104,
-        101,
-        108,
-        108,
-        111,
-        32,
-        119,
-        111,
-        114,
-        108,
-        100,
-        27,
-        91,
-        50,
-        75,
-        27,
-        91,
-        71,
-        27,
-        91,
-        63,
-        50,
-        53,
-        104,
+        27, 91, 63, 50, 53, 108, 27, 91, 50, 75, 27, 91, 71, 226, 160, 139, 32, 104, 101, 108, 108,
+        111, 32, 119, 111, 114, 108, 100, 27, 91, 50, 75, 27, 91, 71, 27, 91, 63, 50, 53, 104,
       ]),
     );
   });
@@ -456,14 +290,8 @@ describe("DefaultPrinterService tests", () => {
     printerService.updateProgressBar(handle, 50);
     await sleep(50);
     await printerService.hideProgressBar(handle);
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "foo",
-    );
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "bits",
-    );
+    expectStringIncludes(dummyStderr.getString(), "foo");
+    expectStringIncludes(dummyStderr.getString(), "bits");
   });
 
   test("Multiple progress bars work", async () => {
@@ -490,22 +318,10 @@ describe("DefaultPrinterService tests", () => {
     await sleep(50);
     await printerService.hideProgressBar(handle1);
     await printerService.hideProgressBar(handle2);
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "bits",
-    );
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "megaflops",
-    );
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "foo1",
-    );
-    expectStringIncludes(
-      dummyStderr.getString(),
-      "bar1",
-    );
+    expectStringIncludes(dummyStderr.getString(), "bits");
+    expectStringIncludes(dummyStderr.getString(), "megaflops");
+    expectStringIncludes(dummyStderr.getString(), "foo1");
+    expectStringIncludes(dummyStderr.getString(), "bar1");
   });
 
   test("backgroundBlue with colorLevel 3 and colorEnabled produces background ANSI code", () => {
@@ -592,18 +408,16 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
     printerService.colorEnabled = true;
-    for (
-      const method of [
-        "backgroundYellow",
-        "backgroundOrange",
-        "backgroundRed",
-        "backgroundMagenta",
-        "backgroundViolet",
-        "backgroundBlue",
-        "backgroundCyan",
-        "backgroundGreen",
-      ] as const
-    ) {
+    for (const method of [
+      "backgroundYellow",
+      "backgroundOrange",
+      "backgroundRed",
+      "backgroundMagenta",
+      "backgroundViolet",
+      "backgroundBlue",
+      "backgroundCyan",
+      "backgroundGreen",
+    ] as const) {
       const result = printerService[method]("text");
       expect(result).toStartWith("\x1b[48;2;");
       expect(result).toEndWith("\x1b[49m");
@@ -623,14 +437,12 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
     printerService.colorEnabled = true;
-    for (
-      const method of [
-        "backgroundPrimary",
-        "backgroundSecondary",
-        "backgroundEmphasised",
-        "backgroundSelected",
-      ] as const
-    ) {
+    for (const method of [
+      "backgroundPrimary",
+      "backgroundSecondary",
+      "backgroundEmphasised",
+      "backgroundSelected",
+    ] as const) {
       const result = printerService[method]("text");
       expect(result).toStartWith("\x1b[48;2;");
       expect(result).toEndWith("\x1b[49m");
@@ -664,13 +476,8 @@ describe("DefaultPrinterService tests", () => {
       new TtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
-    const result = printerService.hyperlink(
-      "click here",
-      "https://example.com",
-    );
-    expect(result).toEqual(
-      "\x1b]8;;\x68ttps://example.com\x07click here\x1b]8;;\x07",
-    );
+    const result = printerService.hyperlink("click here", "https://example.com");
+    expect(result).toEqual("\x1b]8;;\x68ttps://example.com\x07click here\x1b]8;;\x07");
   });
 
   test("hyperlink with hyperlinksEnabled false returns url", () => {
@@ -686,10 +493,7 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
     printerService.hyperlinksEnabled = false;
-    const result = printerService.hyperlink(
-      "click here",
-      "https://example.com",
-    );
+    const result = printerService.hyperlink("click here", "https://example.com");
     expect(result).toEqual("click here: https://example.com");
   });
 
@@ -706,22 +510,20 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
     printerService.colorEnabled = false;
-    for (
-      const method of [
-        "backgroundPrimary",
-        "backgroundSecondary",
-        "backgroundEmphasised",
-        "backgroundSelected",
-        "backgroundYellow",
-        "backgroundOrange",
-        "backgroundRed",
-        "backgroundMagenta",
-        "backgroundViolet",
-        "backgroundBlue",
-        "backgroundCyan",
-        "backgroundGreen",
-      ] as const
-    ) {
+    for (const method of [
+      "backgroundPrimary",
+      "backgroundSecondary",
+      "backgroundEmphasised",
+      "backgroundSelected",
+      "backgroundYellow",
+      "backgroundOrange",
+      "backgroundRed",
+      "backgroundMagenta",
+      "backgroundViolet",
+      "backgroundBlue",
+      "backgroundCyan",
+      "backgroundGreen",
+    ] as const) {
       expectStringEquals(printerService[method]("text"), "text");
     }
   });
