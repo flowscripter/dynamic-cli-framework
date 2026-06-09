@@ -29,7 +29,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
         supportsHyperlinks(process.stderr),
       ),
       new TtyKeyReader(process.stdin),
-      options,
+      { promptingEnabled: process.stdin.isTTY === true, ...options },
     );
   }
 

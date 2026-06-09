@@ -129,6 +129,7 @@ export default class BaseCLI implements CLI {
       completionServiceEnabled: false,
       imagePrinterServiceEnabled: false,
       validateAllCommands: false,
+      promptingEnabled: true,
       ...options,
     };
     this.#keyReader = keyReader;
@@ -219,6 +220,7 @@ export default class BaseCLI implements CLI {
       this.#keyReader,
       this.#printerService,
     );
+    prompterService.promptEnabled = this.#options.promptingEnabled;
     this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
 
     if (this.#options.argumentPrompterServiceEnabled) {
