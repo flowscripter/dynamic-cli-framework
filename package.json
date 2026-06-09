@@ -42,6 +42,8 @@
   },
   "typedocOptions": {
     "readme": "none",
-    "exclude": ["tests/**"]
+    "exclude": [
+      "tests/**"
+    ]
   }
 }
