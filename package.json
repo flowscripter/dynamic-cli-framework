@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/dynamic-cli-framework",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A framework for developing CLI applications which supports dynamic discovery and installation of new commands",
   "keywords": [
     "bun",
