@@ -18,7 +18,7 @@ Lint:
 
 Generate HTML API Documentation:
 
-`bunx typedoc --readme none index.ts`
+`bunx typedoc index.ts`
 
 ### Debug Logging
 

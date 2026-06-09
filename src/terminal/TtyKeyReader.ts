@@ -27,6 +27,25 @@ export default class TtyKeyReader implements KeyReader {
     return new Promise((resolve) => {
       const onData = (data: Buffer): void => {
         this.#ttyReadStream.removeListener("data", onData);
+
+        // A lone 0x1b may be the start of a multi-byte escape sequence (e.g. arrow keys).
+        // Wait briefly for the rest of the sequence before decoding.
+        if (data.length === 1 && data[0] === 0x1b) {
+          const timeout = setTimeout(() => {
+            this.#ttyReadStream.removeListener("data", onMore);
+            resolve(TtyKeyReader.#decodeKeyEvent(data));
+          }, 20);
+
+          const onMore = (more: Buffer): void => {
+            clearTimeout(timeout);
+            this.#ttyReadStream.removeListener("data", onMore);
+            resolve(TtyKeyReader.#decodeKeyEvent(Buffer.concat([data, more])));
+          };
+
+          this.#ttyReadStream.once("data", onMore);
+          return;
+        }
+
         resolve(TtyKeyReader.#decodeKeyEvent(data));
       };
       this.#ttyReadStream.on("data", onData);

@@ -233,7 +233,7 @@ export default class BaseCLI implements CLI {
     let completionService: DefaultCompletionService | undefined;
     if (this.#options.completionServiceEnabled) {
       completionService = new DefaultCompletionService();
-      this.addServiceProvider(new CompletionServiceProvider(60, completionService));
+      this.addServiceProvider(new CompletionServiceProvider(5, completionService));
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
