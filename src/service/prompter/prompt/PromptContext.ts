@@ -14,8 +14,10 @@ export interface PromptContext {
 export function physicalLineCount(terminal: Terminal, text: string): number {
   const cols = terminal.columns();
   if (cols <= 0) return 1;
-  const width = Bun.stringWidth(text);
-  return Math.max(1, Math.ceil(width / cols));
+  return text.split("\n").reduce((sum, segment) => {
+    const width = Bun.stringWidth(segment);
+    return sum + Math.max(1, Math.ceil(width / cols));
+  }, 0);
 }
 
 export function headerLineCount(terminal: Terminal, promptDef: Prompt): number {
