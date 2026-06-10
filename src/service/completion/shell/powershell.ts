@@ -29,7 +29,7 @@ export default class PowerShellShellHandler implements ShellHandler {
 
   validateEnvironment(): Promise<boolean> {
     try {
-      const result = Bun.spawnSync(["pwsh", "--version"]);
+      const result = Bun.spawnSync(["pwsh", "--version"], { timeout: 2000 });
       if (result.exitCode === 0) {
         return Promise.resolve(true);
       }
@@ -37,7 +37,7 @@ export default class PowerShellShellHandler implements ShellHandler {
       // try powershell fallback
     }
     try {
-      const result = Bun.spawnSync(["powershell", "-Command", "echo ok"]);
+      const result = Bun.spawnSync(["powershell", "-Command", "echo ok"], { timeout: 2000 });
       return Promise.resolve(result.exitCode === 0);
     } catch {
       return Promise.resolve(false);
