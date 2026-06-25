@@ -1,4 +1,4 @@
-# Implementation
+# Implementation Details
 
 The following diagram provides an overview of the main internal modules and
 classes:
