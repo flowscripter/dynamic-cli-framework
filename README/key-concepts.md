@@ -16,9 +16,9 @@ The key concepts are:
 - Dynamic plugins (enabled by
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework))
   allow:
-  - dynamic load and import of one or more `CommandFactory` implementations
+  - dynamic load and import of `CommandFactory` implementations
     providing one or more `Command` implementations.
-  - dynamic load and import of one or more `ServiceProviderFactory`
+  - dynamic load and import of `ServiceProviderFactory`
     implementations providing one or more `ServiceProvider` implementations.
 
 The following high-level conceptual diagram illustrates these relationships:
@@ -58,6 +58,28 @@ classDiagram
         <<interface>>
     }
 
+    class Plugin {
+        <<interface>>
+    }
+
+    class CLIPlugin {
+    }
+
+    class PluginManager {
+    }
+
+    class CliPlugin {
+        <<interface>>
+    }
+
+    class CommandFactory {
+        <<interface>>
+    }
+
+    class ServiceProviderFactory {
+        <<interface>>
+    }
+
     CLI --> CLIConfig
 
     CLI --> Context
@@ -78,34 +100,21 @@ classDiagram
 
     ServiceProvider --> "*" Service : provides
 
-    class PluginManager {
-    }
-
-    class Plugin {
-        <<interface>>
-    }
-
-    CLI --> PluginManager
-
-    class CommandFactory {
-        <<interface>>
-    }
-
-    class ServiceProviderFactory {
-        <<interface>>
-    }
+    CLI --> PluginManager : uses
 
     CLI-->ServiceProviderRegistry
 
-    PluginManager --> "*" Plugin : registers
+    PluginManager --> "*" CliPlugin : registers
 
-    Plugin --> "*" CommandFactory: implements
+    Plugin <|.. CLIPlugin
 
-    Plugin --> "*" ServiceProviderFactory: implements
+    CliPlugin --> "0..1" CommandFactory : creates
 
-    CommandFactory --> "*" Command : provides
+    CliPlugin --> "0..1" ServiceProviderFactory : creates
 
-    ServiceProviderFactory --> "*" ServiceProvider : provides
+    CommandFactory --> "*" Command : builds
+
+    ServiceProviderFactory --> "*" ServiceProvider : builds
 ```
 
 ## Commands

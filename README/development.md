@@ -36,7 +36,7 @@ already installed plugins are not validated as they are loaded. The only
 validation that takes place is for commands or services provided by plugins
 BEFORE they are installed.
 
-When using `launcher.ts` runtime validation of all commands and services can be
+When using `launcher.ts` runtime validation of all commands can be
 forced by defining the `DYNAMIC_CLI_FRAMEWORK_VALIDATE_ALL` environment
 variable.
 

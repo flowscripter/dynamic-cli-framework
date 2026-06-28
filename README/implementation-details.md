@@ -54,13 +54,42 @@ classDiagram
         <<interface>>
     }
 
-    class DefaultRuntimeCLI {
-    }
-
     class CLIConfig {
     }
 
     class ServiceXYZ {
+    }
+
+    class DefaultRuntimeCLI {
+    }
+
+    class DynamicPluginRuntimeCLI {
+    }
+
+    class MarketplacePluginManager {
+        <<interface>>
+    }
+
+    class Plugin {
+        <<interface>>
+    }
+
+    class CLIPlugin {
+        <<interface>>
+    }
+
+    class CommandFactory {
+        <<interface>>
+    }
+
+    class ServiceProviderFactory {
+        <<interface>>
+    }
+
+    class HttpPluginManager {
+    }
+
+    class NpmPluginManager {
     }
 
     runner --> scanner
@@ -70,6 +99,8 @@ classDiagram
     CLI <|.. BaseCLI
 
     BaseCLI <|-- DefaultRuntimeCLI
+
+    DefaultRuntimeCLI <|-- DynamicPluginRuntimeCLI
 
     runner --> Context
 
@@ -105,7 +136,31 @@ classDiagram
 
     Context --> ServiceXYZ : access to
 
-    DefaultRuntimeCLI <-- launcher
+    DefaultRuntimeCLI <-- launcher : instantiates
+
+    DynamicPluginRuntimeCLI <-- launcher : instantiates
+
+    DefaultRuntimeCLI --> MarketplacePluginManager
+
+    CLIPlugin --> "0..1" CommandFactory : creates
+
+    CLIPlugin --> "0..1" ServiceProviderFactory : creates
+
+    Plugin <|.. CLIPlugin
+
+    MarketplacePluginManager <|.. HttpPluginManager
+
+    MarketplacePluginManager <|.. NpmPluginManager
+
+    MarketplacePluginManager --> "*" Plugin : installs and loads
+
+    DynamicPluginRuntimeCLI --> ServiceProviderRegistry : registers ServiceProviders
+
+    DynamicPluginRuntimeCLI --> CommandRegistry : registers Commands
+
+    CommandFactory --> "*" Command : builds
+
+    ServiceProviderFactory --> "*" ServiceProvider : builds
 ```
 
 ### `launcher`
@@ -161,6 +216,53 @@ documented in further detail below):
 `DefaultRuntimeCLI` is a simple extension to `BaseCLI` which uses NodeJS
 specific APIs to access the command line arguments, stdout and stderr streams
 and to exit the process.
+
+#### `DynamicPluginRuntimeCLI`
+
+`DynamicPluginRuntimeCLI` extends `DefaultRuntimeCLI` and adds dynamic plugin
+discovery. On each call to `run()` it discovers all locally installed plugins
+via the `MarketplacePluginManager` and registers their commands and service
+providers before delegating to `super.run()`. This ensures that plugin-provided
+commands and service providers participate in the full runner initialization
+lifecycle (including `GlobalModifierCommand` scanning and `initService()`).
+
+It also adds a `DefaultPluginServiceProvider` at construction time, which
+provides the `plugin` group command with `plugin:list`, `plugin:add`,
+`plugin:remove`, `plugin:search` and `plugin:upgrade` sub-commands.
+
+The following sequence diagram illustrates the plugin discovery flow in `run()`:
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant DynamicPluginRuntimeCLI
+    participant MarketplacePluginManager
+    participant CommandFactory
+    participant ServiceProviderFactory
+    participant DefaultRuntimeCLI
+
+    Caller->>DynamicPluginRuntimeCLI: run()
+    DynamicPluginRuntimeCLI->>MarketplacePluginManager: registerExtensions(COMMAND_FACTORY_EP)
+    DynamicPluginRuntimeCLI->>MarketplacePluginManager: registerExtensions(SP_FACTORY_EP)
+    DynamicPluginRuntimeCLI->>MarketplacePluginManager: getRegisteredExtensions(COMMAND_FACTORY_EP)
+    loop for each command factory extension
+        DynamicPluginRuntimeCLI->>MarketplacePluginManager: instantiate(handle)
+        MarketplacePluginManager-->>DynamicPluginRuntimeCLI: CommandFactory
+        DynamicPluginRuntimeCLI->>CommandFactory: getCommands()
+        CommandFactory-->>DynamicPluginRuntimeCLI: Command[]
+        DynamicPluginRuntimeCLI->>DynamicPluginRuntimeCLI: addCommand(cmd) for each
+    end
+    DynamicPluginRuntimeCLI->>MarketplacePluginManager: getRegisteredExtensions(SP_FACTORY_EP)
+    loop for each SP factory extension
+        DynamicPluginRuntimeCLI->>MarketplacePluginManager: instantiate(handle)
+        MarketplacePluginManager-->>DynamicPluginRuntimeCLI: ServiceProviderFactory
+        DynamicPluginRuntimeCLI->>ServiceProviderFactory: getServiceProviders()
+        ServiceProviderFactory-->>DynamicPluginRuntimeCLI: ServiceProvider[]
+        DynamicPluginRuntimeCLI->>DynamicPluginRuntimeCLI: addServiceProvider(sp) for each
+    end
+    DynamicPluginRuntimeCLI->>DefaultRuntimeCLI: super.run()
+    Note over DefaultRuntimeCLI: All plugin commands and SPs<br/>now in registries - participate<br/>in full initialization lifecycle
+```
 
 ### `runner`
 

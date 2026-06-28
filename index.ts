@@ -168,9 +168,19 @@ export {
   MultiCommandCliHelpSubCommand,
 } from "./src/command/MultiCommandCliHelpCommand.ts";
 
+// Plugin API
+export type { default as CommandFactory } from "./src/api/plugin/CommandFactory.ts";
+export { DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT } from "./src/api/plugin/CommandFactory.ts";
+export type { default as ServiceProviderFactory } from "./src/api/plugin/ServiceProviderFactory.ts";
+export { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "./src/api/plugin/ServiceProviderFactory.ts";
+export { PLUGIN_SERVICE_ID } from "./src/api/service/core/PluginService.ts";
+export type { default as PluginService } from "./src/api/service/core/PluginService.ts";
+export { default as DefaultPluginServiceProvider } from "./src/service/plugin/DefaultPluginServiceProvider.ts";
+
 // Core CLI
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
+export { default as DynamicPluginRuntimeCLI } from "./src/cli/DynamicPluginRuntimeCLI.ts";
 
 // Terminal API
 export type { default as Terminal } from "./src/terminal/Terminal.ts";
@@ -180,4 +190,8 @@ export { SpecialKey } from "./src/terminal/KeyReader.ts";
 export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
-export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";
+export {
+  launchMultiCommandCLI,
+  launchSingleCommandCLI,
+  launchDynamicPluginMultiCommandCLI,
+} from "./src/launcher.ts";

@@ -19,10 +19,15 @@
   },
   "type": "module",
   "module": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./plugin": "./cli-plugin.ts"
+  },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
+    "@flowscripter/dynamic-plugin-framework": "../dynamic-plugin-framework",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.11.0",
