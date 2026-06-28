@@ -108,10 +108,7 @@ export class PluginAddSubCommand implements SubCommand {
       Icon.INFORMATION,
     );
     await pluginService.install(descriptor);
-    await printerService.print(
-      `Plugin ${getPluginId(descriptor)} installed.\n`,
-      Icon.SUCCESS,
-    );
+    await printerService.print(`Plugin ${getPluginId(descriptor)} installed.\n`, Icon.SUCCESS);
   }
 }
 
