@@ -9,16 +9,6 @@
 > A framework for developing CLI applications which supports dynamic discovery
 > and installation of new commands
 
-[//]: # "TODO: Remove this when plugin support."
-
-NOTE: The dynamic aspect is still in development as it relies upon:
-
-- some outstanding work on the
-  [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)
-  dependency.
-
-So it isn't really dynamic at the moment! 😜
-
 ## Key Features
 
 - Flexible CLI definitions:
@@ -67,10 +57,8 @@ The following example projects are available:
   application based on this framework.
 - [mpeg-sdl-tool](https://github.com/flowscripter/mpeg-sdl-tool) is a real world
   use case CLI application based on this framework.
-
-[//]: # "TODO: Add this when implemented."
-[//]: # "- [example-cli-plugin](https://github.com/flowscripter/example-cli-plugin) is an"
-[//]: # "example command and service plugin based on this framework."
+- [example-cli-plugin](https://github.com/flowscripter/example-cli-plugin) is an
+  example command and service plugin based on this framework.
 
 ## Further Details
 
@@ -78,6 +66,7 @@ The following example projects are available:
 - [Implementation Details](./README/implementation-details.md)
 - [Core Service Providers](./README/core-service-providers.md)
 - [Core Commands](./README/core-commands.md)
+- [Plugins](./README/plugins.md)
 - [Development](./README/development.md)
 - [API Documentation](https://flowscripter.github.io/dynamic-cli-framework/index.html)
 
