@@ -98,17 +98,33 @@ export class PluginAddSubCommand implements SubCommand {
         break;
       }
     }
-    if (!descriptor) {
-      await printerService.error(`Plugin not found: ${pluginId}`, Icon.FAILURE);
-      return;
+
+    if (!descri ptor) {
+      // Search did not find an exact match - attempt direct install by plugin ID.
+      // This handles cases where the package exists on the registry but is not
+      // returned by search (e.g. recently published or low search ranking).
+      await printerService.info(
+        `Plugin not found via search, attempting direct install of ${pluginId}...`,
+        Icon.INFORMATION,
+      );
+      const parts = pluginId.startsWith("@") ? pluginId.slice(1).split("/") : [undefined, pluginId];
+      const scope = pluginId.startsWith("@") ? `@${parts[0]}` : undefined;
+      const name = pluginId.startsWith("@") ? parts[1]! : pluginId;
+      descriptor = {
+        pluginId,
+        scope,
+        name,
+        version: "latest",
+        extensionPoints: [],
+      };
     }
 
     await printerService.info(
-      `Installing ${getPluginId(descriptor)}@${descriptor.version}...`,
+      `Installing ${descriptor.pluginId}...`,
       Icon.INFORMATION,
     );
     await pluginService.install(descriptor);
-    await printerService.print(`Plugin ${getPluginId(descriptor)} installed.\n`, Icon.SUCCESS);
+    await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
   }
 }
 
