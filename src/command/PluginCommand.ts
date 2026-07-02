@@ -99,7 +99,7 @@ export class PluginAddSubCommand implements SubCommand {
       }
     }
 
-    if (!descri ptor) {
+    if (!descr iptor) {
       // Search did not find an exact match - attempt direct install by plugin ID.
       // This handles cases where the package exists on the registry but is not
       // returned by search (e.g. recently published or low search ranking).
@@ -119,10 +119,7 @@ export class PluginAddSubCommand implements SubCommand {
       };
     }
 
-    await printerService.info(
-      `Installing ${descriptor.pluginId}...`,
-      Icon.INFORMATION,
-    );
+    await printerService.info(`Installing ${descriptor.pluginId}...`, Icon.INFORMATION);
     await pluginService.install(descriptor);
     await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
   }
