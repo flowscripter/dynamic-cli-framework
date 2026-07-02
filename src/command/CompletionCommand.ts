@@ -1,3 +1,4 @@
+import process from "node:process";
 import type GroupCommand from "../api/command/GroupCommand.ts";
 import type SubCommand from "../api/command/SubCommand.ts";
 import type Option from "../api/argument/Option.ts";
@@ -51,7 +52,11 @@ export class CompletionIntegrationSubCommand implements SubCommand {
 
     const configPath = configPathArg || completionService.getDefaultConfigPath(shellType);
     const cliName = context.cliConfig.name;
-    const bootstrapScript = completionService.getBootstrapScript(shellType, cliName);
+    const bootstrapScript = completionService.getBootstrapScript(
+      shellType,
+      cliName,
+      process.execPath,
+    );
 
     const beginMarker = `# BEGIN ${cliName} completion`;
     const endMarker = `# END ${cliName} completion`;

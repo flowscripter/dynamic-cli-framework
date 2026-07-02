@@ -7,7 +7,7 @@ export interface CompletionContext {
 
 export default interface ShellHandler {
   getDefaultConfigPath(): string;
-  getBootstrapScript(cliName: string): string;
+  getBootstrapScript(cliName: string, executablePath: string): string;
   validateEnvironment(): Promise<boolean>;
   formatCompletions(completions: ReadonlyArray<CompletionItem>): string;
   parseCompletionContext(args: ReadonlyArray<string>): CompletionContext;

@@ -12,11 +12,11 @@ export default class ZshShellHandler implements ShellHandler {
     return join(homedir(), ".zshrc");
   }
 
-  getBootstrapScript(cliName: string): string {
+  getBootstrapScript(cliName: string, executablePath: string): string {
     return [
       `_${cliName}_completions() {`,
       `  local -a completions`,
-      `  completions=("\${(@f)$(${cliName} completions:complete zsh "\${words}" "\${CURSOR}")}")`,
+      `  completions=("\${(@f)$("${executablePath}" completions:complete zsh "\${words}" "\${CURSOR}")}")`,
       `  _describe '${cliName}' completions`,
       `}`,
       `compdef _${cliName}_completions ${cliName}`,

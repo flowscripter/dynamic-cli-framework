@@ -14,3 +14,80 @@ export { ArgumentValueTypeName } from "./src/api/argument/ArgumentValueTypes.ts"
 export type { default as Option } from "./src/api/argument/Option.ts";
 export type { default as Positional } from "./src/api/argument/Positional.ts";
 export type { ExtensionDescriptor, ExtensionFactory } from "@flowscripter/dynamic-plugin-framework";
+
+// Core Service IDs and types
+export { ASCII_BANNER_GENERATOR_SERVICE_ID } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
+export type { default as AsciiBannerGeneratorService } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
+export type {
+  BannerColorEffects,
+  BannerGenerateOptions,
+  ColorEffect,
+  ColorEffectDirection,
+  FixedColorEffect,
+  GradientColorEffect,
+  RainbowColorEffect,
+} from "./src/api/service/core/AsciiBannerGeneratorService.ts";
+
+export { KEY_VALUE_SERVICE_ID } from "./src/api/service/core/KeyValueService.ts";
+export { SECRET_SENTINEL_PREFIX } from "./src/api/service/core/KeyValueService.ts";
+export type { default as KeyValueService } from "./src/api/service/core/KeyValueService.ts";
+export type { default as SecretService } from "./src/api/service/core/SecretService.ts";
+
+export { PRINTER_SERVICE_ID } from "./src/api/service/core/PrinterService.ts";
+export type { default as PrinterService } from "./src/api/service/core/PrinterService.ts";
+export { Icon, Level, ProgressStyle, SpinnerStyle } from "./src/api/service/core/PrinterService.ts";
+
+export { SHUTDOWN_SERVICE_ID } from "./src/api/service/core/ShutdownService.ts";
+export type { default as ShutdownService } from "./src/api/service/core/ShutdownService.ts";
+
+export { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "./src/api/service/core/SyntaxHighlighterService.ts";
+export type { default as SyntaxHighlighterService } from "./src/api/service/core/SyntaxHighlighterService.ts";
+export type { ColorScheme } from "./src/api/service/core/SyntaxHighlighterService.ts";
+
+export { PRETTY_PRINTER_SERVICE_ID } from "./src/api/service/core/PrettyPrinterService.ts";
+export type { default as PrettyPrinterService } from "./src/api/service/core/PrettyPrinterService.ts";
+
+export { IMAGE_PRINTER_SERVICE_ID } from "./src/api/service/core/ImagePrinterService.ts";
+export type { default as ImagePrinterService } from "./src/api/service/core/ImagePrinterService.ts";
+
+export { TREE_PRINTER_SERVICE_ID } from "./src/api/service/core/TreePrinterService.ts";
+export type { default as TreePrinterService } from "./src/api/service/core/TreePrinterService.ts";
+export type { TreeNode } from "./src/api/service/core/TreePrinterService.ts";
+
+export { TABLE_GENERATOR_SERVICE_ID } from "./src/api/service/core/TableGeneratorService.ts";
+export type { default as TableGeneratorService } from "./src/api/service/core/TableGeneratorService.ts";
+export {
+  Align,
+  type CellOptions,
+  type ColumnOptions,
+  type RowOptions,
+  type TableOptions,
+} from "./src/api/service/core/TableGeneratorService.ts";
+export { default as Table } from "./src/api/service/core/Table.ts";
+
+export { DATA_DUMP_GENERATOR_SERVICE_ID } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export type { default as DataDumpGeneratorService } from "./src/api/service/core/DataDumpGeneratorService.ts";
+export {
+  type ByteRangeColor,
+  DumpFormat,
+  type HexDumpGenerateOptions,
+} from "./src/api/service/core/DataDumpGeneratorService.ts";
+
+export { COMPLETION_SERVICE_ID } from "./src/api/service/core/CompletionService.ts";
+export type { default as CompletionService } from "./src/api/service/core/CompletionService.ts";
+export { type CompletionItem, ShellType } from "./src/api/service/core/CompletionService.ts";
+
+export { PROMPTER_SERVICE_ID } from "./src/api/service/core/PrompterService.ts";
+export type { default as PrompterService } from "./src/api/service/core/PrompterService.ts";
+export {
+  type Prompt,
+  type PromptOption,
+  type PromptResult,
+  PromptType,
+} from "./src/api/service/core/PrompterService.ts";
+
+export { ARGUMENT_PROMPTER_SERVICE_ID } from "./src/api/service/core/ArgumentPrompterService.ts";
+export type { default as ArgumentPrompterService } from "./src/api/service/core/ArgumentPrompterService.ts";
+
+export { PLUGIN_SERVICE_ID } from "./src/api/service/core/PluginService.ts";
+export type { default as PluginService } from "./src/api/service/core/PluginService.ts";

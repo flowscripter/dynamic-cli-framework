@@ -11,11 +11,11 @@ describe("PowerShellShellHandler", () => {
   });
 
   test("getBootstrapScript generates Register-ArgumentCompleter", () => {
-    const script = handler.getBootstrapScript("mycli");
+    const script = handler.getBootstrapScript("mycli", "/opt/bin/mycli");
     expect(script).toContain("Register-ArgumentCompleter");
     expect(script).toContain("-Native");
     expect(script).toContain("-CommandName mycli");
-    expect(script).toContain("mycli completions:complete powershell");
+    expect(script).toContain('"/opt/bin/mycli" completions:complete powershell');
     expect(script).toContain("CompletionResult");
   });
 

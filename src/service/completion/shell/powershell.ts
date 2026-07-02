@@ -15,11 +15,11 @@ export default class PowerShellShellHandler implements ShellHandler {
     return join(homedir(), ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
   }
 
-  getBootstrapScript(cliName: string): string {
+  getBootstrapScript(cliName: string, executablePath: string): string {
     return [
       `Register-ArgumentCompleter -Native -CommandName ${cliName} -ScriptBlock {`,
       `  param($wordToComplete, $commandAst, $cursorPosition)`,
-      `  $completions = & ${cliName} completions:complete powershell "$commandAst" "$cursorPosition"`,
+      `  $completions = & "${executablePath}" completions:complete powershell "$commandAst" "$cursorPosition"`,
       `  $completions -split '\\n' | ForEach-Object {`,
       `    [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)`,
       `  }`,
@@ -37,7 +37,9 @@ export default class PowerShellShellHandler implements ShellHandler {
       // try powershell fallback
     }
     try {
-      const result = Bun.spawnSync(["powershell", "-Command", "echo ok"], { timeout: 2000 });
+      const result = Bun.spawnSync(["powershell", "-Command", "echo ok"], {
+        timeout: 2000,
+      });
       return Promise.resolve(result.exitCode === 0);
     } catch {
       return Promise.resolve(false);
