@@ -63,13 +63,10 @@ classDiagram
     }
 
     class CLIPlugin {
+        <<interface>>
     }
 
     class PluginManager {
-    }
-
-    class CliPlugin {
-        <<interface>>
     }
 
     class CommandFactory {
@@ -104,7 +101,7 @@ classDiagram
 
     CLI-->ServiceProviderRegistry
 
-    PluginManager --> "*" CliPlugin : registers
+    PluginManager --> "*" CLIPlugin : registers
 
     Plugin <|.. CLIPlugin
 

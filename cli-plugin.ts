@@ -13,7 +13,18 @@ export type { ArgumentValues } from "./src/api/argument/ArgumentValueTypes.ts";
 export { ArgumentValueTypeName } from "./src/api/argument/ArgumentValueTypes.ts";
 export type { default as Option } from "./src/api/argument/Option.ts";
 export type { default as Positional } from "./src/api/argument/Positional.ts";
-export type { ExtensionDescriptor, ExtensionFactory } from "@flowscripter/dynamic-plugin-framework";
+export type {
+  Plugin,
+  ExtensionDescriptor,
+  ExtensionFactory,
+} from "@flowscripter/dynamic-plugin-framework";
+export type {
+  default as CLIPlugin,
+  CommandFactoryExtensionDescriptor,
+  ServiceProviderFactoryExtensionDescriptor,
+} from "./src/api/plugin/CLIPlugin.ts";
+export { default as createCLIPlugin } from "./src/api/plugin/createCLIPlugin.ts";
+export type { CLIPluginOptions } from "./src/api/plugin/createCLIPlugin.ts";
 
 // Core Service IDs and types
 export { ASCII_BANNER_GENERATOR_SERVICE_ID } from "./src/api/service/core/AsciiBannerGeneratorService.ts";
