@@ -99,7 +99,7 @@ export class PluginAddSubCommand implements SubCommand {
       }
     }
 
-    if (!descr iptor) {
+    if (!descriptor) {
       // Search did not find an exact match - attempt direct install by plugin ID.
       // This handles cases where the package exists on the registry but is not
       // returned by search (e.g. recently published or low search ranking).
