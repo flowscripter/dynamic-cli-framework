@@ -1,3 +1,4 @@
+import process from "node:process";
 import type { ServiceProvider } from "../../api/service/ServiceProvider.ts";
 import type { ServiceInfo } from "../../api/service/ServiceProvider.ts";
 import type CLIConfig from "../../api/CLIConfig.ts";
@@ -141,7 +142,11 @@ export default class CompletionServiceProvider implements ServiceProvider {
 
   async #installCompletion(context: Context, shellType: ShellType): Promise<void> {
     const configPath = this.#completionService.getDefaultConfigPath(shellType);
-    const bootstrapScript = this.#completionService.getBootstrapScript(shellType, this.#cliName);
+    const bootstrapScript = this.#completionService.getBootstrapScript(
+      shellType,
+      this.#cliName,
+      process.execPath,
+    );
     const beginMarker = `# BEGIN ${this.#cliName} completion`;
     const endMarker = `# END ${this.#cliName} completion`;
     const block = `${beginMarker}\n${bootstrapScript}\n${endMarker}`;

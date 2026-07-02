@@ -23,8 +23,8 @@ export default class DefaultCompletionService implements CompletionService {
     this.#commandRegistry = registry;
   }
 
-  getBootstrapScript(shellType: ShellType, cliName: string): string {
-    return this.#getHandler(shellType).getBootstrapScript(cliName);
+  getBootstrapScript(shellType: ShellType, cliName: string, executablePath: string): string {
+    return this.#getHandler(shellType).getBootstrapScript(cliName, executablePath);
   }
 
   getDefaultConfigPath(shellType: ShellType): string {

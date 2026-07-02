@@ -197,7 +197,7 @@ describe("DefaultCompletionService", () => {
 
   test("getBootstrapScript delegates to shell handler", () => {
     const service = new DefaultCompletionService();
-    const result = service.getBootstrapScript(ShellType.BASH, "mycli");
+    const result = service.getBootstrapScript(ShellType.BASH, "mycli", "/opt/bin/mycli");
     expect(result).toContain("_mycli_completions");
   });
 

@@ -12,8 +12,8 @@ export default class FishShellHandler implements ShellHandler {
     return join(homedir(), ".config", "fish", "config.fish");
   }
 
-  getBootstrapScript(cliName: string): string {
-    return `complete -c ${cliName} -f -a '(${cliName} completions:complete fish (commandline -cp) (commandline -C))'`;
+  getBootstrapScript(cliName: string, executablePath: string): string {
+    return `complete -c ${cliName} -f -a '("${executablePath}" completions:complete fish (commandline -cp) (commandline -C))'`;
   }
 
   validateEnvironment(): Promise<boolean> {

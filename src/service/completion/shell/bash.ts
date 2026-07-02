@@ -12,11 +12,11 @@ export default class BashShellHandler implements ShellHandler {
     return join(homedir(), ".bashrc");
   }
 
-  getBootstrapScript(cliName: string): string {
+  getBootstrapScript(cliName: string, executablePath: string): string {
     return [
       `_${cliName}_completions() {`,
       `  local IFS=$'\\n'`,
-      `  COMPREPLY=( $(${cliName} completions:complete bash "\${COMP_LINE}" "\${COMP_POINT}") )`,
+      `  COMPREPLY=( $("${executablePath}" completions:complete bash "\${COMP_LINE}" "\${COMP_POINT}") )`,
       `}`,
       `complete -F _${cliName}_completions ${cliName}`,
     ].join("\n");

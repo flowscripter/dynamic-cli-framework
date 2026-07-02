@@ -22,7 +22,7 @@ export default interface CompletionService {
     cursorPosition: number,
   ): Promise<ReadonlyArray<CompletionItem>>;
 
-  getBootstrapScript(shellType: ShellType, cliName: string): string;
+  getBootstrapScript(shellType: ShellType, cliName: string, executablePath: string): string;
 
   getDefaultConfigPath(shellType: ShellType): string;
 
