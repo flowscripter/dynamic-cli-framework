@@ -17,6 +17,7 @@ describe("ZshShellHandler", () => {
     expect(script).toContain('"/opt/bin/mycli" completions:complete zsh');
     expect(script).toContain("compdef _mycli_completions mycli");
     expect(script).toContain("_describe");
+    expect(script).toContain("2>/dev/null");
   });
 
   test("formatCompletions includes descriptions with colon separator", () => {

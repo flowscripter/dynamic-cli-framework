@@ -13,7 +13,7 @@ export default class FishShellHandler implements ShellHandler {
   }
 
   getBootstrapScript(cliName: string, executablePath: string): string {
-    return `complete -c ${cliName} -f -a '("${executablePath}" completions:complete fish (commandline -cp) (commandline -C))'`;
+    return `complete -c ${cliName} -f -a '("${executablePath}" completions:complete fish (commandline -cp) (commandline -C) 2>/dev/null)'`;
   }
 
   validateEnvironment(): Promise<boolean> {

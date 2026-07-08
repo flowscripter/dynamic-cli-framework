@@ -16,7 +16,7 @@ export default class BashShellHandler implements ShellHandler {
     return [
       `_${cliName}_completions() {`,
       `  local IFS=$'\\n'`,
-      `  COMPREPLY=( $("${executablePath}" completions:complete bash "\${COMP_LINE}" "\${COMP_POINT}") )`,
+      `  COMPREPLY=( $("${executablePath}" completions:complete bash "\${COMP_LINE}" "\${COMP_POINT}" 2>/dev/null) )`,
       `}`,
       `complete -F _${cliName}_completions ${cliName}`,
     ].join("\n");

@@ -18,6 +18,7 @@ describe("BashShellHandler", () => {
     expect(script).toContain('"/opt/bin/mycli" completions:complete bash');
     expect(script).toContain("COMP_LINE");
     expect(script).toContain("COMP_POINT");
+    expect(script).toContain("2>/dev/null");
     expect(script).toContain("complete -F _mycli_completions mycli");
   });
 

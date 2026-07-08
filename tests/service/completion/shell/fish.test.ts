@@ -17,6 +17,7 @@ describe("FishShellHandler", () => {
     expect(script).toContain('"/opt/bin/mycli" completions:complete fish');
     expect(script).toContain("commandline -cp");
     expect(script).toContain("commandline -C");
+    expect(script).toContain("2>/dev/null");
   });
 
   test("formatCompletions uses tab separator for descriptions", () => {
