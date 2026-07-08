@@ -32,6 +32,7 @@ export interface CellOptions {
 }
 
 export default interface TableGeneratorService {
+  createTable(rowCount: number, columnCount: number, options?: TableOptions): Table;
   render(table: Table): string;
 }
 

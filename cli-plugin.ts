@@ -74,7 +74,7 @@ export {
   type RowOptions,
   type TableOptions,
 } from "./src/api/service/core/TableGeneratorService.ts";
-export { default as Table } from "./src/api/service/core/Table.ts";
+export type { default as Table } from "./src/api/service/core/Table.ts";
 
 export { DATA_DUMP_GENERATOR_SERVICE_ID } from "./src/api/service/core/DataDumpGeneratorService.ts";
 export type { default as DataDumpGeneratorService } from "./src/api/service/core/DataDumpGeneratorService.ts";
