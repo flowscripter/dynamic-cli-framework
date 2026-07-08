@@ -24,12 +24,12 @@ import type {
   ServiceProviderFactory,
   SubCommand,
   ServiceProvider,
-} from "@flowscripter/dynamic-cli-framework/plugin";
+} from "@flowscripter/dynamic-cli-framework/cli-plugin";
 import {
   DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT,
   DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT,
   ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework/plugin";
+} from "@flowscripter/dynamic-cli-framework/cli-plugin";
 import type { Plugin, ExtensionDescriptor } from "@flowscripter/dynamic-plugin-framework";
 ```
 

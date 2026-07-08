@@ -94,6 +94,18 @@ describe("ConfigurationServiceProvider tests", () => {
     expect(configurationServiceProvider.getConfigString()).toEqual(JSON.stringify(config, null, 2));
   });
 
+  test("ConfigurationServiceProvider initService with missing explicit config location throws", async () => {
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
+
+    const context = new DefaultContext(getCLIConfig());
+
+    configurationServiceProvider.setConfigLocation("/nonexistent/path/config.json");
+
+    await expect(configurationServiceProvider.initService(context)).rejects.toThrow(
+      "doesn't exist or not visible",
+    );
+  });
+
   test("getDefaultArgumentValues works with config", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
 

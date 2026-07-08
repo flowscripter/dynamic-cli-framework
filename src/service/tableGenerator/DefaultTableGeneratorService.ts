@@ -333,7 +333,7 @@ export default class DefaultTableGeneratorService implements TableGeneratorServi
           }
         }
         if (border) line += this.#colorBorder(BORDER_RIGHT, table);
-        output.push(line);
+        output.push(border ? line : line.trimEnd());
       }
 
       if (border && row < table.rowCount - 1) {

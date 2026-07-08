@@ -6,6 +6,8 @@ const envKeys = [
   "CI",
   "CURSOR_TRACE_ID",
   "FORCE_HYPERLINK",
+  "LC_TERMINAL",
+  "LC_TERMINAL_VERSION",
   "TEAMCITY_VERSION",
   "TERM_PROGRAM",
   "TERM_PROGRAM_VERSION",
@@ -134,6 +136,24 @@ describe("supportsHyperlinks", () => {
 
   test("returns true for xterm-kitty", () => {
     process.env.TERM = "xterm-kitty";
+    expect(supportsHyperlinks(ttyStream())).toBe(true);
+  });
+
+  test("returns true for iTerm2 via LC_TERMINAL >= 3.1 (SSH forwarded)", () => {
+    process.env.LC_TERMINAL = "iTerm2";
+    process.env.LC_TERMINAL_VERSION = "3.1.0";
+    expect(supportsHyperlinks(ttyStream())).toBe(true);
+  });
+
+  test("returns false for iTerm2 via LC_TERMINAL < 3.1", () => {
+    process.env.LC_TERMINAL = "iTerm2";
+    process.env.LC_TERMINAL_VERSION = "3.0.0";
+    expect(supportsHyperlinks(ttyStream())).toBe(false);
+  });
+
+  test("returns true for WezTerm via LC_TERMINAL", () => {
+    process.env.LC_TERMINAL = "WezTerm";
+    process.env.LC_TERMINAL_VERSION = "20200620";
     expect(supportsHyperlinks(ttyStream())).toBe(true);
   });
 

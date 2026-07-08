@@ -187,6 +187,70 @@ describe("DefaultCompletionService", () => {
     expect(values).toContain("--version");
   });
 
+  test("returns empty completions after GlobalCommand with trailing space (no allowable values)", async () => {
+    const global = makeGlobalCommand("verbose", "Enable verbose output");
+    const cmd = makeSubCommand("run", "Run something");
+    const service = createService([global, cmd]);
+
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --verbose ", 16);
+    expect(result).toEqual([]);
+  });
+
+  test("returns allowable values after GlobalCommand with trailing space", async () => {
+    const global: GlobalCommand = {
+      name: "env",
+      description: "Set environment",
+      enableConfiguration: false,
+      argument: {
+        type: ArgumentValueTypeName.STRING,
+        allowableValues: ["staging", "production", "development"],
+      },
+      execute: () => Promise.resolve(),
+    };
+    const service = createService([global]);
+
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --env ", 12);
+    const values = result.map((r) => r.value);
+    expect(values).toContain("staging");
+    expect(values).toContain("production");
+    expect(values).toContain("development");
+  });
+
+  test("returns filtered allowable values after GlobalCommand with partial value", async () => {
+    const global: GlobalCommand = {
+      name: "env",
+      description: "Set environment",
+      enableConfiguration: false,
+      argument: {
+        type: ArgumentValueTypeName.STRING,
+        allowableValues: ["staging", "production", "development"],
+      },
+      execute: () => Promise.resolve(),
+    };
+    const service = createService([global]);
+
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --env st", 14);
+    const values = result.map((r) => r.value);
+    expect(values).toContain("staging");
+    expect(values).not.toContain("production");
+    expect(values).not.toContain("development");
+  });
+
+  test("returns empty completions after --help with trailing space (regression)", async () => {
+    const helpGlobal: GlobalCommand = {
+      name: "help",
+      description: "Display help",
+      enableConfiguration: false,
+      argument: { type: ArgumentValueTypeName.STRING, isOptional: true },
+      execute: () => Promise.resolve(),
+    };
+    const cmd = makeSubCommand("run", "Run something");
+    const service = createService([helpGlobal, cmd]);
+
+    const result = await service.generateCompletions(ShellType.BASH, "mycli --help ", 13);
+    expect(result).toEqual([]);
+  });
+
   test("formatCompletions delegates to shell handler", () => {
     const service = new DefaultCompletionService();
     const result = service.formatCompletions(ShellType.FISH, [

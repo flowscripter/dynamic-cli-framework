@@ -112,6 +112,20 @@ export default class DefaultCompletionService implements CompletionService {
       }
     }
 
+    // Check global command (--name pattern)
+    if (commandWord.startsWith("--")) {
+      const globalCommandName = commandWord.substring(2);
+      const globalCommand = this.#commandRegistry!.getGlobalCommandByName(globalCommandName);
+      if (globalCommand) {
+        if (globalCommand.argument?.allowableValues) {
+          return globalCommand.argument.allowableValues
+            .filter((v) => String(v).startsWith(currentWord))
+            .map((v) => ({ value: String(v) }));
+        }
+        return [];
+      }
+    }
+
     // Check sub-command
     const subCommand = this.#commandRegistry!.getSubCommandByName(commandWord);
     if (subCommand) {

@@ -17,6 +17,7 @@ describe("PowerShellShellHandler", () => {
     expect(script).toContain("-CommandName mycli");
     expect(script).toContain('"/opt/bin/mycli" completions:complete powershell');
     expect(script).toContain("CompletionResult");
+    expect(script).toContain("2>$null");
   });
 
   test("formatCompletions outputs one value per line", () => {

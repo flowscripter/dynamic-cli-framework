@@ -19,4 +19,10 @@ export default interface Command {
    * default argument values may be sourced using a configuration source provided by the CLI runtime.
    */
   readonly enableConfiguration?: boolean;
+
+  /**
+   * Optionally hide the command from generic help listings. The command remains registered and
+   * executable, and its own usage help (`help <command>`) is still shown if explicitly requested.
+   */
+  readonly disableGenericHelpDisplay?: boolean;
 }

@@ -33,6 +33,7 @@ import ConfigurationServiceProvider from "../service/configuration/Configuration
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
+import { printRuntimeError } from "../util/runnerHelper.ts";
 
 import { WritableStream } from "node:stream/web";
 import type Terminal from "../terminal/Terminal.ts";
@@ -345,6 +346,7 @@ export default class BaseCLI implements CLI {
         return { runState: RunState.INTERRUPTED };
       }
       logger.error("Runtime error: %s", (error as Error).message);
+      await printRuntimeError(this.#context, error as Error);
       return {
         runState: RunState.RUNTIME_ERROR,
         error: error as Error,

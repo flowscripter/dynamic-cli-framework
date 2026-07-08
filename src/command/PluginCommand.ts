@@ -89,7 +89,7 @@ export class PluginAddSubCommand implements SubCommand {
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
     const pluginId = argumentValues["pluginId"] as string;
-    await printerService.info(`Searching for plugin: ${pluginId}`, Icon.INFORMATION);
+    await printerService.info(`Searching for plugin: ${pluginId}\n`, Icon.INFORMATION);
 
     let descriptor: VersionedPluginDescriptor | undefined;
     for await (const d of pluginService.search({ text: pluginId })) {
@@ -104,7 +104,7 @@ export class PluginAddSubCommand implements SubCommand {
       // This handles cases where the package exists on the registry but is not
       // returned by search (e.g. recently published or low search ranking).
       await printerService.info(
-        `Plugin not found via search, attempting direct install of ${pluginId}...`,
+        `Plugin not found via search, attempting direct install of ${pluginId}...\n`,
         Icon.INFORMATION,
       );
       const parts = pluginId.startsWith("@") ? pluginId.slice(1).split("/") : [undefined, pluginId];
@@ -119,7 +119,7 @@ export class PluginAddSubCommand implements SubCommand {
       };
     }
 
-    await printerService.info(`Installing ${descriptor.pluginId}...`, Icon.INFORMATION);
+    await printerService.info(`Installing ${descriptor.pluginId}...\n`, Icon.INFORMATION);
     await pluginService.install(descriptor);
     await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
   }
@@ -143,7 +143,7 @@ export class PluginRemoveSubCommand implements SubCommand {
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
     const pluginId = argumentValues["pluginId"] as string;
-    await printerService.info(`Removing plugin: ${pluginId}...`, Icon.INFORMATION);
+    await printerService.info(`Removing plugin: ${pluginId}...\n`, Icon.INFORMATION);
     await pluginService.uninstall(pluginId);
     await printerService.print(`Plugin ${pluginId} removed.\n`, Icon.SUCCESS);
   }
@@ -164,7 +164,7 @@ export class PluginUpgradeSubCommand implements SubCommand {
     for await (const update of pluginService.checkForUpdates()) {
       const id = getPluginId(update.descriptor);
       await printerService.info(
-        `Upgrading ${id} to ${update.availableVersion}...`,
+        `Upgrading ${id} to ${update.availableVersion}...\n`,
         Icon.INFORMATION,
       );
       await pluginService.install(update.descriptor);

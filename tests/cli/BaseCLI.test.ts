@@ -102,6 +102,32 @@ describe("BaseCLI tests", () => {
     expectStringIncludes(dummyStderr.getString(), "Unused arg: unused");
   });
 
+  test("BaseCLI run reports formatted error for missing explicit config file", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      { configFileSupportEnabled: true },
+    );
+
+    baseCLI.addCommand(getSubCommand("command", [], []));
+
+    const runResult = await baseCLI.run(["--config", "/nonexistent/path/config.json", "command"]);
+
+    expect(runResult.runState).toEqual(RunState.RUNTIME_ERROR);
+    expectStringIncludes(dummyStderr.getString(), "Execution error");
+    expectStringIncludes(dummyStderr.getString(), "doesn't exist or not visible");
+  });
+
   test("Command and service key value scope isolation works", async () => {
     // ensure we can remove the config file written by the test
     const dummyStdout = new StreamString();

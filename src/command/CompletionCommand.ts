@@ -99,6 +99,7 @@ export class CompletionCompleteSubCommand implements SubCommand {
   readonly name = "complete";
   readonly description = "Generate completions for shell integration";
   readonly enableConfiguration = false;
+  readonly disableGenericHelpDisplay = true;
 
   readonly options: ReadonlyArray<Option> = [];
 

@@ -61,6 +61,14 @@ export async function printCommandExecutionError(
   }
 }
 
+export async function printRuntimeError(context: Context, err: Error) {
+  const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+  await printerService.error(
+    `Execution error: \n  => ${printerService.yellow(err.message)}\n\n`,
+    Icon.FAILURE,
+  );
+}
+
 export async function printNoCommandSpecifiedError(context: Context) {
   const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
   await printerService.error("No command specified\n\n");
@@ -75,8 +83,12 @@ export async function printNoCommandRecognisedError(
   await printerService.error("No command recognised\n\n");
 
   if (availableArgs.length > 0) {
-    const groupCommands = commandRegistry.getGroupCommands();
-    const subCommands = commandRegistry.getSubCommands();
+    const groupCommands = commandRegistry
+      .getGroupCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const subCommands = commandRegistry
+      .getSubCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
 
     const allPossibleCommandNames: string[] = [];
     for (const arg of availableArgs) {
