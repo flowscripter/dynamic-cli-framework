@@ -28,6 +28,8 @@ export default function supportsHyperlinks(stream: WriteStream | undefined): boo
     CI,
     CURSOR_TRACE_ID,
     FORCE_HYPERLINK,
+    LC_TERMINAL,
+    LC_TERMINAL_VERSION,
     TEAMCITY_VERSION,
     TERM_PROGRAM,
     TERM_PROGRAM_VERSION,
@@ -82,6 +84,26 @@ export default function supportsHyperlinks(stream: WriteStream | undefined): boo
         return true;
       case "zed":
         return true;
+    }
+  }
+
+  if (LC_TERMINAL) {
+    const version = parseVersion(LC_TERMINAL_VERSION);
+
+    switch (LC_TERMINAL) {
+      case "iTerm2": {
+        if (version.major === 3) {
+          return version.minor >= 1;
+        }
+        return version.major > 3;
+      }
+      case "WezTerm": {
+        if (/^0-unstable-\d{4}-\d{2}-\d{2}$/.test(LC_TERMINAL_VERSION!)) {
+          const date = LC_TERMINAL_VERSION!.slice("0-unstable-".length);
+          return date >= "2020-06-20";
+        }
+        return version.major >= 20200620;
+      }
     }
   }
 
