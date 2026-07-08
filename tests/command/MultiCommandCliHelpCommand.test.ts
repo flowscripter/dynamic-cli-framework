@@ -215,6 +215,77 @@ describe("MultiCommandCliHelpCommand tests", () => {
     expectStringIncludes(streamString.getString(), "Goo");
   });
 
+  test("Ensure hidden sub-commands are excluded from help output", async () => {
+    const streamString = new StreamString();
+    const context = getContext(streamString);
+    const commandRegistry = getCommandRegistry([
+      {
+        name: "visible-sub",
+        options: [],
+        positionals: [],
+        execute: async (): Promise<void> => {},
+      } as SubCommand,
+      {
+        name: "hidden-sub",
+        disableGenericHelpDisplay: true,
+        options: [],
+        positionals: [],
+        execute: async (): Promise<void> => {},
+      } as SubCommand,
+    ]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
+
+    commandRegistry.addCommand(help);
+
+    await help.execute(context);
+    expectStringIncludes(streamString.getString(), "visible-sub");
+    expectStringNotIncludes(streamString.getString(), "hidden-sub");
+  });
+
+  test("Ensure hidden member sub-commands are excluded from group help output, but visible members remain", async () => {
+    const streamString = new StreamString();
+    const context = getContext(streamString);
+    const commandRegistry = getCommandRegistry([
+      {
+        name: "completions",
+        memberSubCommands: [
+          getSubCommandWithOption("integration"),
+          { ...getSubCommandWithOption("complete"), disableGenericHelpDisplay: true },
+        ],
+        execute: async (): Promise<void> => {},
+      } as GroupCommand,
+    ]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
+
+    commandRegistry.addCommand(help);
+
+    await help.execute(context);
+    expectStringIncludes(streamString.getString(), "Completions Commands");
+    expectStringIncludes(streamString.getString(), "completions:integration");
+    expectStringNotIncludes(streamString.getString(), "completions:complete");
+  });
+
+  test("Ensure a group command section is omitted entirely when all its members are hidden", async () => {
+    const streamString = new StreamString();
+    const context = getContext(streamString);
+    const commandRegistry = getCommandRegistry([
+      {
+        name: "internal",
+        memberSubCommands: [
+          { ...getSubCommandWithOption("secret"), disableGenericHelpDisplay: true },
+        ],
+        execute: async (): Promise<void> => {},
+      } as GroupCommand,
+    ]);
+    const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);
+
+    commandRegistry.addCommand(help);
+
+    await help.execute(context);
+    expectStringNotIncludes(streamString.getString(), "Internal Commands");
+    expectStringNotIncludes(streamString.getString(), "internal:secret");
+  });
+
   test("Ensure non-topic commands are referred to as 'Sub-Commands' if there are no topic and no group commands", async () => {
     const streamString = new StreamString();
     const context = getContext(streamString);

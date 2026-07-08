@@ -75,8 +75,12 @@ export async function printNoCommandRecognisedError(
   await printerService.error("No command recognised\n\n");
 
   if (availableArgs.length > 0) {
-    const groupCommands = commandRegistry.getGroupCommands();
-    const subCommands = commandRegistry.getSubCommands();
+    const groupCommands = commandRegistry
+      .getGroupCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const subCommands = commandRegistry
+      .getSubCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
 
     const allPossibleCommandNames: string[] = [];
     for (const arg of availableArgs) {

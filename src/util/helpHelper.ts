@@ -684,10 +684,12 @@ export function findPossibleCommandNames(
     levenCommandArray.push([distance(subCommand.name, commandName), subCommand.name]);
   });
   groupCommands.forEach((groupCommand) => {
-    groupCommand.memberSubCommands.forEach((memberCommand) => {
-      const memberName = `${groupCommand.name}:${memberCommand.name}`;
-      levenCommandArray.push([distance(memberName, commandName), memberName]);
-    });
+    groupCommand.memberSubCommands
+      .filter((memberCommand) => !memberCommand.disableGenericHelpDisplay)
+      .forEach((memberCommand) => {
+        const memberName = `${groupCommand.name}:${memberCommand.name}`;
+        levenCommandArray.push([distance(memberName, commandName), memberName]);
+      });
   });
   return levenCommandArray
     .sort((a, b) => a[0] - b[0])

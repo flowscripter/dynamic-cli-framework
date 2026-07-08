@@ -94,11 +94,15 @@ abstract class MultiCommandCliAbstractHelpCommand {
       );
     }
     groupCommands.forEach((groupCommand) => {
+      const visibleMemberSubCommands = groupCommand.memberSubCommands.filter(
+        (memberCommand) => !memberCommand.disableGenericHelpDisplay,
+      );
+      if (visibleMemberSubCommands.length === 0) return;
       const topicSection: HelpSection = {
         title: `${groupCommand.name.charAt(0).toUpperCase() + groupCommand.name.slice(1)} Commands`,
         helpEntries: [],
       };
-      groupCommand.memberSubCommands.forEach((memberCommand) => {
+      visibleMemberSubCommands.forEach((memberCommand) => {
         topicSection.helpEntries.push({
           syntax: `${groupCommand.name}:${memberCommand.name}`,
           description: memberCommand.description,
@@ -166,10 +170,18 @@ abstract class MultiCommandCliAbstractHelpCommand {
       TABLE_GENERATOR_SERVICE_ID,
     ) as TableGeneratorService;
 
-    const globalModifierCommands = this.#commandRegistry.getGlobalModifierCommands();
-    const globalCommands = this.#commandRegistry.getGlobalCommands();
-    const groupCommands = this.#commandRegistry.getGroupCommands();
-    const subCommands = this.#commandRegistry.getSubCommands();
+    const globalModifierCommands = this.#commandRegistry
+      .getGlobalModifierCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const globalCommands = this.#commandRegistry
+      .getGlobalCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const groupCommands = this.#commandRegistry
+      .getGroupCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const subCommands = this.#commandRegistry
+      .getSubCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
     const helpSections: Array<HelpSection> = [];
     helpSections.push({
       title: "Usage",
@@ -205,8 +217,12 @@ abstract class MultiCommandCliAbstractHelpCommand {
       TABLE_GENERATOR_SERVICE_ID,
     ) as TableGeneratorService;
 
-    const groupCommands = this.#commandRegistry.getGroupCommands();
-    const subCommands = this.#commandRegistry.getSubCommands();
+    const groupCommands = this.#commandRegistry
+      .getGroupCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
+    const subCommands = this.#commandRegistry
+      .getSubCommands()
+      .filter((command) => !command.disableGenericHelpDisplay);
 
     // find sub-command or group sub-command
     let subCommand = this.#commandRegistry.getSubCommandByName(commandName);
