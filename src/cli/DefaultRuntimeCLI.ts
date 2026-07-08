@@ -1,7 +1,6 @@
 import process from "node:process";
 import BaseCLI from "./BaseCLI.ts";
 import type RunResult from "../api/RunResult.ts";
-import { RunState } from "../api/RunResult.ts";
 import type CLIConfig from "../api/CLIConfig.ts";
 import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
 import { Writable } from "node:stream";
@@ -35,9 +34,6 @@ export default class DefaultRuntimeCLI extends BaseCLI {
 
   override async run(): Promise<RunResult> {
     const runResult = await super.run(process.argv.slice(2));
-    if (runResult.runState === RunState.RUNTIME_ERROR) {
-      console.error(runResult.error);
-    }
     process.exit(runResult.runState);
   }
 }

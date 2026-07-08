@@ -61,6 +61,14 @@ export async function printCommandExecutionError(
   }
 }
 
+export async function printRuntimeError(context: Context, err: Error) {
+  const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+  await printerService.error(
+    `Execution error: \n  => ${printerService.yellow(err.message)}\n\n`,
+    Icon.FAILURE,
+  );
+}
+
 export async function printNoCommandSpecifiedError(context: Context) {
   const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
   await printerService.error("No command specified\n\n");
