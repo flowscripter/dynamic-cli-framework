@@ -16,7 +16,7 @@ export default class ZshShellHandler implements ShellHandler {
     return [
       `_${cliName}_completions() {`,
       `  local -a completions`,
-      `  completions=("\${(@f)$("${executablePath}" completions:complete zsh "\${words}" "\${CURSOR}" 2>/dev/null)}")`,
+      `  completions=("\${(@f)$("${executablePath}" completion:complete zsh "\${words}" "\${CURSOR}" 2>/dev/null)}")`,
       `  _describe '${cliName}' completions`,
       `}`,
       `compdef _${cliName}_completions ${cliName}`,

@@ -36,13 +36,13 @@ Provides:
   Fish, and PowerShell. Completions are dynamic (callback-based) rather than
   static scripts, so they reflect the current set of registered commands
   including dynamically discovered plugins.
-- `CompletionGroupCommand` (`completions`) with two sub-commands:
-  - `completions:integration` installs shell completion integration by adding a
+- `CompletionGroupCommand` (`completion`) with two sub-commands:
+  - `completion:integration` installs shell completion integration by adding a
     bootstrap script to the shell configuration file (e.g. `~/.bashrc`,
     `~/.zshrc`, `~/.config/fish/config.fish`, or the PowerShell profile). Takes
     a required `shell` positional argument and an optional `--config-path`
     option.
-  - `completions:complete` generates completions for shell integration. This is
+  - `completion:complete` generates completions for shell integration. This is
     invoked by the shell's completion mechanism and returns completions in the
     format expected by that shell.
 - On first run, if both `PrompterService` and `KeyValueService` are available,

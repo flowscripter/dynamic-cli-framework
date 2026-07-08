@@ -102,14 +102,14 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("integration", "Install completion"),
       makeSubCommand("complete", "Generate completions"),
     ];
-    const group = makeGroupCommand("completions", "Completion management", members);
+    const group = makeGroupCommand("completion", "Completion management", members);
     const service = createService([group]);
 
     const result = await service.generateCompletions(ShellType.BASH, "mycli comp", 10);
     const values = result.map((r) => r.value);
-    expect(values).toContain("completions");
-    expect(values).toContain("completions:integration");
-    expect(values).toContain("completions:complete");
+    expect(values).toContain("completion");
+    expect(values).toContain("completion:integration");
+    expect(values).toContain("completion:complete");
   });
 
   test("completes member sub-commands after group:", async () => {
@@ -117,13 +117,13 @@ describe("DefaultCompletionService", () => {
       makeSubCommand("integration", "Install completion"),
       makeSubCommand("complete", "Generate completions"),
     ];
-    const group = makeGroupCommand("completions", "Completion management", members);
+    const group = makeGroupCommand("completion", "Completion management", members);
     const service = createService([group]);
 
-    const result = await service.generateCompletions(ShellType.BASH, "mycli completions:i", 19);
+    const result = await service.generateCompletions(ShellType.BASH, "mycli completion:i", 18);
     const values = result.map((r) => r.value);
-    expect(values).toContain("completions:integration");
-    expect(values).not.toContain("completions:complete");
+    expect(values).toContain("completion:integration");
+    expect(values).not.toContain("completion:complete");
   });
 
   test("completes sub-command options", async () => {

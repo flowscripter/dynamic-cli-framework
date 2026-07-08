@@ -4,7 +4,7 @@ import { PLUGIN_SERVICE_ID } from "../../../src/api/service/core/PluginService.t
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
 import type CLIConfig from "../../../src/api/CLIConfig.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
-import { PluginGroupCommand } from "../../../src/command/PluginCommand.ts";
+import { PluginGroupCommand } from "../../../src/service/plugin/command/PluginGroupCommand.ts";
 
 function getCLIConfig(): CLIConfig {
   return { name: "testcli", description: "Test CLI", version: "1.0.0" };

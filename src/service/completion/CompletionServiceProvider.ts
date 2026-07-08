@@ -13,7 +13,11 @@ import { KEY_VALUE_SERVICE_ID } from "../../api/service/core/KeyValueService.ts"
 import type KeyValueService from "../../api/service/core/KeyValueService.ts";
 import { Icon, PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
+import type CommandRegistry from "../../runtime/registry/CommandRegistry.ts";
 import getLogger from "../../util/logger.ts";
+import { CompletionIntegrationSubCommand } from "./command/CompletionIntegrationSubCommand.ts";
+import { CompletionCompleteSubCommand } from "./command/CompletionCompleteSubCommand.ts";
+import { CompletionGroupCommand } from "./command/CompletionGroupCommand.ts";
 
 const logger = getLogger("CompletionServiceProvider");
 
@@ -23,16 +27,26 @@ export default class CompletionServiceProvider implements ServiceProvider {
   readonly #completionService: DefaultCompletionService;
   #cliName = "";
 
-  public constructor(servicePriority: number, completionService: DefaultCompletionService) {
+  public constructor(
+    servicePriority: number,
+    completionService: DefaultCompletionService,
+    commandRegistry: CommandRegistry,
+  ) {
     this.servicePriority = servicePriority;
     this.#completionService = completionService;
+    this.#completionService.setCommandRegistry(commandRegistry);
   }
 
   public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
     this.#cliName = cliConfig.name;
     return Promise.resolve({
       service: this.#completionService,
-      commands: [],
+      commands: [
+        new CompletionGroupCommand(
+          new CompletionIntegrationSubCommand(),
+          new CompletionCompleteSubCommand(),
+        ),
+      ],
     });
   }
 

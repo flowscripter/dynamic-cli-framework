@@ -15,7 +15,7 @@ describe("BashShellHandler", () => {
     const script = handler.getBootstrapScript("mycli", "/opt/bin/mycli");
     expect(script).toContain("_mycli_completions()");
     expect(script).toContain("COMPREPLY=");
-    expect(script).toContain('"/opt/bin/mycli" completions:complete bash');
+    expect(script).toContain('"/opt/bin/mycli" completion:complete bash');
     expect(script).toContain("COMP_LINE");
     expect(script).toContain("COMP_POINT");
     expect(script).toContain("2>/dev/null");

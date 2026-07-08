@@ -14,7 +14,7 @@ describe("ZshShellHandler", () => {
   test("getBootstrapScript generates correct function", () => {
     const script = handler.getBootstrapScript("mycli", "/opt/bin/mycli");
     expect(script).toContain("_mycli_completions()");
-    expect(script).toContain('"/opt/bin/mycli" completions:complete zsh');
+    expect(script).toContain('"/opt/bin/mycli" completion:complete zsh');
     expect(script).toContain("compdef _mycli_completions mycli");
     expect(script).toContain("_describe");
     expect(script).toContain("2>/dev/null");
