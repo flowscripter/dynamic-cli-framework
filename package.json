@@ -45,7 +45,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun build index.ts cli-plugin.ts --outdir dist --target bun && tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@flowscripter/dynamic-plugin-framework": "1.10.1",
