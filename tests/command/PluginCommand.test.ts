@@ -1,5 +1,8 @@
 import { describe, test } from "bun:test";
-import type { SearchQuery, VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-framework";
+import type {
+  SearchQuery,
+  VersionedPluginDescriptor,
+} from "@flowscripter/dynamic-plugin-framework";
 import DefaultContext from "../../src/runtime/DefaultContext.ts";
 import {
   PluginAddSubCommand,
