@@ -4,6 +4,8 @@ import DefaultCompletionService from "../../../src/service/completion/DefaultCom
 import { COMPLETION_SERVICE_ID } from "../../../src/api/service/core/CompletionService.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import type CLIConfig from "../../../src/api/CLIConfig.ts";
+import { CompletionGroupCommand } from "../../../src/service/completion/command/CompletionGroupCommand.ts";
+import { getCommandRegistry } from "../../fixtures/CommandRegistry.ts";
 
 function getCLIConfig(): CLIConfig {
   return { name: "testcli", description: "Test CLI", version: "1.0.0" };
@@ -12,28 +14,29 @@ function getCLIConfig(): CLIConfig {
 describe("CompletionServiceProvider", () => {
   test("has correct serviceId", () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     expect(provider.serviceId).toEqual(COMPLETION_SERVICE_ID);
   });
 
   test("has correct servicePriority", () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     expect(provider.servicePriority).toEqual(60);
   });
 
-  test("getServiceInfo returns service and no commands", async () => {
+  test("getServiceInfo returns service and completion group command", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     const serviceInfo = await provider.getServiceInfo(getCLIConfig());
 
     expect(serviceInfo.service).toBe(service);
-    expect(serviceInfo.commands.length).toEqual(0);
+    expect(serviceInfo.commands.length).toEqual(1);
+    expect(serviceInfo.commands[0]).toBeInstanceOf(CompletionGroupCommand);
   });
 
   test("initService resolves when prompter service not available", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -42,7 +45,7 @@ describe("CompletionServiceProvider", () => {
 
   test("initService resolves when key-value service not available", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -56,7 +59,7 @@ describe("CompletionServiceProvider", () => {
 
   test("initService skips when completion-status is 'installed'", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -76,7 +79,7 @@ describe("CompletionServiceProvider", () => {
 
   test("initService skips when completion-status is 'declined'", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -96,7 +99,7 @@ describe("CompletionServiceProvider", () => {
 
   test("initService skips when promptEnabled is false", async () => {
     const service = new DefaultCompletionService();
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -117,7 +120,7 @@ describe("CompletionServiceProvider", () => {
   test("initService skips when no supported shells detected", async () => {
     const service = new DefaultCompletionService();
     service.validateShellEnvironment = () => Promise.resolve(false);
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -145,7 +148,7 @@ describe("CompletionServiceProvider", () => {
   test("initService stores 'declined' when user says no to completion", async () => {
     const service = new DefaultCompletionService();
     service.validateShellEnvironment = () => Promise.resolve(true);
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -176,7 +179,7 @@ describe("CompletionServiceProvider", () => {
   test("initService skips shell prompt when only one shell detected", async () => {
     const service = new DefaultCompletionService();
     service.validateShellEnvironment = (shell) => Promise.resolve(shell === "bash");
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -229,7 +232,7 @@ describe("CompletionServiceProvider", () => {
     const service = new DefaultCompletionService();
     service.validateShellEnvironment = (shell) =>
       Promise.resolve(shell === "bash" || shell === "zsh");
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());
@@ -294,7 +297,7 @@ describe("CompletionServiceProvider", () => {
       throw new Error("test error");
     };
 
-    const provider = new CompletionServiceProvider(60, service);
+    const provider = new CompletionServiceProvider(60, service, getCommandRegistry());
     await provider.getServiceInfo(getCLIConfig());
 
     const context = new DefaultContext(getCLIConfig());

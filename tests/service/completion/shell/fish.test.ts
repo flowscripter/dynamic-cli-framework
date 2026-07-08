@@ -14,7 +14,7 @@ describe("FishShellHandler", () => {
   test("getBootstrapScript generates correct complete command", () => {
     const script = handler.getBootstrapScript("mycli", "/opt/bin/mycli");
     expect(script).toContain("complete -c mycli");
-    expect(script).toContain('"/opt/bin/mycli" completions:complete fish');
+    expect(script).toContain('"/opt/bin/mycli" completion:complete fish');
     expect(script).toContain("commandline -cp");
     expect(script).toContain("commandline -C");
     expect(script).toContain("2>/dev/null");

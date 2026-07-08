@@ -15,7 +15,7 @@ describe("PowerShellShellHandler", () => {
     expect(script).toContain("Register-ArgumentCompleter");
     expect(script).toContain("-Native");
     expect(script).toContain("-CommandName mycli");
-    expect(script).toContain('"/opt/bin/mycli" completions:complete powershell');
+    expect(script).toContain('"/opt/bin/mycli" completion:complete powershell');
     expect(script).toContain("CompletionResult");
     expect(script).toContain("2>$null");
   });

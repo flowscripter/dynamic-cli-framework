@@ -19,7 +19,6 @@ import type PrinterService from "../api/service/core/PrinterService.ts";
 import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
 import type ComplexOption from "../api/argument/ComplexOption.ts";
 import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
-import Table from "../api/service/core/Table.ts";
 
 const SYNTAX_INDENT_WIDTH = 2;
 const MINIMUM_SYNTAX_COLUMN_WIDTH = 15;
@@ -112,7 +111,7 @@ export async function printHelpSections(
     const hasDescriptions = rows.some((r) => r.description !== undefined);
 
     if (hasDescriptions) {
-      const table = new Table(rows.length, 2, {
+      const table = tableGeneratorService.createTable(rows.length, 2, {
         border: false,
         padding: 1,
         maxWidth: terminalWidth,

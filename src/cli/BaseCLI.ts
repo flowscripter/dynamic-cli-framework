@@ -51,11 +51,6 @@ import ArgumentPrompterServiceProvider from "../service/argumentPrompter/Argumen
 import DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
 import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
 import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
-import {
-  CompletionCompleteSubCommand,
-  CompletionGroupCommand,
-  CompletionIntegrationSubCommand,
-} from "../command/CompletionCommand.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -233,10 +228,11 @@ export default class BaseCLI implements CLI {
       this.addServiceProvider(new ImagePrinterServiceProvider(55, this.#stdoutTerminal));
     }
 
-    let completionService: DefaultCompletionService | undefined;
     if (this.#options.completionServiceEnabled) {
-      completionService = new DefaultCompletionService();
-      this.addServiceProvider(new CompletionServiceProvider(5, completionService));
+      const completionService = new DefaultCompletionService();
+      this.addServiceProvider(
+        new CompletionServiceProvider(5, completionService, this.#commandRegistry),
+      );
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
@@ -302,16 +298,6 @@ export default class BaseCLI implements CLI {
 
       // register the version command
       this.#commandRegistry.addCommand(new VersionCommand());
-
-      // register completion commands (need CommandRegistry reference like help commands)
-      if (completionService) {
-        completionService.setCommandRegistry(this.#commandRegistry);
-        const integrationCommand = new CompletionIntegrationSubCommand();
-        const completeCommand = new CompletionCompleteSubCommand();
-        this.#commandRegistry.addCommand(
-          new CompletionGroupCommand(integrationCommand, completeCommand),
-        );
-      }
 
       // run...
       const runResult = await run(

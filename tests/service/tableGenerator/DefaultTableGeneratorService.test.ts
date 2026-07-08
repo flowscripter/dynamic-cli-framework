@@ -10,6 +10,16 @@ describe("DefaultTableGeneratorService tests", () => {
     return service;
   }
 
+  test("createTable returns a Table instance with the given dimensions and options", () => {
+    const service = createService();
+    const table = service.createTable(2, 3, { maxWidth: 20, padding: 1 });
+
+    expect(table).toBeInstanceOf(Table);
+    expect(table.rowCount).toBe(2);
+    expect(table.columnCount).toBe(3);
+    expect(table.options).toEqual({ maxWidth: 20, padding: 1 });
+  });
+
   test("2x2 table with border renders correct box-drawing chars", () => {
     const service = createService();
     const table = new Table(2, 2, { maxWidth: 20, padding: 1 })

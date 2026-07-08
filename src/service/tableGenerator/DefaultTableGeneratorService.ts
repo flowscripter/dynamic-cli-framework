@@ -1,6 +1,7 @@
 import type TableGeneratorService from "../../api/service/core/TableGeneratorService.ts";
 import { Align } from "../../api/service/core/TableGeneratorService.ts";
-import type Table from "../../api/service/core/Table.ts";
+import type { TableOptions } from "../../api/service/core/TableGeneratorService.ts";
+import Table from "../../api/service/core/Table.ts";
 
 const BORDER_TOP_LEFT = "┌";
 const BORDER_TOP = "─";
@@ -22,6 +23,10 @@ export default class DefaultTableGeneratorService implements TableGeneratorServi
   colorEnabled = true;
   colorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
   backgroundColorFunction: (text: string, hexFormattedColor: string) => string = (text) => text;
+
+  createTable(rowCount: number, columnCount: number, options?: TableOptions): Table {
+    return new Table(rowCount, columnCount, options);
+  }
 
   #resolveAlign(table: Table, rowIndex: number, columnIndex: number): Align {
     const cellOpts = table.getCell(rowIndex, columnIndex)?.options;

@@ -72,6 +72,35 @@ const myPlugin: Plugin = {
 export default myPlugin;
 ```
 
+### Building a plugin for distribution
+
+CLI plugins are installed and consumed via `node_modules` (see
+`plugin:add`/`NpmPluginManager` below), so don't bundle them - transpile with
+`tsc` instead, e.g.:
+
+```json
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["index.ts", "src/**/*.ts"]
+}
+```
+
+This mirrors your source tree into `dist/`, rewrites relative `.ts` imports
+to `.js`, and leaves bare specifiers (e.g.
+`@flowscripter/dynamic-cli-framework`, `@flowscripter/dynamic-plugin-framework`)
+untouched so they resolve via `node_modules` at runtime instead of being
+duplicated into your plugin's own build output. Declare
+`@flowscripter/dynamic-cli-framework` as a `peerDependency` (and
+`devDependency` for local type-checking) to signal that the host CLI
+supplies it; regular `dependencies` your plugin actually ships with (e.g. a
+helper library) resolve from `node_modules` the same way and don't need any
+special handling.
+
 ## Enabling plugin support in a CLI
 
 Use `DynamicPluginRuntimeCLI` or the `launchDynamicPluginMultiCommandCLI` convenience

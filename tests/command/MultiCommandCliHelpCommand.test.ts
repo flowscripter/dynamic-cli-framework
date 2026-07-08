@@ -247,10 +247,13 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const context = getContext(streamString);
     const commandRegistry = getCommandRegistry([
       {
-        name: "completions",
+        name: "completion",
         memberSubCommands: [
           getSubCommandWithOption("integration"),
-          { ...getSubCommandWithOption("complete"), disableGenericHelpDisplay: true },
+          {
+            ...getSubCommandWithOption("complete"),
+            disableGenericHelpDisplay: true,
+          },
         ],
         execute: async (): Promise<void> => {},
       } as GroupCommand,
@@ -260,9 +263,9 @@ describe("MultiCommandCliHelpCommand tests", () => {
     commandRegistry.addCommand(help);
 
     await help.execute(context);
-    expectStringIncludes(streamString.getString(), "Completions Commands");
-    expectStringIncludes(streamString.getString(), "completions:integration");
-    expectStringNotIncludes(streamString.getString(), "completions:complete");
+    expectStringIncludes(streamString.getString(), "Completion Commands");
+    expectStringIncludes(streamString.getString(), "completion:integration");
+    expectStringNotIncludes(streamString.getString(), "completion:complete");
   });
 
   test("Ensure a group command section is omitted entirely when all its members are hidden", async () => {
@@ -272,7 +275,10 @@ describe("MultiCommandCliHelpCommand tests", () => {
       {
         name: "internal",
         memberSubCommands: [
-          { ...getSubCommandWithOption("secret"), disableGenericHelpDisplay: true },
+          {
+            ...getSubCommandWithOption("secret"),
+            disableGenericHelpDisplay: true,
+          },
         ],
         execute: async (): Promise<void> => {},
       } as GroupCommand,

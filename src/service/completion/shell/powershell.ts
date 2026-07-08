@@ -19,7 +19,7 @@ export default class PowerShellShellHandler implements ShellHandler {
     return [
       `Register-ArgumentCompleter -Native -CommandName ${cliName} -ScriptBlock {`,
       `  param($wordToComplete, $commandAst, $cursorPosition)`,
-      `  $completions = & "${executablePath}" completions:complete powershell "$commandAst" "$cursorPosition" 2>$null`,
+      `  $completions = & "${executablePath}" completion:complete powershell "$commandAst" "$cursorPosition" 2>$null`,
       `  $completions -split '\\n' | ForEach-Object {`,
       `    [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)`,
       `  }`,
