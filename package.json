@@ -35,7 +35,7 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./plugin": {
+    "./cli-plugin": {
       "bun": "./cli-plugin.ts",
       "types": "./dist/cli-plugin.d.ts",
       "default": "./dist/cli-plugin.js"
