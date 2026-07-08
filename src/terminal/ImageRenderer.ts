@@ -23,11 +23,13 @@ export default class ImageRenderer {
     hexFormattedBackgroundColor?: string,
   ): Promise<string> {
     if (!this.#isMultiplexer()) {
-      if (supportsTerminalGraphics.stdout.kitty) {
-        return this.#renderKitty(imageBuffer, widthPercentage);
-      }
+      // iTerm2 only supports its own proprietary image protocol, not Kitty's, despite
+      // supports-terminal-graphics incorrectly reporting kitty:true for iTerm2 3.6+.
       if (supportsTerminalGraphics.stdout.iterm2) {
         return this.#renderITerm2(imageBuffer, widthPercentage);
+      }
+      if (supportsTerminalGraphics.stdout.kitty) {
+        return this.#renderKitty(imageBuffer, widthPercentage);
       }
     }
     return this.#renderAnsiBlocks(imageBuffer, widthPercentage, hexFormattedBackgroundColor);
@@ -57,9 +59,9 @@ export default class ImageRenderer {
     for (let i = 0; i < chunks.length; i++) {
       const isLast = i === chunks.length - 1;
       if (i === 0) {
-        result += `\x1b_Gf=100,a=T,c=${columns},m=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
+        result += `\x1b_Gf=100,a=T,c=${columns},q=2,m=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
       } else {
-        result += `\x1b_Gm=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
+        result += `\x1b_Gq=2,m=${isLast ? 0 : 1};${chunks[i]}\x1b\\`;
       }
     }
     return result;

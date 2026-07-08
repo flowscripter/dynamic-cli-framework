@@ -133,7 +133,6 @@ export default class CompletionServiceProvider implements ServiceProvider {
       await this.#installCompletion(context, shellType);
       await keyValueService.setKey("completion-status", "installed");
     } catch (error) {
-      logger.error("Failed to install completion: %s", (error as Error).message);
       if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
         const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
         await printerService.error(
