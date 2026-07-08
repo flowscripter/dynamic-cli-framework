@@ -331,7 +331,6 @@ export default class BaseCLI implements CLI {
       if (shutdownState.shutdownRequested || (error as Error).message === "Interrupted") {
         return { runState: RunState.INTERRUPTED };
       }
-      logger.error("Runtime error: %s", (error as Error).message);
       await printRuntimeError(this.#context, error as Error);
       return {
         runState: RunState.RUNTIME_ERROR,
