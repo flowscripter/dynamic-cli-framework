@@ -4,17 +4,20 @@ import {
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
-import { type InvalidArgument, InvalidArgumentReason } from "../../../src/api/RunResult.ts";
+import {
+  type InvalidArgument,
+  InvalidArgumentReason,
+} from "@flowscripter/dynamic-cli-framework-api";
 import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
   type PopulatedArgumentValues,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
-import type Positional from "../../../src/api/argument/Positional.ts";
-import type GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
-import type Option from "../../../src/api/argument/Option.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("argumentValueValidation tests", () => {
   test("Option types", () => {

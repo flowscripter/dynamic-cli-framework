@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import CompletionServiceProvider from "../../../src/service/completion/CompletionServiceProvider.ts";
 import DefaultCompletionService from "../../../src/service/completion/DefaultCompletionService.ts";
-import { COMPLETION_SERVICE_ID } from "../../../src/api/service/core/CompletionService.ts";
+import { COMPLETION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
-import type CLIConfig from "../../../src/api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import { CompletionGroupCommand } from "../../../src/service/completion/command/CompletionGroupCommand.ts";
 import { getCommandRegistry } from "../../fixtures/CommandRegistry.ts";
 

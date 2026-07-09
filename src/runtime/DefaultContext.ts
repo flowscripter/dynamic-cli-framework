@@ -1,5 +1,5 @@
-import type Context from "../api/Context.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Default implementation of a {@link Context}.

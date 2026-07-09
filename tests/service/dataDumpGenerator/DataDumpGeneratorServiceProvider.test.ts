@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import DataDumpGeneratorServiceProvider from "../../../src/service/dataDumpGenerator/DataDumpGeneratorServiceProvider.ts";
-import { PRINTER_SERVICE_ID } from "../../../src/api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";

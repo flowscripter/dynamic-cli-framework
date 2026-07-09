@@ -1,7 +1,7 @@
 import process from "node:process";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { CompletionItem } from "../../../api/service/core/CompletionService.ts";
+import type { CompletionItem } from "@flowscripter/dynamic-cli-framework-api";
 import type ShellHandler from "./ShellHandler.ts";
 import type { CompletionContext } from "./ShellHandler.ts";
 

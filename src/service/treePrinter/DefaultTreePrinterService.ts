@@ -1,5 +1,5 @@
-import type TreePrinterService from "../../api/service/core/TreePrinterService.ts";
-import type { TreeNode } from "../../api/service/core/TreePrinterService.ts";
+import type { TreePrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import type { TreeNode } from "@flowscripter/dynamic-cli-framework-api";
 
 const DEFAULT_NODE_COLOR = "#839496";
 

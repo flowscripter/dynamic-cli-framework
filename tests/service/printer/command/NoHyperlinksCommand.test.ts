@@ -4,7 +4,7 @@ import NoHyperlinksCommand from "../../../../src/service/printer/command/NoHyper
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 import PrinterServiceProvider from "../../../../src/service/printer/PrinterServiceProvider.ts";
 import ShutdownServiceProvider from "../../../../src/service/shutdown/ShutdownServiceProvider.ts";
-import { SHUTDOWN_SERVICE_ID } from "../../../../src/api/service/core/ShutdownService.ts";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";

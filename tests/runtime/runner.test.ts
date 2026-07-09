@@ -8,18 +8,18 @@ import {
   getSubCommandWithOption,
 } from "../fixtures/Command.ts";
 import { run } from "../../src/runtime/runner.ts";
-import { RunState } from "../../src/api/RunResult.ts";
+import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import { getContext } from "../fixtures/Context.ts";
 import { getServiceProviderRegistry } from "../fixtures/ServiceProviderRegistry.ts";
 import { expectStringIncludes } from "../fixtures/util.ts";
 import { getConfigurationServiceProvider } from "../fixtures/ConfigurationServiceProvider.ts";
-import type GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   type ArgumentValues,
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../src/api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import WritableStreamString from "../fixtures/StreamString.ts";
 import StreamString from "../fixtures/StreamString.ts";
 describe("runner tests", () => {

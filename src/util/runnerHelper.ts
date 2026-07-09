@@ -1,10 +1,10 @@
-import type PrinterService from "../api/service/core/PrinterService.ts";
-import { Icon, PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { ParseResult } from "../runtime/parser.ts";
 import { isGlobalCommand, isGlobalModifierCommand } from "../runtime/command/CommandTypeGuards.ts";
-import type Context from "../api/Context.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import { getInvalidArgumentString } from "../runtime/values/argumentValueValidation.ts";
-import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
+import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { findPossibleCommandNames } from "./helpHelper.ts";
 
 function getCommandString(printerService: PrinterService, parseResult: ParseResult): string {

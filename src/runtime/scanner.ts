@@ -1,8 +1,8 @@
-import type GroupCommand from "../api/command/GroupCommand.ts";
-import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../util/logger.ts";
-import type Command from "../api/command/Command.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import { isGroupCommand } from "./command/CommandTypeGuards.ts";
 
 const logger = getLogger("scanner");

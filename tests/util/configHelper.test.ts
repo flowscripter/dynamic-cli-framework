@@ -10,10 +10,10 @@ import {
   getSubCommandWithOption,
   getSubCommandWithPositional,
 } from "../fixtures/Command.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
-import type ComplexOption from "../../src/api/argument/ComplexOption.ts";
-import type Option from "../../src/api/argument/Option.ts";
-import type SubCommandArgument from "../../src/api/argument/SubCommandArgument.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("configHelper tests", () => {
   test("getConfigurationKey works for global argument", () => {

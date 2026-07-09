@@ -1,9 +1,9 @@
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
-import type Context from "../../api/Context.ts";
-import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
+import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultAsciiBannerGeneratorService from "./DefaultAsciiBannerGeneratorService.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Provides an {@link AsciiBannerGeneratorService}.

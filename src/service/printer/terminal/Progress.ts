@@ -3,8 +3,8 @@ import type Terminal from "../../../terminal/Terminal.ts";
 
 const RATE_SMOOTHING_FACTOR = 0.005;
 
-export { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
-import { ProgressStyle } from "../../../api/service/core/PrinterService.ts";
+export { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
+import { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
 
 const STYLE_CHARS: Record<ProgressStyle, { complete: string; remaining: string }> = {
   [ProgressStyle.STROKE]: { complete: "=", remaining: "-" },

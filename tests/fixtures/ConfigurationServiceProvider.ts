@@ -2,8 +2,8 @@ import ConfigurationServiceProvider from "../../src/service/configuration/Config
 import type {
   ArgumentSingleValueType,
   ArgumentValues,
-} from "../../src/api/argument/ArgumentValueTypes.ts";
-import type Context from "../../src/api/Context.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
   constructor(

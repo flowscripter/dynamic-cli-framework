@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import argumentValueMerge from "../../../src/runtime/values/argumentValueMerge.ts";
-import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../../src/api/argument/SubCommandArgument.ts";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("argumentValueMerge tests", () => {
   test("One layer merge", () => {

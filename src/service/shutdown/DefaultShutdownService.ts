@@ -1,4 +1,4 @@
-import type ShutdownService from "../../api/service/core/ShutdownService.ts";
+import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "./ShutdownState.ts";
 
 export default class DefaultShutdownService implements ShutdownService {

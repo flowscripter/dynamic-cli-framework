@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import DefaultTableGeneratorService from "../../../src/service/tableGenerator/DefaultTableGeneratorService.ts";
-import Table from "../../../src/api/service/core/Table.ts";
-import { Align } from "../../../src/api/service/core/TableGeneratorService.ts";
+import { Table } from "@flowscripter/dynamic-cli-framework-api";
+import { Align } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("DefaultTableGeneratorService tests", () => {
   function createService(): DefaultTableGeneratorService {

@@ -1,17 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
 import DynamicPluginRuntimeCLI from "../../src/cli/DynamicPluginRuntimeCLI.ts";
-import type CLIConfig from "../../src/api/CLIConfig.ts";
-import type CommandFactory from "../../src/api/plugin/CommandFactory.ts";
-import type ServiceProviderFactory from "../../src/api/plugin/ServiceProviderFactory.ts";
-import { DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT } from "../../src/api/plugin/CommandFactory.ts";
-import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "../../src/api/plugin/ServiceProviderFactory.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
-import type { ServiceProvider, ServiceInfo } from "../../src/api/service/ServiceProvider.ts";
-import type Context from "../../src/api/Context.ts";
-import type { ArgumentValues } from "../../src/api/argument/ArgumentValueTypes.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
-import { PLUGIN_SERVICE_ID } from "../../src/api/service/core/PluginService.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { CommandFactory } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceProviderFactory } from "@flowscripter/dynamic-cli-framework-api";
+import { DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT } from "@flowscripter/dynamic-cli-framework-api";
+import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceProvider, ServiceInfo } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 function getCLIConfig(): CLIConfig {
   return { name: "testcli", description: "Test CLI", version: "1.0.0" };

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import PrompterServiceProvider from "../../../src/service/prompter/PrompterServiceProvider.ts";
-import { PROMPTER_SERVICE_ID } from "../../../src/api/service/core/PrompterService.ts";
-import type PrompterService from "../../../src/api/service/core/PrompterService.ts";
+import { PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 

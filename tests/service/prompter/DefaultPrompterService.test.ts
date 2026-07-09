@@ -5,8 +5,8 @@ import DefaultPrompterService, {
 import type KeyReader from "../../../src/terminal/KeyReader.ts";
 import { type KeyEvent, SpecialKey } from "../../../src/terminal/KeyReader.ts";
 import type Terminal from "../../../src/terminal/Terminal.ts";
-import { PromptType } from "../../../src/api/service/core/PrompterService.ts";
-import type PrinterService from "../../../src/api/service/core/PrinterService.ts";
+import { PromptType } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 
 class MockKeyReader implements KeyReader {
   #keys: KeyEvent[] = [];
@@ -99,6 +99,11 @@ function getMockPrinterService(): PrinterService {
     backgroundGreen: (m: string) => m,
     backgroundColor: (m: string, _c: string) => m,
     hyperlink: (t: string, _u: string) => t,
+    startQuote: () => {},
+    endQuote: () => {},
+    startMark: () => {},
+    endMark: () => {},
+    clearMarked: () => Promise.resolve(),
     stdoutColumns: () => 80,
     stderrColumns: () => 80,
     print: () => Promise.resolve(),

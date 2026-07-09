@@ -3,8 +3,8 @@ import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import DumpConfigCommand from "../../../../src/service/configuration/command/DumpConfigCommand.ts";
 import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
-import { PRINTER_SERVICE_ID } from "../../../../src/api/service/core/PrinterService.ts";
-import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "../../../../src/api/service/core/SyntaxHighlighterService.ts";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("DumpConfigCommand tests", () => {
   test("has correct name and description", () => {

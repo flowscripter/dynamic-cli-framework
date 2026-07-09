@@ -1,21 +1,21 @@
 import process from "node:process";
-import type Command from "../api/command/Command.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
   type PopulatedArgumentSingleValueType,
   type PopulatedArgumentValues,
-} from "../api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 type ProcessEnv = NodeJS.ProcessEnv;
 
-import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
-import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../api/argument/SubCommandArgument.ts";
-import type Option from "../api/argument/Option.ts";
-import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
-import type ComplexOption from "../api/argument/ComplexOption.ts";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 
 function getKeySegment(segment: string) {
   let keySegment = segment.replace("-", "_").toUpperCase();

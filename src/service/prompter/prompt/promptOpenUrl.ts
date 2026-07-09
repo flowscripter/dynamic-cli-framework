@@ -1,4 +1,4 @@
-import type { Prompt, PromptResult } from "../../../api/service/core/PrompterService.ts";
+import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
 import { renderPromptHeader } from "./PromptContext.ts";

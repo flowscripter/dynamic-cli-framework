@@ -1,15 +1,15 @@
-import type GroupCommand from "../../src/api/command/GroupCommand.ts";
-import type GlobalCommand from "../../src/api/command/GlobalCommand.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../src/api/argument/ArgumentValueTypes.ts";
-import type ComplexOption from "../../src/api/argument/ComplexOption.ts";
-import type Positional from "../../src/api/argument/Positional.ts";
-import type GlobalCommandArgument from "../../src/api/argument/GlobalCommandArgument.ts";
-import type GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
-import type Option from "../../src/api/argument/Option.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 
 export function getGroupCommand(
   name = "groupCommand",

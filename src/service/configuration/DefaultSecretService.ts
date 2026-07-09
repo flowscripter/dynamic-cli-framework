@@ -1,4 +1,4 @@
-import type SecretService from "../../api/service/core/SecretService.ts";
+import type { SecretService } from "@flowscripter/dynamic-cli-framework-api";
 import { secrets as bunSecrets } from "bun";
 
 const MAX_NAME_LENGTH = 255;

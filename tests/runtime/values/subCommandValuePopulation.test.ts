@@ -4,11 +4,11 @@ import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
   type PopulatedArgumentValues,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
-import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
-import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectExtractResult(
   result: SubCommandValuePopulationResult,

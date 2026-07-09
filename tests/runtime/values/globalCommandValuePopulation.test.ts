@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { GlobalCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
 import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
-import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
-import type GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   ArgumentValueTypeName,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 
 function expectExtractResult(
   result: GlobalCommandValuePopulationResult,

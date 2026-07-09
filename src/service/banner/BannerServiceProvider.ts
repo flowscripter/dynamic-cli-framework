@@ -1,12 +1,12 @@
-import type Context from "../../api/Context.ts";
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import NoBannerCommand from "./command/NoBannerCommand.ts";
-import type PrinterService from "../../api/service/core/PrinterService.ts";
-import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type ConfigurationServiceProvider from "../configuration/ConfigurationServiceProvider.ts";
-import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
+import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 export const BANNER_SERVICE_ID = "@flowscripter/dynamic-cli-framework/banner-service";
 
 /**

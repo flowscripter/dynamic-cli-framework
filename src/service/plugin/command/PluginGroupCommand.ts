@@ -1,6 +1,6 @@
-import type GroupCommand from "../../../api/command/GroupCommand.ts";
-import type SubCommand from "../../../api/command/SubCommand.ts";
-import type Context from "../../../api/Context.ts";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import { PluginListSubCommand } from "./PluginListSubCommand.ts";
 import { PluginSearchSubCommand } from "./PluginSearchSubCommand.ts";
 import { PluginAddSubCommand } from "./PluginAddSubCommand.ts";

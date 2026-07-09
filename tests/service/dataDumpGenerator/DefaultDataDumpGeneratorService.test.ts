@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { describe, expect, test } from "bun:test";
 import DefaultDataDumpGeneratorService from "../../../src/service/dataDumpGenerator/DefaultDataDumpGeneratorService.ts";
-import { DumpFormat } from "../../../src/api/service/core/DataDumpGeneratorService.ts";
+import { DumpFormat } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("DefaultDataDumpGeneratorService tests", () => {
   test("Empty buffer produces empty string", () => {

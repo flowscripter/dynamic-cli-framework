@@ -16,7 +16,22 @@ or both of the two CLI extension points:
 
 ## Writing a plugin
 
-Import the plugin author API from the dedicated entry point:
+Plugin authors should depend on
+[`@flowscripter/dynamic-cli-framework-api`](https://github.com/flowscripter/dynamic-cli-framework-api)
+rather than this package. It contains the same plugin-facing types,
+interfaces and constants (previously available via the `./cli-plugin`
+subpath of this package) but with near-zero runtime dependencies, so
+installing a plugin doesn't also pull in this framework's concrete
+service implementations and their dependencies (`figlet`, `emphasize`,
+`highlight.js`, `prettier`, etc.). Declare it as a `peerDependency`:
+
+```jsonc
+{
+  "peerDependencies": {
+    "@flowscripter/dynamic-cli-framework-api": "*",
+  },
+}
+```
 
 ```ts
 import type {
@@ -24,12 +39,12 @@ import type {
   ServiceProviderFactory,
   SubCommand,
   ServiceProvider,
-} from "@flowscripter/dynamic-cli-framework/cli-plugin";
+} from "@flowscripter/dynamic-cli-framework-api";
 import {
   DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT,
   DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT,
   ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework/cli-plugin";
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { Plugin, ExtensionDescriptor } from "@flowscripter/dynamic-plugin-framework";
 ```
 

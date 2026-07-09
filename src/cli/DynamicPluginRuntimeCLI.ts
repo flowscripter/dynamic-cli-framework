@@ -1,14 +1,14 @@
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
-import type CLIConfig from "../api/CLIConfig.ts";
-import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
-import type RunResult from "../api/RunResult.ts";
-import { RunState } from "../api/RunResult.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "./BaseCLIFeatureOptions.ts";
+import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
+import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultRuntimeCLI from "./DefaultRuntimeCLI.ts";
 import DefaultPluginServiceProvider from "../service/plugin/DefaultPluginServiceProvider.ts";
-import { DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT } from "../api/plugin/CommandFactory.ts";
-import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "../api/plugin/ServiceProviderFactory.ts";
-import type CommandFactory from "../api/plugin/CommandFactory.ts";
-import type ServiceProviderFactory from "../api/plugin/ServiceProviderFactory.ts";
+import { DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT } from "@flowscripter/dynamic-cli-framework-api";
+import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "@flowscripter/dynamic-cli-framework-api";
+import type { CommandFactory } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceProviderFactory } from "@flowscripter/dynamic-cli-framework-api";
 import process from "node:process";
 
 /**

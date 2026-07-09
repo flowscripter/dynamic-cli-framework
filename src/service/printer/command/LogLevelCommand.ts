@@ -1,12 +1,12 @@
-import type GlobalCommandArgument from "../../../api/argument/GlobalCommandArgument.ts";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   ArgumentValueTypeName,
-} from "../../../api/argument/ArgumentValueTypes.ts";
-import type GlobalModifierCommand from "../../../api/command/GlobalModifierCommand.ts";
-import type Context from "../../../api/Context.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
-import { Level } from "../../../api/service/core/PrinterService.ts";
+import { Level } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Command allowing the setting of the log level for {@link PrinterServiceProvider}.

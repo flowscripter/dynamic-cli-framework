@@ -1,12 +1,12 @@
-import type PrompterService from "../../api/service/core/PrompterService.ts";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type Prompt,
   type PromptResult,
   PromptType,
-} from "../../api/service/core/PrompterService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import type Terminal from "../../terminal/Terminal.ts";
 import type KeyReader from "../../terminal/KeyReader.ts";
-import type PrinterService from "../../api/service/core/PrinterService.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { PromptContext } from "./prompt/PromptContext.ts";
 import promptSingleSelect from "./prompt/promptSingleSelect.ts";
 import promptMultiSelect from "./prompt/promptMultiSelect.ts";

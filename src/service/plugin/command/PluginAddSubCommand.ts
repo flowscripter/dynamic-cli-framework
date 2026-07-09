@@ -1,11 +1,11 @@
-import type SubCommand from "../../../api/command/SubCommand.ts";
-import type Context from "../../../api/Context.ts";
-import type { ArgumentValues } from "../../../api/argument/ArgumentValueTypes.ts";
-import { ArgumentValueTypeName } from "../../../api/argument/ArgumentValueTypes.ts";
-import type PrinterService from "../../../api/service/core/PrinterService.ts";
-import { Icon, PRINTER_SERVICE_ID } from "../../../api/service/core/PrinterService.ts";
-import { PLUGIN_SERVICE_ID } from "../../../api/service/core/PluginService.ts";
-import type PluginService from "../../../api/service/core/PluginService.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 import type { VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-framework";
 import { getPluginId } from "./getPluginId.ts";
 

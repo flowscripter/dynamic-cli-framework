@@ -10,15 +10,15 @@ import {
   type ParseResult,
   parseSubCommandClause,
 } from "../../src/runtime/parser.ts";
-import { InvalidArgumentReason } from "../../src/api/RunResult.ts";
-import type ComplexOption from "../../src/api/argument/ComplexOption.ts";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentValueType,
   ArgumentValueTypeName,
   ComplexValueTypeName,
   type PopulatedArgumentValues,
-} from "../../src/api/argument/ArgumentValueTypes.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectParseResult(result: ParseResult, expected: ParseResult) {
   expect(result.populatedArgumentValues).toEqual(expected.populatedArgumentValues!);

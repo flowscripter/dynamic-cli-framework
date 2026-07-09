@@ -1,5 +1,5 @@
 import ImageRenderer from "../../terminal/ImageRenderer.ts";
-import type ImagePrinterService from "../../api/service/core/ImagePrinterService.ts";
+import type { ImagePrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import type Terminal from "../../terminal/Terminal.ts";
 
 export default class DefaultImagePrinterService implements ImagePrinterService {

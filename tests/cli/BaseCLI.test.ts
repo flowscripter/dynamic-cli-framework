@@ -8,14 +8,14 @@ import {
   getSubCommandWithOptionAndPositional,
 } from "../fixtures/Command.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
-import { RunState } from "../../src/api/RunResult.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
+import { RunState } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
-import type KeyValueService from "../../src/api/service/core/KeyValueService.ts";
-import { KEY_VALUE_SERVICE_ID } from "../../src/api/service/core/KeyValueService.ts";
-import type { ServiceInfo, ServiceProvider } from "../../src/api/service/ServiceProvider.ts";
-import type Context from "../../src/api/Context.ts";
-import type CLIConfig from "../../src/api/CLIConfig.ts";
+import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
+import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
 import TtyTerminal from "../../src/terminal/TtyTerminal.ts";

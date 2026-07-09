@@ -1,8 +1,8 @@
 import type {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import type { InvalidArgument } from "../../api/RunResult.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * A base interface for a container holding the result of argument value population.

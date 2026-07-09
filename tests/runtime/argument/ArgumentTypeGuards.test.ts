@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type Positional from "../../../src/api/argument/Positional.ts";
-import type GlobalCommandArgument from "../../../src/api/argument/GlobalCommandArgument.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../../../src/runtime/argument/ArgumentTypeGuards.ts";
-import type Option from "../../../src/api/argument/Option.ts";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 
 function getComplexOption(): ComplexOption {
   return {

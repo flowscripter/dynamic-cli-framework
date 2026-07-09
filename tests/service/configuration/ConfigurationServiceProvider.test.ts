@@ -6,9 +6,9 @@ import { describe, expect, test } from "bun:test";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
-import { ArgumentValueTypeName } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type KeyValueService from "../../../src/api/service/core/KeyValueService.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 function getConfig() {
   return {

@@ -1,13 +1,13 @@
-import type CompletionService from "../../api/service/core/CompletionService.ts";
-import { type CompletionItem, ShellType } from "../../api/service/core/CompletionService.ts";
-import type CommandRegistry from "../../runtime/registry/CommandRegistry.ts";
+import type { CompletionService } from "@flowscripter/dynamic-cli-framework-api";
+import { type CompletionItem, ShellType } from "@flowscripter/dynamic-cli-framework-api";
+import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import type ShellHandler from "./shell/ShellHandler.ts";
 import BashShellHandler from "./shell/bash.ts";
 import ZshShellHandler from "./shell/zsh.ts";
 import FishShellHandler from "./shell/fish.ts";
 import PowerShellShellHandler from "./shell/powershell.ts";
-import type SubCommand from "../../api/command/SubCommand.ts";
-import type Option from "../../api/argument/Option.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class DefaultCompletionService implements CompletionService {
   #commandRegistry: CommandRegistry | undefined;

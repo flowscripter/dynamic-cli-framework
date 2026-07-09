@@ -48,6 +48,7 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
+    "@flowscripter/dynamic-cli-framework-api": "^1.0.1",
     "@flowscripter/dynamic-plugin-framework": "1.10.1",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",

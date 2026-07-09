@@ -1,13 +1,15 @@
 import process from "node:process";
 import path from "node:path";
-import type CLIConfig from "./api/CLIConfig.ts";
-import type BaseCLIFeatureOptions from "./api/BaseCLIFeatureOptions.ts";
-import type SubCommand from "./api/command/SubCommand.ts";
+import type {
+  CLIConfig,
+  SubCommand,
+  Command,
+  RunResult,
+  ServiceProvider,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "./cli/BaseCLIFeatureOptions.ts";
 import DefaultRuntimeCLI from "./cli/DefaultRuntimeCLI.ts";
 import DynamicPluginRuntimeCLI from "./cli/DynamicPluginRuntimeCLI.ts";
-import type Command from "./api/command/Command.ts";
-import type RunResult from "./api/RunResult.ts";
-import type { ServiceProvider } from "./api/service/ServiceProvider.ts";
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
 
 export async function launchSingleCommandCLI(

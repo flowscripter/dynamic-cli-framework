@@ -1,10 +1,10 @@
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultTreePrinterService from "./DefaultTreePrinterService.ts";
-import { TREE_PRINTER_SERVICE_ID } from "../../api/service/core/TreePrinterService.ts";
-import type Context from "../../api/Context.ts";
-import type PrinterService from "../../api/service/core/PrinterService.ts";
-import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import { TREE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class TreePrinterServiceProvider implements ServiceProvider {
   readonly serviceId: string = TREE_PRINTER_SERVICE_ID;

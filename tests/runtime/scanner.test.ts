@@ -11,11 +11,11 @@ import {
   scanForNonModifierCommandClause,
   type ScanResult,
 } from "../../src/runtime/scanner.ts";
-import type GlobalModifierCommand from "../../src/api/command/GlobalModifierCommand.ts";
-import type GroupCommand from "../../src/api/command/GroupCommand.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
-import type GlobalCommand from "../../src/api/command/GlobalCommand.ts";
-import type Command from "../../src/api/command/Command.ts";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectScanResult(result: ScanResult, expected: ScanResult) {
   expect(result.unusedArgSequences).toEqual(expected.unusedArgSequences);
