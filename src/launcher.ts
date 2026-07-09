@@ -2,12 +2,12 @@ import process from "node:process";
 import path from "node:path";
 import type {
   CLIConfig,
-  BaseCLIFeatureOptions,
   SubCommand,
   Command,
   RunResult,
   ServiceProvider,
 } from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "./cli/BaseCLIFeatureOptions.ts";
 import DefaultRuntimeCLI from "./cli/DefaultRuntimeCLI.ts";
 import DynamicPluginRuntimeCLI from "./cli/DynamicPluginRuntimeCLI.ts";
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";

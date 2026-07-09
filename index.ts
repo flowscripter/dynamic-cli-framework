@@ -153,8 +153,9 @@ export { default as ArgumentPrompterServiceProvider } from "./src/service/argume
 // CLI API
 export type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 export type { Context } from "@flowscripter/dynamic-cli-framework-api";
-export type { RunResult, InvalidArgumentReason, RunState } from "@flowscripter/dynamic-cli-framework-api";
-export type { BaseCLIFeatureOptions } from "@flowscripter/dynamic-cli-framework-api";
+export type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
+export { InvalidArgumentReason, RunState } from "@flowscripter/dynamic-cli-framework-api";
+export type { default as BaseCLIFeatureOptions } from "./src/cli/BaseCLIFeatureOptions.ts";
 export type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 export type { CLI } from "@flowscripter/dynamic-cli-framework-api";
 

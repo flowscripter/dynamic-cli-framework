@@ -1,6 +1,6 @@
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
-import type { BaseCLIFeatureOptions } from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "./BaseCLIFeatureOptions.ts";
 import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
 import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultRuntimeCLI from "./DefaultRuntimeCLI.ts";

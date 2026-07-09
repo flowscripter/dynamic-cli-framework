@@ -41,7 +41,7 @@ import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
 import type Styler from "../terminal/Styler.ts";
 import type KeyReader from "../terminal/KeyReader.ts";
-import type { BaseCLIFeatureOptions } from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "./BaseCLIFeatureOptions.ts";
 import DefaultPrompterService, {
   DEFAULT_PROMPTER_CONFIG,
 } from "../service/prompter/DefaultPrompterService.ts";
