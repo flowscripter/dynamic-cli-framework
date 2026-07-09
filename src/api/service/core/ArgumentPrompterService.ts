@@ -1,4 +1,4 @@
-import type { ParseResult } from "../../../runtime/parser.ts";
+import type { ParseResult } from "../../ParseResult.ts";
 
 export const ARGUMENT_PROMPTER_SERVICE_ID =
   "@flowscripter/dynamic-cli-framework/argument-prompter-service";

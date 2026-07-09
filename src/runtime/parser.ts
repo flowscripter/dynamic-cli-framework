@@ -1,11 +1,10 @@
-import type Command from "../api/command/Command.ts";
-import type GroupCommand from "../api/command/GroupCommand.ts";
 import type {
   ArgumentValueType,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
 } from "../api/argument/ArgumentValueTypes.ts";
 import type { InvalidArgument } from "../api/RunResult.ts";
+import type { ParseResult } from "../api/ParseResult.ts";
 import type { CommandClause } from "./scanner.ts";
 import populateGlobalCommandValue from "./values/globalCommandValuePopulation.ts";
 import {
@@ -20,38 +19,7 @@ import type SubCommand from "../api/command/SubCommand.ts";
 
 const logger = getLogger("parser");
 
-/**
- * A container holding the result of a command clause parsing operation.
- */
-export interface ParseResult {
-  /**
-   * The {@link Command} to execute if the parse result is valid (i.e. {@link invalidArguments} is empty).
-   */
-  readonly command: Command;
-
-  /**
-   * Optional parent {@link GroupCommand} if the parsed {@link command} was a member {@link SubCommand},
-   */
-  readonly groupCommand?: GroupCommand;
-
-  /**
-   * The argument values populated from the command line args. If the parse result is valid
-   * (i.e. {@link invalidArguments} is empty), this can be used to execute the specified {@link command}.
-   * {@link PopulatedArgumentSingleValueType} is for {@link GlobalCommand} values, {@link PopulatedArgumentValues} is for
-   * {@link SubCommand} values.
-   */
-  readonly populatedArgumentValues: PopulatedArgumentValues | PopulatedArgumentSingleValueType;
-
-  /**
-   * Any arguments which were invalid.
-   */
-  readonly invalidArguments: ReadonlyArray<InvalidArgument>;
-
-  /**
-   * Any arguments which were unused in the parsing operation.
-   */
-  readonly unusedArgs: ReadonlyArray<string>;
-}
+export type { ParseResult } from "../api/ParseResult.ts";
 
 /**
  * Parse the arguments for the specified {@link CommandClause} assuming it contains a {@link SubCommand}.
