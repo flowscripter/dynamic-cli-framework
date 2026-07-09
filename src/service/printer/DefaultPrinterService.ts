@@ -1,5 +1,6 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
+import { default as Quote } from "./terminal/Quote.ts";
 import type PrinterService from "../../api/service/core/PrinterService.ts";
 import {
   type Icon,
@@ -26,6 +27,22 @@ export default class DefaultPrinterService implements PrinterService {
   #encoder = new TextEncoder();
   #spinner: Spinner;
   #progress: Progress;
+  #quote: Quote;
+  #markedLineCount: number | undefined;
+  #markEndedAt: number | undefined;
+  #markedTerminal: Terminal | undefined;
+
+  #countLines(message: string): number {
+    return message.split("\n").length - (message.endsWith("\n") ? 1 : 0);
+  }
+
+  #recordMarkedWrite(terminal: Terminal, message: string): void {
+    if (this.#markedLineCount === undefined) {
+      return;
+    }
+    this.#markedLineCount += this.#countLines(message);
+    this.#markedTerminal = terminal;
+  }
 
   async #log(level: number, message: string, icon?: Icon): Promise<void> {
     if (this.#threshold > level) {
@@ -33,9 +50,9 @@ export default class DefaultPrinterService implements PrinterService {
     }
     await this.#spinner.pause();
     await this.#progress.pause();
-    await this.#stderrTerminal.write(
-      `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${message}`,
-    );
+    const composed = `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${message}`;
+    this.#recordMarkedWrite(this.#stderrTerminal, composed);
+    await this.#stderrTerminal.write(this.#quote.prefixLines(composed));
     this.#spinner.resume();
     this.#progress.resume();
   }
@@ -58,6 +75,7 @@ export default class DefaultPrinterService implements PrinterService {
     this.#styler.colorEnabled = stderrIsColor;
     this.#spinner = new Spinner(this.#stderrTerminal, this.#styler);
     this.#progress = new Progress(this.#stderrTerminal, this.#styler);
+    this.#quote = new Quote(this.#styler);
     this.darkMode = false;
     this.#iconDefinitions = [this.green("✔"), this.red("✖"), this.yellow("‼"), this.blue("ℹ")];
   }
@@ -256,9 +274,11 @@ export default class DefaultPrinterService implements PrinterService {
     const writer = this.stdoutWritable.getWriter();
     const colorMessage = this.#stdoutIsColor ? this.primary(message) : message;
 
-    const encoded = this.#encoder.encode(
-      `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${colorMessage}`,
-    );
+    const composed = `${
+      icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""
+    }${colorMessage}`;
+    this.#recordMarkedWrite(this.#stdoutTerminal, composed);
+    const encoded = this.#encoder.encode(this.#quote.prefixLines(composed));
 
     await writer.ready;
     await writer.write(encoded);
@@ -266,6 +286,48 @@ export default class DefaultPrinterService implements PrinterService {
     writer.releaseLock();
     this.#spinner.resume();
     this.#progress.resume();
+  }
+
+  public startQuote(hexFormattedColor?: string): void {
+    const color = hexFormattedColor
+      ? this.#parseHexColor(hexFormattedColor)
+      : this.#theme[Color.SECONDARY]!;
+    this.#quote.push(color);
+  }
+
+  public endQuote(): void {
+    this.#quote.pop();
+  }
+
+  public startMark(): void {
+    if (this.#markedLineCount !== undefined) {
+      throw new Error("startMark() called while already marking");
+    }
+    this.#markedLineCount = 0;
+    this.#markEndedAt = undefined;
+  }
+
+  public endMark(): void {
+    if (this.#markedLineCount === undefined) {
+      throw new Error("endMark() called without a matching startMark()");
+    }
+    this.#markEndedAt = Date.now();
+  }
+
+  public async clearMarked(minimumDisplayTimeMs = 0): Promise<void> {
+    if (this.#markedLineCount === undefined || this.#markEndedAt === undefined) {
+      throw new Error("clearMarked() called without a preceding endMark()");
+    }
+    const remaining = minimumDisplayTimeMs - (Date.now() - this.#markEndedAt);
+    if (remaining > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
+    if (this.#markedTerminal !== undefined) {
+      await this.#markedTerminal.clearUpLines(this.#markedLineCount);
+    }
+    this.#markedLineCount = undefined;
+    this.#markEndedAt = undefined;
+    this.#markedTerminal = undefined;
   }
 
   public async setLevel(level: Level): Promise<void> {

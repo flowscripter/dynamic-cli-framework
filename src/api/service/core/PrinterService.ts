@@ -254,6 +254,52 @@ export default interface PrinterService {
   hyperlink(text: string, url: string): string;
 
   /**
+   * Start a quoted, indented block of output. While active, every line written via {@link print},
+   * {@link debug}, {@link info}, {@link warn} or {@link error} is prefixed with box-drawing indent
+   * characters. Quotes can be nested by calling {@link startQuote} again before calling
+   * {@link endQuote}; each nesting level renders in its own color and adds another indent column.
+   *
+   * @param hexFormattedColor optional color for this level's indent characters, e.g. "#rrggbb".
+   * Defaults to the {@link secondary} theme color if not specified.
+   */
+  startQuote(hexFormattedColor?: string): void;
+
+  /**
+   * End the most recently started quote level (see {@link startQuote}).
+   *
+   * Throws if called without a matching {@link startQuote}.
+   */
+  endQuote(): void;
+
+  /**
+   * Start tracking the terminal rows occupied by subsequent writes so they can later be erased via
+   * {@link clearMarked}. Only one mark region can be active at a time.
+   *
+   * Throws if called while already marking.
+   */
+  startMark(): void;
+
+  /**
+   * Stop tracking rows for the current mark region (see {@link startMark}). The tracked row count is
+   * frozen; further writes are not counted. Use {@link clearMarked} to erase the tracked rows.
+   *
+   * Throws if called without a matching {@link startMark}.
+   */
+  endMark(): void;
+
+  /**
+   * Erase the terminal rows tracked since the last {@link startMark}/{@link endMark} pair, moving any
+   * following content up.
+   *
+   * @param minimumDisplayTimeMs optional minimum time (in milliseconds) that must have elapsed since
+   * {@link endMark} was called before the rows are erased; if less time has elapsed, waits for the
+   * remainder before clearing. Defaults to `0`.
+   *
+   * Throws if called without a preceding {@link endMark}.
+   */
+  clearMarked(minimumDisplayTimeMs?: number): Promise<void>;
+
+  /**
    * The number of columns available on the stdout terminal.
    * Defaults to 80 if the terminal width cannot be determined.
    */

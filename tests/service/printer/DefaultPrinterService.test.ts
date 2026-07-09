@@ -527,4 +527,169 @@ describe("DefaultPrinterService tests", () => {
       expectStringEquals(printerService[method]("text"), "text");
     }
   });
+
+  test("startQuote/endQuote prefixes lines at depth 1", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startQuote();
+    await printerService.print("line1\nline2\n");
+    printerService.endQuote();
+    await printerService.print("line3\n");
+
+    expectStringEquals(dummyStdout.getString(), "┐ line1\n│ line2\nline3\n");
+  });
+
+  test("nested startQuote/endQuote prefixes lines with branch column", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startQuote();
+    await printerService.print("outer1\n");
+    printerService.startQuote();
+    await printerService.print("inner1\ninner2\n");
+    printerService.endQuote();
+    await printerService.print("outer2\n");
+    printerService.endQuote();
+
+    expectStringEquals(dummyStdout.getString(), "┐ outer1\n├┐ inner1\n│ │ inner2\n│ outer2\n");
+  });
+
+  test("endQuote() without startQuote() throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    expect(() => printerService.endQuote()).toThrow(
+      "endQuote() called without a matching startQuote()",
+    );
+  });
+
+  test("startMark() while already marking throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    printerService.startMark();
+    expect(() => printerService.startMark()).toThrow("startMark() called while already marking");
+  });
+
+  test("endMark() without startMark() throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    expect(() => printerService.endMark()).toThrow(
+      "endMark() called without a matching startMark()",
+    );
+  });
+
+  test("clearMarked() without endMark() throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    expect(printerService.clearMarked()).rejects.toThrow(
+      "clearMarked() called without a preceding endMark()",
+    );
+  });
+
+  test("startMark/endMark/clearMarked erases the tracked rows", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startMark();
+    await printerService.print("line1\nline2\n");
+    printerService.endMark();
+    await printerService.clearMarked();
+
+    expect(dummyStdout.getString()).toEqual(
+      "line1\nline2\n" + "\x1b[1A\x1b[2K".repeat(2) + "\x1b[2K\x1b[G",
+    );
+  });
+
+  test("clearMarked() waits for the minimum display time", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startMark();
+    await printerService.print("line1\n");
+    printerService.endMark();
+
+    const start = Date.now();
+    await printerService.clearMarked(100);
+    expect(Date.now() - start).toBeGreaterThanOrEqual(90);
+  });
 });
