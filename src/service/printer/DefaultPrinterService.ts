@@ -1,13 +1,13 @@
 import { default as Spinner } from "./terminal/Spinner.ts";
 import { default as Progress } from "./terminal/Progress.ts";
 import { default as Quote } from "./terminal/Quote.ts";
-import type PrinterService from "../../api/service/core/PrinterService.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type Icon,
   Level,
   type ProgressStyle,
   type SpinnerStyle,
-} from "../../api/service/core/PrinterService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import type Terminal from "../../terminal/Terminal.ts";
 import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";

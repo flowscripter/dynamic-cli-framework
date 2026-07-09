@@ -7,7 +7,7 @@ import {
   write,
 } from "../../fixtures/util.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
-import { Icon, Level } from "../../../src/api/service/core/PrinterService.ts";
+import { Icon, Level } from "@flowscripter/dynamic-cli-framework-api";
 import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import StreamString from "../../fixtures/StreamString.ts";

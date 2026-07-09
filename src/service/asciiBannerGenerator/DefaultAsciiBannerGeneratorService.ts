@@ -1,8 +1,8 @@
-import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
 import type {
   BannerGenerateOptions,
   ColorEffect,
-} from "../../api/service/core/AsciiBannerGeneratorService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import {
   BACKGROUND_COLOR_END,
   backgroundColorStart,

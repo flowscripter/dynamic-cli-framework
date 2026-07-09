@@ -1,5 +1,5 @@
-import type KeyValueService from "../../api/service/core/KeyValueService.ts";
-import { SECRET_SENTINEL_PREFIX } from "../../api/service/core/KeyValueService.ts";
+import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
+import { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
 import type DefaultSecretService from "./DefaultSecretService.ts";
 
 export default class DefaultKeyValueService implements KeyValueService {

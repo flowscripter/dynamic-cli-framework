@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import NoPromptCommand from "../../../../src/service/prompter/command/NoPromptCommand.ts";
 import PrompterServiceProvider from "../../../../src/service/prompter/PrompterServiceProvider.ts";
-import { ArgumentValueTypeName } from "../../../../src/api/argument/ArgumentValueTypes.ts";
-import type PrompterService from "../../../../src/api/service/core/PrompterService.ts";
-import type Context from "../../../../src/api/Context.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 function getMockPrompterService(): PrompterService {
   return {

@@ -1,4 +1,4 @@
-import type PluginService from "../../api/service/core/PluginService.ts";
+import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 import type {
   MarketplacePluginManager,
   VersionedPluginDescriptor,

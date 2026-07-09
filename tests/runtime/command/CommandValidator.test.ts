@@ -6,14 +6,14 @@ import {
   getGroupCommand,
   getSubCommandWithComplexOptions,
 } from "../../fixtures/Command.ts";
-import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type Option from "../../../src/api/argument/Option.ts";
-import type Positional from "../../../src/api/argument/Positional.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 function getSubCommand(
   name: string,

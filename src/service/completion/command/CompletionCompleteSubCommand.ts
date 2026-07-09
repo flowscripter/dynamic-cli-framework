@@ -1,15 +1,15 @@
-import type SubCommand from "../../../api/command/SubCommand.ts";
-import type Option from "../../../api/argument/Option.ts";
-import type Positional from "../../../api/argument/Positional.ts";
-import type Context from "../../../api/Context.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentValues,
   ArgumentValueTypeName,
-} from "../../../api/argument/ArgumentValueTypes.ts";
-import { COMPLETION_SERVICE_ID, ShellType } from "../../../api/service/core/CompletionService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import { COMPLETION_SERVICE_ID, ShellType } from "@flowscripter/dynamic-cli-framework-api";
 import type DefaultCompletionService from "../DefaultCompletionService.ts";
-import { PRINTER_SERVICE_ID } from "../../../api/service/core/PrinterService.ts";
-import type PrinterService from "../../../api/service/core/PrinterService.ts";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 
 export class CompletionCompleteSubCommand implements SubCommand {
   readonly name = "complete";

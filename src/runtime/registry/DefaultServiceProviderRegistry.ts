@@ -1,5 +1,5 @@
-import type ServiceProviderRegistry from "./ServiceProviderRegistry.ts";
-import type { ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { ServiceProviderRegistry } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultServiceProviderRegistry");

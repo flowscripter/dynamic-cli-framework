@@ -1,10 +1,10 @@
-import type GlobalModifierCommand from "../../../api/command/GlobalModifierCommand.ts";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   ArgumentValueTypeName,
-} from "../../../api/argument/ArgumentValueTypes.ts";
-import type Context from "../../../api/Context.ts";
-import type GlobalCommandArgument from "../../../api/argument/GlobalCommandArgument.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type BannerServiceProvider from "../BannerServiceProvider.ts";
 
 /**

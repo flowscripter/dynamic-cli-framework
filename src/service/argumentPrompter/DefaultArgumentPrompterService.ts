@@ -1,26 +1,26 @@
-import type ArgumentPrompterService from "../../api/service/core/ArgumentPrompterService.ts";
+import type { ArgumentPrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { ParseResult } from "../../runtime/parser.ts";
-import type PrompterService from "../../api/service/core/PrompterService.ts";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type Prompt,
   type PromptOption,
   PromptType,
-} from "../../api/service/core/PrompterService.ts";
-import { InvalidArgumentReason } from "../../api/RunResult.ts";
-import type { InvalidArgument } from "../../api/RunResult.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   ArgumentValueTypeName,
   ComplexValueTypeName,
   type PopulatedArgumentSingleValueType,
   type PopulatedArgumentValues,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import type Argument from "../../api/argument/Argument.ts";
-import type Option from "../../api/argument/Option.ts";
-import type Positional from "../../api/argument/Positional.ts";
-import type ComplexOption from "../../api/argument/ComplexOption.ts";
-import type SubCommand from "../../api/command/SubCommand.ts";
-import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "../../runtime/command/CommandTypeGuards.ts";
 
 export default class DefaultArgumentPrompterService implements ArgumentPrompterService {

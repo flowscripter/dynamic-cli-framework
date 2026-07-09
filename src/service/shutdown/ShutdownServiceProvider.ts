@@ -1,11 +1,11 @@
 import process from "node:process";
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultShutdownService from "./DefaultShutdownService.ts";
-import type ShutdownService from "../../api/service/core/ShutdownService.ts";
-import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
-import type Context from "../../api/Context.ts";
+import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "./ShutdownState.ts";
 
 const logger = getLogger("ShutdownServiceProvider");

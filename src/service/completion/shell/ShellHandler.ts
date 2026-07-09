@@ -1,4 +1,4 @@
-import type { CompletionItem } from "../../../api/service/core/CompletionService.ts";
+import type { CompletionItem } from "@flowscripter/dynamic-cli-framework-api";
 
 export interface CompletionContext {
   readonly line: string;

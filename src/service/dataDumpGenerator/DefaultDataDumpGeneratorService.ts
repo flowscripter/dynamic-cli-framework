@@ -1,10 +1,10 @@
 import { Buffer } from "node:buffer";
-import type DataDumpGeneratorService from "../../api/service/core/DataDumpGeneratorService.ts";
+import type { DataDumpGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ByteRangeColor,
   DumpFormat,
   type HexDumpGenerateOptions,
-} from "../../api/service/core/DataDumpGeneratorService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 
 export default class DefaultDataDumpGeneratorService implements DataDumpGeneratorService {
   colorEnabled = true;

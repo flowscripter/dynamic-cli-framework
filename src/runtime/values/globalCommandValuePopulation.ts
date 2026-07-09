@@ -1,9 +1,9 @@
-import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import { ArgumentValueTypeName } from "../../api/argument/ArgumentValueTypes.ts";
-import type { PopulatedArgumentSingleValueType } from "../../api/argument/ArgumentValueTypes.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { PopulatedArgumentSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
-import { InvalidArgumentReason } from "../../api/RunResult.ts";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("globalCommandValuePopulation");
 

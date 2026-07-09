@@ -2,9 +2,9 @@ import type {
   ArgumentValueType,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
-} from "../api/argument/ArgumentValueTypes.ts";
-import type { InvalidArgument } from "../api/RunResult.ts";
-import type { ParseResult } from "../api/ParseResult.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
 import type { CommandClause } from "./scanner.ts";
 import populateGlobalCommandValue from "./values/globalCommandValuePopulation.ts";
 import {
@@ -14,12 +14,12 @@ import {
 } from "./values/argumentValueValidation.ts";
 import getLogger from "../util/logger.ts";
 import populateSubCommandValues from "./values/subCommandValuePopulation.ts";
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("parser");
 
-export type { ParseResult } from "../api/ParseResult.ts";
+export type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Parse the arguments for the specified {@link CommandClause} assuming it contains a {@link SubCommand}.

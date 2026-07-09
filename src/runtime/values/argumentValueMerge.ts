@@ -4,9 +4,9 @@ import type {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
-import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "../../api/argument/ComplexOption.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
+import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "@flowscripter/dynamic-cli-framework-api";
 
 function doClone(
   source:

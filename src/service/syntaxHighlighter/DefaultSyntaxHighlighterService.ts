@@ -1,8 +1,8 @@
-import type SyntaxHighlighterService from "../../api/service/core/SyntaxHighlighterService.ts";
+import type { SyntaxHighlighterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { LanguageFn as HighlightSyntax } from "highlight.js";
 import { createEmphasize } from "emphasize";
 import json from "highlight.js/lib/languages/json";
-import type { ColorScheme } from "../../api/service/core/SyntaxHighlighterService.ts";
+import type { ColorScheme } from "@flowscripter/dynamic-cli-framework-api";
 
 type Sheet = Record<string, (value: string) => string> | undefined;
 

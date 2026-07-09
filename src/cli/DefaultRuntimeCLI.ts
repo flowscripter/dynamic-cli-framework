@@ -1,8 +1,8 @@
 import process from "node:process";
 import BaseCLI from "./BaseCLI.ts";
-import type RunResult from "../api/RunResult.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
-import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
+import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { BaseCLIFeatureOptions } from "@flowscripter/dynamic-cli-framework-api";
 import { Writable } from "node:stream";
 import TtyTerminal from "../terminal/TtyTerminal.ts";
 import TtyKeyReader from "../terminal/TtyKeyReader.ts";

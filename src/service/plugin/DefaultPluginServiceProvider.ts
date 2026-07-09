@@ -1,8 +1,8 @@
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
-import type Context from "../../api/Context.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
-import { PLUGIN_SERVICE_ID } from "../../api/service/core/PluginService.ts";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPluginService from "./DefaultPluginService.ts";
 import { PluginGroupCommand } from "./command/PluginGroupCommand.ts";
 

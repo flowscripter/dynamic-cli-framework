@@ -8,9 +8,9 @@ import {
 } from "../fixtures/Command.ts";
 import { getContext } from "../fixtures/Context.ts";
 import { expectStringIncludes, expectStringNotIncludes } from "../fixtures/util.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleCommandCliHelpCommand.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 
 describe("SingleCommandCliHelpCommand tests", () => {

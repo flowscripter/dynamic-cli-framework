@@ -6,9 +6,9 @@ import {
   getGlobalModifierCommand,
   getGroupCommand,
 } from "../../fixtures/Command.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
-import type Positional from "../../../src/api/argument/Positional.ts";
-import type Option from "../../../src/api/argument/Option.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 
 function getSubCommand(name: string, options: Option[], positionals: Positional[]): SubCommand {
   return {

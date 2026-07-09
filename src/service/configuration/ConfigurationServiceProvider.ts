@@ -2,31 +2,31 @@ import process from "node:process";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { Stats } from "node:fs";
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import ConfigCommand from "./command/ConfigCommand.ts";
 import type {
   ArgumentSingleValueType,
   ArgumentValues,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
-import type Context from "../../api/Context.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import DumpConfigCommand from "./command/DumpConfigCommand.ts";
 import {
   KEY_VALUE_SERVICE_ID,
   SECRET_SENTINEL_PREFIX,
-} from "../../api/service/core/KeyValueService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
 import DefaultSecretService from "./DefaultSecretService.ts";
-import type Command from "../../api/command/Command.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import argumentValueMerge from "../../runtime/values/argumentValueMerge.ts";
 import {
   isGlobalCommand,
   isGlobalModifierCommand,
   isSubCommand,
 } from "../../runtime/command/CommandTypeGuards.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,

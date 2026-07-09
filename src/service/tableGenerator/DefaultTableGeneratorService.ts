@@ -1,7 +1,7 @@
-import type TableGeneratorService from "../../api/service/core/TableGeneratorService.ts";
-import { Align } from "../../api/service/core/TableGeneratorService.ts";
-import type { TableOptions } from "../../api/service/core/TableGeneratorService.ts";
-import Table from "../../api/service/core/Table.ts";
+import type { TableGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
+import { Align } from "@flowscripter/dynamic-cli-framework-api";
+import type { TableOptions } from "@flowscripter/dynamic-cli-framework-api";
+import { Table } from "@flowscripter/dynamic-cli-framework-api";
 
 const BORDER_TOP_LEFT = "┌";
 const BORDER_TOP = "─";

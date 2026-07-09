@@ -1,24 +1,24 @@
 import { distance } from "fastest-levenshtein";
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
-import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
-import { ArgumentValueTypeName, ComplexValueTypeName } from "../api/argument/ArgumentValueTypes.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
-import type Context from "../api/Context.ts";
-import type UsageExample from "../api/command/UsageExample.ts";
-import type Option from "../api/argument/Option.ts";
-import type Positional from "../api/argument/Positional.ts";
-import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import type GroupCommand from "../api/command/GroupCommand.ts";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { UsageExample } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   getGlobalCommandArgumentConfigurationKey,
   getSubCommandArgumentConfigurationKey,
 } from "./configHelper.ts";
-import type Command from "../api/command/Command.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
-import type PrinterService from "../api/service/core/PrinterService.ts";
-import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
-import type ComplexOption from "../api/argument/ComplexOption.ts";
-import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import type { TableGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
 
 const SYNTAX_INDENT_WIDTH = 2;
 const MINIMUM_SYNTAX_COLUMN_WIDTH = 15;

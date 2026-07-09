@@ -1,4 +1,4 @@
-import type PrettyPrinterService from "../../api/service/core/PrettyPrinterService.ts";
+import type { PrettyPrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import * as prettier from "prettier";
 import type { Plugin } from "prettier";
 
@@ -8,7 +8,7 @@ import type { Plugin } from "prettier";
  */
 export default class DefaultPrettyPrinterService implements PrettyPrinterService {
   #registeredSyntaxes = new Array<string>();
-  #syntaxNameToPluginnMap = new Map<string, Plugin>();
+  #syntaxNameToPluginnMap = new Map<string, Plugin<unknown>>();
 
   async #populateBuiltInSyntaxes(): Promise<void> {
     const languages = (await prettier.getSupportInfo()).languages;
@@ -43,7 +43,7 @@ export default class DefaultPrettyPrinterService implements PrettyPrinterService
     return prettier.format(text, options);
   }
 
-  async registerSyntax(syntaxName: string, syntaxPlugin: Plugin): Promise<void> {
+  async registerSyntax(syntaxName: string, syntaxPlugin: Plugin<unknown>): Promise<void> {
     if (this.#registeredSyntaxes.length === 0) {
       await this.#populateBuiltInSyntaxes();
     }

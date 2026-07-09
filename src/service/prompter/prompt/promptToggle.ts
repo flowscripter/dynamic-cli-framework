@@ -2,7 +2,7 @@ import {
   type Prompt,
   type PromptResult,
   PromptType,
-} from "../../../api/service/core/PrompterService.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { PromptContext } from "./PromptContext.ts";
 import promptSingleSelect from "./promptSingleSelect.ts";
 

@@ -5,8 +5,8 @@ const BOX_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇
 
 const STAR_FRAMES = ["★", "✶", "✷", "✹", "✷", "✶", "★", "✦"];
 
-export { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
-import { SpinnerStyle } from "../../../api/service/core/PrinterService.ts";
+export { SpinnerStyle } from "@flowscripter/dynamic-cli-framework-api";
+import { SpinnerStyle } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class Spinner {
   #isShown = false;

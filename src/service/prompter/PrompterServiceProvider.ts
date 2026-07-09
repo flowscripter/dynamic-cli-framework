@@ -1,9 +1,9 @@
-import type Context from "../../api/Context.ts";
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
-import type PrompterService from "../../api/service/core/PrompterService.ts";
-import { PROMPTER_SERVICE_ID } from "../../api/service/core/PrompterService.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import NoPromptCommand from "./command/NoPromptCommand.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class PrompterServiceProvider implements ServiceProvider {
   readonly serviceId: string = PROMPTER_SERVICE_ID;

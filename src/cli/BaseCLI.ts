@@ -1,15 +1,15 @@
-import type CLI from "../api/CLI.ts";
-import type RunResult from "../api/RunResult.ts";
-import { RunState } from "../api/RunResult.ts";
+import type { CLI } from "@flowscripter/dynamic-cli-framework-api";
+import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
+import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../util/logger.ts";
 import DefaultCommandRegistry from "../runtime/registry/DefaultCommandRegistry.ts";
-import type Command from "../api/command/Command.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultServiceProviderRegistry from "../runtime/registry/DefaultServiceProviderRegistry.ts";
 import DefaultContext from "../runtime/DefaultContext.ts";
-import type { ServiceProvider } from "../api/service/ServiceProvider.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
+import type { ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   SingleCommandCliHelpGlobalCommand,
   SingleCommandCliHelpSubCommand,
@@ -37,11 +37,11 @@ import { printRuntimeError } from "../util/runnerHelper.ts";
 
 import { WritableStream } from "node:stream/web";
 import type Terminal from "../terminal/Terminal.ts";
-import type PrinterService from "../api/service/core/PrinterService.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
 import type Styler from "../terminal/Styler.ts";
 import type KeyReader from "../terminal/KeyReader.ts";
-import type BaseCLIFeatureOptions from "../api/BaseCLIFeatureOptions.ts";
+import type { BaseCLIFeatureOptions } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrompterService, {
   DEFAULT_PROMPTER_CONFIG,
 } from "../service/prompter/DefaultPrompterService.ts";

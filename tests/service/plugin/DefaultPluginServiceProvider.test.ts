@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import DefaultPluginServiceProvider from "../../../src/service/plugin/DefaultPluginServiceProvider.ts";
-import { PLUGIN_SERVICE_ID } from "../../../src/api/service/core/PluginService.ts";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
-import type CLIConfig from "../../../src/api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { PluginGroupCommand } from "../../../src/service/plugin/command/PluginGroupCommand.ts";
 

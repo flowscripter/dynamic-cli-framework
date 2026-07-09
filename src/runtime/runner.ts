@@ -1,14 +1,14 @@
-import type Context from "../api/Context.ts";
-import type RunResult from "../api/RunResult.ts";
-import { RunState } from "../api/RunResult.ts";
-import type CommandRegistry from "./registry/CommandRegistry.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
+import { RunState } from "@flowscripter/dynamic-cli-framework-api";
+import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
 import type {
   ArgumentSingleValueType,
   ArgumentValues,
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
-} from "../api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../util/logger.ts";
 import {
   printCommandExecutionError,
@@ -18,16 +18,16 @@ import {
   printUnusedArgsWarning,
 } from "../util/runnerHelper.ts";
 import { scanForGlobalModifierCommandClauses, scanForNonModifierCommandClause } from "./scanner.ts";
-import type ServiceProviderRegistry from "./registry/ServiceProviderRegistry.ts";
+import type { ServiceProviderRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { parseGlobalCommandClause, type ParseResult, parseSubCommandClause } from "./parser.ts";
 import type ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
-import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import type GroupCommand from "../api/command/GroupCommand.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
-import type Command from "../api/command/Command.ts";
-import type ArgumentPrompterService from "../api/service/core/ArgumentPrompterService.ts";
-import { ARGUMENT_PROMPTER_SERVICE_ID } from "../api/service/core/ArgumentPrompterService.ts";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
+import type { ArgumentPrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import { ARGUMENT_PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("runner");
 

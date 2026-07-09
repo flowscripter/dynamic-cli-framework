@@ -2,13 +2,13 @@ import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import DefaultCompletionService from "../../../src/service/completion/DefaultCompletionService.ts";
 import DefaultCommandRegistry from "../../../src/runtime/registry/DefaultCommandRegistry.ts";
-import { ShellType } from "../../../src/api/service/core/CompletionService.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
-import type GroupCommand from "../../../src/api/command/GroupCommand.ts";
-import type GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
-import type GlobalModifierCommand from "../../../src/api/command/GlobalModifierCommand.ts";
-import { ArgumentValueTypeName } from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type Context from "../../../src/api/Context.ts";
+import { ShellType } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 function makeSubCommand(
   name: string,

@@ -11,9 +11,9 @@ import {
   MultiCommandCliHelpGlobalCommand,
   MultiCommandCliHelpSubCommand,
 } from "../../src/command/MultiCommandCliHelpCommand.ts";
-import type SubCommand from "../../src/api/command/SubCommand.ts";
-import type GroupCommand from "../../src/api/command/GroupCommand.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 
 describe("MultiCommandCliHelpCommand tests", () => {

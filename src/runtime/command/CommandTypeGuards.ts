@@ -1,8 +1,8 @@
-import type SubCommand from "../../api/command/SubCommand.ts";
-import type GroupCommand from "../../api/command/GroupCommand.ts";
-import type GlobalCommand from "../../api/command/GlobalCommand.ts";
-import type GlobalModifierCommand from "../../api/command/GlobalModifierCommand.ts";
-import type Command from "../../api/command/Command.ts";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 
 export function isGroupCommand(command: Command): command is GroupCommand {
   return (command as GroupCommand).memberSubCommands !== undefined;

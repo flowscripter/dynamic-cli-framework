@@ -1,9 +1,9 @@
-import type Command from "../api/command/Command.ts";
-import type CLIConfig from "../api/CLIConfig.ts";
-import type Option from "../api/argument/Option.ts";
-import type Positional from "../api/argument/Positional.ts";
-import type SubCommandArgument from "../api/argument/SubCommandArgument.ts";
-import type GlobalCommandArgument from "../api/argument/GlobalCommandArgument.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 
 function getKeySegment(segment: string, isCustom = false, isArray = false) {
   let keySegment = segment;

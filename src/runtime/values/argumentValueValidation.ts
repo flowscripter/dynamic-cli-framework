@@ -5,20 +5,20 @@ import type {
   PopulatedArgumentSingleValueType,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import type Positional from "../../api/argument/Positional.ts";
-import type Option from "../../api/argument/Option.ts";
-import type ComplexOption from "../../api/argument/ComplexOption.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
-import type { InvalidArgument } from "../../api/RunResult.ts";
-import { InvalidArgumentReason } from "../../api/RunResult.ts";
-import type SubCommandArgument from "../../api/argument/SubCommandArgument.ts";
-import type Argument from "../../api/argument/Argument.ts";
-import type GlobalCommand from "../../api/command/GlobalCommand.ts";
+import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 interface ValidationResult {
   invalidArgument?: InvalidArgument;

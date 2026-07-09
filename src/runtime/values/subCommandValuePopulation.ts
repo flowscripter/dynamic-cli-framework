@@ -1,20 +1,20 @@
-import type Option from "../../api/argument/Option.ts";
-import type SubCommand from "../../api/command/SubCommand.ts";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ArgumentSingleValueType,
   ArgumentValueTypeName,
   type PopulatedArgumentSingleValueType,
   type PopulatedArgumentValues,
   type PopulatedArgumentValueType,
-} from "../../api/argument/ArgumentValueTypes.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
 import type { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import type ComplexOption from "../../api/argument/ComplexOption.ts";
-import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "../../api/argument/ComplexOption.ts";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
+import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
-import { type InvalidArgument, InvalidArgumentReason } from "../../api/RunResult.ts";
-import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "../../api/argument/SubCommandArgument.ts";
+import { type InvalidArgument, InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("subCommandValuePopulation");
 

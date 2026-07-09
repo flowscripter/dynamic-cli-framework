@@ -1,5 +1,5 @@
-import type AsciiBannerGeneratorService from "../../api/service/core/AsciiBannerGeneratorService.ts";
-import type { BannerGenerateOptions } from "../../api/service/core/AsciiBannerGeneratorService.ts";
+import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
+import type { BannerGenerateOptions } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultAsciiBannerGeneratorService from "../asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
 import figlet from "figlet";
 import chiselFont from "./chisel.flf.json" with { type: "json" };

@@ -1,8 +1,8 @@
-import type GlobalCommand from "../api/command/GlobalCommand.ts";
-import type SubCommand from "../api/command/SubCommand.ts";
-import type Option from "../api/argument/Option.ts";
-import type Positional from "../api/argument/Positional.ts";
-import type Context from "../api/Context.ts";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import {
   getCommandArgsHelpSections,
   getCommandExamplesHelpSections,
@@ -12,13 +12,13 @@ import {
   type HelpSection,
   printHelpSections,
 } from "../util/helpHelper.ts";
-import type GlobalModifierCommand from "../api/command/GlobalModifierCommand.ts";
-import type GroupCommand from "../api/command/GroupCommand.ts";
-import type CommandRegistry from "../runtime/registry/CommandRegistry.ts";
-import type PrinterService from "../api/service/core/PrinterService.ts";
-import { PRINTER_SERVICE_ID } from "../api/service/core/PrinterService.ts";
-import type TableGeneratorService from "../api/service/core/TableGeneratorService.ts";
-import { TABLE_GENERATOR_SERVICE_ID } from "../api/service/core/TableGeneratorService.ts";
+import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { TableGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
+import { TABLE_GENERATOR_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Provides common implementation for both {@link SingleCommandCliHelpGlobalCommand} and {@link SingleCommandCliHelpSubCommand}.

@@ -1,6 +1,5 @@
 import DefaultServiceProviderRegistry from "../../src/runtime/registry/DefaultServiceProviderRegistry.ts";
-import type ServiceProviderRegistry from "../../src/runtime/registry/ServiceProviderRegistry.ts";
-import type { ServiceProvider } from "../../src/api/service/ServiceProvider.ts";
+import type { ServiceProviderRegistry, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 
 export function getServiceProviderRegistry(
   serviceProviders?: Array<ServiceProvider>,

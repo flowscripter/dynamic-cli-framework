@@ -1,14 +1,14 @@
-import type Context from "../../api/Context.ts";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import LogLevelCommand from "./command/LogLevelCommand.ts";
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
-import type PrinterService from "../../api/service/core/PrinterService.ts";
-import { PRINTER_SERVICE_ID } from "../../api/service/core/PrinterService.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DarkModeCommand from "./command/DarkModeCommand.ts";
 import NoColorCommand from "./command/NoColorCommand.ts";
 import NoHyperlinksCommand from "./command/NoHyperlinksCommand.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
-import type ShutdownService from "../../api/service/core/ShutdownService.ts";
-import { SHUTDOWN_SERVICE_ID } from "../../api/service/core/ShutdownService.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Provides a {@link PrinterService}.

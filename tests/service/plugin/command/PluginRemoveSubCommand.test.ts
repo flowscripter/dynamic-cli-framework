@@ -3,9 +3,9 @@ import type { VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-fra
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import { PluginRemoveSubCommand } from "../../../../src/service/plugin/command/PluginRemoveSubCommand.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
-import { PRINTER_SERVICE_ID } from "../../../../src/api/service/core/PrinterService.ts";
-import { PLUGIN_SERVICE_ID } from "../../../../src/api/service/core/PluginService.ts";
-import type PluginService from "../../../../src/api/service/core/PluginService.ts";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import { expectStringEquals } from "../../../fixtures/util.ts";

@@ -1,16 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import DefaultArgumentPrompterService from "../../../src/service/argumentPrompter/DefaultArgumentPrompterService.ts";
-import type PrompterService from "../../../src/api/service/core/PrompterService.ts";
-import type { Prompt, PromptResult } from "../../../src/api/service/core/PrompterService.ts";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
 import type { ParseResult } from "../../../src/runtime/parser.ts";
-import { InvalidArgumentReason } from "../../../src/api/RunResult.ts";
+import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../../src/api/argument/ArgumentValueTypes.ts";
-import type SubCommand from "../../../src/api/command/SubCommand.ts";
-import type GlobalCommand from "../../../src/api/command/GlobalCommand.ts";
-import type ComplexOption from "../../../src/api/argument/ComplexOption.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 
 class MockPrompterService implements PrompterService {
   promptEnabled = true;

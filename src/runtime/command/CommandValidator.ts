@@ -1,16 +1,16 @@
-import type Command from "../../api/command/Command.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import { isGroupCommand, isSubCommand } from "./CommandTypeGuards.ts";
-import type GlobalCommand from "../../api/command/GlobalCommand.ts";
-import type Argument from "../../api/argument/Argument.ts";
-import type GroupCommand from "../../api/command/GroupCommand.ts";
-import type SubCommand from "../../api/command/SubCommand.ts";
-import type { ArgumentSingleValueType } from "../../api/argument/ArgumentValueTypes.ts";
+import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ArgumentSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ArgumentValueTypeName,
   ComplexValueTypeName,
-} from "../../api/argument/ArgumentValueTypes.ts";
-import type Option from "../../api/argument/Option.ts";
-import type ComplexOption from "../../api/argument/ComplexOption.ts";
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
 import {
   getInvalidArgumentString,
@@ -18,14 +18,14 @@ import {
   validateOptionValue,
 } from "../values/argumentValueValidation.ts";
 import getLogger from "../../util/logger.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import {
   getGlobalCommandArgumentConfigurationKey,
   getSubCommandArgumentConfigurationKey,
 } from "../../util/configHelper.ts";
-import type { InvalidArgument } from "../../api/RunResult.ts";
-import type SubCommandArgument from "../../api/argument/SubCommandArgument.ts";
-import type GlobalCommandArgument from "../../api/argument/GlobalCommandArgument.ts";
+import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
+import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("commandValidation");
 

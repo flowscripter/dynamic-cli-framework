@@ -1,8 +1,8 @@
-import type { ServiceInfo, ServiceProvider } from "../../api/service/ServiceProvider.ts";
+import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrettyPrinterService from "./DefaultPrettyPrinterService.ts";
-import { PRETTY_PRINTER_SERVICE_ID } from "../../api/service/core/PrettyPrinterService.ts";
-import type Context from "../../api/Context.ts";
-import type CLIConfig from "../../api/CLIConfig.ts";
+import { PRETTY_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Provides a {@link PrettyPrinterService}.

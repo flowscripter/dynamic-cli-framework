@@ -12,7 +12,7 @@ import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,
 } from "../../src/util/envVarHelper.ts";
-import { ArgumentValueTypeName } from "../../src/api/argument/ArgumentValueTypes.ts";
+import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("envVarHelper tests", () => {
   test("getGlobalCommandValuesFromEnvVars works", () => {
