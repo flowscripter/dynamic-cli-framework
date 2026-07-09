@@ -4,7 +4,10 @@ import {
   validateOptionValue,
   validatePositionalValue,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
-import { type InvalidArgument, InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  type InvalidArgument,
+  InvalidArgumentReason,
+} from "@flowscripter/dynamic-cli-framework-api";
 import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
 import {
   ArgumentValueTypeName,

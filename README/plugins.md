@@ -28,8 +28,8 @@ service implementations and their dependencies (`figlet`, `emphasize`,
 ```jsonc
 {
   "peerDependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "*"
-  }
+    "@flowscripter/dynamic-cli-framework-api": "*",
+  },
 }
 ```
 

@@ -13,7 +13,10 @@ import type { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
-import { type InvalidArgument, InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  type InvalidArgument,
+  InvalidArgumentReason,
+} from "@flowscripter/dynamic-cli-framework-api";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("subCommandValuePopulation");

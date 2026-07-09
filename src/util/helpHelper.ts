@@ -1,7 +1,10 @@
 import { distance } from "fastest-levenshtein";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  ArgumentValueTypeName,
+  ComplexValueTypeName,
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { UsageExample } from "@flowscripter/dynamic-cli-framework-api";
