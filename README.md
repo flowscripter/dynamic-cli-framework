@@ -40,6 +40,9 @@
   configuration management, and user input prompting.
 - Graceful signal handling (SIGINT/SIGTERM) with shutdown hooks, cooperative
   cancellation for long-running commands, and triple-interrupt force exit.
+- Graceful degradation when piped or run non-interactively: color,
+  hyperlinks, prompting, spinners/progress bars and image rendering are
+  automatically disabled based on which of `stdin`/`stdout`/`stderr` are TTYs.
 - Core (but optional) support for dynamic discovery and installation of commands
   and services using
   [dynamic-plugin-framework](https://github.com/flowscripter/dynamic-plugin-framework)

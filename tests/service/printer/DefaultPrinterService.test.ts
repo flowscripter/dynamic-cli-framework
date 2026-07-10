@@ -9,6 +9,7 @@ import {
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
 import { Icon, Level } from "@flowscripter/dynamic-cli-framework-api";
 import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import NonTtyTerminal from "../../../src/terminal/NonTtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 
@@ -528,7 +529,54 @@ describe("DefaultPrinterService tests", () => {
     }
   });
 
-  test("startQuote/endQuote prefixes lines at depth 1", async () => {
+  test("startQuote/endQuote prefixes lines at depth 1 on stderr", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startQuote();
+    await printerService.info("line1\nline2\n");
+    printerService.endQuote();
+    await printerService.info("line3\n");
+
+    expectStringEquals(dummyStderr.getString(), "┐ line1\n│ line2\nline3\n");
+  });
+
+  test("nested startQuote/endQuote prefixes lines with branch column on stderr", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startQuote();
+    await printerService.info("outer1\n");
+    printerService.startQuote();
+    await printerService.info("inner1\ninner2\n");
+    printerService.endQuote();
+    await printerService.info("outer2\n");
+    printerService.endQuote();
+
+    expectStringEquals(dummyStderr.getString(), "┐ outer1\n├┐ inner1\n│ │ inner2\n│ outer2\n");
+  });
+
+  test("startQuote/endQuote does not affect print() (stdout)", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const printerService = new DefaultPrinterService(
@@ -545,12 +593,11 @@ describe("DefaultPrinterService tests", () => {
     printerService.startQuote();
     await printerService.print("line1\nline2\n");
     printerService.endQuote();
-    await printerService.print("line3\n");
 
-    expectStringEquals(dummyStdout.getString(), "┐ line1\n│ line2\nline3\n");
+    expectStringEquals(dummyStdout.getString(), "line1\nline2\n");
   });
 
-  test("nested startQuote/endQuote prefixes lines with branch column", async () => {
+  test("startQuote prefixes still apply when stderr is a NonTtyTerminal", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const printerService = new DefaultPrinterService(
@@ -559,20 +606,16 @@ describe("DefaultPrinterService tests", () => {
       true,
       true,
       new TtyTerminal(dummyStdout.writeStream),
-      new TtyTerminal(dummyStderr.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
       new TtyStyler(3),
     );
     printerService.colorEnabled = false;
 
     printerService.startQuote();
-    await printerService.print("outer1\n");
-    printerService.startQuote();
-    await printerService.print("inner1\ninner2\n");
-    printerService.endQuote();
-    await printerService.print("outer2\n");
+    await printerService.info("line1\nline2\n");
     printerService.endQuote();
 
-    expectStringEquals(dummyStdout.getString(), "┐ outer1\n├┐ inner1\n│ │ inner2\n│ outer2\n");
+    expectStringEquals(dummyStderr.getString(), "┐ line1\n│ line2\n");
   });
 
   test("endQuote() without startQuote() throws", () => {
@@ -646,7 +689,7 @@ describe("DefaultPrinterService tests", () => {
     );
   });
 
-  test("startMark/endMark/clearMarked erases the tracked rows", async () => {
+  test("startMark/endMark/clearMarked erases the tracked rows on stderr", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const printerService = new DefaultPrinterService(
@@ -661,13 +704,89 @@ describe("DefaultPrinterService tests", () => {
     printerService.colorEnabled = false;
 
     printerService.startMark();
-    await printerService.print("line1\nline2\n");
+    await printerService.info("line1\nline2\n");
     printerService.endMark();
     await printerService.clearMarked();
 
-    expect(dummyStdout.getString()).toEqual(
+    expect(dummyStderr.getString()).toEqual(
       "line1\nline2\n" + "\x1b[1A\x1b[2K".repeat(2) + "\x1b[2K\x1b[G",
     );
+  });
+
+  test("startMark/endMark/clearMarked no-op when stderr is not a TTY", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startMark();
+    await printerService.info("line1\nline2\n");
+    printerService.endMark();
+    await printerService.clearMarked();
+
+    expectStringEquals(dummyStderr.getString(), "line1\nline2\n");
+  });
+
+  test("startMark() while already marking throws even when stderr is not a TTY", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    printerService.startMark();
+    expect(() => printerService.startMark()).toThrow("startMark() called while already marking");
+  });
+
+  test("showSpinner() no-ops when stderr is not a TTY", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    await printerService.showSpinner("hello world");
+
+    expectStringEquals(dummyStderr.getString(), "");
+  });
+
+  test("showProgressBar() no-ops and returns -1 when stderr is not a TTY", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    const handle = await printerService.showProgressBar("bits", "foo", 100, 0);
+
+    expect(handle).toEqual(-1);
+    expectStringEquals(dummyStderr.getString(), "");
   });
 
   test("clearMarked() waits for the minimum display time", async () => {
@@ -685,7 +804,7 @@ describe("DefaultPrinterService tests", () => {
     printerService.colorEnabled = false;
 
     printerService.startMark();
-    await printerService.print("line1\n");
+    await printerService.info("line1\n");
     printerService.endMark();
 
     const start = Date.now();

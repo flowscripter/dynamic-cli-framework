@@ -13,6 +13,7 @@ import { Color } from "./terminal/Color.ts";
 import { getDarkModeTheme, getLightModeTheme } from "./terminal/Theme.ts";
 import { WritableStream } from "node:stream/web";
 import type Styler from "../../terminal/Styler.ts";
+
 export default class DefaultPrinterService implements PrinterService {
   readonly stdoutWritable: WritableStream;
   readonly stderrWritable: WritableStream;
@@ -30,18 +31,16 @@ export default class DefaultPrinterService implements PrinterService {
   #quote: Quote;
   #markedLineCount: number | undefined;
   #markEndedAt: number | undefined;
-  #markedTerminal: Terminal | undefined;
 
   #countLines(message: string): number {
     return message.split("\n").length - (message.endsWith("\n") ? 1 : 0);
   }
 
-  #recordMarkedWrite(terminal: Terminal, message: string): void {
+  #recordMarkedWrite(message: string): void {
     if (this.#markedLineCount === undefined) {
       return;
     }
     this.#markedLineCount += this.#countLines(message);
-    this.#markedTerminal = terminal;
   }
 
   async #log(level: number, message: string, icon?: Icon): Promise<void> {
@@ -51,7 +50,7 @@ export default class DefaultPrinterService implements PrinterService {
     await this.#spinner.pause();
     await this.#progress.pause();
     const composed = `${icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""}${message}`;
-    this.#recordMarkedWrite(this.#stderrTerminal, composed);
+    this.#recordMarkedWrite(composed);
     await this.#stderrTerminal.write(this.#quote.prefixLines(composed));
     this.#spinner.resume();
     this.#progress.resume();
@@ -277,8 +276,7 @@ export default class DefaultPrinterService implements PrinterService {
     const composed = `${
       icon !== undefined ? `${this.#iconDefinitions[icon]} ` : ""
     }${colorMessage}`;
-    this.#recordMarkedWrite(this.#stdoutTerminal, composed);
-    const encoded = this.#encoder.encode(this.#quote.prefixLines(composed));
+    const encoded = this.#encoder.encode(composed);
 
     await writer.ready;
     await writer.write(encoded);
@@ -318,16 +316,18 @@ export default class DefaultPrinterService implements PrinterService {
     if (this.#markedLineCount === undefined || this.#markEndedAt === undefined) {
       throw new Error("clearMarked() called without a preceding endMark()");
     }
+    if (!this.#stderrTerminal.isTty()) {
+      this.#markedLineCount = undefined;
+      this.#markEndedAt = undefined;
+      return;
+    }
     const remaining = minimumDisplayTimeMs - (Date.now() - this.#markEndedAt);
     if (remaining > 0) {
       await new Promise((resolve) => setTimeout(resolve, remaining));
     }
-    if (this.#markedTerminal !== undefined) {
-      await this.#markedTerminal.clearUpLines(this.#markedLineCount);
-    }
+    await this.#stderrTerminal.clearUpLines(this.#markedLineCount);
     this.#markedLineCount = undefined;
     this.#markEndedAt = undefined;
-    this.#markedTerminal = undefined;
   }
 
   public async setLevel(level: Level): Promise<void> {
@@ -343,6 +343,9 @@ export default class DefaultPrinterService implements PrinterService {
   }
 
   public async showSpinner(message?: string, style?: SpinnerStyle): Promise<void> {
+    if (!this.#stderrTerminal.isTty()) {
+      return;
+    }
     await this.#progress.hideAll();
     if (this.#threshold > Level.INFO) {
       return;
@@ -364,6 +367,9 @@ export default class DefaultPrinterService implements PrinterService {
     current = 0,
     style?: ProgressStyle,
   ): Promise<number> {
+    if (!this.#stderrTerminal.isTty()) {
+      return -1;
+    }
     await this.#spinner.hide();
     if (this.#threshold > Level.INFO) {
       return -1;

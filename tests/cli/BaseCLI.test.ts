@@ -19,8 +19,10 @@ import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
 import TtyTerminal from "../../src/terminal/TtyTerminal.ts";
+import NonTtyTerminal from "../../src/terminal/NonTtyTerminal.ts";
 import TtyStyler from "../../src/terminal/TtyStyler.ts";
 import type KeyReader from "../../src/terminal/KeyReader.ts";
+import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 const mockKeyReader: KeyReader = {
   enableRawMode() {},
@@ -305,5 +307,108 @@ describe("BaseCLI tests", () => {
 
     // cleanup
     await fs.rm(path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`));
+  });
+
+  test("BaseCLI without keyReader and promptingEnabled false works", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      undefined,
+      { promptingEnabled: false },
+    );
+
+    baseCLI.addCommand(getSubCommandWithOptionAndPositional());
+
+    const runResult = await baseCLI.run([]);
+
+    expect(runResult.runState).toEqual(RunState.NO_COMMAND);
+  });
+
+  test("BaseCLI without keyReader and promptingEnabled true throws", () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      undefined,
+      { promptingEnabled: true },
+    );
+
+    baseCLI.addCommand(getSubCommandWithOptionAndPositional());
+
+    expect(baseCLI.run([])).rejects.toThrow(
+      "promptingEnabled requires a keyReader and a TTY stderr terminal",
+    );
+  });
+
+  test("BaseCLI with non-TTY stderr terminal and promptingEnabled true throws even with a keyReader", () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      { promptingEnabled: true },
+    );
+
+    baseCLI.addCommand(getSubCommandWithOptionAndPositional());
+
+    expect(baseCLI.run([])).rejects.toThrow(
+      "promptingEnabled requires a keyReader and a TTY stderr terminal",
+    );
+  });
+
+  test("BaseCLI with non-TTY stdout terminal skips ImagePrinterServiceProvider", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new NonTtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      { imagePrinterServiceEnabled: true },
+    );
+
+    const command = getSubCommand("command", [], []);
+    let serviceExists: boolean | undefined;
+    command.execute = (context): Promise<void> => {
+      serviceExists = context.doesServiceExist(IMAGE_PRINTER_SERVICE_ID);
+      return Promise.resolve();
+    };
+    baseCLI.addCommand(command);
+
+    const runResult = await baseCLI.run(["command"]);
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(serviceExists).toBeFalse();
   });
 });

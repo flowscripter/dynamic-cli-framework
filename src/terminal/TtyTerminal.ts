@@ -62,4 +62,8 @@ export default class TtyTerminal implements Terminal {
       return 24;
     }
   }
+
+  isTty(): boolean {
+    return true;
+  }
 }

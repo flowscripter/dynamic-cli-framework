@@ -17,6 +17,7 @@ export default class TtyStyler implements Styler {
   /**
    * The color level in use.
    *
+   * 0 = no color
    * 1 = 16 color
    * 2 = 256 color
    * 3 = 16 million color
@@ -27,7 +28,7 @@ export default class TtyStyler implements Styler {
   }
 
   colorText(text: string, colorValue: number): string {
-    if (!this.colorEnabled) {
+    if (!this.colorEnabled || this.colorLevel === 0) {
       return text;
     }
 
@@ -43,7 +44,7 @@ export default class TtyStyler implements Styler {
   }
 
   backgroundColorText(text: string, colorValue: number): string {
-    if (!this.colorEnabled) {
+    if (!this.colorEnabled || this.colorLevel === 0) {
       return text;
     }
 
@@ -68,6 +69,9 @@ export default class TtyStyler implements Styler {
   }
 
   italicText(text: string): string {
+    if (!this.colorEnabled || this.colorLevel === 0) {
+      return text;
+    }
     return ITALIC_START + text + ITALIC_END;
   }
 
