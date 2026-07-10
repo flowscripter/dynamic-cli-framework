@@ -108,6 +108,7 @@ function createMockTerminal(columns: number = 80, rows: number = 24): Terminal {
     write: () => Promise.resolve(),
     columns: () => columns,
     rows: () => rows,
+    isTty: () => true,
   };
 }
 

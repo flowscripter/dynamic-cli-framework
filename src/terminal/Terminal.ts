@@ -6,4 +6,5 @@ export default interface Terminal {
   write(text: string): Promise<void>;
   columns(): number;
   rows(): number;
+  isTty(): boolean;
 }

@@ -62,6 +62,10 @@ class MockTerminal implements Terminal {
   rows(): number {
     return 24;
   }
+
+  isTty(): boolean {
+    return true;
+  }
 }
 
 function getMockPrinterService(): PrinterService {

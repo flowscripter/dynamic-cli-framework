@@ -70,6 +70,12 @@ const logger = getLogger("BaseCLI");
  *
  * * {@link ImagePrinterServiceProvider}
  *
+ * `keyReader` is optional. If omitted, or if the stderr {@link Terminal} is not a TTY, prompting is
+ * unavailable: {@link PrompterServiceProvider} (and {@link ArgumentPrompterServiceProvider}, if
+ * enabled) are simply not registered. If `promptingEnabled` is `true` in that situation, {@link run}
+ * throws rather than failing later inside a prompt. Similarly {@link ImagePrinterServiceProvider} is
+ * only registered if the stdout {@link Terminal} is a TTY.
+ *
  * By default the following commands are added:
  *
  * * {@link SingleCommandCliHelpSubCommand} or {@link MultiCommandCliHelpSubCommand}
@@ -80,7 +86,7 @@ const logger = getLogger("BaseCLI");
 export default class BaseCLI implements CLI {
   readonly #cliConfig: CLIConfig;
   readonly #options: Required<BaseCLIFeatureOptions>;
-  readonly #keyReader: KeyReader;
+  readonly #keyReader: KeyReader | undefined;
   readonly #stderrTerminal: Terminal;
   readonly #addedNonModifierCommands: Array<Command>;
   readonly #serviceProviderRegistry: DefaultServiceProviderRegistry;
@@ -98,7 +104,7 @@ export default class BaseCLI implements CLI {
     stdoutTerminal: Terminal,
     stderrTerminal: Terminal,
     styler: Styler,
-    keyReader: KeyReader,
+    keyReader: KeyReader | undefined,
     options?: BaseCLIFeatureOptions,
   ) {
     if (cliConfig.name.length === 0) {
@@ -210,22 +216,50 @@ export default class BaseCLI implements CLI {
     this.addServiceProvider(new PrinterServiceProvider(80, this.#printerService));
     this.addServiceProvider(new TableGeneratorServiceProvider(70));
 
-    const prompterService = new DefaultPrompterService(
-      DEFAULT_PROMPTER_CONFIG,
-      this.#stderrTerminal,
-      this.#keyReader,
-      this.#printerService,
-    );
-    prompterService.promptEnabled = this.#options.promptingEnabled;
-    this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+    const canPrompt = this.#keyReader !== undefined && this.#stderrTerminal.isTty();
+
+    if (this.#options.promptingEnabled && !canPrompt) {
+      throw new Error("promptingEnabled requires a keyReader and a TTY stderr terminal");
+    }
+
+    let prompterService: DefaultPrompterService | undefined;
+    if (canPrompt) {
+      prompterService = new DefaultPrompterService(
+        DEFAULT_PROMPTER_CONFIG,
+        this.#stderrTerminal,
+        this.#keyReader!,
+        this.#printerService,
+      );
+      prompterService.promptEnabled = this.#options.promptingEnabled;
+      this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+    } else {
+      logger.debug(
+        () =>
+          `Skipping PrompterServiceProvider: keyReader present: ${
+            this.#keyReader !== undefined
+          }, stderr isTty: ${this.#stderrTerminal.isTty()}`,
+      );
+    }
 
     if (this.#options.argumentPrompterServiceEnabled) {
-      const argumentPrompterService = new DefaultArgumentPrompterService(prompterService);
-      this.addServiceProvider(new ArgumentPrompterServiceProvider(65, argumentPrompterService));
+      if (prompterService !== undefined) {
+        const argumentPrompterService = new DefaultArgumentPrompterService(prompterService);
+        this.addServiceProvider(new ArgumentPrompterServiceProvider(65, argumentPrompterService));
+      } else {
+        logger.debug(
+          "Skipping ArgumentPrompterServiceProvider: argumentPrompterServiceEnabled is true but prompting is unavailable",
+        );
+      }
     }
 
     if (this.#options.imagePrinterServiceEnabled) {
-      this.addServiceProvider(new ImagePrinterServiceProvider(55, this.#stdoutTerminal));
+      if (this.#stdoutTerminal.isTty()) {
+        this.addServiceProvider(new ImagePrinterServiceProvider(55, this.#stdoutTerminal));
+      } else {
+        logger.debug(
+          "Skipping ImagePrinterServiceProvider: imagePrinterServiceEnabled is true but stdout is not a TTY",
+        );
+      }
     }
 
     if (this.#options.completionServiceEnabled) {

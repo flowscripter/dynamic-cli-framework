@@ -28,6 +28,9 @@ class MockTerminal implements Terminal {
   write(): Promise<void> {
     return Promise.resolve();
   }
+  isTty(): boolean {
+    return true;
+  }
 }
 
 describe("physicalLineCount", () => {
