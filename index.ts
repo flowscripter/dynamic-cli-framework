@@ -78,6 +78,15 @@ export type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 export { default as DefaultShutdownService } from "./src/service/shutdown/DefaultShutdownService.ts";
 export { default as ShutdownServiceProvider } from "./src/service/shutdown/ShutdownServiceProvider.ts";
 
+export { SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type {
+  SpawnOptions,
+  SpawnResult,
+  SpawnService,
+} from "@flowscripter/dynamic-cli-framework-api";
+export { default as DefaultSpawnService } from "./src/service/spawn/DefaultSpawnService.ts";
+export { default as SpawnServiceProvider } from "./src/service/spawn/SpawnServiceProvider.ts";
+
 export { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { SyntaxHighlighterService } from "@flowscripter/dynamic-cli-framework-api";
 export type { ColorScheme } from "@flowscripter/dynamic-cli-framework-api";
@@ -192,7 +201,7 @@ export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
 export {
+  launchDynamicPluginMultiCommandCLI,
   launchMultiCommandCLI,
   launchSingleCommandCLI,
-  launchDynamicPluginMultiCommandCLI,
 } from "./src/launcher.ts";
