@@ -70,6 +70,7 @@ export default class DefaultSpawnService implements SpawnService {
     try {
       proc = Bun.spawn([...command], {
         cwd: options.cwd,
+        stdin: stdio === "wrapped" ? "ignore" : "inherit",
         stdout: stdio === "wrapped" ? "pipe" : "inherit",
         stderr: stdio === "wrapped" ? "pipe" : "inherit",
       });
