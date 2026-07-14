@@ -51,6 +51,7 @@ import ArgumentPrompterServiceProvider from "../service/argumentPrompter/Argumen
 import DefaultCompletionService from "../service/completion/DefaultCompletionService.ts";
 import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
 import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
+import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -69,6 +70,7 @@ const logger = getLogger("BaseCLI");
  * Optionally enabled via {@link BaseCLIFeatureOptions}:
  *
  * * {@link ImagePrinterServiceProvider}
+ * * {@link SpawnServiceProvider}
  *
  * `keyReader` is optional. If omitted, or if the stderr {@link Terminal} is not a TTY, prompting is
  * unavailable: {@link PrompterServiceProvider} (and {@link ArgumentPrompterServiceProvider}, if
@@ -130,6 +132,7 @@ export default class BaseCLI implements CLI {
       argumentPrompterServiceEnabled: false,
       completionServiceEnabled: false,
       imagePrinterServiceEnabled: false,
+      spawnServiceEnabled: false,
       validateAllCommands: false,
       promptingEnabled: true,
       ...options,
@@ -260,6 +263,10 @@ export default class BaseCLI implements CLI {
           "Skipping ImagePrinterServiceProvider: imagePrinterServiceEnabled is true but stdout is not a TTY",
         );
       }
+    }
+
+    if (this.#options.spawnServiceEnabled) {
+      this.addServiceProvider(new SpawnServiceProvider(58));
     }
 
     if (this.#options.completionServiceEnabled) {

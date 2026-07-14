@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import DefaultPluginServiceProvider from "../../../src/service/plugin/DefaultPluginServiceProvider.ts";
-import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-import type { MarketplacePluginManager } from "@flowscripter/dynamic-plugin-framework";
+import {
+  PLUGIN_SERVICE_ID,
+  PRINTER_SERVICE_ID,
+  SPAWN_SERVICE_ID,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  MarketplacePluginManager,
+  SpawnInterface,
+} from "@flowscripter/dynamic-plugin-framework";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { PluginGroupCommand } from "../../../src/service/plugin/command/PluginGroupCommand.ts";
@@ -70,5 +77,60 @@ describe("DefaultPluginServiceProvider", () => {
     const provider = new DefaultPluginServiceProvider(makeMockPluginManager());
     const context = new DefaultContext(getCLIConfig());
     await provider.initService(context);
+  });
+
+  test("initService does not inject spawn when SpawnService is not registered", async () => {
+    let setSpawnCalled = false;
+    const pluginManager = {
+      ...makeMockPluginManager(),
+      setSpawn: () => {
+        setSpawnCalled = true;
+      },
+    } as unknown as MarketplacePluginManager;
+    const provider = new DefaultPluginServiceProvider(pluginManager);
+    const context = new DefaultContext(getCLIConfig());
+
+    await provider.initService(context);
+
+    expect(setSpawnCalled).toBeFalse();
+  });
+
+  test("initService does not inject spawn when the plugin manager is not SpawnCapable", () => {
+    const provider = new DefaultPluginServiceProvider(makeMockPluginManager());
+    const context = new DefaultContext(getCLIConfig());
+    context.addServiceInstance(SPAWN_SERVICE_ID, {
+      spawn: () => Promise.resolve({ ok: true, exitCode: 0 }),
+    });
+    context.addServiceInstance(PRINTER_SERVICE_ID, {});
+
+    // no setSpawn method on the mock manager - should not throw
+    expect(provider.initService(context)).resolves.toBeUndefined();
+  });
+
+  test("initService injects a SpawnInterfaceAdapter when SpawnService is registered and the plugin manager is SpawnCapable", async () => {
+    let injectedSpawn: SpawnInterface | undefined;
+    const pluginManager = {
+      ...makeMockPluginManager(),
+      setSpawn: (spawn: SpawnInterface) => {
+        injectedSpawn = spawn;
+      },
+    } as unknown as MarketplacePluginManager;
+    const provider = new DefaultPluginServiceProvider(pluginManager);
+    const context = new DefaultContext(getCLIConfig());
+    context.addServiceInstance(SPAWN_SERVICE_ID, {
+      spawn: () => Promise.resolve({ ok: true, exitCode: 0 }),
+    });
+    context.addServiceInstance(PRINTER_SERVICE_ID, {
+      startQuote: () => {},
+      endQuote: () => {},
+      startMark: () => {},
+      endMark: () => {},
+      clearMarked: () => Promise.resolve(),
+      info: () => Promise.resolve(),
+    });
+
+    await provider.initService(context);
+
+    expect(injectedSpawn).toBeDefined();
   });
 });

@@ -1,8 +1,8 @@
 import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 import type {
   MarketplacePluginManager,
-  VersionedPluginDescriptor,
   SearchQuery,
+  VersionedPluginDescriptor,
 } from "@flowscripter/dynamic-plugin-framework";
 
 export default class DefaultPluginService implements PluginService {
