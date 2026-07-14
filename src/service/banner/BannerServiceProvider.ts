@@ -7,6 +7,8 @@ import type ConfigurationServiceProvider from "../configuration/ConfigurationSer
 import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
 import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import { UPGRADE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { UpgradeService } from "@flowscripter/dynamic-cli-framework-api";
 export const BANNER_SERVICE_ID = "@flowscripter/dynamic-cli-framework/banner-service";
 
 /**
@@ -67,6 +69,17 @@ export default class BannerServiceProvider implements ServiceProvider {
     }
     if (cliConfig.version.length > 0) {
       await printerService.info(`  ${printerService.secondary("version: " + cliConfig.version)}\n`);
+    }
+    if (context.doesServiceExist(UPGRADE_SERVICE_ID)) {
+      const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
+      const result = await upgradeService.checkForUpgrade().catch(() => undefined);
+      if (result?.updateAvailable) {
+        await printerService.info(
+          `  ${printerService.secondary(
+            `(${result.latestVersion} available, run '${cliConfig.name} upgrade')`,
+          )}\n`,
+        );
+      }
     }
     if (this.#configurationServiceProvider) {
       const configLocation = this.#configurationServiceProvider.configLocation;

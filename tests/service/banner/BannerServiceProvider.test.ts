@@ -10,6 +10,7 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
+import { UPGRADE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
 import smallFont from "../asciiBannerGenerator/small.flf.json" with { type: "json" };
@@ -83,5 +84,39 @@ describe("BannerServiceProvider tests", () => {
     await printer.error("some text\n");
     expect(bannerServiceProvider.printBanner).toBeTrue();
     expect(dummyStdout.getString()).toMatchSnapshot();
+  });
+
+  test("BannerServiceProvider shows upgrade availability when UpgradeService reports one", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printer = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printer.colorEnabled = false;
+
+    const asciiBannerGenerator = new DefaultAsciiBannerGeneratorService();
+    const context = new DefaultContext(getCLIConfig());
+
+    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+    context.addServiceInstance(ASCII_BANNER_GENERATOR_SERVICE_ID, asciiBannerGenerator);
+    context.addServiceInstance(UPGRADE_SERVICE_ID, {
+      checkForUpgrade: () =>
+        Promise.resolve({
+          currentVersion: "foobar",
+          latestVersion: "9.9.9",
+          updateAvailable: true,
+        }),
+    });
+
+    const bannerServiceProvider = new BannerServiceProvider(100);
+    await bannerServiceProvider.initService(context);
+
+    expect(dummyStderr.getString()).toContain("(9.9.9 available, run 'foo upgrade')");
   });
 });
