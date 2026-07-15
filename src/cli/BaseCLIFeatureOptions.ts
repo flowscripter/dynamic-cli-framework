@@ -1,3 +1,5 @@
+import type { UpgradeLocationsConfig } from "../service/upgrade/UpgradeLocationsConfig.ts";
+
 export default interface BaseCLIFeatureOptions {
   readonly configFileSupportEnabled?: boolean;
   readonly envVarsSupportEnabled?: boolean;
@@ -7,6 +9,8 @@ export default interface BaseCLIFeatureOptions {
   readonly completionServiceEnabled?: boolean;
   readonly imagePrinterServiceEnabled?: boolean;
   readonly spawnServiceEnabled?: boolean;
+  readonly upgradeServiceEnabled?: boolean;
+  readonly upgradeLocationsConfig?: UpgradeLocationsConfig;
   readonly validateAllCommands?: boolean;
   readonly promptingEnabled?: boolean;
 }

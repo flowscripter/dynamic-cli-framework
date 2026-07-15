@@ -5,19 +5,21 @@
     "": {
       "name": "@flowscripter/dynamic-cli-framework",
       "dependencies": {
-        "@flowscripter/dynamic-cli-framework-api": "^1.1.1",
+        "@flowscripter/dynamic-cli-framework-api": "^1.2.0",
         "@flowscripter/dynamic-plugin-framework": "1.11.0",
         "emphasize": "^7.0.0",
         "fastest-levenshtein": "^1.0.16",
         "figlet": "^1.11.0",
         "highlight.js": "^11.11.1",
         "prettier": "^3.9.4",
+        "semver": "^7.7.3",
         "supports-color": "^10.2.2",
         "supports-terminal-graphics": "^0.1.0",
       },
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "@types/node": "^26.1.0",
+        "@types/semver": "^7.7.1",
         "oxfmt": "0.57.0",
         "oxlint": "1.72.0",
       },
@@ -27,7 +29,7 @@
     },
   },
   "packages": {
-    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@1.1.1", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-/OeeZzd+UH4SJA4tS6agGuVX3bjMCDVYoTaZnPUvDdHSjmY45UVTOL2y7TyOvWktRyV8viVkT1cPJxmFy9KBoA=="],
+    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@1.2.0", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-ajR6PwQQwsQN96OH3OwO0SH5h3TGY3lLPM5lIYNUCpUXrOZ9MYJtsXvDcDKz8U/heWe0FBJeRY0nsNDJV4p9Vw=="],
 
     "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@1.11.0", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-TNtU5Wi7cEfKhnNoF6rPBJeC1FC1JBpF4S5wlGex5Wc44mnWE6bdEfqlxw7l3IxjHP5z7ppxx/WRal+FWN40CA=="],
 
@@ -112,6 +114,8 @@
     "@types/hast": ["@types/hast@3.0.5", "", { "dependencies": { "@types/unist": "*" } }, "sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g=="],
 
     "@types/node": ["@types/node@26.1.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw=="],
+
+    "@types/semver": ["@types/semver@7.7.1", "", {}, "sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA=="],
 
     "@types/unist": ["@types/unist@3.0.3", "", {}, "sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q=="],
 

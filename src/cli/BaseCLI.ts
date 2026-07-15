@@ -52,6 +52,7 @@ import DefaultCompletionService from "../service/completion/DefaultCompletionSer
 import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
 import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
 import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
+import UpgradeServiceProvider from "../service/upgrade/UpgradeServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -71,6 +72,8 @@ const logger = getLogger("BaseCLI");
  *
  * * {@link ImagePrinterServiceProvider}
  * * {@link SpawnServiceProvider}
+ * * {@link CompletionServiceProvider}
+ * * {@link UpgradeServiceProvider}
  *
  * `keyReader` is optional. If omitted, or if the stderr {@link Terminal} is not a TTY, prompting is
  * unavailable: {@link PrompterServiceProvider} (and {@link ArgumentPrompterServiceProvider}, if
@@ -133,6 +136,8 @@ export default class BaseCLI implements CLI {
       completionServiceEnabled: false,
       imagePrinterServiceEnabled: false,
       spawnServiceEnabled: false,
+      upgradeServiceEnabled: false,
+      upgradeLocationsConfig: { supportedPlatforms: [] },
       validateAllCommands: false,
       promptingEnabled: true,
       ...options,
@@ -274,6 +279,10 @@ export default class BaseCLI implements CLI {
       this.addServiceProvider(
         new CompletionServiceProvider(5, completionService, this.#commandRegistry),
       );
+    }
+
+    if (this.#options.upgradeServiceEnabled) {
+      this.addServiceProvider(new UpgradeServiceProvider(6, this.#options.upgradeLocationsConfig));
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(

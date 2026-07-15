@@ -3,6 +3,22 @@
 The core `ServiceProvider` implementations (and the service and `Command`
 implementations they provide) built into the framework are:
 
+## `ArgumentPrompterServiceProvider`
+
+Provides:
+
+- `ArgumentPrompterService` which automatically prompts the user for missing
+  mandatory arguments when all parse errors are of type `MISSING_VALUE`. Derives
+  the appropriate prompt type from the argument definition: boolean arguments
+  become toggle prompts, arguments with allowable values become single select
+  prompts, and other arguments become text entry prompts. Handles complex
+  options by prompting for each nested property and array/vararg arguments by
+  repeating prompts with an "add another?" confirmation.
+
+NOTE: This service is opt-in. Enable via `argumentPrompterEnabled` flag on
+`BaseCLI`, `DefaultRuntimeCLI`, or the launcher functions. Requires
+`prompterEnabled` to also be true.
+
 ## `AsciiBannerGeneratorServiceProvider`
 
 Provides:
@@ -21,7 +37,10 @@ Provides:
 
 On initialisation this uses the `PrinterService` to output the CLI name in ASCII
 banner text together with the CLI description, version and optional sub-message
-(from `CLIConfig.subMessage`).
+(from `CLIConfig.subMessage`). If an `UpgradeService` is registered and reports
+a newer version available, an additional
+`(<latest version> available, run '<cli name> upgrade')` line is shown below
+the version.
 
 Provides:
 
@@ -120,21 +139,8 @@ Provides:
 - `NoPromptCommand` which allows interactive prompting to be disabled via the
   argument `--no-prompt` or the env var `NO_PROMPT`.
 
-## `ArgumentPrompterServiceProvider`
-
-Provides:
-
-- `ArgumentPrompterService` which automatically prompts the user for missing
-  mandatory arguments when all parse errors are of type `MISSING_VALUE`. Derives
-  the appropriate prompt type from the argument definition: boolean arguments
-  become toggle prompts, arguments with allowable values become single select
-  prompts, and other arguments become text entry prompts. Handles complex
-  options by prompting for each nested property and array/vararg arguments by
-  repeating prompts with an "add another?" confirmation.
-
-NOTE: Both services are opt-in. Enable via `prompterEnabled` and
-`argumentPrompterEnabled` flags on `BaseCLI`, `DefaultRuntimeCLI`, or the
-launcher functions. `argumentPrompterEnabled` requires `prompterEnabled`.
+NOTE: This service is opt-in. Enable via `prompterEnabled` flag on `BaseCLI`,
+`DefaultRuntimeCLI`, or the launcher functions.
 
 ## `ShutdownServiceProvider`
 
@@ -161,6 +167,21 @@ while (!shutdownService.isShutdownRequested) {
 }
 shutdownService.leaveLongRunningMode();
 ```
+
+## `SpawnServiceProvider`
+
+Provides:
+
+- `SpawnService` allowing a `Command` to spawn a child process. Output can
+  optionally be captured line-by-line via a callback (`stdio: "wrapped"`)
+  instead of being inherited directly by the CLI's stdout/stderr, and shutdown
+  signals are gracefully forwarded to the spawned process (SIGTERM, followed by
+  SIGKILL after a grace period if it hasn't exited). Cooperates with
+  `ShutdownService`'s long-running mode so a single Ctrl-C terminates the
+  spawned process rather than immediately exiting the CLI.
+
+NOTE: This service is opt-in. Enable via `spawnServiceEnabled` flag on
+`BaseCLI`, `DefaultRuntimeCLI`, or the launcher functions.
 
 ## `SyntaxHighlighterServiceProvider`
 
@@ -196,3 +217,30 @@ Provides:
   box-drawing characters. Trees are defined using `TreeNode` objects with a
   `label` and optional `children` (which can be nested `TreeNode` objects or
   plain strings). Node labels are colored using the `PrinterService`.
+
+## `UpgradeServiceProvider`
+
+Provides:
+
+- `UpgradeService` allowing a CLI to check for and install newer versions of
+  itself. Detects the current OS (Linux, macOS, Windows) and CPU architecture
+  (x64, arm64), and the mechanism by which the CLI was installed (a Linux
+  install script backed by GitHub releases, a Homebrew tap, Winget, or manual
+  GitHub release download). Determines the latest available version for the
+  resolved install method and performs the upgrade via `SpawnService`. Configured by
+  the CLI author via an `UpgradeLocationsConfig` describing the supported
+  platforms and the release location for each install method.
+- `UpgradeSubCommand` (`upgrade`) which checks for and installs the latest
+  version. Accepts optional `--os` and `--install-method` arguments to override
+  auto-detection.
+- On first run, if both `PrompterService` and `KeyValueService` are available,
+  prompts the user to enable automatic upgrades on startup. If enabled, every
+  subsequent run checks for and installs a newer version automatically before
+  the CLI's main command executes.
+
+NOTE: This service is opt-in. Enable via `upgradeServiceEnabled` flag (with
+`upgradeLocationsConfig` supplying the release locations) on `BaseCLI`,
+`DefaultRuntimeCLI`, or the launcher functions. Requires `SpawnServiceProvider`
+(`spawnServiceEnabled`) to also be enabled for the install/upgrade step itself
+to work; without it, upgrade availability can still be detected and reported
+(e.g. by `VersionCommand`) but not installed.
