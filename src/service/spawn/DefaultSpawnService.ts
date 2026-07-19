@@ -1,3 +1,4 @@
+import process from "node:process";
 import type {
   PrinterService,
   ShutdownService,
@@ -10,6 +11,26 @@ import getLogger from "../../util/logger.ts";
 const logger = getLogger("DefaultSpawnService");
 
 const SHUTDOWN_GRACE_PERIOD_MS = 5000;
+
+/**
+ * On Windows, batch-file shims (e.g. `npm.cmd`, `bun.cmd`) cannot be launched directly via
+ * `CreateProcess` - they must be run through `cmd.exe /c`. Resolve the command through the shell
+ * in that case; leave it untouched on other platforms.
+ */
+export function resolveForPlatform(command: ReadonlyArray<string>): string[] {
+  if (process.platform !== "win32") {
+    return [...command];
+  }
+  const [bin, ...args] = command;
+  if (bin === undefined) {
+    return [...command];
+  }
+  const resolved = Bun.which(bin) ?? bin;
+  if (!/\.(cmd|bat)$/i.test(resolved)) {
+    return [resolved, ...args];
+  }
+  return ["cmd.exe", "/d", "/s", "/c", resolved, ...args];
+}
 
 export default class DefaultSpawnService implements SpawnService {
   #printerService: PrinterService | undefined;
@@ -68,7 +89,7 @@ export default class DefaultSpawnService implements SpawnService {
 
     let proc;
     try {
-      proc = Bun.spawn([...command], {
+      proc = Bun.spawn(resolveForPlatform(command), {
         cwd: options.cwd,
         stdin: stdio === "wrapped" ? "ignore" : "inherit",
         stdout: stdio === "wrapped" ? "pipe" : "inherit",

@@ -1,5 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import DefaultSpawnService from "../../../src/service/spawn/DefaultSpawnService.ts";
+import process from "node:process";
+import { afterEach, describe, expect, test } from "bun:test";
+import DefaultSpawnService, {
+  resolveForPlatform,
+} from "../../../src/service/spawn/DefaultSpawnService.ts";
 import type { PrinterService, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 
 interface FakePrinterServiceState {
@@ -162,5 +165,54 @@ describe("DefaultSpawnService tests", () => {
     await service.spawn(["echo", "hello"]);
 
     expect(state.listeners.length).toEqual(1);
+  });
+});
+
+describe("resolveForPlatform tests", () => {
+  const originalPlatform = process.platform;
+  const originalWhich = Bun.which;
+
+  afterEach(() => {
+    Object.defineProperty(process, "platform", { value: originalPlatform });
+    Bun.which = originalWhich;
+  });
+
+  test("leaves command untouched on non-win32 platforms", () => {
+    Object.defineProperty(process, "platform", { value: "linux" });
+
+    expect(resolveForPlatform(["npm", "install", "foo"])).toEqual(["npm", "install", "foo"]);
+  });
+
+  test("wraps a resolved .cmd shim through cmd.exe on win32", () => {
+    Object.defineProperty(process, "platform", { value: "win32" });
+    Bun.which = (bin: string) => (bin === "npm" ? "C:\\Program Files\\nodejs\\npm.CMD" : null);
+
+    expect(resolveForPlatform(["npm", "install", "foo"])).toEqual([
+      "cmd.exe",
+      "/d",
+      "/s",
+      "/c",
+      "C:\\Program Files\\nodejs\\npm.CMD",
+      "install",
+      "foo",
+    ]);
+  });
+
+  test("does not wrap a resolved non-shim executable on win32", () => {
+    Object.defineProperty(process, "platform", { value: "win32" });
+    Bun.which = (bin: string) => (bin === "bun" ? "C:\\Users\\me\\.bun\\bin\\bun.exe" : null);
+
+    expect(resolveForPlatform(["bun", "add", "foo"])).toEqual([
+      "C:\\Users\\me\\.bun\\bin\\bun.exe",
+      "add",
+      "foo",
+    ]);
+  });
+
+  test("falls back to the bare binary name on win32 if Bun.which cannot resolve it", () => {
+    Object.defineProperty(process, "platform", { value: "win32" });
+    Bun.which = () => null;
+
+    expect(resolveForPlatform(["npm", "install", "foo"])).toEqual(["npm", "install", "foo"]);
   });
 });
