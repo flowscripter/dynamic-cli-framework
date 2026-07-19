@@ -6,7 +6,7 @@
       "name": "@flowscripter/dynamic-cli-framework",
       "dependencies": {
         "@flowscripter/dynamic-cli-framework-api": "^1.2.0",
-        "@flowscripter/dynamic-plugin-framework": "1.11.0",
+        "@flowscripter/dynamic-plugin-framework": "1.11.1",
         "emphasize": "^7.0.0",
         "fastest-levenshtein": "^1.0.16",
         "figlet": "^1.11.0",
@@ -31,7 +31,7 @@
   "packages": {
     "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@1.2.0", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-ajR6PwQQwsQN96OH3OwO0SH5h3TGY3lLPM5lIYNUCpUXrOZ9MYJtsXvDcDKz8U/heWe0FBJeRY0nsNDJV4p9Vw=="],
 
-    "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@1.11.0", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-TNtU5Wi7cEfKhnNoF6rPBJeC1FC1JBpF4S5wlGex5Wc44mnWE6bdEfqlxw7l3IxjHP5z7ppxx/WRal+FWN40CA=="],
+    "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@1.11.1", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-m8bioReoQzzm7uj3sxXLH7Haclyj1UWnPCSxy2QXvGQ2yp24H1GnzqohVnXo3JfBpJzmCUAaHT+lAhYu9Gh6Aw=="],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.57.0", "", { "os": "android", "cpu": "arm" }, "sha512-qVBsEO+KugOsCmUHcO8iqNnqc65p7PCKpCs8M66mPZ+Ri+CWbcpoQOEJBg2OTu03+0qu++NK1jj6IzvQVs0Sig=="],
 
