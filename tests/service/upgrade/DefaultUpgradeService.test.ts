@@ -161,7 +161,11 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64, InstallMethod.GITHUB_RELEASE);
+    await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
     expect(receivedSignal).toBeInstanceOf(AbortSignal);
     expect(receivedSignal?.aborted).toBe(false);
   });
