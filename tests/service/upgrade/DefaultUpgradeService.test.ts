@@ -148,6 +148,28 @@ describe("DefaultUpgradeService", () => {
     expect(result?.updateAvailable).toBe(false);
   });
 
+  test("checkForUpgrade passes a bounded AbortSignal to the GitHub release lookup", async () => {
+    let receivedSignal: AbortSignal | undefined;
+    globalThis.fetch = ((_url: string, init?: RequestInit) => {
+      receivedSignal = init?.signal ?? undefined;
+      return Promise.resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }));
+    }) as unknown as typeof fetch;
+
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    expect(receivedSignal).toBeInstanceOf(AbortSignal);
+    expect(receivedSignal?.aborted).toBe(false);
+  });
+
   test("checkForUpgrade returns undefined when fetch fails", async () => {
     globalThis.fetch = (() =>
       Promise.reject(new Error("network error"))) as unknown as typeof fetch;

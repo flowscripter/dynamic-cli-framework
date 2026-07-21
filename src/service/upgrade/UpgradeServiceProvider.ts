@@ -8,6 +8,8 @@ import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { SpawnService } from "@flowscripter/dynamic-cli-framework-api";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService from "./DefaultUpgradeService.ts";
@@ -44,7 +46,10 @@ export default class UpgradeServiceProvider implements ServiceProvider {
 
     if (context.doesServiceExist(SPAWN_SERVICE_ID)) {
       const spawnService = context.getServiceById(SPAWN_SERVICE_ID) as SpawnService;
-      upgradeService.setDependencies(spawnService);
+      const shutdownService = context.doesServiceExist(SHUTDOWN_SERVICE_ID)
+        ? (context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService)
+        : undefined;
+      upgradeService.setDependencies(spawnService, shutdownService);
     } else {
       logger.debug(() => "SpawnService not available, upgrade install methods will be unavailable");
     }
