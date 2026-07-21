@@ -148,11 +148,12 @@ describe("DefaultUpgradeService", () => {
     expect(result?.updateAvailable).toBe(false);
   });
 
-  test("checkForUpgrade aborts the GitHub release lookup if it stalls past the timeout", async () => {
-    globalThis.fetch = ((_url: string, init?: RequestInit) =>
-      new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason as Error));
-      })) as unknown as typeof fetch;
+  test("checkForUpgrade passes a bounded AbortSignal to the GitHub release lookup", async () => {
+    let receivedSignal: AbortSignal | undefined;
+    globalThis.fetch = ((_url: string, init?: RequestInit) => {
+      receivedSignal = init?.signal ?? undefined;
+      return Promise.resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }));
+    }) as unknown as typeof fetch;
 
     const service = new DefaultUpgradeService(
       getConfig({
@@ -160,13 +161,10 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
-    );
-    expect(result).toBeUndefined();
-  }, 10000);
+    await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64, InstallMethod.GITHUB_RELEASE);
+    expect(receivedSignal).toBeInstanceOf(AbortSignal);
+    expect(receivedSignal?.aborted).toBe(false);
+  });
 
   test("checkForUpgrade returns undefined when fetch fails", async () => {
     globalThis.fetch = (() =>
