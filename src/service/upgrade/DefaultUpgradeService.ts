@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   CLIConfig,
+  ShutdownService,
   SpawnService,
   UpgradeCheckResult,
   UpgradeResult,
@@ -20,6 +21,10 @@ import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultUpgradeService");
 
+// checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
+// so its version-check network calls must never be allowed to stall CLI startup.
+const VERSION_CHECK_TIMEOUT_MS = 250;
+
 const OS_LABELS: Record<SupportedOs, string> = {
   [SupportedOs.LINUX]: "Linux",
   [SupportedOs.MACOS]: "MacOS",
@@ -28,6 +33,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
+  #shutdownService: ShutdownService | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
 
@@ -36,8 +42,9 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#cliConfig = cliConfig;
   }
 
-  public setDependencies(spawnService: SpawnService): void {
+  public setDependencies(spawnService: SpawnService, shutdownService?: ShutdownService): void {
     this.#spawnService = spawnService;
+    this.#shutdownService = shutdownService;
   }
 
   public detectOs(): SupportedOs | undefined {
@@ -210,7 +217,10 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const { owner, repo } = this.#config.githubRelease;
     try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
+        { signal: AbortSignal.timeout(VERSION_CHECK_TIMEOUT_MS) },
+      );
       if (!response.ok) {
         return undefined;
       }
@@ -234,6 +244,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     try {
       const response = await fetch(
         `https://raw.githubusercontent.com/${tapOwner}/homebrew-${tapName}/main/${formula}.rb`,
+        { signal: AbortSignal.timeout(VERSION_CHECK_TIMEOUT_MS) },
       );
       if (!response.ok) {
         return undefined;
@@ -316,14 +327,24 @@ export default class DefaultUpgradeService implements UpgradeService {
     const assetName = assetPattern.replace("{os}", OS_LABELS[os]).replace("{arch}", archLabel);
     const url = `https://github.com/${owner}/${repo}/releases/latest/download/${assetName}`;
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to download release asset '${assetName}': HTTP ${response.status}`);
+    // Downloading the release asset happens outside SpawnService (which enters long-running mode
+    // for its own subprocesses by default), so bracket it here to get the same cooperative
+    // Ctrl-C handling during what can be the slowest step of the upgrade.
+    this.#shutdownService?.enterLongRunningMode();
+    let archiveData: ArrayBuffer;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download release asset '${assetName}': HTTP ${response.status}`);
+      }
+      archiveData = await response.arrayBuffer();
+    } finally {
+      this.#shutdownService?.leaveLongRunningMode();
     }
 
     const tmpDir = await mkdtemp(join(tmpdir(), "upgrade-"));
     const archivePath = join(tmpDir, assetName);
-    await Bun.write(archivePath, await response.arrayBuffer());
+    await Bun.write(archivePath, archiveData);
 
     const currentExecutable = process.execPath;
 

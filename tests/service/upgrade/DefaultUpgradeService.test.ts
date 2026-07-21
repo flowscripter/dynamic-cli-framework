@@ -148,6 +148,26 @@ describe("DefaultUpgradeService", () => {
     expect(result?.updateAvailable).toBe(false);
   });
 
+  test("checkForUpgrade aborts the GitHub release lookup if it stalls past the timeout", async () => {
+    globalThis.fetch = ((_url: string, init?: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason as Error));
+      })) as unknown as typeof fetch;
+
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    expect(result).toBeUndefined();
+  }, 10000);
+
   test("checkForUpgrade returns undefined when fetch fails", async () => {
     globalThis.fetch = (() =>
       Promise.reject(new Error("network error"))) as unknown as typeof fetch;
