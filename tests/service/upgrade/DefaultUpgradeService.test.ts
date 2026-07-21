@@ -91,6 +91,20 @@ describe("DefaultUpgradeService", () => {
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
 
+  test("detectInstallMethod falls through to GITHUB_RELEASE if a stalled winget check never resolves", async () => {
+    const service = new DefaultUpgradeService(
+      getConfig({
+        winget: { packageId: "Flowscripter.example-cli" },
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    service.setDependencies({ spawn: () => new Promise(() => {}) });
+    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(
+      InstallMethod.GITHUB_RELEASE,
+    );
+  });
+
   test("checkForUpgrade returns undefined for unsupported platform", async () => {
     const service = new DefaultUpgradeService(
       getConfig({ supportedPlatforms: [] }),

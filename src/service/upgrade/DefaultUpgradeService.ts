@@ -25,6 +25,17 @@ const logger = getLogger("DefaultUpgradeService");
 // so its version-check network calls must never be allowed to stall CLI startup.
 const VERSION_CHECK_TIMEOUT_MS = 250;
 
+// SpawnService has no built-in cancellation, so a stalled `brew`/`winget` invocation (e.g. winget's
+// first-ever run on a machine prompting to accept Microsoft Store terms) can otherwise hang
+// checkForUpgrade() indefinitely. Racing against this bounds how long we wait for a result; the
+// underlying process is not killed, but the CLI stops blocking on it.
+async function withSpawnTimeout<T>(spawnPromise: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([
+    spawnPromise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), VERSION_CHECK_TIMEOUT_MS)),
+  ]);
+}
+
 const OS_LABELS: Record<SupportedOs, string> = {
   [SupportedOs.LINUX]: "Linux",
   [SupportedOs.MACOS]: "MacOS",
@@ -175,9 +186,12 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (!this.#spawnService || !this.#config.homebrew) {
       return false;
     }
-    const result = await this.#spawnService.spawn(
-      ["brew", "list", "--versions", this.#config.homebrew.formula],
-      { stdio: "wrapped", longRunning: false },
+    const result = await withSpawnTimeout(
+      this.#spawnService.spawn(["brew", "list", "--versions", this.#config.homebrew.formula], {
+        stdio: "wrapped",
+        longRunning: false,
+      }),
+      { ok: false } as const,
     );
     return result.ok;
   }
@@ -186,9 +200,12 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (!this.#spawnService || !this.#config.winget) {
       return false;
     }
-    const result = await this.#spawnService.spawn(
-      ["winget", "list", "--id", this.#config.winget.packageId],
-      { stdio: "wrapped", longRunning: false },
+    const result = await withSpawnTimeout(
+      this.#spawnService.spawn(["winget", "list", "--id", this.#config.winget.packageId], {
+        stdio: "wrapped",
+        longRunning: false,
+      }),
+      { ok: false } as const,
     );
     return result.ok;
   }
@@ -262,13 +279,13 @@ export default class DefaultUpgradeService implements UpgradeService {
       return undefined;
     }
     const lines: string[] = [];
-    const result = await this.#spawnService.spawn(
-      ["winget", "show", "--id", this.#config.winget.packageId],
-      {
+    const result = await withSpawnTimeout(
+      this.#spawnService.spawn(["winget", "show", "--id", this.#config.winget.packageId], {
         stdio: "wrapped",
         longRunning: false,
         onOutput: (line) => lines.push(line),
-      },
+      }),
+      { ok: false } as const,
     );
     if (!result.ok) {
       return undefined;
