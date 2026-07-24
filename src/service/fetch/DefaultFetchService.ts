@@ -1,4 +1,8 @@
-import type { FetchOptions, FetchService, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  FetchOptions,
+  FetchService,
+  ShutdownService,
+} from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultFetchService");

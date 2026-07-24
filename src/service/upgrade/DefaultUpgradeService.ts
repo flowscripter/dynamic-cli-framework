@@ -405,9 +405,12 @@ export default class DefaultUpgradeService implements UpgradeService {
         throw new Error("Failed to copy new executable into place");
       }
     } else {
-      const extractResult = await this.#spawnService!.spawn(["unzip", "-o", archivePath, "-d", tmpDir], {
-        mode: "ignore",
-      });
+      const extractResult = await this.#spawnService!.spawn(
+        ["unzip", "-o", archivePath, "-d", tmpDir],
+        {
+          mode: "ignore",
+        },
+      );
       if (!extractResult.ok) {
         throw new Error("Failed to extract release archive");
       }

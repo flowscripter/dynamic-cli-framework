@@ -1,4 +1,10 @@
-import type { CLIConfig, Context, ServiceInfo, ServiceProvider, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  CLIConfig,
+  Context,
+  ServiceInfo,
+  ServiceProvider,
+  ShutdownService,
+} from "@flowscripter/dynamic-cli-framework-api";
 import { FETCH_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultFetchService from "./DefaultFetchService.ts";
 

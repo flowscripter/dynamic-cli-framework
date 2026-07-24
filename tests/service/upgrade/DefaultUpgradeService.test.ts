@@ -147,9 +147,7 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() =>
-        new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }),
-      ),
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -170,9 +168,7 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() =>
-        new Response(JSON.stringify({ tag_name: "v0.0.0" }), { status: 200 }),
-      ),
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v0.0.0" }), { status: 200 })),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -262,9 +258,7 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() =>
-        new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }),
-      ),
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
     );
     const result = await service.upgrade(
       SupportedOs.LINUX,
