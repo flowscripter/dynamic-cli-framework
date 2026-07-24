@@ -115,6 +115,26 @@ Provides:
   width as a percentage of the terminal width. GIF detection is automatic based
   on file magic bytes.
 
+## `PluginServiceProvider`
+
+Provides:
+
+- `PluginService` allowing a `Command` to search for, install, remove and list plugins, and
+  check for available plugin updates.
+- `PluginGroupCommand` (`plugin`) with sub-commands:
+  - `plugin:list` lists locally installed plugins.
+  - `plugin:search <query>` searches remote plugins.
+  - `plugin:add <pluginId>` installs a plugin.
+  - `plugin:remove <pluginId>` removes an installed plugin.
+  - `plugin:upgrade` upgrades all installed plugins to their latest versions.
+- On initialisation, discovers and registers commands and service providers contributed by
+  locally installed CLI plugins.
+
+NOTE: This service is opt-in. Enable via `pluginServiceEnabled` flag (with
+`pluginServiceRemoteConfig` and `pluginServiceLocalConfig` supplying the default remote and
+local plugin repository configuration) on `BaseCLI`, `DefaultRuntimeCLI`, or the launcher
+functions. See [Plugins](plugins.md) for full details on writing and enabling plugin support.
+
 ## `PrettyPrinterServiceProvider`
 
 Provides:

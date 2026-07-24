@@ -63,7 +63,7 @@ classDiagram
     class DefaultRuntimeCLI {
     }
 
-    class DynamicPluginRuntimeCLI {
+    class PluginServiceProvider {
     }
 
     class MarketplacePluginManager {
@@ -99,8 +99,6 @@ classDiagram
     CLI <|.. BaseCLI
 
     BaseCLI <|-- DefaultRuntimeCLI
-
-    DefaultRuntimeCLI <|-- DynamicPluginRuntimeCLI
 
     runner --> Context
 
@@ -138,9 +136,9 @@ classDiagram
 
     DefaultRuntimeCLI <-- launcher : instantiates
 
-    DynamicPluginRuntimeCLI <-- launcher : instantiates
+    BaseCLI --> PluginServiceProvider : constructs when\npluginServiceEnabled
 
-    DefaultRuntimeCLI --> MarketplacePluginManager
+    PluginServiceProvider --> MarketplacePluginManager
 
     CLIPlugin --> "0..1" CommandFactory : creates
 
@@ -154,9 +152,9 @@ classDiagram
 
     MarketplacePluginManager --> "*" Plugin : installs and loads
 
-    DynamicPluginRuntimeCLI --> ServiceProviderRegistry : registers ServiceProviders
+    PluginServiceProvider --> ServiceProviderRegistry : registers ServiceProviders
 
-    DynamicPluginRuntimeCLI --> CommandRegistry : registers Commands
+    PluginServiceProvider --> CommandRegistry : registers Commands
 
     CommandFactory --> "*" Command : builds
 
@@ -217,51 +215,73 @@ documented in further detail below):
 specific APIs to access the command line arguments, stdout and stderr streams
 and to exit the process.
 
-#### `DynamicPluginRuntimeCLI`
+#### `PluginServiceProvider`
 
-`DynamicPluginRuntimeCLI` extends `DefaultRuntimeCLI` and adds dynamic plugin
-discovery. On each call to `run()` it discovers all locally installed plugins
-via the `MarketplacePluginManager` and registers their commands and service
-providers before delegating to `super.run()`. This ensures that plugin-provided
-commands and service providers participate in the full runner initialization
-lifecycle (including `GlobalModifierCommand` scanning and `initService()`).
+Plugin support is provided as an opt-in `ServiceProvider`, following the same
+pattern as `SpawnServiceProvider` and `UpgradeServiceProvider`. When
+`pluginServiceEnabled` is set in `BaseCLIFeatureOptions`, `BaseCLI` constructs a
+`PluginServiceProvider`, handing it direct references to its own internal
+`DefaultCommandRegistry` and `DefaultServiceProviderRegistry` instances. This
+requires no changes to `DefaultRuntimeCLI` and no separate CLI subclass.
 
-It also adds a `DefaultPluginServiceProvider` at construction time, which
-provides the `plugin` group command with `plugin:list`, `plugin:add`,
-`plugin:remove`, `plugin:search` and `plugin:upgrade` sub-commands.
+`PluginServiceProvider.getServiceInfo()` constructs a `DefaultPluginService`
+(wrapping a `MarketplacePluginManager` built from the configured remote and
+local plugin repository configuration) and provides the `plugin` group command
+with `plugin:list`, `plugin:add`, `plugin:remove`, `plugin:search` and
+`plugin:upgrade` sub-commands.
 
-The following sequence diagram illustrates the plugin discovery flow in `run()`:
+`PluginServiceProvider.initService()` applies any `KeyValueService` overrides of
+the default repository configuration, wires up `SpawnCapable`/`FetchCapable`
+support on the `MarketplacePluginManager` if available, then discovers all
+locally installed plugins and registers their commands and service providers
+directly into the `DefaultCommandRegistry`/`DefaultServiceProviderRegistry`
+instances passed to it at construction time. Because a `ServiceProvider` added
+to `DefaultServiceProviderRegistry` during another provider's `initService()`
+call is picked up by the same in-progress `runner` loop (the loop iterates the
+live, sorted array returned by `getServiceProviders()`), plugin-provided service
+providers still have their own `initService()` invoked by `runner` - but since
+they weren't present at the time `BaseCLI.run()` called `getServiceInfo()` on
+every registered provider (this happens before `runner` starts), their own
+`getServiceInfo()` is instead called manually by `PluginServiceProvider`, which
+also registers the resulting service instance and commands by hand.
+
+The following sequence diagram illustrates the plugin discovery flow in
+`initService()`:
 
 ```mermaid
 sequenceDiagram
-    participant Caller
-    participant DynamicPluginRuntimeCLI
+    participant runner
+    participant PluginServiceProvider
     participant MarketplacePluginManager
     participant CommandFactory
     participant ServiceProviderFactory
-    participant DefaultRuntimeCLI
+    participant DefaultCommandRegistry
+    participant DefaultServiceProviderRegistry
 
-    Caller->>DynamicPluginRuntimeCLI: run()
-    DynamicPluginRuntimeCLI->>MarketplacePluginManager: registerExtensions(COMMAND_FACTORY_EP)
-    DynamicPluginRuntimeCLI->>MarketplacePluginManager: registerExtensions(SP_FACTORY_EP)
-    DynamicPluginRuntimeCLI->>MarketplacePluginManager: getRegisteredExtensions(COMMAND_FACTORY_EP)
+    runner->>PluginServiceProvider: initService(context)
+    PluginServiceProvider->>MarketplacePluginManager: registerExtensions(COMMAND_FACTORY_EP)
+    PluginServiceProvider->>MarketplacePluginManager: registerExtensions(SP_FACTORY_EP)
+    PluginServiceProvider->>MarketplacePluginManager: getRegisteredExtensions(COMMAND_FACTORY_EP)
     loop for each command factory extension
-        DynamicPluginRuntimeCLI->>MarketplacePluginManager: instantiate(handle)
-        MarketplacePluginManager-->>DynamicPluginRuntimeCLI: CommandFactory
-        DynamicPluginRuntimeCLI->>CommandFactory: getCommands()
-        CommandFactory-->>DynamicPluginRuntimeCLI: Command[]
-        DynamicPluginRuntimeCLI->>DynamicPluginRuntimeCLI: addCommand(cmd) for each
+        PluginServiceProvider->>MarketplacePluginManager: instantiate(handle)
+        MarketplacePluginManager-->>PluginServiceProvider: CommandFactory
+        PluginServiceProvider->>CommandFactory: getCommands()
+        CommandFactory-->>PluginServiceProvider: Command[]
+        PluginServiceProvider->>DefaultCommandRegistry: addCommand(cmd) for each
     end
-    DynamicPluginRuntimeCLI->>MarketplacePluginManager: getRegisteredExtensions(SP_FACTORY_EP)
+    PluginServiceProvider->>MarketplacePluginManager: getRegisteredExtensions(SP_FACTORY_EP)
     loop for each SP factory extension
-        DynamicPluginRuntimeCLI->>MarketplacePluginManager: instantiate(handle)
-        MarketplacePluginManager-->>DynamicPluginRuntimeCLI: ServiceProviderFactory
-        DynamicPluginRuntimeCLI->>ServiceProviderFactory: getServiceProviders()
-        ServiceProviderFactory-->>DynamicPluginRuntimeCLI: ServiceProvider[]
-        DynamicPluginRuntimeCLI->>DynamicPluginRuntimeCLI: addServiceProvider(sp) for each
+        PluginServiceProvider->>MarketplacePluginManager: instantiate(handle)
+        MarketplacePluginManager-->>PluginServiceProvider: ServiceProviderFactory
+        PluginServiceProvider->>ServiceProviderFactory: getServiceProviders()
+        ServiceProviderFactory-->>PluginServiceProvider: ServiceProvider[]
+        loop for each discovered ServiceProvider
+            PluginServiceProvider->>PluginServiceProvider: sp.getServiceInfo(cliConfig)
+            PluginServiceProvider->>DefaultCommandRegistry: addCommand(cmd) for each
+            PluginServiceProvider->>DefaultServiceProviderRegistry: addServiceProvider(sp)
+        end
     end
-    DynamicPluginRuntimeCLI->>DefaultRuntimeCLI: super.run()
-    Note over DefaultRuntimeCLI: All plugin commands and SPs<br/>now in registries - participate<br/>in full initialization lifecycle
+    Note over DefaultServiceProviderRegistry: runner's own in-progress loop\nwill call sp.initService() for\neach newly added ServiceProvider
 ```
 
 ### `runner`
