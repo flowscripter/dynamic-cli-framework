@@ -52,7 +52,10 @@ export class UpgradeSubCommand implements SubCommand {
     const arch = undefined as SupportedArch | undefined;
     const installMethod = argumentValues["install-method"] as InstallMethod | undefined;
 
-    const checkResult = await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
+    const checkResult =
+      os === undefined && installMethod === undefined
+        ? await this.#upgradeService.getUpgradeCheckResult(true)
+        : await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
     if (!checkResult) {
       await printerService.error(
         `No upgrade location is configured for the detected or requested platform.\n`,

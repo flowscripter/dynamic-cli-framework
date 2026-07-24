@@ -72,7 +72,7 @@ export default class BannerServiceProvider implements ServiceProvider {
     }
     if (context.doesServiceExist(UPGRADE_SERVICE_ID)) {
       const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
-      const result = await upgradeService.checkForUpgrade().catch(() => undefined);
+      const result = await upgradeService.getUpgradeCheckResult().catch(() => undefined);
       if (result?.updateAvailable) {
         await printerService.info(
           `  ${printerService.secondary(

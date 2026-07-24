@@ -166,6 +166,32 @@ describe("DefaultSpawnService tests", () => {
 
     expect(state.listeners.length).toEqual(1);
   });
+
+  test("spawn() resolves ok:true within timeoutMs if the process exits in time", async () => {
+    const service = new DefaultSpawnService();
+    const { printerService } = getFakePrinterService();
+    const { shutdownService } = getFakeShutdownService();
+    service.setDependencies(printerService, shutdownService);
+
+    const result = await service.spawn(["echo", "hello"], { timeoutMs: 5000 });
+
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+  });
+
+  test("spawn() kills the process and resolves ok:false timedOut:true if it exceeds timeoutMs", async () => {
+    const service = new DefaultSpawnService();
+    const { printerService } = getFakePrinterService();
+    const { shutdownService } = getFakeShutdownService();
+    service.setDependencies(printerService, shutdownService);
+
+    const result = await service.spawn(["sh", "-c", "sleep 30"], {
+      stdio: "wrapped",
+      longRunning: false,
+      timeoutMs: 100,
+    });
+
+    expect(result).toEqual({ ok: false, timedOut: true });
+  });
 });
 
 describe("resolveForPlatform tests", () => {

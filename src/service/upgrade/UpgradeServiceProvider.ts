@@ -54,6 +54,8 @@ export default class UpgradeServiceProvider implements ServiceProvider {
       logger.debug(() => "SpawnService not available, upgrade install methods will be unavailable");
     }
 
+    void upgradeService.getUpgradeCheckResult();
+
     if (!context.doesServiceExist(PROMPTER_SERVICE_ID)) {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");
       return;
@@ -128,7 +130,7 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     cliConfig: CLIConfig,
   ): Promise<void> {
     try {
-      const checkResult = await upgradeService.checkForUpgrade();
+      const checkResult = await upgradeService.getUpgradeCheckResult();
       if (!checkResult?.updateAvailable) {
         return;
       }

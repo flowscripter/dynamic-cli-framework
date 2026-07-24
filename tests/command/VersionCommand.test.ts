@@ -53,7 +53,7 @@ describe("VersionCommand tests", () => {
 
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
-      checkForUpgrade: () =>
+      getUpgradeCheckResult: () =>
         Promise.resolve({
           currentVersion: "foobar",
           latestVersion: "9.9.9",
@@ -86,7 +86,7 @@ describe("VersionCommand tests", () => {
 
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
-      checkForUpgrade: () => Promise.resolve({ updateAvailable: false }),
+      getUpgradeCheckResult: () => Promise.resolve({ updateAvailable: false }),
     });
 
     const versionCommand = new VersionCommand();
