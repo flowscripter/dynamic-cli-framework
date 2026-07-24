@@ -55,8 +55,11 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
     this.#printerService.endMark();
     await this.#printerService.clearMarked(this.#markMinimumDisplayTimeMs);
 
-    return result.ok
-      ? { ok: true, exitCode: result.exitCode }
+    if (result.ok) {
+      return { ok: true, exitCode: result.exitCode };
+    }
+    return "timedOut" in result
+      ? { ok: false, error: new Error("Command timed out") }
       : { ok: false, exitCode: result.exitCode, error: result.error };
   }
 }

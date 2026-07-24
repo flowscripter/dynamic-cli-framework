@@ -41,6 +41,22 @@ export default class DefaultSpawnService implements SpawnService {
     this.#shutdownService = shutdownService;
   }
 
+  async #terminate(
+    proc: ReturnType<typeof Bun.spawn>,
+    command: ReadonlyArray<string>,
+  ): Promise<void> {
+    logger.debug(() => `Sending SIGTERM to spawned command '${command.join(" ")}'`);
+    proc.kill("SIGTERM");
+    const exitedInTime = await Promise.race([
+      proc.exited.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), SHUTDOWN_GRACE_PERIOD_MS)),
+    ]);
+    if (!exitedInTime) {
+      logger.debug(() => `Sending SIGKILL to spawned command '${command.join(" ")}'`);
+      proc.kill("SIGKILL");
+    }
+  }
+
   async #pipeLines(
     stream: ReadableStream<Uint8Array> | number | undefined,
     streamName: "stdout" | "stderr",
@@ -110,16 +126,7 @@ export default class DefaultSpawnService implements SpawnService {
       if (settled) {
         return;
       }
-      logger.debug(() => `Sending SIGTERM to spawned command '${command.join(" ")}'`);
-      proc.kill("SIGTERM");
-      await Promise.race([
-        proc.exited.then(() => {}),
-        new Promise<void>((resolve) => setTimeout(resolve, SHUTDOWN_GRACE_PERIOD_MS)),
-      ]);
-      if (!settled) {
-        logger.debug(() => `Sending SIGKILL to spawned command '${command.join(" ")}'`);
-        proc.kill("SIGKILL");
-      }
+      await this.#terminate(proc, command);
     });
 
     if (stdio === "wrapped" && options.onOutput) {
@@ -129,6 +136,28 @@ export default class DefaultSpawnService implements SpawnService {
     }
 
     try {
+      if (options.timeoutMs === undefined) {
+        const exitCode = await proc.exited;
+        settled = true;
+        return exitCode === 0 ? { ok: true, exitCode } : { ok: false, exitCode };
+      }
+
+      let timeoutHandle: ReturnType<typeof setTimeout>;
+      const timedOut = await Promise.race([
+        proc.exited.then(() => false),
+        new Promise<boolean>((resolve) => {
+          timeoutHandle = setTimeout(() => resolve(true), options.timeoutMs);
+        }),
+      ]);
+      clearTimeout(timeoutHandle!);
+
+      if (timedOut) {
+        logger.debug(() => `Command '${command.join(" ")}' timed out after ${options.timeoutMs}ms`);
+        await this.#terminate(proc, command);
+        settled = true;
+        return { ok: false, timedOut: true };
+      }
+
       const exitCode = await proc.exited;
       settled = true;
       return exitCode === 0 ? { ok: true, exitCode } : { ok: false, exitCode };

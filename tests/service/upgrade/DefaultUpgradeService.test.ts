@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
 import type { SpawnResult, SpawnService } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultUpgradeService from "../../../src/service/upgrade/DefaultUpgradeService.ts";
+import DefaultUpgradeService, {
+  VERSION_CHECK_TIMEOUT_MS,
+} from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
 
@@ -91,7 +93,7 @@ describe("DefaultUpgradeService", () => {
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
 
-  test("detectInstallMethod falls through to GITHUB_RELEASE if a stalled winget check never resolves", async () => {
+  test("detectInstallMethod falls through to GITHUB_RELEASE if the winget check times out", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
         winget: { packageId: "Flowscripter.example-cli" },
@@ -99,7 +101,14 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies({ spawn: () => new Promise(() => {}) });
+    service.setDependencies({
+      // Mimics DefaultSpawnService's real timeoutMs handling: a stalled process resolves
+      // { ok: false, timedOut: true } once the caller-specified timeoutMs elapses.
+      spawn: (_command, options) =>
+        options?.timeoutMs === undefined
+          ? new Promise(() => {})
+          : Promise.resolve({ ok: false, timedOut: true }),
+    });
     expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(
       InstallMethod.GITHUB_RELEASE,
     );
@@ -297,5 +306,91 @@ describe("DefaultUpgradeService", () => {
     );
     expect(result.ok).toBe(false);
     expect(result.error?.message).toContain("brew upgrade failed");
+  });
+
+  test("getUpgradeCheckResult caches the same promise across calls", async () => {
+    let checkCount = 0;
+    globalThis.fetch = (() => {
+      checkCount++;
+      return Promise.resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }));
+    }) as unknown as typeof fetch;
+
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+
+    const first = service.getUpgradeCheckResult(true);
+    const second = service.getUpgradeCheckResult(true);
+    expect(first).toBe(second);
+    await first;
+    await second;
+    expect(checkCount).toEqual(1);
+  });
+
+  test("getUpgradeCheckResult resolves undefined if the cached check exceeds VERSION_CHECK_TIMEOUT_MS", async () => {
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch;
+
+    const result = await service.getUpgradeCheckResult();
+    expect(result).toBeUndefined();
+  });
+
+  test("getUpgradeCheckResult(true) waits for the full result with no timeout", async () => {
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    globalThis.fetch = (() =>
+      new Promise((resolve) =>
+        setTimeout(
+          () => resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
+          VERSION_CHECK_TIMEOUT_MS + 50,
+        ),
+      )) as unknown as typeof fetch;
+
+    const result = await service.getUpgradeCheckResult(true);
+    expect(result?.latestVersion).toEqual("9.9.9");
+  });
+
+  test("upgrade bypasses the cached check when an override is passed", async () => {
+    globalThis.fetch = (() =>
+      Promise.resolve(
+        new Response('version "v9.9.9"', { status: 200 }),
+      )) as unknown as typeof fetch;
+
+    const spawnedCommands: ReadonlyArray<string>[] = [];
+    const service = new DefaultUpgradeService(
+      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      getSpawnService((command) => {
+        spawnedCommands.push(command);
+        return { ok: true, exitCode: 0 };
+      }),
+    );
+
+    // Prime the cache with default (no-override) detection, which resolves undefined since
+    // supportedPlatforms only covers LINUX/MACOS/WINDOWS x specific arches and detectOs()/
+    // detectArch() here reflect the actual test host - the override call below must not reuse it.
+    void service.getUpgradeCheckResult();
+
+    const result = await service.upgrade(
+      SupportedOs.MACOS,
+      SupportedArch.ARM64,
+      InstallMethod.HOMEBREW,
+    );
+    expect(result.ok).toBe(true);
+    expect(result.newVersion).toEqual("9.9.9");
   });
 });

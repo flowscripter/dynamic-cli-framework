@@ -106,7 +106,7 @@ describe("BannerServiceProvider tests", () => {
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
     context.addServiceInstance(ASCII_BANNER_GENERATOR_SERVICE_ID, asciiBannerGenerator);
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
-      checkForUpgrade: () =>
+      getUpgradeCheckResult: () =>
         Promise.resolve({
           currentVersion: "foobar",
           latestVersion: "9.9.9",

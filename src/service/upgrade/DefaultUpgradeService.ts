@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type {
   CLIConfig,
   ShutdownService,
+  SpawnResult,
   SpawnService,
   UpgradeCheckResult,
   UpgradeResult,
@@ -22,18 +23,13 @@ import getLogger from "../../util/logger.ts";
 const logger = getLogger("DefaultUpgradeService");
 
 // checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
-// so its version-check network calls must never be allowed to stall CLI startup.
-const VERSION_CHECK_TIMEOUT_MS = 250;
+// so its version-check network/spawn calls must never be allowed to stall CLI startup.
+export const VERSION_CHECK_TIMEOUT_MS = 250;
 
-// SpawnService has no built-in cancellation, so a stalled `brew`/`winget` invocation (e.g. winget's
-// first-ever run on a machine prompting to accept Microsoft Store terms) can otherwise hang
-// checkForUpgrade() indefinitely. Racing against this bounds how long we wait for a result; the
-// underlying process is not killed, but the CLI stops blocking on it.
-async function withSpawnTimeout<T>(spawnPromise: Promise<T>, fallback: T): Promise<T> {
-  return Promise.race([
-    spawnPromise,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), VERSION_CHECK_TIMEOUT_MS)),
-  ]);
+function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): string {
+  return "timedOut" in result
+    ? "timed out"
+    : (result.error?.message ?? `exit code ${result.exitCode}`);
 }
 
 const OS_LABELS: Record<SupportedOs, string> = {
@@ -45,6 +41,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
   #shutdownService: ShutdownService | undefined;
+  #upgradeCheckPromise: Promise<UpgradeCheckResult | undefined> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
 
@@ -56,6 +53,21 @@ export default class DefaultUpgradeService implements UpgradeService {
   public setDependencies(spawnService: SpawnService, shutdownService?: ShutdownService): void {
     this.#spawnService = spawnService;
     this.#shutdownService = shutdownService;
+  }
+
+  public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult | undefined> {
+    if (!this.#upgradeCheckPromise) {
+      this.#upgradeCheckPromise = this.checkForUpgrade();
+    }
+    if (waitForResult) {
+      return this.#upgradeCheckPromise;
+    }
+    return Promise.race([
+      this.#upgradeCheckPromise,
+      new Promise<undefined>((resolve) =>
+        setTimeout(() => resolve(undefined), VERSION_CHECK_TIMEOUT_MS),
+      ),
+    ]);
   }
 
   public detectOs(): SupportedOs | undefined {
@@ -143,7 +155,11 @@ export default class DefaultUpgradeService implements UpgradeService {
     installMethodOverride?: InstallMethod,
   ): Promise<UpgradeResult> {
     const oldVersion = this.#cliConfig.version;
-    const checkResult = await this.checkForUpgrade(osOverride, archOverride, installMethodOverride);
+    const hasOverride =
+      osOverride !== undefined || archOverride !== undefined || installMethodOverride !== undefined;
+    const checkResult = hasOverride
+      ? await this.checkForUpgrade(osOverride, archOverride, installMethodOverride)
+      : await this.getUpgradeCheckResult(true);
     if (!checkResult) {
       return {
         ok: false,
@@ -186,12 +202,9 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (!this.#spawnService || !this.#config.homebrew) {
       return false;
     }
-    const result = await withSpawnTimeout(
-      this.#spawnService.spawn(["brew", "list", "--versions", this.#config.homebrew.formula], {
-        stdio: "wrapped",
-        longRunning: false,
-      }),
-      { ok: false } as const,
+    const result = await this.#spawnService.spawn(
+      ["brew", "list", "--versions", this.#config.homebrew.formula],
+      { stdio: "wrapped", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
     );
     return result.ok;
   }
@@ -200,12 +213,9 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (!this.#spawnService || !this.#config.winget) {
       return false;
     }
-    const result = await withSpawnTimeout(
-      this.#spawnService.spawn(["winget", "list", "--id", this.#config.winget.packageId], {
-        stdio: "wrapped",
-        longRunning: false,
-      }),
-      { ok: false } as const,
+    const result = await this.#spawnService.spawn(
+      ["winget", "list", "--id", this.#config.winget.packageId],
+      { stdio: "wrapped", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
     );
     return result.ok;
   }
@@ -279,13 +289,14 @@ export default class DefaultUpgradeService implements UpgradeService {
       return undefined;
     }
     const lines: string[] = [];
-    const result = await withSpawnTimeout(
-      this.#spawnService.spawn(["winget", "show", "--id", this.#config.winget.packageId], {
+    const result = await this.#spawnService.spawn(
+      ["winget", "show", "--id", this.#config.winget.packageId],
+      {
         stdio: "wrapped",
         longRunning: false,
+        timeoutMs: VERSION_CHECK_TIMEOUT_MS,
         onOutput: (line) => lines.push(line),
-      }),
-      { ok: false } as const,
+      },
     );
     if (!result.ok) {
       return undefined;
@@ -303,9 +314,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     const { scriptUrl } = this.#config.linuxScript!;
     const result = await this.#spawnService!.spawn(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`]);
     if (!result.ok) {
-      throw new Error(
-        `Install script failed: ${result.error?.message ?? `exit code ${result.exitCode}`}`,
-      );
+      throw new Error(`Install script failed: ${describeSpawnFailure(result)}`);
     }
   }
 
@@ -313,9 +322,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     const { tap, formula } = this.#config.homebrew!;
     const result = await this.#spawnService!.spawn(["brew", "upgrade", `${tap}/${formula}`]);
     if (!result.ok) {
-      throw new Error(
-        `brew upgrade failed: ${result.error?.message ?? `exit code ${result.exitCode}`}`,
-      );
+      throw new Error(`brew upgrade failed: ${describeSpawnFailure(result)}`);
     }
   }
 
@@ -331,9 +338,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       "--accept-source-agreements",
     ]);
     if (!result.ok) {
-      throw new Error(
-        `winget upgrade failed: ${result.error?.message ?? `exit code ${result.exitCode}`}`,
-      );
+      throw new Error(`winget upgrade failed: ${describeSpawnFailure(result)}`);
     }
   }
 
@@ -344,8 +349,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     const assetName = assetPattern.replace("{os}", OS_LABELS[os]).replace("{arch}", archLabel);
     const url = `https://github.com/${owner}/${repo}/releases/latest/download/${assetName}`;
 
-    // Downloading the release asset happens outside SpawnService (which enters long-running mode
-    // for its own subprocesses by default), so bracket it here to get the same cooperative
+    // Downloading the release asset but enter long-running mode to get cooperative
     // Ctrl-C handling during what can be the slowest step of the upgrade.
     this.#shutdownService?.enterLongRunningMode();
     let archiveData: ArrayBuffer;
