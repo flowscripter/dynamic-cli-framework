@@ -1,7 +1,12 @@
 import process from "node:process";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
-import type { SpawnResult, SpawnService } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  FetchOptions,
+  FetchService,
+  SpawnResult,
+  SpawnService,
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   VERSION_CHECK_TIMEOUT_MS,
@@ -32,17 +37,15 @@ function getSpawnService(handler: (command: ReadonlyArray<string>) => SpawnResul
   };
 }
 
+function getFetchService(
+  handler: (input: string | URL, options?: FetchOptions) => Response | Promise<Response>,
+): FetchService {
+  return {
+    fetch: (input, options) => Promise.resolve(handler(input, options)),
+  };
+}
+
 describe("DefaultUpgradeService", () => {
-  let originalFetch: typeof fetch;
-
-  beforeEach(() => {
-    originalFetch = globalThis.fetch;
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
-
   test("detectOs maps process.platform to the current OS", () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
     const expected =
@@ -89,7 +92,10 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(getSpawnService(() => ({ ok: true, exitCode: 0 })));
+    service.setDependencies(
+      getSpawnService(() => ({ ok: true, exitCode: 0 })),
+      undefined,
+    );
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
 
@@ -101,14 +107,17 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies({
-      // Mimics DefaultSpawnService's real timeoutMs handling: a stalled process resolves
-      // { ok: false, timedOut: true } once the caller-specified timeoutMs elapses.
-      spawn: (_command, options) =>
-        options?.timeoutMs === undefined
-          ? new Promise(() => {})
-          : Promise.resolve({ ok: false, timedOut: true }),
-    });
+    service.setDependencies(
+      {
+        // Mimics DefaultSpawnService's real timeoutMs handling: a stalled process resolves
+        // { ok: false, timedOut: true } once the caller-specified timeoutMs elapses.
+        spawn: (_command, options) =>
+          options?.timeoutMs === undefined
+            ? new Promise(() => {})
+            : Promise.resolve({ ok: false, timedOut: true }),
+      },
+      undefined,
+    );
     expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(
       InstallMethod.GITHUB_RELEASE,
     );
@@ -130,16 +139,15 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("checkForUpgrade reports updateAvailable when latest GitHub release is newer", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -152,16 +160,15 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("checkForUpgrade reports no update available when already latest", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ tag_name: "v0.0.0" }), { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v0.0.0" }), { status: 200 })),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -171,37 +178,39 @@ describe("DefaultUpgradeService", () => {
     expect(result?.updateAvailable).toBe(false);
   });
 
-  test("checkForUpgrade passes a bounded AbortSignal to the GitHub release lookup", async () => {
-    let receivedSignal: AbortSignal | undefined;
-    globalThis.fetch = ((_url: string, init?: RequestInit) => {
-      receivedSignal = init?.signal ?? undefined;
-      return Promise.resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }));
-    }) as unknown as typeof fetch;
-
+  test("checkForUpgrade passes VERSION_CHECK_TIMEOUT_MS as timeoutMs to the GitHub release lookup", async () => {
+    let receivedOptions: FetchOptions | undefined;
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService((_input, options) => {
+        receivedOptions = options;
+        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+      }),
     );
     await service.checkForUpgrade(
       SupportedOs.LINUX,
       SupportedArch.X64,
       InstallMethod.GITHUB_RELEASE,
     );
-    expect(receivedSignal).toBeInstanceOf(AbortSignal);
-    expect(receivedSignal?.aborted).toBe(false);
+    expect(receivedOptions?.timeoutMs).toEqual(VERSION_CHECK_TIMEOUT_MS);
   });
 
   test("checkForUpgrade returns undefined when fetch fails", async () => {
-    globalThis.fetch = (() =>
-      Promise.reject(new Error("network error"))) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => Promise.reject(new Error("network error"))),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -212,16 +221,18 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("checkForUpgrade resolves latest homebrew version from tap formula file", async () => {
-    globalThis.fetch = ((url: string) => {
-      expect(url).toEqual(
-        "https://raw.githubusercontent.com/flowscripter/homebrew-tap/main/example-cli.rb",
-      );
-      return Promise.resolve(new Response('version "v9.9.9"', { status: 200 }));
-    }) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService((url) => {
+        expect(url).toEqual(
+          "https://raw.githubusercontent.com/flowscripter/homebrew-tap/main/example-cli.rb",
+        );
+        return new Response('version "v9.9.9"', { status: 200 });
+      }),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.MACOS,
@@ -239,16 +250,15 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("upgrade returns error when SpawnService not available", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
     );
     const result = await service.upgrade(
       SupportedOs.LINUX,
@@ -260,11 +270,6 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("upgrade via homebrew invokes 'brew upgrade' and returns new version", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response('version "v9.9.9"', { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const spawnedCommands: ReadonlyArray<string>[] = [];
     const service = new DefaultUpgradeService(
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
@@ -275,6 +280,7 @@ describe("DefaultUpgradeService", () => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
       }),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
     );
 
     const result = await service.upgrade(
@@ -288,16 +294,14 @@ describe("DefaultUpgradeService", () => {
   });
 
   test("upgrade via homebrew reports failure when brew upgrade fails", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response('version "v9.9.9"', { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(getSpawnService(() => ({ ok: false, exitCode: 1 })));
+    service.setDependencies(
+      getSpawnService(() => ({ ok: false, exitCode: 1 })),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+    );
 
     const result = await service.upgrade(
       SupportedOs.MACOS,
@@ -310,16 +314,18 @@ describe("DefaultUpgradeService", () => {
 
   test("getUpgradeCheckResult caches the same promise across calls", async () => {
     let checkCount = 0;
-    globalThis.fetch = (() => {
-      checkCount++;
-      return Promise.resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 }));
-    }) as unknown as typeof fetch;
-
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => {
+        checkCount++;
+        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+      }),
     );
 
     const first = service.getUpgradeCheckResult(true);
@@ -337,7 +343,10 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch;
+    service.setDependencies(
+      undefined,
+      getFetchService(() => new Promise(() => {})),
+    );
 
     const result = await service.getUpgradeCheckResult();
     expect(result).toBeUndefined();
@@ -350,24 +359,24 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    globalThis.fetch = (() =>
-      new Promise((resolve) =>
-        setTimeout(
-          () => resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
-          VERSION_CHECK_TIMEOUT_MS + 50,
-        ),
-      )) as unknown as typeof fetch;
+    service.setDependencies(
+      undefined,
+      getFetchService(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
+              VERSION_CHECK_TIMEOUT_MS + 50,
+            ),
+          ),
+      ),
+    );
 
     const result = await service.getUpgradeCheckResult(true);
     expect(result?.latestVersion).toEqual("9.9.9");
   });
 
   test("upgrade bypasses the cached check when an override is passed", async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(
-        new Response('version "v9.9.9"', { status: 200 }),
-      )) as unknown as typeof fetch;
-
     const spawnedCommands: ReadonlyArray<string>[] = [];
     const service = new DefaultUpgradeService(
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
@@ -378,6 +387,7 @@ describe("DefaultUpgradeService", () => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
       }),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
     );
 
     // Prime the cache with default (no-override) detection, which resolves undefined since

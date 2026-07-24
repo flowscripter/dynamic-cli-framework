@@ -95,10 +95,10 @@ export default class DefaultSpawnService implements SpawnService {
     }
     const printerService = this.#printerService;
     const shutdownService = this.#shutdownService;
-    const stdio = options.stdio ?? "inherit";
+    const mode = options.mode ?? "inherit";
     const longRunning = options.longRunning ?? true;
 
-    if (stdio === "inherit") {
+    if (mode === "inherit") {
       await printerService.hideSpinner();
       await printerService.hideAllProgressBars();
     }
@@ -107,9 +107,9 @@ export default class DefaultSpawnService implements SpawnService {
     try {
       proc = Bun.spawn(resolveForPlatform(command), {
         cwd: options.cwd,
-        stdin: stdio === "wrapped" ? "ignore" : "inherit",
-        stdout: stdio === "wrapped" ? "pipe" : "inherit",
-        stderr: stdio === "wrapped" ? "pipe" : "inherit",
+        stdin: mode === "inherit" ? "inherit" : "ignore",
+        stdout: mode === "wrapped" ? "pipe" : mode === "ignore" ? "ignore" : "inherit",
+        stderr: mode === "wrapped" ? "pipe" : mode === "ignore" ? "ignore" : "inherit",
       });
     } catch (error) {
       logger.debug(() => `Failed to launch command '${command.join(" ")}': ${error}`);
@@ -129,7 +129,7 @@ export default class DefaultSpawnService implements SpawnService {
       await this.#terminate(proc, command);
     });
 
-    if (stdio === "wrapped" && options.onOutput) {
+    if (mode === "wrapped" && options.onOutput) {
       const onOutput = options.onOutput;
       void this.#pipeLines(proc.stdout, "stdout", onOutput);
       void this.#pipeLines(proc.stderr, "stderr", onOutput);

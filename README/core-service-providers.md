@@ -91,6 +91,21 @@ Provides:
   between groups, and byte-range-based color schemes for visual differentiation
   of byte value ranges.
 
+## `FetchServiceProvider`
+
+Provides:
+
+- `FetchService` allowing a `Command` to perform a `fetch()` request. Supports the same options as
+  native `fetch()` (method, headers, body, etc. via `RequestInit`) plus an optional `timeoutMs` and
+  cooperation with `ShutdownService`'s long-running mode (`longRunning: true`) so a single Ctrl-C
+  gracefully aborts the request rather than immediately exiting the CLI. A timeout rejects with a
+  `DOMException` named `"TimeoutError"`, a shutdown-triggered abort rejects with one named
+  `"AbortError"`, and a genuine network failure rejects with a `TypeError` - the same distinction
+  native `fetch()` already gives.
+
+NOTE: This service is opt-in. Enable via `fetchServiceEnabled` flag on `BaseCLI`,
+`DefaultRuntimeCLI`, or the launcher functions.
+
 ## `ImagePrinterServiceProvider`
 
 Provides:
@@ -173,12 +188,13 @@ shutdownService.leaveLongRunningMode();
 Provides:
 
 - `SpawnService` allowing a `Command` to spawn a child process. Output can
-  optionally be captured line-by-line via a callback (`stdio: "wrapped"`)
-  instead of being inherited directly by the CLI's stdout/stderr, and shutdown
-  signals are gracefully forwarded to the spawned process (SIGTERM, followed by
-  SIGKILL after a grace period if it hasn't exited). Cooperates with
-  `ShutdownService`'s long-running mode so a single Ctrl-C terminates the
-  spawned process rather than immediately exiting the CLI.
+  optionally be captured line-by-line via a callback (`mode: "wrapped"`)
+  instead of being inherited directly by the CLI's stdout/stderr, or discarded
+  entirely (`mode: "ignore"`). Shutdown signals are gracefully forwarded to the
+  spawned process (SIGTERM, followed by SIGKILL after a grace period if it
+  hasn't exited). Cooperates with `ShutdownService`'s long-running mode so a
+  single Ctrl-C terminates the spawned process rather than immediately exiting
+  the CLI.
 
 NOTE: This service is opt-in. Enable via `spawnServiceEnabled` flag on
 `BaseCLI`, `DefaultRuntimeCLI`, or the launcher functions.
@@ -240,7 +256,9 @@ Provides:
 
 NOTE: This service is opt-in. Enable via `upgradeServiceEnabled` flag (with
 `upgradeLocationsConfig` supplying the release locations) on `BaseCLI`,
-`DefaultRuntimeCLI`, or the launcher functions. Requires `SpawnServiceProvider`
-(`spawnServiceEnabled`) to also be enabled for the install/upgrade step itself
-to work; without it, upgrade availability can still be detected and reported
+`DefaultRuntimeCLI`, or the launcher functions. Requires `FetchServiceProvider`
+(`fetchServiceEnabled`) for the version-check/download fetches, and
+`SpawnServiceProvider` (`spawnServiceEnabled`) for the install/upgrade step
+itself and for the Homebrew/Winget detection and version-check spawns; without
+either, upgrade availability can still be partially detected and reported
 (e.g. by `VersionCommand`) but not installed.

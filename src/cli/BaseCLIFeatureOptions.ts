@@ -9,6 +9,7 @@ export default interface BaseCLIFeatureOptions {
   readonly completionServiceEnabled?: boolean;
   readonly imagePrinterServiceEnabled?: boolean;
   readonly spawnServiceEnabled?: boolean;
+  readonly fetchServiceEnabled?: boolean;
   readonly upgradeServiceEnabled?: boolean;
   readonly upgradeLocationsConfig?: UpgradeLocationsConfig;
   readonly validateAllCommands?: boolean;

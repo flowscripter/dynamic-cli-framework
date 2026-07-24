@@ -52,6 +52,7 @@ import DefaultCompletionService from "../service/completion/DefaultCompletionSer
 import CompletionServiceProvider from "../service/completion/CompletionServiceProvider.ts";
 import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
 import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
+import FetchServiceProvider from "../service/fetch/FetchServiceProvider.ts";
 import UpgradeServiceProvider from "../service/upgrade/UpgradeServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
@@ -72,6 +73,7 @@ const logger = getLogger("BaseCLI");
  *
  * * {@link ImagePrinterServiceProvider}
  * * {@link SpawnServiceProvider}
+ * * {@link FetchServiceProvider}
  * * {@link CompletionServiceProvider}
  * * {@link UpgradeServiceProvider}
  *
@@ -136,6 +138,7 @@ export default class BaseCLI implements CLI {
       completionServiceEnabled: false,
       imagePrinterServiceEnabled: false,
       spawnServiceEnabled: false,
+      fetchServiceEnabled: false,
       upgradeServiceEnabled: false,
       upgradeLocationsConfig: { supportedPlatforms: [] },
       validateAllCommands: false,
@@ -272,6 +275,10 @@ export default class BaseCLI implements CLI {
 
     if (this.#options.spawnServiceEnabled) {
       this.addServiceProvider(new SpawnServiceProvider(58));
+    }
+
+    if (this.#options.fetchServiceEnabled) {
+      this.addServiceProvider(new FetchServiceProvider(57));
     }
 
     if (this.#options.completionServiceEnabled) {

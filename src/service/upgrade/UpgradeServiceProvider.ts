@@ -8,8 +8,8 @@ import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { SpawnService } from "@flowscripter/dynamic-cli-framework-api";
-import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import { FETCH_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { FetchService } from "@flowscripter/dynamic-cli-framework-api";
 import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService from "./DefaultUpgradeService.ts";
@@ -44,15 +44,19 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     const upgradeService = this.#upgradeService!;
     const cliConfig = this.#cliConfig!;
 
-    if (context.doesServiceExist(SPAWN_SERVICE_ID)) {
-      const spawnService = context.getServiceById(SPAWN_SERVICE_ID) as SpawnService;
-      const shutdownService = context.doesServiceExist(SHUTDOWN_SERVICE_ID)
-        ? (context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService)
-        : undefined;
-      upgradeService.setDependencies(spawnService, shutdownService);
-    } else {
+    const spawnService = context.doesServiceExist(SPAWN_SERVICE_ID)
+      ? (context.getServiceById(SPAWN_SERVICE_ID) as SpawnService)
+      : undefined;
+    const fetchService = context.doesServiceExist(FETCH_SERVICE_ID)
+      ? (context.getServiceById(FETCH_SERVICE_ID) as FetchService)
+      : undefined;
+    if (spawnService === undefined) {
       logger.debug(() => "SpawnService not available, upgrade install methods will be unavailable");
     }
+    if (fetchService === undefined) {
+      logger.debug(() => "FetchService not available, upgrade version checks will be unavailable");
+    }
+    upgradeService.setDependencies(spawnService, fetchService);
 
     void upgradeService.getUpgradeCheckResult();
 

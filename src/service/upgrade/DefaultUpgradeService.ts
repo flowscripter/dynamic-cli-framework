@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   CLIConfig,
-  ShutdownService,
+  FetchService,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
@@ -40,7 +40,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
-  #shutdownService: ShutdownService | undefined;
+  #fetchService: FetchService | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult | undefined> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
@@ -50,9 +50,12 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#cliConfig = cliConfig;
   }
 
-  public setDependencies(spawnService: SpawnService, shutdownService?: ShutdownService): void {
+  public setDependencies(
+    spawnService: SpawnService | undefined,
+    fetchService: FetchService | undefined,
+  ): void {
     this.#spawnService = spawnService;
-    this.#shutdownService = shutdownService;
+    this.#fetchService = fetchService;
   }
 
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult | undefined> {
@@ -170,6 +173,9 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (!this.#spawnService) {
       return { ok: false, oldVersion, error: new Error("SpawnService is not available") };
     }
+    if (checkResult.installMethod === InstallMethod.GITHUB_RELEASE && !this.#fetchService) {
+      return { ok: false, oldVersion, error: new Error("FetchService is not available") };
+    }
 
     try {
       switch (checkResult.installMethod) {
@@ -204,7 +210,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const result = await this.#spawnService.spawn(
       ["brew", "list", "--versions", this.#config.homebrew.formula],
-      { stdio: "wrapped", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
+      { mode: "ignore", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
     );
     return result.ok;
   }
@@ -215,7 +221,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const result = await this.#spawnService.spawn(
       ["winget", "list", "--id", this.#config.winget.packageId],
-      { stdio: "wrapped", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
+      { mode: "ignore", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
     );
     return result.ok;
   }
@@ -239,14 +245,14 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   async #getLatestGithubReleaseVersion(): Promise<string | undefined> {
-    if (!this.#config.githubRelease) {
+    if (!this.#config.githubRelease || !this.#fetchService) {
       return undefined;
     }
     const { owner, repo } = this.#config.githubRelease;
     try {
-      const response = await fetch(
+      const response = await this.#fetchService.fetch(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { signal: AbortSignal.timeout(VERSION_CHECK_TIMEOUT_MS) },
+        { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
       );
       if (!response.ok) {
         return undefined;
@@ -260,7 +266,7 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   async #getLatestHomebrewVersion(): Promise<string | undefined> {
-    if (!this.#config.homebrew) {
+    if (!this.#config.homebrew || !this.#fetchService) {
       return undefined;
     }
     const { tap, formula } = this.#config.homebrew;
@@ -269,9 +275,9 @@ export default class DefaultUpgradeService implements UpgradeService {
       return undefined;
     }
     try {
-      const response = await fetch(
+      const response = await this.#fetchService.fetch(
         `https://raw.githubusercontent.com/${tapOwner}/homebrew-${tapName}/main/${formula}.rb`,
-        { signal: AbortSignal.timeout(VERSION_CHECK_TIMEOUT_MS) },
+        { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
       );
       if (!response.ok) {
         return undefined;
@@ -292,7 +298,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     const result = await this.#spawnService.spawn(
       ["winget", "show", "--id", this.#config.winget.packageId],
       {
-        stdio: "wrapped",
+        mode: "wrapped",
         longRunning: false,
         timeoutMs: VERSION_CHECK_TIMEOUT_MS,
         onOutput: (line) => lines.push(line),
@@ -312,7 +318,9 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaLinuxScript(): Promise<void> {
     const { scriptUrl } = this.#config.linuxScript!;
-    const result = await this.#spawnService!.spawn(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`]);
+    const result = await this.#spawnService!.spawn(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`], {
+      mode: "ignore",
+    });
     if (!result.ok) {
       throw new Error(`Install script failed: ${describeSpawnFailure(result)}`);
     }
@@ -320,7 +328,9 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaHomebrew(): Promise<void> {
     const { tap, formula } = this.#config.homebrew!;
-    const result = await this.#spawnService!.spawn(["brew", "upgrade", `${tap}/${formula}`]);
+    const result = await this.#spawnService!.spawn(["brew", "upgrade", `${tap}/${formula}`], {
+      mode: "ignore",
+    });
     if (!result.ok) {
       throw new Error(`brew upgrade failed: ${describeSpawnFailure(result)}`);
     }
@@ -328,15 +338,18 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaWinget(): Promise<void> {
     const { packageId } = this.#config.winget!;
-    const result = await this.#spawnService!.spawn([
-      "winget",
-      "upgrade",
-      "--id",
-      packageId,
-      "--silent",
-      "--accept-package-agreements",
-      "--accept-source-agreements",
-    ]);
+    const result = await this.#spawnService!.spawn(
+      [
+        "winget",
+        "upgrade",
+        "--id",
+        packageId,
+        "--silent",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+      ],
+      { mode: "ignore" },
+    );
     if (!result.ok) {
       throw new Error(`winget upgrade failed: ${describeSpawnFailure(result)}`);
     }
@@ -349,19 +362,13 @@ export default class DefaultUpgradeService implements UpgradeService {
     const assetName = assetPattern.replace("{os}", OS_LABELS[os]).replace("{arch}", archLabel);
     const url = `https://github.com/${owner}/${repo}/releases/latest/download/${assetName}`;
 
-    // Downloading the release asset but enter long-running mode to get cooperative
-    // Ctrl-C handling during what can be the slowest step of the upgrade.
-    this.#shutdownService?.enterLongRunningMode();
-    let archiveData: ArrayBuffer;
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to download release asset '${assetName}': HTTP ${response.status}`);
-      }
-      archiveData = await response.arrayBuffer();
-    } finally {
-      this.#shutdownService?.leaveLongRunningMode();
+    // longRunning: true gets cooperative Ctrl-C handling during what can be the slowest step of
+    // the upgrade.
+    const response = await this.#fetchService!.fetch(url, { longRunning: true });
+    if (!response.ok) {
+      throw new Error(`Failed to download release asset '${assetName}': HTTP ${response.status}`);
     }
+    const archiveData = await response.arrayBuffer();
 
     const tmpDir = await mkdtemp(join(tmpdir(), "upgrade-"));
     const archivePath = join(tmpDir, assetName);
@@ -370,52 +377,46 @@ export default class DefaultUpgradeService implements UpgradeService {
     const currentExecutable = process.execPath;
 
     if (os === SupportedOs.WINDOWS) {
-      const extractResult = await this.#spawnService!.spawn([
-        "powershell",
-        "-Command",
-        `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}' -Force`,
-      ]);
+      const extractResult = await this.#spawnService!.spawn(
+        [
+          "powershell",
+          "-Command",
+          `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}' -Force`,
+        ],
+        { mode: "ignore" },
+      );
       if (!extractResult.ok) {
         throw new Error("Failed to extract release archive");
       }
       const extractedBinary = join(tmpDir, `${this.#cliConfig.name}.exe`);
       const oldPath = `${currentExecutable}.old.exe`;
-      const moveResult = await this.#spawnService!.spawn([
-        "cmd",
-        "/c",
-        "move",
-        "/y",
-        currentExecutable,
-        oldPath,
-      ]);
+      const moveResult = await this.#spawnService!.spawn(
+        ["cmd", "/c", "move", "/y", currentExecutable, oldPath],
+        { mode: "ignore" },
+      );
       if (!moveResult.ok) {
         throw new Error("Failed to move current executable aside");
       }
-      const copyResult = await this.#spawnService!.spawn([
-        "cmd",
-        "/c",
-        "copy",
-        "/y",
-        extractedBinary,
-        currentExecutable,
-      ]);
+      const copyResult = await this.#spawnService!.spawn(
+        ["cmd", "/c", "copy", "/y", extractedBinary, currentExecutable],
+        { mode: "ignore" },
+      );
       if (!copyResult.ok) {
         throw new Error("Failed to copy new executable into place");
       }
     } else {
-      const extractResult = await this.#spawnService!.spawn([
-        "unzip",
-        "-o",
-        archivePath,
-        "-d",
-        tmpDir,
-      ]);
+      const extractResult = await this.#spawnService!.spawn(
+        ["unzip", "-o", archivePath, "-d", tmpDir],
+        {
+          mode: "ignore",
+        },
+      );
       if (!extractResult.ok) {
         throw new Error("Failed to extract release archive");
       }
       const extractedBinary = join(tmpDir, this.#cliConfig.name);
       await Bun.write(currentExecutable, Bun.file(extractedBinary));
-      await this.#spawnService!.spawn(["chmod", "+x", currentExecutable]);
+      await this.#spawnService!.spawn(["chmod", "+x", currentExecutable], { mode: "ignore" });
     }
   }
 }

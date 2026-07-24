@@ -112,7 +112,7 @@ describe("DefaultSpawnService tests", () => {
 
     const lines: Array<{ line: string; stream: "stdout" | "stderr" }> = [];
     const result = await service.spawn(["sh", "-c", "echo out1; echo err1 >&2"], {
-      stdio: "wrapped",
+      mode: "wrapped",
       onOutput: (line, stream) => lines.push({ line, stream }),
     });
 
@@ -185,12 +185,27 @@ describe("DefaultSpawnService tests", () => {
     service.setDependencies(printerService, shutdownService);
 
     const result = await service.spawn(["sh", "-c", "sleep 30"], {
-      stdio: "wrapped",
+      mode: "wrapped",
       longRunning: false,
       timeoutMs: 100,
     });
 
     expect(result).toEqual({ ok: false, timedOut: true });
+  });
+
+  test("spawn() with mode ignore discards output and does not touch the printer", async () => {
+    const service = new DefaultSpawnService();
+    const { printerService, state } = getFakePrinterService();
+    const { shutdownService } = getFakeShutdownService();
+    service.setDependencies(printerService, shutdownService);
+
+    const result = await service.spawn(["sh", "-c", "echo out1; echo err1 >&2"], {
+      mode: "ignore",
+    });
+
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+    expect(state.hideSpinnerCalls).toEqual(0);
+    expect(state.hideAllProgressBarsCalls).toEqual(0);
   });
 });
 
