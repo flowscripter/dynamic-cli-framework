@@ -5,8 +5,8 @@ The core `Command` implementations provided with the framework are:
 ## `PluginGroupCommand`
 
 Implementation of plugin lifecycle management (`myCli plugin ...`), backed by
-`PluginService`. Provided by `DefaultPluginServiceProvider` when plugin support
-is enabled via `DynamicPluginRuntimeCLI`. Has five sub-commands:
+`PluginService`. Provided by `PluginServiceProvider` when plugin support
+is enabled via `pluginServiceEnabled`. Has five sub-commands:
 
 - `plugin list` lists plugins currently installed in the local plugin store.
 - `plugin search <query>` searches the remote marketplace for plugins matching

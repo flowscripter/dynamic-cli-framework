@@ -190,12 +190,11 @@ export type { ServiceProviderFactory } from "@flowscripter/dynamic-cli-framework
 export { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "@flowscripter/dynamic-cli-framework-api";
 export { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
-export { default as DefaultPluginServiceProvider } from "./src/service/plugin/DefaultPluginServiceProvider.ts";
+export { default as PluginServiceProvider } from "./src/service/plugin/PluginServiceProvider.ts";
 
 // Core CLI
 export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
 export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
-export { default as DynamicPluginRuntimeCLI } from "./src/cli/DynamicPluginRuntimeCLI.ts";
 
 // Terminal API
 export type { default as Terminal } from "./src/terminal/Terminal.ts";
@@ -205,8 +204,4 @@ export { SpecialKey } from "./src/terminal/KeyReader.ts";
 export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
-export {
-  launchDynamicPluginMultiCommandCLI,
-  launchMultiCommandCLI,
-  launchSingleCommandCLI,
-} from "./src/launcher.ts";
+export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";

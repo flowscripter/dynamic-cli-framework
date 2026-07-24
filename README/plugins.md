@@ -118,37 +118,64 @@ special handling.
 
 ## Enabling plugin support in a CLI
 
-Use `DynamicPluginRuntimeCLI` or the `launchDynamicPluginMultiCommandCLI` convenience
-function instead of their non-plugin counterparts:
+Enable `pluginServiceEnabled` (with `pluginServiceRemoteConfig` and `pluginServiceLocalConfig`)
+on `launchMultiCommandCLI`, `launchSingleCommandCLI`, `BaseCLI`, or `DefaultRuntimeCLI`:
 
 ```ts
-import { launchDynamicPluginMultiCommandCLI } from "@flowscripter/dynamic-cli-framework";
-import {
-  NpmPluginManager,
-  NpmPluginRepository,
-  NpmjsPluginRepository,
-} from "@flowscripter/dynamic-plugin-framework";
+import { launchMultiCommandCLI } from "@flowscripter/dynamic-cli-framework";
 import path from "node:path";
 import os from "node:os";
 
 const pluginsDir = path.join(os.homedir(), ".my-cli", "plugins", "node_modules");
-const pluginManager = new NpmPluginManager(
-  [new NpmjsPluginRepository("mypluginframework")],
-  new NpmPluginRepository(pluginsDir, "mypluginframework"),
-);
 
-await launchDynamicPluginMultiCommandCLI(
-  pluginManager,
+await launchMultiCommandCLI(
   [myCommand],
   "My CLI description",
   "my-cli",
   packageJson.version,
+  undefined,
+  {
+    pluginServiceEnabled: true,
+    pluginServiceRemoteConfig: {
+      name: "npmjs",
+      registryUrl: "https://registry.npmjs.org",
+      packageJsonNamespace: "mypluginframework",
+    },
+    pluginServiceLocalConfig: {
+      nodeModulesPath: pluginsDir,
+      packageJsonNamespace: "mypluginframework",
+    },
+  },
 );
 ```
 
-The `NpmjsPluginRepository` keyword (`"mypluginframework"` above) is used to
-filter npm packages on the registry. Plugins should include this keyword in
-their `package.json` so they appear in search results.
+The `packageJsonNamespace` (`"mypluginframework"` above) is used to filter npm packages on the
+registry and to identify installed plugin packages locally. Plugins should include this
+namespace as a keyword in their `package.json` so they appear in search results.
+
+### Overriding the default plugin repository configuration
+
+An end user of the CLI can override the CLI author's default `pluginServiceRemoteConfig` and
+`pluginServiceLocalConfig` via the CLI's JSON configuration file (see `ConfigurationServiceProvider`
+for the full configuration file format), under the `key-values` property scoped to the
+`PluginServiceProvider`'s service ID (`PLUGIN_SERVICE`):
+
+```jsonc
+{
+  "key-values": {
+    "services": {
+      "PLUGIN_SERVICE": {
+        "remotes-config": "[{\"name\":\"npmjs\",\"registryUrl\":\"https://registry.npmjs.org\",\"packageJsonNamespace\":\"mypluginframework\"}]",
+        "local-config": "{\"nodeModulesPath\":\"/home/user/.my-cli/plugins/node_modules\",\"packageJsonNamespace\":\"mypluginframework\"}",
+      },
+    },
+  },
+}
+```
+
+`remotes-config` is a JSON-encoded array of `NpmjsPluginRepositoryConfig` (allowing more than one
+remote repository to be configured) and `local-config` is a JSON-encoded `NpmPluginRepositoryConfig`.
+Both values are read once, on startup, and replace the CLI author's defaults for that run.
 
 ## Plugin management commands
 

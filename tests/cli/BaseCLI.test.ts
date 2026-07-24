@@ -23,6 +23,7 @@ import NonTtyTerminal from "../../src/terminal/NonTtyTerminal.ts";
 import TtyStyler from "../../src/terminal/TtyStyler.ts";
 import type KeyReader from "../../src/terminal/KeyReader.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 const mockKeyReader: KeyReader = {
   enableRawMode() {},
@@ -410,5 +411,47 @@ describe("BaseCLI tests", () => {
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(serviceExists).toBeFalse();
+  });
+
+  test("BaseCLI with pluginServiceEnabled registers PluginServiceProvider and its command", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      {
+        pluginServiceEnabled: true,
+        pluginServiceRemoteConfig: {
+          name: "test-remote",
+          registryUrl: "https://registry.npmjs.org",
+          packageJsonNamespace: "test-ns",
+        },
+        pluginServiceLocalConfig: {
+          nodeModulesPath: "/tmp/nonexistent-plugin-service-provider-test/node_modules",
+          packageJsonNamespace: "test-ns",
+        },
+      },
+    );
+
+    const command = getSubCommand("command", [], []);
+    let serviceExists: boolean | undefined;
+    command.execute = (context): Promise<void> => {
+      serviceExists = context.doesServiceExist(PLUGIN_SERVICE_ID);
+      return Promise.resolve();
+    };
+    baseCLI.addCommand(command);
+
+    const runResult = await baseCLI.run(["command"]);
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(serviceExists).toBeTrue();
   });
 });
