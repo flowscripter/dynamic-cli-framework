@@ -45,7 +45,7 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
 
     const result = await this.#spawnService.spawn(command, {
       cwd: options.cwd,
-      stdio: "wrapped",
+      mode: "wrapped",
       onOutput,
     });
 

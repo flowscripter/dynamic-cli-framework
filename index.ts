@@ -78,6 +78,11 @@ export type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 export { default as DefaultShutdownService } from "./src/service/shutdown/DefaultShutdownService.ts";
 export { default as ShutdownServiceProvider } from "./src/service/shutdown/ShutdownServiceProvider.ts";
 
+export { FETCH_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type { FetchOptions, FetchService } from "@flowscripter/dynamic-cli-framework-api";
+export { default as DefaultFetchService } from "./src/service/fetch/DefaultFetchService.ts";
+export { default as FetchServiceProvider } from "./src/service/fetch/FetchServiceProvider.ts";
+
 export { SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type {
   SpawnOptions,
