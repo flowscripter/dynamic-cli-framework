@@ -61,8 +61,8 @@ export default class CompletionServiceProvider implements ServiceProvider {
     }
 
     const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
-    if (await keyValueService.hasKey("completion-status")) {
-      const status = await keyValueService.getKey("completion-status");
+    if (await keyValueService.has("completion-status")) {
+      const status = await keyValueService.get("completion-status");
       if (status === "installed" || status === "declined") {
         logger.debug(() => `Completion status is '${status}', skipping auto-prompt`);
         return;
@@ -99,7 +99,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
     }
 
     if (enableResult.value !== true) {
-      await keyValueService.setKey("completion-status", "declined");
+      await keyValueService.set("completion-status", "declined");
       return;
     }
 
@@ -131,7 +131,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
 
     try {
       await this.#installCompletion(context, shellType);
-      await keyValueService.setKey("completion-status", "installed");
+      await keyValueService.set("completion-status", "installed");
     } catch (error) {
       if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
         const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;

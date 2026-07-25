@@ -146,14 +146,14 @@ describe("PluginServiceProvider", () => {
     const context = new DefaultContext(getCLIConfig());
     let hasKeyCalled = false;
     const keyValueService: KeyValueService = {
-      hasKey: (key: string) => {
+      has: (key: string) => {
         if (key === "remotes-config" || key === "local-config") {
           hasKeyCalled = true;
         }
         return Promise.resolve(false);
       },
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
     } as unknown as KeyValueService;
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, keyValueService);
 

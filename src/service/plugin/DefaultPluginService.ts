@@ -33,16 +33,16 @@ export default class DefaultPluginService implements PluginService {
 
   async applyKeyValueOverrides(keyValueService: KeyValueService): Promise<void> {
     let remotesConfig: NpmjsPluginRepositoryConfig[] = [this.#defaultRemoteConfig];
-    if (await keyValueService.hasKey("remotes-config")) {
-      remotesConfig = JSON.parse(
-        await keyValueService.getKey("remotes-config"),
-      ) as NpmjsPluginRepositoryConfig[];
+    if (await keyValueService.has("remotes-config")) {
+      remotesConfig = (await keyValueService.get(
+        "remotes-config",
+      )) as unknown as NpmjsPluginRepositoryConfig[];
     }
     let localConfig: NpmPluginRepositoryConfig = this.#defaultLocalConfig;
-    if (await keyValueService.hasKey("local-config")) {
-      localConfig = JSON.parse(
-        await keyValueService.getKey("local-config"),
-      ) as NpmPluginRepositoryConfig;
+    if (await keyValueService.has("local-config")) {
+      localConfig = (await keyValueService.get(
+        "local-config",
+      )) as unknown as NpmPluginRepositoryConfig;
     }
     this.#pluginManager = new NpmPluginManager(
       remotesConfig.map((config) => new NpmjsPluginRepository(config)),

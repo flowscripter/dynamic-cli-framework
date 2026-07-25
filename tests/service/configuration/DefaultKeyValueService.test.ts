@@ -16,8 +16,8 @@ describe("DefaultKeyValueService tests", () => {
 
     keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
 
-    expect(await keyValueService.hasKey("foo")).toBeTrue();
-    expect(await keyValueService.getKey("foo")).toEqual("bar");
+    expect(await keyValueService.has("foo")).toBeTrue();
+    expect(await keyValueService.get("foo")).toEqual("bar");
   });
 
   test("Cannot set data without clearing", () => {
@@ -33,17 +33,17 @@ describe("DefaultKeyValueService tests", () => {
   test("Cannot modify data before setting it", async () => {
     const keyValueService = new DefaultKeyValueService();
 
-    expect(keyValueService.setKey("foo", "bar")).rejects.toThrow();
-    expect(keyValueService.hasKey("foo")).rejects.toThrow();
-    expect(keyValueService.getKey("foo")).rejects.toThrow();
-    expect(keyValueService.deleteKey("foo")).rejects.toThrow();
+    expect(keyValueService.set("foo", "bar")).rejects.toThrow();
+    expect(keyValueService.has("foo")).rejects.toThrow();
+    expect(keyValueService.get("foo")).rejects.toThrow();
+    expect(keyValueService.delete("foo")).rejects.toThrow();
 
     keyValueService.setKeyValueData(new Map());
 
-    await keyValueService.setKey("foo", "bar");
-    expect(await keyValueService.hasKey("foo")).toBeTrue();
-    expect(await keyValueService.getKey("foo")).toEqual("bar");
-    await keyValueService.deleteKey("foo");
+    await keyValueService.set("foo", "bar");
+    expect(await keyValueService.has("foo")).toBeTrue();
+    expect(await keyValueService.get("foo")).toEqual("bar");
+    await keyValueService.delete("foo");
   });
 
   test("Dirty state is managed correctly", async () => {
@@ -55,7 +55,7 @@ describe("DefaultKeyValueService tests", () => {
 
     expect(keyValueService.isDirty()).toBeFalse();
 
-    await keyValueService.setKey("foo", "bar");
+    await keyValueService.set("foo", "bar");
 
     expect(keyValueService.isDirty()).toBeTrue();
 
@@ -67,43 +67,41 @@ describe("DefaultKeyValueService tests", () => {
 
     expect(keyValueService.isDirty()).toBeFalse();
 
-    await keyValueService.deleteKey("foo");
+    await keyValueService.delete("foo");
 
     expect(keyValueService.isDirty()).toBeTrue();
   });
 
-  test("setKey with isSecret=true throws without secret service", async () => {
+  test("set with isSecret=true throws without secret service", async () => {
     const keyValueService = new DefaultKeyValueService();
     keyValueService.setKeyValueData(new Map());
 
-    await expect(keyValueService.setKey("token", "secret", true)).rejects.toThrow(
-      "no secret service",
-    );
+    await expect(keyValueService.set("token", "secret", true)).rejects.toThrow("no secret service");
   });
 
-  test("setKey with isSecret=true stores sentinel", async () => {
+  test("set with isSecret=true stores sentinel", async () => {
     const mockApi = createMockSecretsApi();
     const secretService = new DefaultSecretService("test-cli", mockApi);
     secretService.setScope("command_test");
     const keyValueService = new DefaultKeyValueService(secretService);
     keyValueService.setKeyValueData(new Map());
 
-    await keyValueService.setKey("token", "my-secret", true);
+    await keyValueService.set("token", "my-secret", true);
 
-    expect(await keyValueService.hasKey("token")).toBeTrue();
+    expect(await keyValueService.has("token")).toBeTrue();
     expect(keyValueService.isDirty()).toBeTrue();
     expect(mockApi.set).toHaveBeenCalledTimes(1);
   });
 
-  test("getKey resolves secret sentinel", async () => {
+  test("get resolves secret sentinel", async () => {
     const mockApi = createMockSecretsApi();
     const secretService = new DefaultSecretService("test-cli", mockApi);
     secretService.setScope("command_test");
     const keyValueService = new DefaultKeyValueService(secretService);
     keyValueService.setKeyValueData(new Map([["token", "__SECRET__:command_test_token"]]));
 
-    mockApi.get.mockResolvedValueOnce("resolved-secret");
-    const value = await keyValueService.getKey("token");
+    mockApi.get.mockResolvedValueOnce(JSON.stringify("resolved-secret"));
+    const value = await keyValueService.get("token");
     expect(value).toEqual("resolved-secret");
     expect(mockApi.get).toHaveBeenCalledWith({
       service: "test_cli",
@@ -111,7 +109,7 @@ describe("DefaultKeyValueService tests", () => {
     });
   });
 
-  test("getKey throws when secret not found in OS store", async () => {
+  test("get throws when secret not found in OS store", async () => {
     const mockApi = createMockSecretsApi();
     const secretService = new DefaultSecretService("test-cli", mockApi);
     secretService.setScope("command_test");
@@ -119,37 +117,83 @@ describe("DefaultKeyValueService tests", () => {
     keyValueService.setKeyValueData(new Map([["token", "__SECRET__:command_test_token"]]));
 
     mockApi.get.mockResolvedValueOnce(null);
-    await expect(keyValueService.getKey("token")).rejects.toThrow("Secret not found");
+    await expect(keyValueService.get("token")).rejects.toThrow("Secret not found");
   });
 
-  test("getKey with sentinel throws without secret service", async () => {
+  test("get with sentinel throws without secret service", async () => {
     const keyValueService = new DefaultKeyValueService();
     keyValueService.setKeyValueData(new Map([["token", "__SECRET__:command_test_token"]]));
 
-    await expect(keyValueService.getKey("token")).rejects.toThrow("no secret service");
+    await expect(keyValueService.get("token")).rejects.toThrow("no secret service");
   });
 
-  test("deleteKey removes secret from OS store", async () => {
+  test("delete removes secret from OS store", async () => {
     const mockApi = createMockSecretsApi();
     const secretService = new DefaultSecretService("test-cli", mockApi);
     secretService.setScope("command_test");
     const keyValueService = new DefaultKeyValueService(secretService);
     keyValueService.setKeyValueData(new Map([["token", "__SECRET__:command_test_token"]]));
 
-    await keyValueService.deleteKey("token");
+    await keyValueService.delete("token");
     expect(mockApi.delete).toHaveBeenCalledWith({
       service: "test_cli",
       name: "command_test_token",
     });
-    expect(await keyValueService.hasKey("token")).toBeFalse();
+    expect(await keyValueService.has("token")).toBeFalse();
     expect(keyValueService.isDirty()).toBeTrue();
   });
 
-  test("deleteKey works for non-secret values", async () => {
+  test("delete works for non-secret values", async () => {
     const keyValueService = new DefaultKeyValueService();
     keyValueService.setKeyValueData(new Map([["foo", "bar"]]));
 
-    await keyValueService.deleteKey("foo");
-    expect(await keyValueService.hasKey("foo")).toBeFalse();
+    await keyValueService.delete("foo");
+    expect(await keyValueService.has("foo")).toBeFalse();
+  });
+
+  test("set with isSecret=true stores a non-string (object) value, get recovers it", async () => {
+    const mockApi = createMockSecretsApi();
+    const secretService = new DefaultSecretService("test-cli", mockApi);
+    secretService.setScope("command_test");
+    const keyValueService = new DefaultKeyValueService(secretService);
+    keyValueService.setKeyValueData(new Map());
+
+    const original = { user: "alice", tokens: [1, 2, 3], nested: { active: true } };
+    await keyValueService.set("creds", original, true);
+
+    expect(mockApi.set).toHaveBeenCalledTimes(1);
+    const setCall = mockApi.set.mock.calls[0] as unknown as [{ value: string }];
+    expect(JSON.parse(setCall[0].value)).toEqual(original);
+
+    mockApi.get.mockResolvedValueOnce(setCall[0].value);
+    const recovered = await keyValueService.get("creds");
+    expect(recovered).toEqual(original);
+  });
+
+  test("get recursively resolves a hand-embedded nested sentinel in a plain object value", async () => {
+    const mockApi = createMockSecretsApi();
+    const secretService = new DefaultSecretService("test-cli", mockApi);
+    secretService.setScope("command_test");
+    const keyValueService = new DefaultKeyValueService(secretService);
+    keyValueService.setKeyValueData(
+      new Map([
+        [
+          "config",
+          {
+            plain: "value",
+            list: ["a", "__SECRET__:command_test_nested"],
+            nested: { token: "__SECRET__:command_test_nested" },
+          },
+        ],
+      ]),
+    );
+
+    mockApi.get.mockResolvedValue("resolved-nested-secret");
+    const value = await keyValueService.get("config");
+    expect(value).toEqual({
+      plain: "value",
+      list: ["a", "resolved-nested-secret"],
+      nested: { token: "resolved-nested-secret" },
+    });
   });
 });

@@ -18,11 +18,11 @@ function getLocalConfig(): NpmPluginRepositoryConfig {
   return { nodeModulesPath: "/tmp/default/node_modules", packageJsonNamespace: "ns" };
 }
 
-function makeKeyValueService(data: Record<string, string>): KeyValueService {
+function makeKeyValueService(data: Record<string, unknown>): KeyValueService {
   return {
-    hasKey: (key: string) => Promise.resolve(key in data),
-    getKey: (key: string) => Promise.resolve(data[key] ?? ""),
-    setKey: () => Promise.resolve(),
+    has: (key: string) => Promise.resolve(key in data),
+    get: (key: string) => Promise.resolve(data[key]),
+    set: () => Promise.resolve(),
   } as unknown as KeyValueService;
 }
 
@@ -45,9 +45,7 @@ describe("DefaultPluginService", () => {
     const remotesConfig: NpmjsPluginRepositoryConfig[] = [
       { name: "override-remote", registryUrl: "https://example.com", packageJsonNamespace: "ns2" },
     ];
-    await service.applyKeyValueOverrides(
-      makeKeyValueService({ "remotes-config": JSON.stringify(remotesConfig) }),
-    );
+    await service.applyKeyValueOverrides(makeKeyValueService({ "remotes-config": remotesConfig }));
     expect(service.pluginManager).toBeDefined();
   });
 
@@ -57,9 +55,7 @@ describe("DefaultPluginService", () => {
       nodeModulesPath: "/tmp/override/node_modules",
       packageJsonNamespace: "ns2",
     };
-    await service.applyKeyValueOverrides(
-      makeKeyValueService({ "local-config": JSON.stringify(localConfig) }),
-    );
+    await service.applyKeyValueOverrides(makeKeyValueService({ "local-config": localConfig }));
     expect(service.pluginManager).toBeDefined();
   });
 
@@ -74,8 +70,8 @@ describe("DefaultPluginService", () => {
     };
     await service.applyKeyValueOverrides(
       makeKeyValueService({
-        "remotes-config": JSON.stringify(remotesConfig),
-        "local-config": JSON.stringify(localConfig),
+        "remotes-config": remotesConfig,
+        "local-config": localConfig,
       }),
     );
     expect(service.pluginManager).toBeDefined();

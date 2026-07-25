@@ -1,9 +1,10 @@
-import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
+import type { KeyValueData, KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
 import type DefaultSecretService from "./DefaultSecretService.ts";
+import resolveSecrets from "./resolveSecrets.ts";
 
 export default class DefaultKeyValueService implements KeyValueService {
-  #keyValueData: Map<string, string> | undefined;
+  #keyValueData: Map<string, KeyValueData> | undefined;
   #dirty = false;
   readonly #secretService: DefaultSecretService | undefined;
 
@@ -11,7 +12,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     this.#secretService = secretService;
   }
 
-  public setKeyValueData(keyValueData: Map<string, string>) {
+  public setKeyValueData(keyValueData: Map<string, KeyValueData>) {
     if (this.#keyValueData) {
       throw new Error("Attempt to overwrite key-value data, it should be cleared first");
     }
@@ -28,7 +29,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     return this.#dirty;
   }
 
-  public async getKey(key: string): Promise<string> {
+  public async get<T extends KeyValueData = KeyValueData>(key: string): Promise<T> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
@@ -37,29 +38,35 @@ export default class DefaultKeyValueService implements KeyValueService {
       throw new Error("Attempt to access unknown key");
     }
 
-    if (value.startsWith(SECRET_SENTINEL_PREFIX)) {
+    const resolveSecret = async (bunSecretName: string): Promise<string> => {
       if (!this.#secretService) {
         throw new Error("Secret sentinel found but no secret service is available");
       }
-      const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
       const secretValue = await this.#secretService.getSecret(bunSecretName);
       if (secretValue === null) {
         throw new Error(`Secret not found in OS secret store for key: '${key}'`);
       }
       return secretValue;
+    };
+
+    let resolvedValue: KeyValueData = value;
+    if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
+      const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
+      const secretValue = await resolveSecret(bunSecretName);
+      resolvedValue = JSON.parse(secretValue) as KeyValueData;
     }
 
-    return value;
+    return (await resolveSecrets(resolvedValue, resolveSecret)) as T;
   }
 
-  public hasKey(key: string): Promise<boolean> {
+  public has(key: string): Promise<boolean> {
     if (this.#keyValueData === undefined) {
       return Promise.reject(new Error("Attempt to access undefined key-value data"));
     }
     return Promise.resolve(this.#keyValueData.has(key));
   }
 
-  public async setKey(key: string, value: string, isSecret = false): Promise<void> {
+  public async set(key: string, value: KeyValueData, isSecret = false): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
@@ -67,7 +74,7 @@ export default class DefaultKeyValueService implements KeyValueService {
       if (!this.#secretService) {
         throw new Error("Attempt to set a secret but no secret service is available");
       }
-      const bunSecretName = await this.#secretService.setSecret(key, value);
+      const bunSecretName = await this.#secretService.setSecret(key, JSON.stringify(value));
       this.#keyValueData.set(key, SECRET_SENTINEL_PREFIX + bunSecretName);
     } else {
       this.#keyValueData.set(key, value);
@@ -75,12 +82,12 @@ export default class DefaultKeyValueService implements KeyValueService {
     this.#dirty = true;
   }
 
-  public async deleteKey(key: string): Promise<void> {
+  public async delete(key: string): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
     const value = this.#keyValueData.get(key);
-    if (value !== undefined && value.startsWith(SECRET_SENTINEL_PREFIX)) {
+    if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
       if (this.#secretService) {
         const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
         await this.#secretService.deleteSecret(bunSecretName);

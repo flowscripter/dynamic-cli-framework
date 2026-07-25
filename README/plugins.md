@@ -165,16 +165,26 @@ for the full configuration file format), under the `key-values` property scoped 
   "key-values": {
     "services": {
       "PLUGIN_SERVICE": {
-        "remotes-config": "[{\"name\":\"npmjs\",\"registryUrl\":\"https://registry.npmjs.org\",\"packageJsonNamespace\":\"mypluginframework\"}]",
-        "local-config": "{\"nodeModulesPath\":\"/home/user/.my-cli/plugins/node_modules\",\"packageJsonNamespace\":\"mypluginframework\"}",
+        "remotes-config": [
+          {
+            "name": "npmjs",
+            "registryUrl": "https://registry.npmjs.org",
+            "packageJsonNamespace": "mypluginframework",
+          },
+        ],
+        "local-config": {
+          "nodeModulesPath": "/home/user/.my-cli/plugins/node_modules",
+          "packageJsonNamespace": "mypluginframework",
+        },
       },
     },
   },
 }
 ```
 
-`remotes-config` is a JSON-encoded array of `NpmjsPluginRepositoryConfig` (allowing more than one
-remote repository to be configured) and `local-config` is a JSON-encoded `NpmPluginRepositoryConfig`.
+`remotes-config` is an array of `NpmjsPluginRepositoryConfig` (allowing more than one remote
+repository to be configured) and `local-config` is a `NpmPluginRepositoryConfig`, both stored
+directly as nested JSON (the `KeyValueService` supports arbitrary JSON values, not just strings).
 Both values are read once, on startup, and replace the CLI author's defaults for that run.
 
 ## Plugin management commands

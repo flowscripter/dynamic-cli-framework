@@ -7,6 +7,7 @@ import ConfigCommand from "./command/ConfigCommand.ts";
 import type {
   ArgumentSingleValueType,
   ArgumentValues,
+  KeyValueData,
   PopulatedArgumentValues,
   PopulatedArgumentValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
@@ -19,6 +20,7 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
 import DefaultSecretService from "./DefaultSecretService.ts";
+import resolveSecrets from "./resolveSecrets.ts";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import argumentValueMerge from "../../runtime/values/argumentValueMerge.ts";
 import {
@@ -129,13 +131,19 @@ const logger = getLogger("ConfigurationServiceProvider");
  *
  * The second and third level of properties is used to scope the key-values to specific command names
  * (via {@link Command.name} values) and specific service IDs (via {@link ServiceProvider.serviceId} values).
- * Both keys and values are string based.
+ * Keys are strings, but values are arbitrary JSON (see {@link KeyValueData}) - not limited to strings -
+ * and may be deep objects or arrays.
  *
- * Values may be stored as OS-native secrets via {@link KeyValueService.setKey} with `isSecret=true`.
- * When a value is stored as a secret, a sentinel value of the format `__SECRET__:<bun_secret_name>`
- * is stored in the config file instead of the actual value. The actual value is stored in the OS
- * credential store via Bun.secrets. The sentinel prefix `__SECRET__:` is reserved and must not be
- * used for regular key-value data.
+ * Values may be stored as OS-native secrets via {@link KeyValueService.set} with `isSecret=true`.
+ * When a value is stored as a secret, the entire value (of any shape) is JSON-serialized and stored
+ * as a single OS-native secret via Bun.secrets, with a sentinel value of the format
+ * `__SECRET__:<bun_secret_name>` stored in the config file in its place. The sentinel prefix
+ * `__SECRET__:` is reserved and must not be used for regular key-value data.
+ *
+ * Independently of how a value was written, {@link KeyValueService.get} recursively resolves any
+ * string leaf - at any depth within the retrieved value - which starts with the sentinel prefix,
+ * via the OS secret store. This means a secret reference may also be hand-embedded (nested
+ * arbitrarily deep) directly within a plain, non-secret value in the config file.
  *
  * Secret support requires `secretServiceEnabled=true` in the constructor (which also requires
  * `configEnabled=true`).
@@ -150,7 +158,10 @@ const logger = getLogger("ConfigurationServiceProvider");
  *        "commands": {
  *            "command1": {
  *               "foo1": "bar1",
- *               "foo2": "__SECRET__:command_command1_foo2"
+ *               "foo2": "__SECRET__:command_command1_foo2",
+ *               "foo3": {
+ *                   "nested": ["a", "__SECRET__:command_command1_foo3_nested"]
+ *               }
  *            },
  *            "command2": {
  *                "foo1": "bar3"
@@ -184,11 +195,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
-  #commandKeyValueData = new Map<string, Map<string, string>>();
+  #commandKeyValueData = new Map<string, Map<string, KeyValueData>>();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating service scoped access to key-value data via the key-value service.
-  #serviceKeyValueData = new Map<string, Map<string, string>>();
+  #serviceKeyValueData = new Map<string, Map<string, KeyValueData>>();
 
   // the optional service providing scope limited key-value data to commands and other services
   #defaultKeyValueService: DefaultKeyValueService | undefined;
@@ -301,38 +312,21 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     }
 
     if (result !== undefined && this.#defaultSecretService) {
-      result = await this.#resolveSecrets(result);
+      result = await resolveSecrets<PopulatedArgumentValues | PopulatedArgumentValueType>(
+        result,
+        async (bunSecretName) => {
+          const secretValue = await this.#defaultSecretService!.getSecret(bunSecretName);
+          if (secretValue === null) {
+            throw new Error(
+              `Secret not found in OS secret store for sentinel: '${SECRET_SENTINEL_PREFIX}${bunSecretName}'`,
+            );
+          }
+          return secretValue;
+        },
+      );
     }
 
     return result;
-  }
-
-  async #resolveSecrets(
-    value: PopulatedArgumentValues | PopulatedArgumentValueType,
-  ): Promise<PopulatedArgumentValues | PopulatedArgumentValueType> {
-    if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
-      const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
-      const secretValue = await this.#defaultSecretService!.getSecret(bunSecretName);
-      if (secretValue === null) {
-        throw new Error(`Secret not found in OS secret store for sentinel: '${value}'`);
-      }
-      return secretValue;
-    }
-    if (typeof value === "object" && value !== null) {
-      if (Array.isArray(value)) {
-        const resolved = [];
-        for (const item of value) {
-          resolved.push(await this.#resolveSecrets(item));
-        }
-        return resolved as unknown as PopulatedArgumentValues;
-      }
-      const resolved: Record<string, unknown> = {};
-      for (const [key, val] of Object.entries(value)) {
-        resolved[key] = await this.#resolveSecrets(val as PopulatedArgumentValueType);
-      }
-      return resolved as unknown as PopulatedArgumentValues;
-    }
-    return value;
   }
 
   /**
@@ -542,8 +536,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     const config: {
       defaults?: Record<string, ArgumentValues | ArgumentSingleValueType>;
       "key-values"?: {
-        commands?: Record<string, Record<string, string>>;
-        services?: Record<string, Record<string, string>>;
+        commands?: Record<string, Record<string, KeyValueData>>;
+        services?: Record<string, Record<string, KeyValueData>>;
       };
     } = {};
 

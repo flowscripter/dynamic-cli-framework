@@ -69,10 +69,10 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: (key: string) => Promise.resolve(key === "completion-status"),
-      getKey: () => Promise.resolve("installed"),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: (key: string) => Promise.resolve(key === "completion-status"),
+      get: () => Promise.resolve("installed"),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
@@ -89,10 +89,10 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: (key: string) => Promise.resolve(key === "completion-status"),
-      getKey: () => Promise.resolve("declined"),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: (key: string) => Promise.resolve(key === "completion-status"),
+      get: () => Promise.resolve("declined"),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
@@ -109,10 +109,10 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
@@ -135,10 +135,10 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await provider.initService(context);
@@ -161,14 +161,14 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: (key: string, value: string) => {
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: (key: string, value: string) => {
         storedKey = key;
         storedValue = value;
         return Promise.resolve();
       },
-      deleteKey: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await provider.initService(context);
@@ -199,13 +199,13 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: (key: string, value: string) => {
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: (key: string, value: string) => {
         storedEntries.push({ key, value });
         return Promise.resolve();
       },
-      deleteKey: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     let infoMessage = "";
@@ -257,13 +257,13 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: (key: string, value: string) => {
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: (key: string, value: string) => {
         storedEntries.push({ key, value });
         return Promise.resolve();
       },
-      deleteKey: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     let infoMessage = "";
@@ -312,10 +312,10 @@ describe("CompletionServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance("@flowscripter/dynamic-cli-framework/key-value-service", {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     let errorMessage = "";
