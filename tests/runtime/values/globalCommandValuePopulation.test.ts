@@ -3,14 +3,11 @@ import type { GlobalCommandValuePopulationResult } from "../../../src/runtime/va
 import populateGlobalCommandValue from "../../../src/runtime/values/globalCommandValuePopulation.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectExtractResult(
   result: GlobalCommandValuePopulationResult,
-  value: ArgumentSingleValueType | undefined,
+  value: SingleValueType | undefined,
   unusedArgs: ReadonlyArray<string>,
 ) {
   expect(result.populatedArgumentValue).toEqual(value!);
@@ -22,7 +19,7 @@ describe("globalCommandValuePopulation tests", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -36,7 +33,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.NUMBER,
+        type: ValueTypeName.NUMBER,
       },
       execute: async (): Promise<void> => {},
     };
@@ -48,7 +45,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.INTEGER,
+        type: ValueTypeName.INTEGER,
       },
       execute: async (): Promise<void> => {},
     };
@@ -60,7 +57,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.SECRET,
+        type: ValueTypeName.SECRET,
       },
       execute: async (): Promise<void> => {},
     };
@@ -72,7 +69,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -84,7 +81,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -102,7 +99,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -114,7 +111,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -126,7 +123,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -138,7 +135,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: true,
       },
       execute: async (): Promise<void> => {},
@@ -151,7 +148,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: true,
       },
       execute: async (): Promise<void> => {},
@@ -164,7 +161,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: false,
       },
       execute: async (): Promise<void> => {},
@@ -177,7 +174,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: false,
       },
       execute: async (): Promise<void> => {},
@@ -190,7 +187,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: false,
       },
       execute: async (): Promise<void> => {},
@@ -205,7 +202,7 @@ describe("globalCommandValuePopulation tests", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -227,7 +224,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -242,7 +239,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: true,
       },
       execute: async (): Promise<void> => {},
@@ -255,7 +252,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         defaultValue: "bar",
       },
       execute: async (): Promise<void> => {},
@@ -270,7 +267,7 @@ describe("globalCommandValuePopulation tests", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -284,7 +281,7 @@ describe("globalCommandValuePopulation tests", () => {
     const command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -298,7 +295,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.NUMBER,
+        type: ValueTypeName.NUMBER,
         defaultValue: 0,
       },
       execute: async (): Promise<void> => {},
@@ -310,7 +307,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         defaultValue: "foo",
       },
       execute: async (): Promise<void> => {},
@@ -323,7 +320,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: false,
       },
       execute: async (): Promise<void> => {},
@@ -338,7 +335,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.NUMBER,
+        type: ValueTypeName.NUMBER,
       },
       execute: async (): Promise<void> => {},
     };
@@ -350,7 +347,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -362,7 +359,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -374,7 +371,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
       execute: async (): Promise<void> => {},
     };
@@ -388,7 +385,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.NUMBER,
+        type: ValueTypeName.NUMBER,
         defaultValue: 0,
       },
       execute: async (): Promise<void> => {},
@@ -401,7 +398,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         defaultValue: "foo",
       },
       execute: async (): Promise<void> => {},
@@ -414,7 +411,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: false,
       },
       execute: async (): Promise<void> => {},
@@ -427,7 +424,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: true,
       },
       execute: async (): Promise<void> => {},
@@ -442,7 +439,7 @@ describe("globalCommandValuePopulation tests", () => {
     let command: GlobalCommand = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       execute: async (): Promise<void> => {},
     };
@@ -454,7 +451,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: true,
       },
       execute: async (): Promise<void> => {},
@@ -467,7 +464,7 @@ describe("globalCommandValuePopulation tests", () => {
     command = {
       name: "foo",
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         defaultValue: "bar",
       },
       execute: async (): Promise<void> => {},

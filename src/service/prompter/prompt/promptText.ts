@@ -1,5 +1,5 @@
 import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
+import type { SingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
 import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
 import { renderPromptHeader } from "./PromptContext.ts";
@@ -52,7 +52,7 @@ export default async function promptText(
         continue;
       }
 
-      const value: ArgumentSingleValueType = buffer;
+      const value: SingleValueType = buffer;
 
       const validationOption = promptDef.options.length > 0 ? promptDef.options[0] : undefined;
       if (validationOption?.validate) {

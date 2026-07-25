@@ -511,12 +511,12 @@ the following are equivalent:
 
 A `Command` is executed via the implemented function:
 
-    execute(argumentValues: ArgumentValues, context: Context): Promise<void>;
+    execute(argumentValues: Values, context: Context): Promise<void>;
 
 The `Context` instance allow access to the `CLIConfig` and the ability to access
 services by registered service IDs.
 
-The `ArgumentValues` instance provides access to the populated and validated
+The `Values` instance provides access to the populated and validated
 arguments for the command. These values are provided either:
 
 - as a single key-value pair in the form `commandName: globalArgumentValue` for
@@ -531,10 +531,10 @@ const globalModifierCommand: GlobalModifierCommand = {
   name: "log-level",
   argument: {
     name: "level",
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
   },
   executePriority: 1,
-  execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
+  execute: (argumentValues: Values, context: Context) => Promise.resolve()
 };
 ```
 
@@ -550,11 +550,11 @@ const subCommand: SubCommand = {
       properties: [
         {
           name: "host",
-          type: ArgumentValueTypeName.STRING
+          type: ValueTypeName.STRING
         },
         {
           name: "port",
-          type: ArgumentValueTypeName.NUMBER
+          type: ValueTypeName.NUMBER
         }
       ]
     }
@@ -562,10 +562,10 @@ const subCommand: SubCommand = {
   positionals: [
     {
       name: "retryOnError",
-      type: ArgumentValueTypeName.BOOLEAN
+      type: ValueTypeName.BOOLEAN
     }
   ],
-  execute: (argumentValues: ArgumentValues, context: Context) => Promise.resolve()
+  execute: (argumentValues: Values, context: Context) => Promise.resolve()
 };
 ```
 
@@ -573,7 +573,7 @@ when the following command line arguments are specified:
 
 `myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080 true --log-level=DEBUG`
 
-then the `ArgumentValues` passed to the `globalModifierCommand.execute(...)`
+then the `Values` passed to the `globalModifierCommand.execute(...)`
 function would be:
 
 ```
@@ -582,7 +582,7 @@ function would be:
 }
 ```
 
-and the `ArgumentValues` passed to the `subCommand.execute(...)` function would
+and the `Values` passed to the `subCommand.execute(...)` function would
 be:
 
 ```

@@ -7,12 +7,12 @@ import {
   KEY_VALUE_SERVICE_ID,
   DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT,
   DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT,
-  ArgumentValueTypeName,
+  ValueTypeName,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type {
   CLIConfig,
   Context,
-  ArgumentValues,
+  Values,
   SubCommand,
   ServiceProvider,
   ServiceInfo,
@@ -51,11 +51,11 @@ const pluginSubCommand: SubCommand = {
     {
       name: "val",
       description: "value",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     },
   ],
-  execute: (_context: Context, _argumentValues: ArgumentValues) => Promise.resolve(),
+  execute: (_context: Context, _argumentValues: Values) => Promise.resolve(),
 };
 
 const pluginCommandFactory: CommandFactory = {

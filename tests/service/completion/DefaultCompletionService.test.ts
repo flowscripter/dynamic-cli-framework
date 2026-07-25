@@ -7,7 +7,7 @@ import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 function makeSubCommand(
@@ -41,7 +41,7 @@ function makeGlobalCommand(name: string, description: string): GlobalCommand {
     name,
     description,
     enableConfiguration: false,
-    argument: { type: ArgumentValueTypeName.BOOLEAN },
+    argument: { type: ValueTypeName.BOOLEAN },
     execute: () => Promise.resolve(),
   };
 }
@@ -51,7 +51,7 @@ function makeGlobalModifierCommand(name: string, description: string): GlobalMod
     name,
     description,
     enableConfiguration: false,
-    argument: { type: ArgumentValueTypeName.BOOLEAN },
+    argument: { type: ValueTypeName.BOOLEAN },
     executePriority: 0,
     execute: () => Promise.resolve(),
   };
@@ -130,13 +130,13 @@ describe("DefaultCompletionService", () => {
     const cmd = makeSubCommand("deploy", "Deploy app", [
       {
         name: "target",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         description: "Deploy target",
         isOptional: true,
       },
       {
         name: "force",
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         description: "Force deploy",
         isOptional: true,
         shortAlias: "f",
@@ -153,7 +153,7 @@ describe("DefaultCompletionService", () => {
     const cmd = makeSubCommand("deploy", "Deploy app", [
       {
         name: "env",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         description: "Environment",
         isOptional: true,
         allowableValues: ["staging", "production", "development"],
@@ -202,7 +202,7 @@ describe("DefaultCompletionService", () => {
       description: "Set environment",
       enableConfiguration: false,
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         allowableValues: ["staging", "production", "development"],
       },
       execute: () => Promise.resolve(),
@@ -222,7 +222,7 @@ describe("DefaultCompletionService", () => {
       description: "Set environment",
       enableConfiguration: false,
       argument: {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         allowableValues: ["staging", "production", "development"],
       },
       execute: () => Promise.resolve(),
@@ -241,7 +241,7 @@ describe("DefaultCompletionService", () => {
       name: "help",
       description: "Display help",
       enableConfiguration: false,
-      argument: { type: ArgumentValueTypeName.STRING, isOptional: true },
+      argument: { type: ValueTypeName.STRING, isOptional: true },
       execute: () => Promise.resolve(),
     };
     const cmd = makeSubCommand("run", "Run something");

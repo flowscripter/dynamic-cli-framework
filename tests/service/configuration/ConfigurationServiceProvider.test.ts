@@ -6,7 +6,7 @@ import { describe, expect, test } from "bun:test";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -52,7 +52,7 @@ function getSubCommand(): SubCommand {
     options: [
       {
         name: "arg4",
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
       },
     ],
     positionals: [],

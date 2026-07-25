@@ -43,7 +43,7 @@ import type {
 import {
   DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT,
   DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT,
-  ArgumentValueTypeName,
+  ValueTypeName,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { Plugin, ExtensionDescriptor } from "@flowscripter/dynamic-plugin-framework";
 ```

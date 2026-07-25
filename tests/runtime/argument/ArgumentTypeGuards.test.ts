@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../../../src/runtime/argument/ArgumentTypeGuards.ts";
@@ -20,20 +17,20 @@ function getComplexOption(): ComplexOption {
 function getOption(): Option {
   return {
     name: "option",
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
   };
 }
 
 function getPositional(): Positional {
   return {
     name: "positional",
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
   };
 }
 
 function getGlobalCommandArgument(): GlobalCommandArgument {
   return {
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
   };
 }
 

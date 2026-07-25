@@ -1,8 +1,5 @@
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type BannerServiceProvider from "../BannerServiceProvider.ts";
@@ -15,7 +12,7 @@ export default class NoBannerCommand implements GlobalModifierCommand {
   readonly description = "Disable output of banner";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.BOOLEAN,
+    type: ValueTypeName.BOOLEAN,
     defaultValue: true,
     configurationKey: "NO_BANNER",
   };
@@ -28,7 +25,7 @@ export default class NoBannerCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     this.#bannerServiceProvider.printBanner = !(argumentValue as boolean);
 
     return Promise.resolve();

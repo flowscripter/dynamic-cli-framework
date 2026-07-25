@@ -4,8 +4,8 @@ import { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api"
  * Recursively walk the provided value and resolve any string leaf - at any depth - which starts
  * with {@link SECRET_SENTINEL_PREFIX}, via the provided resolver callback.
  *
- * @param value the value to walk (a JSON-serializable value or a `PopulatedArgumentValues` /
- *   `PopulatedArgumentValueType` tree).
+ * @param value the value to walk (a JSON-serializable value or a `PopulatedValues` /
+ *   `PopulatedValueType` tree).
  * @param resolveSecret callback used to resolve a sentinel-prefixed string (with the prefix
  *   stripped) to its actual value. Should throw if the secret cannot be found.
  */

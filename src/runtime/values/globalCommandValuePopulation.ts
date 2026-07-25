@@ -1,23 +1,23 @@
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandValuePopulationResult } from "./ValuePopulationResult.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
-import type { PopulatedArgumentSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { PopulatedSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("globalCommandValuePopulation");
 
 /**
- * Attempt to populate a {@link ArgumentValueType} for the provided {@link GlobalCommand} using the provided potential args.
+ * Attempt to populate a {@link ValueType} for the provided {@link GlobalCommand} using the provided potential args.
  *
- * @param globalCommand the {@link GlobalCommand} for which {@link ArgumentValues} values should be populated.
+ * @param globalCommand the {@link GlobalCommand} for which {@link Values} values should be populated.
  * @param potentialArgs the potential args to use for population.
  * @param defaultValue optional default value to use for population before parsing the provided arguments.
  */
 export default function populateGlobalCommandValue(
   globalCommand: GlobalCommand,
   potentialArgs: ReadonlyArray<string>,
-  defaultValue: PopulatedArgumentSingleValueType,
+  defaultValue: PopulatedSingleValueType,
 ): GlobalCommandValuePopulationResult {
   logger.debug(() => {
     const message = `Populating value for global command: '${globalCommand.name}' using potential args: ${potentialArgs.join(
@@ -43,7 +43,7 @@ export default function populateGlobalCommandValue(
     const firstPotentialArg = potentialArgs[0];
 
     // don't use potentialArg if it cannot be a boolean value...
-    if (argument.type === ArgumentValueTypeName.BOOLEAN) {
+    if (argument.type === ValueTypeName.BOOLEAN) {
       const firstPotentialArgLower = firstPotentialArg!.toLowerCase();
 
       if (firstPotentialArgLower !== "true" && firstPotentialArgLower !== "false") {
@@ -59,7 +59,7 @@ export default function populateGlobalCommandValue(
     unusedArgs = potentialArgs.slice(1);
   } // check if argument type is boolean and therefore command being specified is an implicit value of true
   else if (
-    argument.type === ArgumentValueTypeName.BOOLEAN &&
+    argument.type === ValueTypeName.BOOLEAN &&
     (populatedArgumentValue === undefined || argument.defaultValue === false)
   ) {
     return {

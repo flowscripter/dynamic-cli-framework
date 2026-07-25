@@ -5,11 +5,11 @@ import { Stats } from "node:fs";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import ConfigCommand from "./command/ConfigCommand.ts";
 import type {
-  ArgumentSingleValueType,
-  ArgumentValues,
+  SingleValueType,
+  Values,
   KeyValueData,
-  PopulatedArgumentValues,
-  PopulatedArgumentValueType,
+  PopulatedValues,
+  PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
@@ -44,16 +44,16 @@ const logger = getLogger("ConfigurationServiceProvider");
  *
  * **Default Command Arguments**
  *
- * Configuration of default {@link ArgumentValues} for {@link Command} instances is supported if they
+ * Configuration of default {@link Values} for {@link Command} instances is supported if they
  * have defined {@link Command.enableConfiguration} as `true`.
  *
  * Two sources of configuration are supported and both are expected to be manually managed by the user of the CLI.
  *
  * *Configuration File*
  *
- * A JSON file where the structure matches {@link ArgumentValues} and the defaults are stored
+ * A JSON file where the structure matches {@link Values} and the defaults are stored
  * under a top level `defaults` property. The second level of properties is used to refer to {@link Command.name}
- * and the contained values are treated as command {@link ArgumentValues}. As an example:
+ * and the contained values are treated as command {@link Values}. As an example:
  *
  * ```
  * {
@@ -189,9 +189,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public configLocation: string | undefined;
 
   // the configuration data to be used by the CLI runner implementation when setting command defaults.
-  // ArgumentSingleValueType is for GlobalCommandArgument values, ArgumentValues is for
+  // SingleValueType is for GlobalCommandArgument values, Values is for
   // SubCommandArgument values.
-  public defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType> = new Map();
+  public defaultsData: Map<string, Values | SingleValueType> = new Map();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
@@ -275,7 +275,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public async getDefaultArgumentValues(
     cliConfig: CLIConfig,
     command: Command,
-  ): Promise<PopulatedArgumentValues | PopulatedArgumentValueType | undefined> {
+  ): Promise<PopulatedValues | PopulatedValueType | undefined> {
     if (!this.configEnabled) {
       logger.debug("configuration of default values is not enabled");
       return undefined;
@@ -288,17 +288,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       return undefined;
     }
 
-    let result: PopulatedArgumentValues | PopulatedArgumentValueType | undefined;
+    let result: PopulatedValues | PopulatedValueType | undefined;
 
     if (isGlobalModifierCommand(command) || isGlobalCommand(command)) {
-      const configuredValue = this.defaultsData.get(command.name) as ArgumentSingleValueType;
+      const configuredValue = this.defaultsData.get(command.name) as SingleValueType;
       const envVarValue = this.envVarsEnabled
         ? getGlobalCommandValueFromEnvVars(cliConfig, command)
         : undefined;
       // default to environment variable value
       result = envVarValue !== undefined ? envVarValue : configuredValue;
     } else if (isSubCommand(command)) {
-      const configuredValues = this.defaultsData.get(command.name) as ArgumentValues;
+      const configuredValues = this.defaultsData.get(command.name) as Values;
       const envVarValues = this.envVarsEnabled
         ? getSubCommandValuesFromEnvVars(cliConfig, command)
         : undefined;
@@ -307,12 +307,12 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       } else if (configuredValues === undefined) {
         result = envVarValues;
       } else {
-        result = argumentValueMerge(envVarValues, configuredValues) as PopulatedArgumentValues;
+        result = argumentValueMerge(envVarValues, configuredValues) as PopulatedValues;
       }
     }
 
     if (result !== undefined && this.#defaultSecretService) {
-      result = await resolveSecrets<PopulatedArgumentValues | PopulatedArgumentValueType>(
+      result = await resolveSecrets<PopulatedValues | PopulatedValueType>(
         result,
         async (bunSecretName) => {
           const secretValue = await this.#defaultSecretService!.getSecret(bunSecretName);
@@ -490,7 +490,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       if (config.defaults !== undefined) {
         const defaults = config.defaults;
         Object.keys(defaults).forEach((commandName) => {
-          this.defaultsData.set(commandName, defaults[commandName] as ArgumentValues);
+          this.defaultsData.set(commandName, defaults[commandName] as Values);
           logger.debug("Set default argument values for command name: %s", commandName);
         });
       }
@@ -534,7 +534,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
   public getConfigString(): string {
     const config: {
-      defaults?: Record<string, ArgumentValues | ArgumentSingleValueType>;
+      defaults?: Record<string, Values | SingleValueType>;
       "key-values"?: {
         commands?: Record<string, Record<string, KeyValueData>>;
         services?: Record<string, Record<string, KeyValueData>>;

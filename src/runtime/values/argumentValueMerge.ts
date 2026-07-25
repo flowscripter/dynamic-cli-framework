@@ -1,25 +1,21 @@
 import type {
-  ArgumentSingleValueType,
-  ArgumentValues,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
-  PopulatedArgumentValueType,
+  SingleValueType,
+  Values,
+  PopulatedSingleValueType,
+  PopulatedValues,
+  PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
 import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework-api";
 import { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "@flowscripter/dynamic-cli-framework-api";
 
 function doClone(
   source:
-    | PopulatedArgumentValueType
-    | PopulatedArgumentValues
-    | Array<PopulatedArgumentValues | undefined>
-    | Array<PopulatedArgumentSingleValueType>,
+    | PopulatedValueType
+    | PopulatedValues
+    | Array<PopulatedValues | undefined>
+    | Array<PopulatedSingleValueType>,
   nestingLevel: number,
-):
-  | PopulatedArgumentValueType
-  | PopulatedArgumentValues
-  | Array<PopulatedArgumentValues>
-  | Array<PopulatedArgumentSingleValueType> {
+): PopulatedValueType | PopulatedValues | Array<PopulatedValues> | Array<PopulatedSingleValueType> {
   if (source === undefined) {
     return source;
   }
@@ -36,10 +32,10 @@ function doClone(
 }
 
 function arrayMerge(
-  override: Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues | undefined>,
-  base: Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues>,
+  override: Array<PopulatedSingleValueType> | Array<PopulatedValues | undefined>,
+  base: Array<PopulatedSingleValueType> | Array<PopulatedValues>,
   nestingLevel: number,
-): Array<PopulatedArgumentSingleValueType> | Array<PopulatedArgumentValues> {
+): Array<PopulatedSingleValueType> | Array<PopulatedValues> {
   if (override.length > MAXIMUM_ARGUMENT_ARRAY_SIZE) {
     throw new Error(`Maximum array size exceeded: ${override.length}`);
   }
@@ -55,31 +51,28 @@ function arrayMerge(
       );
     }
     if (index >= base.length) {
-      result.push(
-        doClone(argValue, nestingLevel) as PopulatedArgumentSingleValueType &
-          PopulatedArgumentValues,
-      );
+      result.push(doClone(argValue, nestingLevel) as PopulatedSingleValueType & PopulatedValues);
     } else {
       result[index] = doMerge(argValue, base[index], nestingLevel) as
-        | PopulatedArgumentSingleValueType
-        | PopulatedArgumentValues;
+        | PopulatedSingleValueType
+        | PopulatedValues;
     }
   });
   return result;
 }
 
 function objectMerge(
-  override: PopulatedArgumentValues,
-  base: PopulatedArgumentValues,
+  override: PopulatedValues,
+  base: PopulatedValues,
   nestingLevel: number,
-): PopulatedArgumentValues {
+): PopulatedValues {
   if (nestingLevel > MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH) {
     throw new Error(`Maximum complex option nesting depth exceeded: ${nestingLevel}`);
   }
 
   nestingLevel++;
 
-  const result: PopulatedArgumentValues = {};
+  const result: PopulatedValues = {};
 
   Object.keys(override).forEach((argName) => {
     if (base[argName] === undefined) {
@@ -102,16 +95,10 @@ function objectMerge(
 }
 
 function doMerge(
-  override:
-    | PopulatedArgumentValues
-    | PopulatedArgumentValueType
-    | Array<PopulatedArgumentValues | undefined>,
-  defaults:
-    | PopulatedArgumentValues
-    | PopulatedArgumentValueType
-    | Array<PopulatedArgumentValues | undefined>,
+  override: PopulatedValues | PopulatedValueType | Array<PopulatedValues | undefined>,
+  defaults: PopulatedValues | PopulatedValueType | Array<PopulatedValues | undefined>,
   nestingLevel: number,
-): PopulatedArgumentValues | PopulatedArgumentValueType | Array<PopulatedArgumentValues> {
+): PopulatedValues | PopulatedValueType | Array<PopulatedValues> {
   if (defaults === undefined) {
     throw new Error(
       `Undefined value provided in merge: override = ${JSON.stringify(
@@ -123,15 +110,15 @@ function doMerge(
     // check if we need to convert from single value to array
     if (Array.isArray(override)) {
       if (typeof defaults === "object") {
-        defaults = [defaults as ArgumentValues];
+        defaults = [defaults as Values];
       } else {
-        defaults = [defaults as ArgumentSingleValueType];
+        defaults = [defaults as SingleValueType];
       }
     } else if (Array.isArray(defaults)) {
       if (typeof override === "object") {
-        override = [override as PopulatedArgumentValues];
+        override = [override as PopulatedValues];
       } else {
-        override = [override as PopulatedArgumentSingleValueType];
+        override = [override as PopulatedSingleValueType];
       }
     } // check if we need to convert from single non-string value to single string value
     else if (
@@ -151,15 +138,11 @@ function doMerge(
 
   // check if override is an array
   if (Array.isArray(override)) {
-    return arrayMerge(
-      override,
-      defaults as Array<ArgumentValues> | Array<ArgumentSingleValueType>,
-      nestingLevel,
-    );
+    return arrayMerge(override, defaults as Array<Values> | Array<SingleValueType>, nestingLevel);
   }
   // check if override is an object
   if (typeof override === "object") {
-    return objectMerge(override, defaults as ArgumentValues, nestingLevel);
+    return objectMerge(override, defaults as Values, nestingLevel);
   }
 
   // check if override is undefined so we should use default
@@ -182,8 +165,8 @@ function doMerge(
  * @param defaults the values to use unless they are overridden in `override`.
  */
 export default function argumentValueMerge(
-  override: PopulatedArgumentValues,
-  defaults: PopulatedArgumentValues,
-): PopulatedArgumentValues {
-  return doMerge(override, defaults, 0) as PopulatedArgumentValues;
+  override: PopulatedValues,
+  defaults: PopulatedValues,
+): PopulatedValues {
+  return doMerge(override, defaults, 0) as PopulatedValues;
 }

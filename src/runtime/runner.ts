@@ -4,10 +4,10 @@ import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
 import type {
-  ArgumentSingleValueType,
-  ArgumentValues,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
+  SingleValueType,
+  Values,
+  PopulatedSingleValueType,
+  PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../util/logger.ts";
 import {
@@ -98,14 +98,11 @@ async function executeParsedCommand(
       configurationServiceProvider.setCommandKeyValueScope(parseResult.command.name);
     }
     if (isSubCommand(parseResult.command)) {
-      await parseResult.command.execute(
-        context,
-        parseResult.populatedArgumentValues as ArgumentValues,
-      );
+      await parseResult.command.execute(context, parseResult.populatedArgumentValues as Values);
     } else {
       await (parseResult.command as GlobalCommand).execute(
         context,
-        parseResult.populatedArgumentValues as ArgumentSingleValueType,
+        parseResult.populatedArgumentValues as SingleValueType,
       );
     }
     if (
@@ -174,7 +171,7 @@ async function findAndExecuteGlobalModifierCommands(
         : undefined;
       const parseResult = parseGlobalCommandClause(
         globalModifierCommandClause,
-        defaultArgumentValues as PopulatedArgumentSingleValueType,
+        defaultArgumentValues as PopulatedSingleValueType,
       );
 
       if (parseResult.invalidArguments.length > 0) {
@@ -219,7 +216,7 @@ async function findAndExecuteGlobalModifierCommands(
           command: globalModifierCommand,
           potentialArgs: [],
         },
-        defaultArgumentValues as PopulatedArgumentSingleValueType,
+        defaultArgumentValues as PopulatedSingleValueType,
       );
 
       if (parseResult.invalidArguments.length > 0) {
@@ -300,12 +297,12 @@ async function findAndExecuteNonModifierCommand(
     if (isGlobalCommand(scanResult.nonModifierCommandClause.command)) {
       parseResult = parseGlobalCommandClause(
         scanResult.nonModifierCommandClause,
-        defaultArgumentValues as PopulatedArgumentSingleValueType,
+        defaultArgumentValues as PopulatedSingleValueType,
       );
     } else {
       parseResult = parseSubCommandClause(
         scanResult.nonModifierCommandClause,
-        defaultArgumentValues as PopulatedArgumentValues,
+        defaultArgumentValues as PopulatedValues,
       );
     }
 
@@ -345,7 +342,7 @@ async function findAndExecuteNonModifierCommand(
               command: nonModifierCommand,
               potentialArgs: [],
             },
-            defaultArgumentValues as PopulatedArgumentSingleValueType,
+            defaultArgumentValues as PopulatedSingleValueType,
           );
         } else {
           parseResult = parseSubCommandClause(
@@ -353,7 +350,7 @@ async function findAndExecuteNonModifierCommand(
               command: nonModifierCommand,
               potentialArgs: [],
             },
-            defaultArgumentValues as PopulatedArgumentValues,
+            defaultArgumentValues as PopulatedValues,
           );
         }
 
@@ -430,7 +427,7 @@ async function findAndExecuteDefaultNonModifierCommand(
           command: defaultNonModifierCommand,
           potentialArgs: [...argSequence],
         },
-        defaultArgumentValues as PopulatedArgumentSingleValueType,
+        defaultArgumentValues as PopulatedSingleValueType,
       );
     } else {
       parseResult = parseSubCommandClause(
@@ -438,7 +435,7 @@ async function findAndExecuteDefaultNonModifierCommand(
           command: defaultNonModifierCommand,
           potentialArgs: [...argSequence],
         },
-        defaultArgumentValues as PopulatedArgumentValues,
+        defaultArgumentValues as PopulatedValues,
       );
     }
 
@@ -470,7 +467,7 @@ async function findAndExecuteDefaultNonModifierCommand(
           command: defaultNonModifierCommand,
           potentialArgs: [],
         },
-        defaultArgumentValues as PopulatedArgumentSingleValueType,
+        defaultArgumentValues as PopulatedSingleValueType,
       );
     } else {
       parseResult = parseSubCommandClause(
@@ -478,7 +475,7 @@ async function findAndExecuteDefaultNonModifierCommand(
           command: defaultNonModifierCommand,
           potentialArgs: [],
         },
-        defaultArgumentValues as PopulatedArgumentValues,
+        defaultArgumentValues as PopulatedValues,
       );
     }
 

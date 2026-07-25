@@ -1,15 +1,9 @@
 import ConfigurationServiceProvider from "../../src/service/configuration/ConfigurationServiceProvider.ts";
-import type {
-  ArgumentSingleValueType,
-  ArgumentValues,
-} from "@flowscripter/dynamic-cli-framework-api";
+import type { SingleValueType, Values } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
-  constructor(
-    servicePriority: number,
-    defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType>,
-  ) {
+  constructor(servicePriority: number, defaultsData: Map<string, Values | SingleValueType>) {
     super(servicePriority, false, true);
 
     this.defaultsData = defaultsData;
@@ -22,7 +16,7 @@ class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
 
 export function getConfigurationServiceProvider(
   servicePriority: number,
-  defaultsData: Map<string, ArgumentValues | ArgumentSingleValueType>,
+  defaultsData: Map<string, Values | SingleValueType>,
 ) {
   return new DummyConfigurationServiceProvider(servicePriority, defaultsData);
 }
