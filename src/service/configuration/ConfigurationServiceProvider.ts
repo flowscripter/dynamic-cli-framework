@@ -134,11 +134,13 @@ const logger = getLogger("ConfigurationServiceProvider");
  * Keys are strings, but values are arbitrary JSON (see {@link KeyValueData}) - not limited to strings -
  * and may be deep objects or arrays.
  *
- * Values may be stored as OS-native secrets via {@link KeyValueService.set} with `isSecret=true`.
- * When a value is stored as a secret, the entire value (of any shape) is JSON-serialized and stored
- * as a single OS-native secret via Bun.secrets, with a sentinel value of the format
- * `__SECRET__:<bun_secret_name>` stored in the config file in its place. The sentinel prefix
- * `__SECRET__:` is reserved and must not be used for regular key-value data.
+ * Any node within a value passed to {@link KeyValueService.set} can be wrapped in {@link Secret} -
+ * at any depth - to have that node, and only that node, stored as an OS-native secret. When a node
+ * is wrapped in {@link Secret}, its value (of any shape) is JSON-serialized and stored as a single
+ * OS-native secret via Bun.secrets, with a sentinel value of the format `__SECRET__:<bun_secret_name>`
+ * substituted in its place in the structure that gets stored in the config file. Everything else in
+ * the value is stored as plain (unencrypted) config data. The sentinel prefix `__SECRET__:` is
+ * reserved and must not be used for regular key-value data.
  *
  * Independently of how a value was written, {@link KeyValueService.get} recursively resolves any
  * string leaf - at any depth within the retrieved value - which starts with the sentinel prefix,

@@ -11,7 +11,7 @@ import { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api"
  */
 export default async function resolveSecrets<T>(
   value: T,
-  resolveSecret: (sentinelValue: string) => Promise<string>,
+  resolveSecret: (sentinelValue: string) => Promise<unknown>,
 ): Promise<T> {
   if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
     const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
