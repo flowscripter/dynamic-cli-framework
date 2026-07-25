@@ -352,6 +352,38 @@ describe("DefaultUpgradeService", () => {
     expect(result).toBeUndefined();
   });
 
+  test("a transient timeout on an opportunistic check does not poison a later deliberate wait", async () => {
+    let callCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => {
+        callCount++;
+        // first call (simulating the opportunistic startup check) fails as if its own
+        // internal timeoutMs fired; subsequent calls resolve immediately.
+        if (callCount === 1) {
+          throw new Error("simulated fetch timeout");
+        }
+        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+      }),
+    );
+
+    // opportunistic, non-blocking call - its underlying fetch fails immediately.
+    const opportunistic = await service.getUpgradeCheckResult();
+    expect(opportunistic).toBeUndefined();
+
+    // a later, deliberate blocking call (e.g. the `upgrade` command) must get a fresh attempt
+    // rather than reusing the earlier timed-out promise forever.
+    const deliberate = await service.getUpgradeCheckResult(true);
+    expect(deliberate?.latestVersion).toEqual("9.9.9");
+    expect(callCount).toEqual(2);
+  });
+
   test("getUpgradeCheckResult(true) waits for the full result with no timeout", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
