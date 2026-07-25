@@ -15,9 +15,9 @@ import { expectStringIncludes } from "../fixtures/util.ts";
 import { getConfigurationServiceProvider } from "../fixtures/ConfigurationServiceProvider.ts";
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  type ArgumentSingleValueType,
-  type ArgumentValues,
-  ArgumentValueTypeName,
+  type SingleValueType,
+  type Values,
+  ValueTypeName,
   ComplexValueTypeName,
 } from "@flowscripter/dynamic-cli-framework-api";
 import WritableStreamString from "../fixtures/StreamString.ts";
@@ -28,7 +28,7 @@ describe("runner tests", () => {
 
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     const command = getSubCommand("command", [option]);
 
@@ -57,7 +57,7 @@ describe("runner tests", () => {
     let subHasRun = false;
 
     const globalModifierCommand = getGlobalModifierCommandWithArgument("modifierCommand", "c", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const subCommand = getSubCommand("subCommand", [], []);
 
@@ -103,7 +103,7 @@ describe("runner tests", () => {
     let hasRun = false;
 
     const command = getGlobalCommandWithShortAlias("command", "c", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     command.execute = (): Promise<void> => {
@@ -184,11 +184,11 @@ describe("runner tests", () => {
     let subHasRun = false;
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -221,10 +221,10 @@ describe("runner tests", () => {
     let globalHasRun = false;
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     modifierCommand.execute = (): Promise<void> => {
@@ -256,13 +256,13 @@ describe("runner tests", () => {
     let globalHasRun = false;
 
     const modifierCommand1 = getGlobalModifierCommandWithArgument("modifier1", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const modifierCommand2 = getGlobalModifierCommandWithArgument("modifier2", "n", 2, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     modifierCommand1.execute = (): Promise<void> => {
@@ -304,10 +304,10 @@ describe("runner tests", () => {
     let subHasRun = false;
 
     const modifierCommand1 = getGlobalModifierCommandWithArgument("modifier1", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const modifierCommand2 = getGlobalModifierCommandWithArgument("modifier2", "n", 2, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const subCommand = getSubCommandWithOption("subCommand", true);
     const groupCommand = getGroupCommand("group", [subCommand]);
@@ -357,7 +357,7 @@ describe("runner tests", () => {
     let defaultHasRun = false;
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g");
 
@@ -392,7 +392,7 @@ describe("runner tests", () => {
     let defaultHasRun = false;
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g");
 
@@ -426,7 +426,7 @@ describe("runner tests", () => {
 
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -452,7 +452,7 @@ describe("runner tests", () => {
   test("Error thrown in non-global run", async () => {
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -476,7 +476,7 @@ describe("runner tests", () => {
   test("Error thrown in global run", async () => {
     const streamString = new StreamString();
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     globalCommand.execute = (): Promise<void> => {
@@ -533,7 +533,7 @@ describe("runner tests", () => {
     let hasRun = false;
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -585,7 +585,7 @@ describe("runner tests", () => {
     let hasRun = false;
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -614,7 +614,7 @@ describe("runner tests", () => {
     let hasRun = false;
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -716,11 +716,11 @@ describe("runner tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -744,11 +744,11 @@ describe("runner tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -785,11 +785,11 @@ describe("runner tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -826,11 +826,11 @@ describe("runner tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -855,12 +855,12 @@ describe("runner tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: true,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -883,7 +883,7 @@ describe("runner tests", () => {
     let hasRun = false;
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand1 = getSubCommand("command1", [option], []);
@@ -911,13 +911,13 @@ describe("runner tests", () => {
   test("Ensure global modifier and global run priority order", async () => {
     const hasRun: string[] = [];
     const modifier1Command = getGlobalModifierCommandWithArgument("modifier1", "1", 2, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const modifier2Command = getGlobalModifierCommandWithArgument("modifier2", "2", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     modifier1Command.execute = (): Promise<void> => {
@@ -956,7 +956,7 @@ describe("runner tests", () => {
     const streamString = new StreamString();
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -977,7 +977,7 @@ describe("runner tests", () => {
     const streamString = new StreamString();
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -1012,12 +1012,12 @@ describe("runner tests", () => {
               {
                 name: "gamma",
                 shortAlias: "g",
-                type: ArgumentValueTypeName.STRING,
+                type: ValueTypeName.STRING,
               },
               {
                 name: "delta",
                 shortAlias: "d",
-                type: ArgumentValueTypeName.NUMBER,
+                type: ValueTypeName.NUMBER,
                 isArray: true,
               },
             ],
@@ -1032,12 +1032,12 @@ describe("runner tests", () => {
           {
             name: "gamma",
             shortAlias: "g",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
           },
           {
             name: "delta",
             shortAlias: "d",
-            type: ArgumentValueTypeName.NUMBER,
+            type: ValueTypeName.NUMBER,
           },
         ],
       },
@@ -1090,12 +1090,12 @@ describe("runner tests", () => {
               {
                 name: "gamma",
                 shortAlias: "g",
-                type: ArgumentValueTypeName.STRING,
+                type: ValueTypeName.STRING,
               },
               {
                 name: "delta",
                 shortAlias: "d",
-                type: ArgumentValueTypeName.NUMBER,
+                type: ValueTypeName.NUMBER,
                 isArray: true,
               },
             ],
@@ -1110,12 +1110,12 @@ describe("runner tests", () => {
           {
             name: "gamma",
             shortAlias: "g",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
           },
           {
             name: "delta",
             shortAlias: "d",
-            type: ArgumentValueTypeName.NUMBER,
+            type: ValueTypeName.NUMBER,
           },
         ],
       },
@@ -1123,11 +1123,11 @@ describe("runner tests", () => {
     const positionals = [
       {
         name: "foo",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       {
         name: "bar",
-        type: ArgumentValueTypeName.INTEGER,
+        type: ValueTypeName.INTEGER,
         isVarargMultiple: true,
         isVarargOptional: true,
       },
@@ -1239,12 +1239,12 @@ describe("runner tests", () => {
       "m",
       1,
       {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
       true,
     );
     const globalCommand = getGlobalCommandWithShortAlias("global", "g", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     modifierCommand.execute = (_context, argumentValue): Promise<void> => {
@@ -1265,7 +1265,7 @@ describe("runner tests", () => {
       getServiceProviderRegistry(),
       getConfigurationServiceProvider(
         90,
-        new Map<string, ArgumentValues | ArgumentSingleValueType>([
+        new Map<string, Values | SingleValueType>([
           ["modifier", "foo"],
           [
             "irrelevant",

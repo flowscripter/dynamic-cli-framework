@@ -8,7 +8,7 @@ import {
 } from "../fixtures/Command.ts";
 import { getContext } from "../fixtures/Context.ts";
 import { expectStringIncludes, expectStringNotIncludes } from "../fixtures/util.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import { SingleCommandCliHelpGlobalCommand } from "../../src/command/SingleCommandCliHelpCommand.ts";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
@@ -33,7 +33,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry([
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true),
-      getSubCommandWithOption("command_a", true, true, true, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithOption("command_a", true, true, true, ValueTypeName.BOOLEAN),
       getSubCommandWithOption("command_b", true),
       {
         name: "topic",
@@ -220,11 +220,11 @@ describe("SingleCommandCliHelpCommand tests", () => {
       getGlobalModifierCommand("modifier2", "m", true, true),
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true, true),
-      getSubCommandWithOption("sub1", true, true, false, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithOption("sub1", true, true, false, ValueTypeName.BOOLEAN),
     ]);
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithOption("command_a", true, false, true, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithOption("command_a", true, false, true, ValueTypeName.BOOLEAN),
       commandRegistry,
     );
 
@@ -238,7 +238,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry();
     const help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithOption("command_a", true, false, true, ArgumentValueTypeName.STRING, "foo"),
+      getSubCommandWithOption("command_a", true, false, true, ValueTypeName.STRING, "foo"),
       commandRegistry,
     );
 
@@ -269,7 +269,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional("command_a", true, true, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithPositional("command_a", true, true, ValueTypeName.BOOLEAN),
       commandRegistry,
     );
     await help.execute(context);
@@ -277,7 +277,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional("command_a", true, true, ArgumentValueTypeName.STRING),
+      getSubCommandWithPositional("command_a", true, true, ValueTypeName.STRING),
       commandRegistry,
     );
     await help.execute(context);
@@ -285,7 +285,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional("command_a", false, false, ArgumentValueTypeName.STRING),
+      getSubCommandWithPositional("command_a", false, false, ValueTypeName.STRING),
       commandRegistry,
     );
     await help.execute(context);
@@ -293,7 +293,7 @@ describe("SingleCommandCliHelpCommand tests", () => {
 
     help = new SingleCommandCliHelpGlobalCommand(
       true,
-      getSubCommandWithPositional("command_a", false, true, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithPositional("command_a", false, true, ValueTypeName.BOOLEAN),
       commandRegistry,
     );
     await help.execute(context);

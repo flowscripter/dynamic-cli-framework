@@ -1,10 +1,7 @@
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
@@ -34,7 +31,7 @@ export function getGlobalModifierCommand(
     executePriority: 1,
     argument: withArg
       ? {
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: !mandatoryArg,
         }
       : undefined,
@@ -71,7 +68,7 @@ export function getGlobalCommand(
     enableConfiguration,
     argument: withArg
       ? {
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: !mandatoryArg,
           configurationKey,
         }
@@ -100,13 +97,13 @@ export function getSubCommandWithOptionAndPositional(): SubCommand {
       {
         name: "goo",
         shortAlias: "g",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
     ],
     positionals: [
       {
         name: "foo",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       },
     ],
     execute: async (): Promise<void> => {},
@@ -133,7 +130,7 @@ export function getSubCommandWithOption(
   withArg = false,
   mandatoryArg = false,
   multiple = false,
-  type: ArgumentValueTypeName = ArgumentValueTypeName.STRING,
+  type: ValueTypeName = ValueTypeName.STRING,
   defaultValue?: string,
   enableConfiguration = false,
   configurationKey?: string,
@@ -163,7 +160,7 @@ export function getSubCommandWithPositional(
   name: string,
   optional = false,
   multiple = false,
-  type: ArgumentValueTypeName = ArgumentValueTypeName.STRING,
+  type: ValueTypeName = ValueTypeName.STRING,
   enableConfiguration = false,
   configurationKey?: string,
 ): SubCommand {
@@ -209,12 +206,12 @@ export function getSubCommandWithComplexOptions(
               {
                 name: "gamma",
                 shortAlias: "g",
-                type: ArgumentValueTypeName.STRING,
+                type: ValueTypeName.STRING,
               },
               {
                 name: "delta",
                 shortAlias: "d",
-                type: ArgumentValueTypeName.NUMBER,
+                type: ValueTypeName.NUMBER,
                 isArray: true,
               },
             ],
@@ -229,13 +226,13 @@ export function getSubCommandWithComplexOptions(
           {
             name: "gamma",
             shortAlias: "g",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
             configurationKey: "FOO_BAR_A",
           },
           {
             name: "delta",
             shortAlias: "d",
-            type: ArgumentValueTypeName.NUMBER,
+            type: ValueTypeName.NUMBER,
             configurationKey: "FOO_BAR_B",
             isArray: deltaIsArray,
           },

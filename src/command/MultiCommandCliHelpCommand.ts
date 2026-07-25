@@ -4,9 +4,9 @@ import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  type ArgumentSingleValueType,
-  type ArgumentValues,
-  ArgumentValueTypeName,
+  type SingleValueType,
+  type Values,
+  ValueTypeName,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { HelpSection } from "../util/helpHelper.ts";
@@ -308,11 +308,11 @@ export class MultiCommandCliHelpGlobalCommand
 
   readonly argument = {
     name: "command",
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
     isOptional: true,
   };
 
-  public async execute(context: Context, argumentValue?: ArgumentSingleValueType): Promise<void> {
+  public async execute(context: Context, argumentValue?: SingleValueType): Promise<void> {
     const commandName = argumentValue as string | undefined;
     if (commandName !== undefined) {
       await this.printUsageHelp(context, commandName);
@@ -334,13 +334,13 @@ export class MultiCommandCliHelpSubCommand
   public readonly positionals: ReadonlyArray<Positional> = [
     {
       name: "command",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
       description: "Display help for the specific <command>",
     },
   ];
 
-  public async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
+  public async execute(context: Context, argumentValues: Values): Promise<void> {
     const commandName = argumentValues["command"] as string | undefined;
     if (commandName !== undefined) {
       await this.printUsageHelp(context, commandName);

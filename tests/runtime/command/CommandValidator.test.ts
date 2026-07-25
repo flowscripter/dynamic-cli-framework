@@ -7,10 +7,7 @@ import {
   getSubCommandWithComplexOptions,
 } from "../../fixtures/Command.ts";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
@@ -36,11 +33,11 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -53,13 +50,13 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -71,11 +68,11 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -89,12 +86,12 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -107,12 +104,12 @@ describe("CommandValidator tests", () => {
         {
           name: "foo1",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -127,7 +124,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           allowableValues: ["goo"],
         },
       ],
@@ -143,7 +140,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isCaseInsensitive: true,
         },
       ],
@@ -159,7 +156,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           isCaseInsensitive: false,
         },
       ],
@@ -175,7 +172,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           minValueInclusive: 1,
         },
       ],
@@ -191,7 +188,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           allowableValues: [1],
           minValueInclusive: 1,
         },
@@ -211,7 +208,7 @@ describe("CommandValidator tests", () => {
         [
           {
             name: "foo",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
             defaultValue: "bar",
             allowableValues: ["goo"],
           },
@@ -232,7 +229,7 @@ describe("CommandValidator tests", () => {
         [
           {
             name: "foo",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
             defaultValue: "bar",
             allowableValues: ["BAR"],
           },
@@ -253,7 +250,7 @@ describe("CommandValidator tests", () => {
         [
           {
             name: "foo",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
             defaultValue: "bar",
             allowableValues: ["BAR"],
             isCaseInsensitive: true,
@@ -276,7 +273,7 @@ describe("CommandValidator tests", () => {
           {
             name: "foo",
             defaultValue: "bar",
-            type: ArgumentValueTypeName.BOOLEAN,
+            type: ValueTypeName.BOOLEAN,
           },
         ],
         [],
@@ -296,7 +293,7 @@ describe("CommandValidator tests", () => {
           {
             name: "foo",
             defaultValue: ["bar1", "bar2"],
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
           },
         ],
         [],
@@ -317,7 +314,7 @@ describe("CommandValidator tests", () => {
             name: "foo",
             defaultValue: "bar",
             allowableValues: [1],
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
           },
         ],
         [],
@@ -333,7 +330,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "-foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -349,7 +346,7 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           shortAlias: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [],
@@ -366,11 +363,11 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargMultiple: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -383,11 +380,11 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargOptional: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -403,12 +400,12 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargMultiple: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
           isVarargMultiple: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -421,12 +418,12 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargOptional: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
           isVarargOptional: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -439,12 +436,12 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargOptional: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
           isVarargMultiple: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -457,12 +454,12 @@ describe("CommandValidator tests", () => {
         {
           name: "foo",
           isVarargMultiple: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo",
           isVarargOptional: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -479,13 +476,13 @@ describe("CommandValidator tests", () => {
           defaultValue: "bar",
           allowableValues: ["bar", "gar"],
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       [
         {
           name: "boo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           isVarargMultiple: true,
           allowableValues: [1, 2],
         },
@@ -500,7 +497,7 @@ describe("CommandValidator tests", () => {
       " not matching any values specified in argument valid values",
     () => {
       const command = getGlobalCommandWithShortAlias("command", "c", {
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         defaultValue: "bar",
         allowableValues: ["goo"],
       });
@@ -514,7 +511,7 @@ describe("CommandValidator tests", () => {
       " not matching the type specified in global argument type",
     () => {
       const command = getGlobalCommandWithShortAlias("command", "c", {
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         defaultValue: "bar",
       });
 
@@ -529,7 +526,7 @@ describe("CommandValidator tests", () => {
       const command = getGlobalCommandWithShortAlias("command", "c", {
         defaultValue: "bar",
         allowableValues: [1],
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
       });
 
       expect(() => new CommandValidator(getCLIConfig()).validate(command)).toThrow();
@@ -538,7 +535,7 @@ describe("CommandValidator tests", () => {
 
   test("GlobalCommand validation fails due to invalid command name", () => {
     const command = getGlobalCommandWithShortAlias("-command", "c", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     expect(() => new CommandValidator(getCLIConfig()).validate(command)).toThrow();
@@ -546,7 +543,7 @@ describe("CommandValidator tests", () => {
 
   test("GlobalCommand validation fails due to invalid command short alias", () => {
     const command = getGlobalCommandWithShortAlias("command", "command", {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     expect(() => new CommandValidator(getCLIConfig()).validate(command)).toThrow();
@@ -556,7 +553,7 @@ describe("CommandValidator tests", () => {
     const command = getGlobalCommandWithShortAlias("command", "c", {
       defaultValue: "bar",
       allowableValues: ["bar", "gar"],
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
 
     new CommandValidator(getCLIConfig()).validate(command);
@@ -600,13 +597,13 @@ describe("CommandValidator tests", () => {
             defaultValue: "bar",
             allowableValues: ["bar", "gar"],
             shortAlias: "f",
-            type: ArgumentValueTypeName.STRING,
+            type: ValueTypeName.STRING,
           },
         ],
         [
           {
             name: "boo",
-            type: ArgumentValueTypeName.NUMBER,
+            type: ValueTypeName.NUMBER,
             isVarargMultiple: true,
             allowableValues: [1, 2],
           },
@@ -640,7 +637,7 @@ describe("CommandValidator tests", () => {
                 {
                   name: "gamma",
                   shortAlias: "g",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -661,7 +658,7 @@ describe("CommandValidator tests", () => {
                 {
                   name: "gamma",
                   shortAlias: "g",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -693,7 +690,7 @@ describe("CommandValidator tests", () => {
                 {
                   name: "gamma",
                   shortAlias: "g",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -711,7 +708,7 @@ describe("CommandValidator tests", () => {
               properties: [
                 {
                   name: "g",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -746,7 +743,7 @@ describe("CommandValidator tests", () => {
                   {
                     name: "gamma",
                     shortAlias: "g",
-                    type: ArgumentValueTypeName.STRING,
+                    type: ValueTypeName.STRING,
                     allowableValues: ["foo"],
                     defaultValue: "bar",
                   },
@@ -778,7 +775,7 @@ describe("CommandValidator tests", () => {
                   {
                     name: "gamma",
                     shortAlias: "g",
-                    type: ArgumentValueTypeName.STRING,
+                    type: ValueTypeName.STRING,
                     allowableValues: ["foo", "bar"],
                     defaultValue: "bar",
                   },
@@ -815,7 +812,7 @@ describe("CommandValidator tests", () => {
                   {
                     name: "gamma",
                     shortAlias: "g",
-                    type: ArgumentValueTypeName.BOOLEAN,
+                    type: ValueTypeName.BOOLEAN,
                     defaultValue: 1,
                   },
                 ],
@@ -852,7 +849,7 @@ describe("CommandValidator tests", () => {
                   {
                     name: "gamma",
                     shortAlias: "g",
-                    type: ArgumentValueTypeName.STRING,
+                    type: ValueTypeName.STRING,
                     defaultValue: ["foo", "bar"],
                   },
                 ],
@@ -890,7 +887,7 @@ describe("CommandValidator tests", () => {
                 properties: [
                   {
                     name: "gamma",
-                    type: ArgumentValueTypeName.BOOLEAN,
+                    type: ValueTypeName.BOOLEAN,
                   },
                 ],
               },
@@ -923,7 +920,7 @@ describe("CommandValidator tests", () => {
                 properties: [
                   {
                     name: "gamma",
-                    type: ArgumentValueTypeName.BOOLEAN,
+                    type: ValueTypeName.BOOLEAN,
                   },
                 ],
               },
@@ -956,7 +953,7 @@ describe("CommandValidator tests", () => {
                 properties: [
                   {
                     name: "gamma",
-                    type: ArgumentValueTypeName.STRING,
+                    type: ValueTypeName.STRING,
                   },
                 ],
               },
@@ -985,7 +982,7 @@ describe("CommandValidator tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -1010,7 +1007,7 @@ describe("CommandValidator tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -1039,7 +1036,7 @@ describe("CommandValidator tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -1066,7 +1063,7 @@ describe("CommandValidator tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
               ],
             },
@@ -1085,7 +1082,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR",
         },
       ],
@@ -1101,7 +1098,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR",
         },
       ],
@@ -1118,14 +1115,14 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR",
         },
       ],
       [
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR",
         },
       ],
@@ -1141,14 +1138,14 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR_1",
         },
       ],
       [
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "FOO_BAR_2",
         },
       ],
@@ -1164,7 +1161,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "-FOO_BAR",
         },
       ],
@@ -1181,7 +1178,7 @@ describe("CommandValidator tests", () => {
       [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           configurationKey: "3_FOO_BAR_1",
         },
       ],

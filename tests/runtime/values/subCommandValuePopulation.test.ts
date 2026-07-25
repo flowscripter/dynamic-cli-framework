@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import populateSubCommandValues from "../../../src/runtime/values/subCommandValuePopulation.ts";
 import {
-  ArgumentValueTypeName,
+  ValueTypeName,
   ComplexValueTypeName,
-  type PopulatedArgumentValues,
+  type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommandValuePopulationResult } from "../../../src/runtime/values/ValuePopulationResult.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
@@ -12,7 +12,7 @@ import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectExtractResult(
   result: SubCommandValuePopulationResult,
-  values: PopulatedArgumentValues,
+  values: PopulatedValues,
   unusedArgs: ReadonlyArray<string>,
 ) {
   expect(result.populatedArgumentValues).toEqual(values);
@@ -25,7 +25,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
         },
       ],
@@ -65,7 +65,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
       positionals: [],
@@ -82,7 +82,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.INTEGER,
+          type: ValueTypeName.INTEGER,
         },
       ],
       positionals: [],
@@ -99,7 +99,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.SECRET,
+          type: ValueTypeName.SECRET,
         },
       ],
       positionals: [],
@@ -116,7 +116,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -133,7 +133,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -151,7 +151,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
           isArray: true,
         },
@@ -187,7 +187,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -205,7 +205,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
       positionals: [],
@@ -221,7 +221,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -241,7 +241,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           defaultValue: "nope",
         },
       ],
@@ -258,7 +258,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           defaultValue: 2,
         },
       ],
@@ -275,7 +275,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           defaultValue: false,
         },
       ],
@@ -294,7 +294,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           defaultValue: "nope",
         },
       ],
@@ -311,7 +311,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           defaultValue: 2,
         },
       ],
@@ -328,7 +328,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           defaultValue: true,
         },
       ],
@@ -347,7 +347,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -363,7 +363,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
       positionals: [],
@@ -379,7 +379,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -397,12 +397,12 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: false,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -418,12 +418,12 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isArray: false,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -439,12 +439,12 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isArray: true,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -462,12 +462,12 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
         {
           name: "goo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isArray: true,
           shortAlias: "g",
         },
@@ -528,7 +528,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -551,7 +551,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -588,7 +588,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -604,11 +604,11 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "bar",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -626,7 +626,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -642,7 +642,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -657,7 +657,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -674,11 +674,11 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -696,7 +696,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
           isVarargOptional: true,
         },
@@ -724,11 +724,11 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "bar",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
           isVarargOptional: true,
         },
@@ -759,23 +759,23 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "goo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "1",
         },
         {
           name: "goo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "2",
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -836,22 +836,22 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "goo1",
           shortAlias: "1",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
         {
           name: "goo2",
           shortAlias: "2",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -912,13 +912,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           isArray: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -945,13 +945,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           isArray: true,
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -990,7 +990,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -1011,7 +1011,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -1030,7 +1030,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -1051,7 +1051,7 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           shortAlias: "f",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -1070,13 +1070,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo1",
           shortAlias: "1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1098,13 +1098,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo1",
           shortAlias: "1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1132,7 +1132,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1149,7 +1149,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [],
@@ -1165,7 +1165,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [],
@@ -1183,21 +1183,21 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "goo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1225,21 +1225,21 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "goo1",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
         {
           name: "goo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1265,21 +1265,21 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "goo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "goo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1326,21 +1326,21 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "goo1",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
         {
           name: "goo2",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [
         {
           name: "foo1",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
         {
           name: "foo2",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1383,14 +1383,14 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
         },
       ],
@@ -1419,14 +1419,14 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
           isVarargOptional: true,
         },
@@ -1467,7 +1467,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1483,7 +1483,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1498,7 +1498,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1515,7 +1515,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           isVarargOptional: true,
         },
       ],
@@ -1532,7 +1532,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargOptional: true,
         },
       ],
@@ -1548,7 +1548,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isVarargOptional: true,
         },
       ],
@@ -1566,7 +1566,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
           isVarargOptional: false,
           isVarargMultiple: true,
         },
@@ -1584,7 +1584,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargOptional: false,
           isVarargMultiple: true,
         },
@@ -1601,7 +1601,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           isVarargOptional: false,
           isVarargMultiple: true,
         },
@@ -1619,7 +1619,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
       ],
@@ -1640,7 +1640,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
       ],
@@ -1662,7 +1662,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
         },
       ],
@@ -1683,7 +1683,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
         },
       ],
@@ -1703,7 +1703,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
           isArray: true,
         },
@@ -1735,7 +1735,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
           isArray: true,
         },
@@ -1768,7 +1768,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
           isArray: true,
         },
@@ -1797,13 +1797,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           isArray: true,
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1830,13 +1830,13 @@ describe("subCommandValuePopulation tests", () => {
         {
           name: "foo",
           isArray: true,
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
         },
       ],
       positionals: [
         {
           name: "goo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
       execute: async (): Promise<void> => {},
@@ -1884,12 +1884,12 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
                 {
                   name: "delta",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "d",
                 },
               ],
@@ -1943,12 +1943,12 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
                 {
                   name: "delta",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "d",
                   isArray: true,
                 },
@@ -2048,12 +2048,12 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
                 {
                   name: "delta",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "d",
                 },
               ],
@@ -2142,12 +2142,12 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
                 {
                   name: "delta",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "d",
                 },
               ],
@@ -2190,7 +2190,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isArray: true,
         },
       ],
@@ -2238,7 +2238,7 @@ describe("subCommandValuePopulation tests", () => {
       options: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           shortAlias: "f",
           isArray: true,
         },
@@ -2280,7 +2280,7 @@ describe("subCommandValuePopulation tests", () => {
       positionals: [
         {
           name: "foo",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
         },
       ],
@@ -2321,12 +2321,12 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
                 {
                   name: "delta",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "d",
                 },
               ],
@@ -2369,7 +2369,7 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "alpha",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "a",
                 },
               ],
@@ -2408,7 +2408,7 @@ describe("subCommandValuePopulation tests", () => {
               properties: [
                 {
                   name: "gamma",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                   shortAlias: "g",
                 },
               ],

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import NoPromptCommand from "../../../../src/service/prompter/command/NoPromptCommand.ts";
 import PrompterServiceProvider from "../../../../src/service/prompter/PrompterServiceProvider.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -30,7 +30,7 @@ describe("NoPromptCommand tests", () => {
     const provider = new PrompterServiceProvider(100, prompterService);
     const command = new NoPromptCommand(provider, 100);
 
-    expect(command.argument.type).toEqual(ArgumentValueTypeName.BOOLEAN);
+    expect(command.argument.type).toEqual(ValueTypeName.BOOLEAN);
     expect(command.argument.defaultValue).toEqual(false);
     expect(command.argument.configurationKey).toEqual("NO_PROMPT");
   });

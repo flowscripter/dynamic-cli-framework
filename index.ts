@@ -1,17 +1,14 @@
 // Argument API
 export type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 export type {
-  ArgumentSingleValueType,
-  ArgumentValues,
-  ArgumentValueType,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
-  PopulatedArgumentValueType,
+  SingleValueType,
+  Values,
+  ValueType,
+  PopulatedSingleValueType,
+  PopulatedValues,
+  PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
-export {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+export { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 export type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 export { MAXIMUM_COMPLEX_OPTION_NESTING_DEPTH } from "@flowscripter/dynamic-cli-framework-api";
 export type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";

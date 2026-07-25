@@ -4,10 +4,7 @@ import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
 import type { ParseResult } from "../../../src/runtime/parser.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
@@ -54,7 +51,7 @@ function makeSubCommand(
 
 function makeGlobalCommand(
   name: string,
-  argType: ArgumentValueTypeName = ArgumentValueTypeName.STRING,
+  argType: ValueTypeName = ValueTypeName.STRING,
 ): GlobalCommand {
   return {
     name,
@@ -75,7 +72,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "foo",
         description: "foo option",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
       },
     ]);
@@ -142,7 +139,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "foo",
         description: "foo option",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
       },
     ]);
@@ -173,7 +170,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "flag",
         description: "flag option",
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         isOptional: false,
       },
     ]);
@@ -204,7 +201,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "color",
         description: "color option",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
         allowableValues: ["red", "blue", "green"],
       },
@@ -236,7 +233,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "count",
         description: "count option",
-        type: ArgumentValueTypeName.INTEGER,
+        type: ValueTypeName.INTEGER,
         isOptional: false,
       },
     ]);
@@ -268,13 +265,13 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "name",
         description: "name option",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
       },
       {
         name: "age",
         description: "age option",
-        type: ArgumentValueTypeName.INTEGER,
+        type: ValueTypeName.INTEGER,
         isOptional: false,
       },
     ]);
@@ -357,7 +354,7 @@ describe("DefaultArgumentPrompterService tests", () => {
     prompter.addResponse("count", "99");
     const service = new DefaultArgumentPrompterService(prompter);
 
-    const command = makeGlobalCommand("count", ArgumentValueTypeName.INTEGER);
+    const command = makeGlobalCommand("count", ValueTypeName.INTEGER);
 
     const parseResult: ParseResult = {
       command,
@@ -390,13 +387,13 @@ describe("DefaultArgumentPrompterService tests", () => {
         {
           name: "street",
           description: "street name",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: false,
         },
         {
           name: "city",
           description: "city name",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: false,
         },
       ],
@@ -439,13 +436,13 @@ describe("DefaultArgumentPrompterService tests", () => {
         {
           name: "street",
           description: "street name",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: false,
         },
         {
           name: "zip",
           description: "zip code",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isOptional: true,
           defaultValue: "00000",
         },
@@ -500,7 +497,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "tags",
         description: "tags list",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
         isArray: true,
       },
@@ -536,7 +533,7 @@ describe("DefaultArgumentPrompterService tests", () => {
         {
           name: "file",
           description: "file path",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
         },
       ],
     );
@@ -567,7 +564,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "known",
         description: "known option",
-        type: ArgumentValueTypeName.STRING,
+        type: ValueTypeName.STRING,
         isOptional: false,
       },
     ]);
@@ -619,7 +616,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "ratio",
         description: "ratio option",
-        type: ArgumentValueTypeName.NUMBER,
+        type: ValueTypeName.NUMBER,
         isOptional: false,
       },
     ]);
@@ -651,7 +648,7 @@ describe("DefaultArgumentPrompterService tests", () => {
       {
         name: "enabled",
         description: "enabled option",
-        type: ArgumentValueTypeName.BOOLEAN,
+        type: ValueTypeName.BOOLEAN,
         isOptional: false,
       },
     ]);
@@ -719,7 +716,7 @@ describe("DefaultArgumentPrompterService tests", () => {
         {
           name: "files",
           description: "file paths",
-          type: ArgumentValueTypeName.STRING,
+          type: ValueTypeName.STRING,
           isVarargMultiple: true,
         },
       ],

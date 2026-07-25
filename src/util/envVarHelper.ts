@@ -2,10 +2,10 @@ import process from "node:process";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  ArgumentValueTypeName,
+  ValueTypeName,
   ComplexValueTypeName,
-  type PopulatedArgumentSingleValueType,
-  type PopulatedArgumentValues,
+  type PopulatedSingleValueType,
+  type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 type ProcessEnv = NodeJS.ProcessEnv;
 
@@ -59,7 +59,7 @@ function getGlobalArgumentKeyPrefix(
 export function getGlobalCommandValueFromEnvVars(
   cliConfig: CLIConfig,
   command: GlobalCommand,
-): PopulatedArgumentSingleValueType {
+): PopulatedSingleValueType {
   const { argument } = command;
   if (argument === undefined) {
     return undefined;
@@ -67,7 +67,7 @@ export function getGlobalCommandValueFromEnvVars(
 
   // simple check for a specific env var name
   let envVarValue = process.env[getGlobalArgumentKeyPrefix(cliConfig, command, argument)];
-  if (envVarValue != undefined && argument.type === ArgumentValueTypeName.BOOLEAN) {
+  if (envVarValue != undefined && argument.type === ValueTypeName.BOOLEAN) {
     envVarValue = envVarValue.length > 0 ? "true" : "false";
   }
 
@@ -75,7 +75,7 @@ export function getGlobalCommandValueFromEnvVars(
 }
 
 function getOptionValuesFromEnvVars(
-  envVarValues: PopulatedArgumentValues,
+  envVarValues: PopulatedValues,
   potentialEnvVarNames: Array<string>,
   env: ProcessEnv,
   option: Option | ComplexOption,
@@ -126,17 +126,16 @@ function getOptionValuesFromEnvVars(
         if (suffix.length > 0) {
           if (option.type === ComplexValueTypeName.COMPLEX) {
             if (
-              (envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>)[index] ===
-              undefined
+              (envVarValues[option.name] as Array<PopulatedSingleValueType>)[index] === undefined
             ) {
-              (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] = Object.create(
+              (envVarValues[option.name] as Array<PopulatedValues>)[index] = Object.create(
                 null,
-              ) as PopulatedArgumentValues;
+              ) as PopulatedValues;
             }
             (option as ComplexOption).properties.forEach((property) => {
               const propertySegment = property.configurationKey || getKeySegment(property.name);
               getOptionValuesFromEnvVars(
-                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index]!,
+                (envVarValues[option.name] as Array<PopulatedValues>)[index]!,
                 matches,
                 env,
                 property,
@@ -145,13 +144,13 @@ function getOptionValuesFromEnvVars(
             });
             if (
               Object.keys(
-                (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index] as Record<
+                (envVarValues[option.name] as Array<PopulatedValues>)[index] as Record<
                   string,
                   string
                 >,
               ).length === 0
             ) {
-              delete (envVarValues[option.name] as Array<PopulatedArgumentValues>)[index];
+              delete (envVarValues[option.name] as Array<PopulatedValues>)[index];
             }
           } else {
             throw new Error(`Unidentified suffix ${suffix} in env var: ${match}`);
@@ -161,14 +160,13 @@ function getOptionValuesFromEnvVars(
         } else {
           // set primitive value
           let envVarValue = env[match];
-          if (envVarValue != undefined && option.type === ArgumentValueTypeName.BOOLEAN) {
+          if (envVarValue != undefined && option.type === ValueTypeName.BOOLEAN) {
             envVarValue = envVarValue.length > 1 ? "true" : "false";
           }
-          (envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>)[index] =
-            envVarValue;
+          (envVarValues[option.name] as Array<PopulatedSingleValueType>)[index] = envVarValue;
         }
 
-        const elements = envVarValues[option.name] as Array<PopulatedArgumentSingleValueType>;
+        const elements = envVarValues[option.name] as Array<PopulatedSingleValueType>;
         for (let i = elements.length - 1; i > -1; i--) {
           if (elements[i] === undefined) {
             elements.length = i;
@@ -182,11 +180,11 @@ function getOptionValuesFromEnvVars(
   } else if (option.type === ComplexValueTypeName.COMPLEX) {
     (option as ComplexOption).properties.forEach((property) => {
       if (envVarValues[option.name] === undefined) {
-        envVarValues[option.name] = Object.create(null) as PopulatedArgumentValues;
+        envVarValues[option.name] = Object.create(null) as PopulatedValues;
       }
       const propertySegment = property.configurationKey || getKeySegment(property.name);
       getOptionValuesFromEnvVars(
-        envVarValues[option.name] as PopulatedArgumentValues,
+        envVarValues[option.name] as PopulatedValues,
         potentialEnvVarNames,
         env,
         property,
@@ -202,7 +200,7 @@ function getOptionValuesFromEnvVars(
     if (value === undefined) {
       return undefined;
     }
-    if (option.type === ArgumentValueTypeName.BOOLEAN) {
+    if (option.type === ValueTypeName.BOOLEAN) {
       value = value.length > 1 ? "true" : "false";
     }
     // set primitive value
@@ -220,8 +218,8 @@ function getOptionValuesFromEnvVars(
 export function getSubCommandValuesFromEnvVars(
   cliConfig: CLIConfig,
   command: SubCommand,
-): PopulatedArgumentValues | undefined {
-  const envVarValues = Object.create(null) as PopulatedArgumentValues;
+): PopulatedValues | undefined {
+  const envVarValues = Object.create(null) as PopulatedValues;
   if (command.options) {
     for (const option of command.options) {
       const potentialEnvVarNames = Object.keys(process.env);
@@ -270,11 +268,10 @@ export function getSubCommandValuesFromEnvVars(
             }
             // set primitive value
             let envVarValue = process.env[match];
-            if (envVarValue != undefined && positional.type === ArgumentValueTypeName.BOOLEAN) {
+            if (envVarValue != undefined && positional.type === ValueTypeName.BOOLEAN) {
               envVarValue = envVarValue.length > 1 ? "true" : "false";
             }
-            (envVarValues[positional.name] as Array<PopulatedArgumentSingleValueType>)[index] =
-              envVarValue;
+            (envVarValues[positional.name] as Array<PopulatedSingleValueType>)[index] = envVarValue;
           }
         });
       } else {
@@ -283,7 +280,7 @@ export function getSubCommandValuesFromEnvVars(
         if (value === undefined) {
           return undefined;
         }
-        if (positional.type === ArgumentValueTypeName.BOOLEAN) {
+        if (positional.type === ValueTypeName.BOOLEAN) {
           value = value.length > 1 ? "true" : "false";
         }
         // set primitive value

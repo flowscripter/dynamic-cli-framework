@@ -1,10 +1,7 @@
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentValues,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type Values, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import {
   Icon,
   InstallMethod,
@@ -24,14 +21,14 @@ export class UpgradeSubCommand implements SubCommand {
   readonly options: ReadonlyArray<Option> = [
     {
       name: "os",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isOptional: true,
       allowableValues: Object.values(SupportedOs),
       description: "Override the detected operating system",
     },
     {
       name: "install-method",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isOptional: true,
       allowableValues: Object.values(InstallMethod),
       description: "Override the detected install method",
@@ -44,7 +41,7 @@ export class UpgradeSubCommand implements SubCommand {
     this.#upgradeService = upgradeService;
   }
 
-  public async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
+  public async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const cliName = context.cliConfig.name;
 

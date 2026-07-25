@@ -1,9 +1,6 @@
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
 
@@ -15,7 +12,7 @@ export default class NoColorCommand implements GlobalModifierCommand {
   readonly description = "Disable color for output";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.BOOLEAN,
+    type: ValueTypeName.BOOLEAN,
     defaultValue: false,
     configurationKey: "NO_COLOR",
   };
@@ -28,7 +25,7 @@ export default class NoColorCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     this.#printerServiceProvider.printerService!.colorEnabled = !argumentValue as boolean;
 
     return Promise.resolve();

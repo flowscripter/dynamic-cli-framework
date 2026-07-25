@@ -9,11 +9,11 @@ import {
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
+  type SingleValueType,
+  ValueTypeName,
   ComplexValueTypeName,
-  type PopulatedArgumentSingleValueType,
-  type PopulatedArgumentValues,
+  type PopulatedSingleValueType,
+  type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
@@ -76,14 +76,14 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     );
     const result = await this.#prompterService.prompt(prompt);
     const value = DefaultArgumentPrompterService.#coerceValue(
-      result.value as ArgumentSingleValueType,
+      result.value as SingleValueType,
       command.argument.type,
     );
 
     return {
       command: parseResult.command,
       groupCommand: parseResult.groupCommand,
-      populatedArgumentValues: value as PopulatedArgumentSingleValueType,
+      populatedArgumentValues: value as PopulatedSingleValueType,
       invalidArguments: [],
       unusedArgs: parseResult.unusedArgs,
     };
@@ -91,8 +91,8 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
 
   async #promptForSubCommand(parseResult: ParseResult): Promise<ParseResult> {
     const command = parseResult.command as SubCommand;
-    const existingValues = (parseResult.populatedArgumentValues ?? {}) as PopulatedArgumentValues;
-    const newValues: Record<string, PopulatedArgumentValues[string]> = {
+    const existingValues = (parseResult.populatedArgumentValues ?? {}) as PopulatedValues;
+    const newValues: Record<string, PopulatedValues[string]> = {
       ...existingValues,
     };
     const remainingInvalid: InvalidArgument[] = [];
@@ -129,7 +129,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
         );
         const result = await this.#prompterService.prompt(prompt);
         newValues[invalid.name] = DefaultArgumentPrompterService.#coerceValue(
-          result.value as ArgumentSingleValueType,
+          result.value as SingleValueType,
           (arg as Argument).type,
         );
       }
@@ -138,7 +138,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     return {
       command: parseResult.command,
       groupCommand: parseResult.groupCommand,
-      populatedArgumentValues: newValues as PopulatedArgumentValues,
+      populatedArgumentValues: newValues as PopulatedValues,
       invalidArguments: remainingInvalid,
       unusedArgs: parseResult.unusedArgs,
     };
@@ -147,8 +147,8 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
   async #promptForComplexOption(
     name: string,
     complexOption: ComplexOption,
-  ): Promise<PopulatedArgumentValues> {
-    const values: Record<string, PopulatedArgumentValues[string]> = {};
+  ): Promise<PopulatedValues> {
+    const values: Record<string, PopulatedValues[string]> = {};
 
     for (const prop of complexOption.properties) {
       if ("type" in prop && (prop as ComplexOption).type === ComplexValueTypeName.COMPLEX) {
@@ -168,20 +168,20 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
         );
         const result = await this.#prompterService.prompt(prompt);
         values[option.name] = DefaultArgumentPrompterService.#coerceValue(
-          result.value as ArgumentSingleValueType,
+          result.value as SingleValueType,
           option.type,
         );
       }
     }
 
-    return values as PopulatedArgumentValues;
+    return values as PopulatedValues;
   }
 
   async #promptForArrayArgument(
     name: string,
     arg: Option | Positional,
-  ): Promise<Array<ArgumentSingleValueType>> {
-    const values: ArgumentSingleValueType[] = [];
+  ): Promise<Array<SingleValueType>> {
+    const values: SingleValueType[] = [];
 
     while (true) {
       const prompt = DefaultArgumentPrompterService.#argumentToPrompt(
@@ -192,7 +192,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
       const result = await this.#prompterService.prompt(prompt);
       values.push(
         DefaultArgumentPrompterService.#coerceValue(
-          result.value as ArgumentSingleValueType,
+          result.value as SingleValueType,
           (arg as Argument).type,
         ),
       );
@@ -213,7 +213,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
   }
 
   static #argumentToPrompt(name: string, description: string, arg: Argument): Prompt {
-    if (arg.type === ArgumentValueTypeName.BOOLEAN) {
+    if (arg.type === ValueTypeName.BOOLEAN) {
       return {
         name,
         promptText: description,
@@ -236,7 +236,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     }
 
     const validationOption: PromptOption = {
-      displayValue: arg.type === ArgumentValueTypeName.SECRET ? "__SECRET__" : name,
+      displayValue: arg.type === ValueTypeName.SECRET ? "__SECRET__" : name,
       returnedValue: "",
       min: arg.minValueInclusive,
       max: arg.maxValueInclusive,
@@ -251,17 +251,14 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     };
   }
 
-  static #coerceValue(
-    value: ArgumentSingleValueType,
-    type: ArgumentValueTypeName,
-  ): ArgumentSingleValueType {
+  static #coerceValue(value: SingleValueType, type: ValueTypeName): SingleValueType {
     if (typeof value === "string") {
       switch (type) {
-        case ArgumentValueTypeName.INTEGER:
+        case ValueTypeName.INTEGER:
           return parseInt(value, 10);
-        case ArgumentValueTypeName.NUMBER:
+        case ValueTypeName.NUMBER:
           return parseFloat(value);
-        case ArgumentValueTypeName.BOOLEAN:
+        case ValueTypeName.BOOLEAN:
           return value.toLowerCase() === "true";
       }
     }

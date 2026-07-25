@@ -4,11 +4,8 @@ import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import type { SingleValueType } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import { isComplexOption } from "../argument/ArgumentTypeGuards.ts";
@@ -30,14 +27,14 @@ import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-
 const logger = getLogger("commandValidation");
 
 function validateValueType(
-  type: ArgumentValueTypeName,
-  value: ArgumentSingleValueType,
+  type: ValueTypeName,
+  value: SingleValueType,
   argumentName: string,
   isDefaultValue: boolean,
   isRangeValue: boolean,
 ): void {
   switch (type) {
-    case ArgumentValueTypeName.BOOLEAN:
+    case ValueTypeName.BOOLEAN:
       if (typeof value !== "boolean") {
         throw new Error(
           `Specified ${
@@ -46,7 +43,7 @@ function validateValueType(
         );
       }
       break;
-    case ArgumentValueTypeName.NUMBER:
+    case ValueTypeName.NUMBER:
       if (typeof value !== "number" || !Number.isFinite(value)) {
         throw new Error(
           `Specified ${
@@ -55,7 +52,7 @@ function validateValueType(
         );
       }
       break;
-    case ArgumentValueTypeName.INTEGER:
+    case ValueTypeName.INTEGER:
       if (typeof value !== "number" || !Number.isInteger(value)) {
         throw new Error(
           `Specified ${
@@ -64,7 +61,7 @@ function validateValueType(
         );
       }
       break;
-    case ArgumentValueTypeName.STRING:
+    case ValueTypeName.STRING:
       if (typeof value !== "string") {
         throw new Error(
           `Specified ${
@@ -102,15 +99,15 @@ function isConfigurationKeyLegal(configurationKey: string): boolean {
 
 function validateArgument(argument: Argument, name: string): void {
   if (
-    argument.type !== ArgumentValueTypeName.NUMBER &&
-    argument.type !== ArgumentValueTypeName.INTEGER &&
-    argument.type !== ArgumentValueTypeName.STRING &&
-    argument.type !== ArgumentValueTypeName.BOOLEAN
+    argument.type !== ValueTypeName.NUMBER &&
+    argument.type !== ValueTypeName.INTEGER &&
+    argument.type !== ValueTypeName.STRING &&
+    argument.type !== ValueTypeName.BOOLEAN
   ) {
     throw new Error(`Illegal type: '${argument.type}' for argument: '${name}'`);
   }
   if (argument.allowableValues) {
-    if (argument.type === ArgumentValueTypeName.BOOLEAN) {
+    if (argument.type === ValueTypeName.BOOLEAN) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with allowable values specified`,
       );
@@ -120,21 +117,18 @@ function validateArgument(argument: Argument, name: string): void {
     });
   }
   if (argument.isCaseInsensitive !== undefined) {
-    if (argument.type === ArgumentValueTypeName.BOOLEAN && argument.isCaseInsensitive === false) {
+    if (argument.type === ValueTypeName.BOOLEAN && argument.isCaseInsensitive === false) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' must always be case insensitive`,
       );
-    } else if (argument.type !== ArgumentValueTypeName.STRING) {
+    } else if (argument.type !== ValueTypeName.STRING) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with case insensitive specified`,
       );
     }
   }
   if (argument.minValueInclusive !== undefined) {
-    if (
-      argument.type !== ArgumentValueTypeName.NUMBER &&
-      argument.type !== ArgumentValueTypeName.INTEGER
-    ) {
+    if (argument.type !== ValueTypeName.NUMBER && argument.type !== ValueTypeName.INTEGER) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with min value specified`,
       );
@@ -147,10 +141,7 @@ function validateArgument(argument: Argument, name: string): void {
     validateValueType(argument.type, argument.minValueInclusive, name, false, true);
   }
   if (argument.maxValueInclusive !== undefined) {
-    if (
-      argument.type !== ArgumentValueTypeName.NUMBER &&
-      argument.type !== ArgumentValueTypeName.INTEGER
-    ) {
+    if (argument.type !== ValueTypeName.NUMBER && argument.type !== ValueTypeName.INTEGER) {
       throw new Error(
         `Illegal type: '${argument.type}' for argument: '${name}' with max value specified`,
       );

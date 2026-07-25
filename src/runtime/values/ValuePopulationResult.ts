@@ -1,6 +1,6 @@
 import type {
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
+  PopulatedSingleValueType,
+  PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -26,7 +26,7 @@ export interface SubCommandValuePopulationResult extends ValuePopulationResult {
   /**
    * Populated argument values.
    */
-  readonly populatedArgumentValues: PopulatedArgumentValues;
+  readonly populatedArgumentValues: PopulatedValues;
 }
 
 /**
@@ -36,5 +36,5 @@ export interface GlobalCommandValuePopulationResult extends ValuePopulationResul
   /**
    * Populated argument value.
    */
-  readonly populatedArgumentValue: PopulatedArgumentSingleValueType;
+  readonly populatedArgumentValue: PopulatedSingleValueType;
 }

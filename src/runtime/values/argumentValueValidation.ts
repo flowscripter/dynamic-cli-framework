@@ -1,15 +1,12 @@
 import type {
-  ArgumentSingleValueType,
-  ArgumentValues,
-  ArgumentValueType,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
-  PopulatedArgumentValueType,
+  SingleValueType,
+  Values,
+  ValueType,
+  PopulatedSingleValueType,
+  PopulatedValues,
+  PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
@@ -25,15 +22,15 @@ interface ValidationResult {
 }
 
 interface SingleValueValidationResult extends ValidationResult {
-  validValue?: ArgumentSingleValueType;
+  validValue?: SingleValueType;
 }
 
 interface ArrayValueValidationResult extends ValidationResult {
-  validValue?: Array<ArgumentSingleValueType | ArgumentValues>;
+  validValue?: Array<SingleValueType | Values>;
 }
 
 interface ObjectValueValidationResult extends ValidationResult {
-  validValue?: ArgumentValues;
+  validValue?: Values;
 }
 
 /**
@@ -44,7 +41,7 @@ interface ObjectValueValidationResult extends ValidationResult {
  */
 function validatePrimitiveValue(
   argument: Argument,
-  value: PopulatedArgumentSingleValueType,
+  value: PopulatedSingleValueType,
 ): SingleValueValidationResult {
   let convertedValue;
 
@@ -60,7 +57,7 @@ function validatePrimitiveValue(
   // type check and conversion
   let castValue: string | undefined;
   switch (argument.type) {
-    case ArgumentValueTypeName.BOOLEAN:
+    case ValueTypeName.BOOLEAN:
       if (value === true || value === false) {
         convertedValue = value;
         break;
@@ -80,7 +77,7 @@ function validatePrimitiveValue(
       }
       convertedValue = castValue === "true";
       break;
-    case ArgumentValueTypeName.INTEGER:
+    case ValueTypeName.INTEGER:
       if (!Number.isInteger(Number(value))) {
         return {
           invalidArgument: {
@@ -92,7 +89,7 @@ function validatePrimitiveValue(
       }
       convertedValue = Number(value);
       break;
-    case ArgumentValueTypeName.NUMBER:
+    case ValueTypeName.NUMBER:
       if (!Number.isFinite(Number(value))) {
         return {
           invalidArgument: {
@@ -104,7 +101,7 @@ function validatePrimitiveValue(
       }
       convertedValue = Number(value);
       break;
-    case ArgumentValueTypeName.STRING:
+    case ValueTypeName.STRING:
     default:
       convertedValue = String(value);
       break;
@@ -116,7 +113,7 @@ function validatePrimitiveValue(
     let searchValue = convertedValue;
     let allowableValues = argument.allowableValues;
 
-    if (argument.type === ArgumentValueTypeName.STRING && argument.isCaseInsensitive) {
+    if (argument.type === ValueTypeName.STRING && argument.isCaseInsensitive) {
       searchValue = (convertedValue as string).toLowerCase();
       allowableValues = argument.allowableValues.map((v) => (v as string).toLowerCase());
     }
@@ -159,9 +156,9 @@ function validatePrimitiveValue(
 
 function validateArrayValue(
   subCommandArgument: SubCommandArgument | ComplexOption,
-  arrayValue: Array<PopulatedArgumentSingleValueType | PopulatedArgumentValues | undefined>,
+  arrayValue: Array<PopulatedSingleValueType | PopulatedValues | undefined>,
 ): ArrayValueValidationResult {
-  const convertedArrayValue: Array<ArgumentSingleValueType | ArgumentValues> = [];
+  const convertedArrayValue: Array<SingleValueType | Values> = [];
 
   for (let i = 0; i < arrayValue.length; i += 1) {
     const singleValue = arrayValue[i];
@@ -253,9 +250,9 @@ function validateArrayValue(
 
 function validateObjectValue(
   argument: ComplexOption,
-  objectValue: PopulatedArgumentValues,
+  objectValue: PopulatedValues,
 ): ObjectValueValidationResult {
-  const convertedObjectValue: ArgumentValues = {};
+  const convertedObjectValue: Values = {};
 
   for (let i = 0; i < argument.properties.length; i++) {
     const propertyArg = argument.properties[i]!;
@@ -307,7 +304,7 @@ function validateObjectValue(
       }
       validationResult = validateObjectValue(
         propertyArg as ComplexOption,
-        propertyValue as PopulatedArgumentValues,
+        propertyValue as PopulatedValues,
       );
     } // if not array and not object, then must be primitive
     else {
@@ -326,9 +323,9 @@ function validateObjectValue(
     }
     if (validationResult.validValue !== undefined) {
       convertedObjectValue[propertyArg.name] = validationResult.validValue as
-        | ArgumentValueType
-        | ArgumentValues
-        | Array<ArgumentValues>;
+        | ValueType
+        | Values
+        | Array<Values>;
     }
     // fast fail
     if (validationResult.invalidArgument !== undefined) {
@@ -365,14 +362,11 @@ function validateObjectValue(
 
 function doSubCommandArgumentValidation(
   argument: SubCommandArgument | ComplexOption,
-  value:
-    | PopulatedArgumentValueType
-    | PopulatedArgumentValues
-    | Array<PopulatedArgumentValues | undefined>,
+  value: PopulatedValueType | PopulatedValues | Array<PopulatedValues | undefined>,
   isArray: boolean,
   isOptional: boolean,
   invalidArguments: Array<InvalidArgument>,
-): PopulatedArgumentValueType | PopulatedArgumentValues | Array<PopulatedArgumentValues> {
+): PopulatedValueType | PopulatedValues | Array<PopulatedValues> {
   // if there is a value, check if it is valid
   if (value !== undefined) {
     let validationResult;
@@ -439,23 +433,20 @@ function doSubCommandArgumentValidation(
     }
     if (argument.validate && validationResult.validValue !== undefined) {
       const customError = argument.validate(
-        validationResult.validValue as ArgumentValueType | ArgumentValues | Array<ArgumentValues>,
+        validationResult.validValue as ValueType | Values | Array<Values>,
       );
       if (customError !== undefined) {
         invalidArguments.push({
           argument,
           name: argument.name,
-          value: validationResult.validValue as PopulatedArgumentValueType,
+          value: validationResult.validValue as PopulatedValueType,
           reason: InvalidArgumentReason.CUSTOM_VALIDATION,
           message: customError,
         });
         return undefined;
       }
     }
-    return validationResult.validValue as
-      | PopulatedArgumentValueType
-      | PopulatedArgumentValues
-      | undefined;
+    return validationResult.validValue as PopulatedValueType | PopulatedValues | undefined;
   }
 
   // if there is no value, check if it was optional
@@ -478,12 +469,9 @@ function doSubCommandArgumentValidation(
  */
 export function validateOptionValue(
   option: Option | ComplexOption,
-  value:
-    | PopulatedArgumentValueType
-    | PopulatedArgumentValues
-    | Array<PopulatedArgumentValues | undefined>,
+  value: PopulatedValueType | PopulatedValues | Array<PopulatedValues | undefined>,
   invalidArguments: Array<InvalidArgument>,
-): PopulatedArgumentValueType | PopulatedArgumentValues | Array<PopulatedArgumentValues> {
+): PopulatedValueType | PopulatedValues | Array<PopulatedValues> {
   return doSubCommandArgumentValidation(
     option,
     value,
@@ -502,16 +490,16 @@ export function validateOptionValue(
  */
 export function validatePositionalValue(
   positional: Positional,
-  value: PopulatedArgumentValueType,
+  value: PopulatedValueType,
   invalidArguments: Array<InvalidArgument>,
-): PopulatedArgumentValueType {
+): PopulatedValueType {
   return doSubCommandArgumentValidation(
     positional,
     value,
     positional.isVarargMultiple || false,
     positional.isVarargOptional || false,
     invalidArguments,
-  ) as PopulatedArgumentValueType;
+  ) as PopulatedValueType;
 }
 
 /**
@@ -524,9 +512,9 @@ export function validatePositionalValue(
  */
 export function validateGlobalCommandArgumentValue(
   globalCommand: GlobalCommand,
-  value: PopulatedArgumentSingleValueType,
+  value: PopulatedSingleValueType,
   invalidArguments: Array<InvalidArgument>,
-): PopulatedArgumentSingleValueType {
+): PopulatedSingleValueType {
   // if this function is called it is because the argument is defined
   const globalCommandArgument = globalCommand.argument!;
 
@@ -553,9 +541,7 @@ export function validateGlobalCommandArgumentValue(
     }
 
     if (globalCommandArgument.validate && validationResult.validValue !== undefined) {
-      const customError = globalCommandArgument.validate(
-        validationResult.validValue as ArgumentValueType,
-      );
+      const customError = globalCommandArgument.validate(validationResult.validValue as ValueType);
       if (customError !== undefined) {
         invalidArguments.push({
           argument: globalCommandArgument,
@@ -567,7 +553,7 @@ export function validateGlobalCommandArgumentValue(
         return undefined;
       }
     }
-    return validationResult.validValue as PopulatedArgumentSingleValueType;
+    return validationResult.validValue as PopulatedSingleValueType;
   }
 
   // if there is no value, check if it was optional

@@ -1,8 +1,5 @@
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
@@ -16,7 +13,7 @@ export default class LogLevelCommand implements GlobalModifierCommand {
   readonly description = "Set the logging threshold";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
     allowableValues: ["DEBUG", "INFO", "WARN", "ERROR"],
     isCaseInsensitive: true,
     defaultValue: "INFO",
@@ -31,7 +28,7 @@ export default class LogLevelCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     const logLevel = argumentValue as string;
 
     switch (logLevel.toUpperCase()) {

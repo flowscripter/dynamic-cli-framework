@@ -1,7 +1,7 @@
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { Values } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
@@ -17,12 +17,12 @@ export class PluginSearchSubCommand implements SubCommand {
     {
       name: "query",
       description: "Search query",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     },
   ];
 
-  async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
+  async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 

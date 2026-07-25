@@ -9,8 +9,8 @@ import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceProvider, ServiceInfo } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { Values } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 function getCLIConfig(): CLIConfig {
@@ -26,11 +26,11 @@ const pluginSubCommand: SubCommand = {
     {
       name: "val",
       description: "value",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     },
   ],
-  execute: (_context: Context, _argumentValues: ArgumentValues) => Promise.resolve(),
+  execute: (_context: Context, _argumentValues: Values) => Promise.resolve(),
 };
 
 const pluginCommandFactory: CommandFactory = {

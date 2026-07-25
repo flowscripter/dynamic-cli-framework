@@ -1,7 +1,7 @@
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import type { Values } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
@@ -18,11 +18,11 @@ export class PluginAddSubCommand implements SubCommand {
     {
       name: "pluginId",
       description: "Plugin ID to install (e.g. @scope/name)",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     },
   ];
 
-  async execute(context: Context, argumentValues: ArgumentValues): Promise<void> {
+  async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 

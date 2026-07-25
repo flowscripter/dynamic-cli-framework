@@ -13,10 +13,10 @@ import {
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  type ArgumentValueType,
-  ArgumentValueTypeName,
+  type ValueType,
+  ValueTypeName,
   ComplexValueTypeName,
-  type PopulatedArgumentValues,
+  type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -357,7 +357,7 @@ describe("parser tests", () => {
       potentialArgs: ["-e.g=bar", "-e.d=1", "-a.b[1].g=foo2", "-a.b[1].d[1]=2", "-a.b[1].d[0]=3"],
     });
 
-    let argumentValues: PopulatedArgumentValues = {
+    let argumentValues: PopulatedValues = {
       alpha: [
         {
           beta: [],
@@ -369,10 +369,7 @@ describe("parser tests", () => {
       },
     };
 
-    (
-      (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
-        .beta as Array<PopulatedArgumentValues>
-    )[1] = {
+    ((argumentValues.alpha as Array<PopulatedValues>)[0]!.beta as Array<PopulatedValues>)[1] = {
       gamma: "foo2",
       delta: ["3", "2"], // these are still stored as strings as the validation (and type conversion) failed fast
     };
@@ -426,16 +423,12 @@ describe("parser tests", () => {
 
     // these are still stored as strings as the validation (and type conversion) failed fast
     (
-      (
-        (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
-          .beta as Array<PopulatedArgumentValues>
-      )[1]!.delta as Array<ArgumentValueType>
+      ((argumentValues.alpha as Array<PopulatedValues>)[0]!.beta as Array<PopulatedValues>)[1]!
+        .delta as Array<ValueType>
     )[0] = "0";
     (
-      (
-        (argumentValues.alpha as Array<PopulatedArgumentValues>)[0]!
-          .beta as Array<PopulatedArgumentValues>
-      )[1]!.delta as Array<ArgumentValueType>
+      ((argumentValues.alpha as Array<PopulatedValues>)[0]!.beta as Array<PopulatedValues>)[1]!
+        .delta as Array<ValueType>
     )[2] = "2";
 
     expectParseResult(parseResult, {
@@ -673,12 +666,12 @@ describe("parser tests", () => {
                 {
                   name: "gamma",
                   shortAlias: "g",
-                  type: ArgumentValueTypeName.STRING,
+                  type: ValueTypeName.STRING,
                 },
                 {
                   name: "delta",
                   shortAlias: "d",
-                  type: ArgumentValueTypeName.NUMBER,
+                  type: ValueTypeName.NUMBER,
                   isArray: true,
                 },
               ],
@@ -697,12 +690,12 @@ describe("parser tests", () => {
             {
               name: "gamma",
               shortAlias: "g",
-              type: ArgumentValueTypeName.STRING,
+              type: ValueTypeName.STRING,
             },
             {
               name: "delta",
               shortAlias: "d",
-              type: ArgumentValueTypeName.NUMBER,
+              type: ValueTypeName.NUMBER,
             },
           ],
         },

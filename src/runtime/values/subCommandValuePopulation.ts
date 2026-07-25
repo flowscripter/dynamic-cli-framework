@@ -1,11 +1,11 @@
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-  type PopulatedArgumentSingleValueType,
-  type PopulatedArgumentValues,
-  type PopulatedArgumentValueType,
+  type SingleValueType,
+  ValueTypeName,
+  type PopulatedSingleValueType,
+  type PopulatedValues,
+  type PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
@@ -58,7 +58,7 @@ class ParseContext {
   /**
    * The current populated values for the sub-command.
    */
-  populatedArgumentValues: PopulatedArgumentValues;
+  populatedArgumentValues: PopulatedValues;
 
   /**
    * Current parse state.
@@ -163,9 +163,9 @@ class ParseContext {
     const complexAndArrayPathElements: Array<string | number> = [];
     let option: Option | ComplexOption | undefined = undefined;
     let currentValue:
-      | PopulatedArgumentValues
-      | Array<PopulatedArgumentValues | PopulatedArgumentValueType>
-      | PopulatedArgumentValueType
+      | PopulatedValues
+      | Array<PopulatedValues | PopulatedValueType>
+      | PopulatedValueType
       | undefined = this.populatedArgumentValues;
 
     for (let i = 0; i < complexPathElements.length; i++) {
@@ -277,10 +277,10 @@ class ParseContext {
         return false;
       }
 
-      if ((currentValue as PopulatedArgumentValues)[complexPathElement] === undefined) {
+      if ((currentValue as PopulatedValues)[complexPathElement] === undefined) {
         // ensure we have a placeholder value
         if (option.isArray) {
-          currentValue = (currentValue as PopulatedArgumentValues)[complexPathElement] = [];
+          currentValue = (currentValue as PopulatedValues)[complexPathElement] = [];
 
           if (isComplexOption(option)) {
             // if we are retrieving a property by name only use the last entry in the array by default
@@ -292,12 +292,10 @@ class ParseContext {
             currentValue = currentValue[index] = {};
           }
         } else if (isComplexOption(option)) {
-          currentValue = (currentValue as PopulatedArgumentValues)[complexPathElement] = {};
+          currentValue = (currentValue as PopulatedValues)[complexPathElement] = {};
         }
       } else {
-        currentValue = (currentValue as PopulatedArgumentValues)[
-          complexPathElement
-        ] as PopulatedArgumentValues;
+        currentValue = (currentValue as PopulatedValues)[complexPathElement] as PopulatedValues;
         if (Array.isArray(currentValue)) {
           // if we are retrieving a property by name only use the last entry in the array by default
           // (this is the scenario when array indices are implicit)
@@ -354,11 +352,9 @@ class ParseContext {
    * @return `false` if there is a problem populating the value, in which case the {@link state} will be set to
    * {@link ParseState.ERROR} and {@link invalidArgument} will be populated.
    */
-  setOptionValue(value: ArgumentSingleValueType): boolean {
-    let optionValue:
-      | Array<PopulatedArgumentValues>
-      | PopulatedArgumentValues
-      | PopulatedArgumentValueType = this.populatedArgumentValues;
+  setOptionValue(value: SingleValueType): boolean {
+    let optionValue: Array<PopulatedValues> | PopulatedValues | PopulatedValueType =
+      this.populatedArgumentValues;
     const optionPath = this.currentOptionPath as Array<string | number>;
 
     // traverse the current populated values using the validated option path elements
@@ -368,11 +364,11 @@ class ParseContext {
       // if on last path element, set the value
       if (i === optionPath.length - 1) {
         if (typeof pathElement === "string") {
-          const currentValue = (optionValue as PopulatedArgumentValues)[pathElement as string];
+          const currentValue = (optionValue as PopulatedValues)[pathElement as string];
 
           // if we haven't populated the argument value before...
           if (currentValue === undefined) {
-            (optionValue as PopulatedArgumentValues)[pathElement as string] = value;
+            (optionValue as PopulatedValues)[pathElement as string] = value;
           } // if we have already populated the argument value as an array...
           else if (Array.isArray(currentValue)) {
             if (currentValue.length === MAXIMUM_ARGUMENT_ARRAY_SIZE) {
@@ -385,7 +381,7 @@ class ParseContext {
               return false;
             }
             // push the new value
-            (currentValue as Array<PopulatedArgumentSingleValueType>).push(value);
+            (currentValue as Array<PopulatedSingleValueType>).push(value);
           } // else the value to add would make an array where it is not allowed
           else {
             this.invalidArgument = {
@@ -398,30 +394,29 @@ class ParseContext {
           }
         } else {
           // set the new value on the array
-          (optionValue as Array<PopulatedArgumentValueType | PopulatedArgumentValues>)[
-            pathElement as number
-          ] = value;
+          (optionValue as Array<PopulatedValueType | PopulatedValues>)[pathElement as number] =
+            value;
         }
       } // otherwise continue to navigate the path
       else {
         if (typeof pathElement === "string") {
           if (Array.isArray(optionValue)) {
-            optionValue = (optionValue as Array<PopulatedArgumentValues>)[
-              (optionValue as Array<PopulatedArgumentValues>).length - 1
+            optionValue = (optionValue as Array<PopulatedValues>)[
+              (optionValue as Array<PopulatedValues>).length - 1
             ]![pathElement as string] as
-              | Array<PopulatedArgumentValues>
-              | PopulatedArgumentValues
-              | PopulatedArgumentValueType;
+              | Array<PopulatedValues>
+              | PopulatedValues
+              | PopulatedValueType;
           } else {
-            optionValue = (optionValue as PopulatedArgumentValues)[pathElement as string] as
-              | Array<PopulatedArgumentValues>
-              | PopulatedArgumentValues
-              | PopulatedArgumentValueType;
+            optionValue = (optionValue as PopulatedValues)[pathElement as string] as
+              | Array<PopulatedValues>
+              | PopulatedValues
+              | PopulatedValueType;
           }
         } else {
-          optionValue = (
-            optionValue as Array<PopulatedArgumentSingleValueType | PopulatedArgumentValues>
-          )[pathElement as number];
+          optionValue = (optionValue as Array<PopulatedSingleValueType | PopulatedValues>)[
+            pathElement as number
+          ];
         }
       }
     }
@@ -441,7 +436,7 @@ class ParseContext {
    *
    * @param value the value to attempt to set.
    */
-  setPositionalValue(value: ArgumentSingleValueType): boolean {
+  setPositionalValue(value: SingleValueType): boolean {
     const positional = this.subCommand.positionals[this.currentPositionalIndex]!;
     const currentValue = this.populatedArgumentValues[positional.name];
 
@@ -465,9 +460,9 @@ class ParseContext {
         return false;
       }
       this.populatedArgumentValues[positional.name] = [
-        ...(currentValue as Array<PopulatedArgumentSingleValueType>),
+        ...(currentValue as Array<PopulatedSingleValueType>),
         value,
-      ] as Array<PopulatedArgumentSingleValueType>;
+      ] as Array<PopulatedSingleValueType>;
     }
 
     // Update the state
@@ -493,7 +488,7 @@ class ParseContext {
       if (
         potentialArg !== "true" &&
         potentialArg !== "false" &&
-        this.currentOption!.type === ArgumentValueTypeName.BOOLEAN
+        this.currentOption!.type === ValueTypeName.BOOLEAN
       ) {
         // Set the value to implicit value of true and return ony error.
         if (!this.setOptionValue("true")) {
@@ -582,16 +577,16 @@ class ParseContext {
 }
 
 /**
- * Populate {@link PopulatedArgumentValues} for the provided {@link SubCommand} using the provided potential args.
+ * Populate {@link PopulatedValues} for the provided {@link SubCommand} using the provided potential args.
  *
- * @param subCommand the {@link SubCommand} for which {@link PopulatedArgumentValues} values should be populated.
+ * @param subCommand the {@link SubCommand} for which {@link PopulatedValues} values should be populated.
  * @param potentialArgs the potential args to use for population.
- * @param defaultValues optional default {@link ArgumentValues} to use for population before parsing the provided arguments.
+ * @param defaultValues optional default {@link Values} to use for population before parsing the provided arguments.
  */
 export default function populateSubCommandValues(
   subCommand: SubCommand,
   potentialArgs: ReadonlyArray<string>,
-  defaultValues: PopulatedArgumentValues | undefined,
+  defaultValues: PopulatedValues | undefined,
 ): SubCommandValuePopulationResult {
   logger.debug(() => {
     const message = `Populating values for sub-command: '${subCommand.name}' using potential args: ${potentialArgs.join(
@@ -629,7 +624,7 @@ export default function populateSubCommandValues(
   // Check if the last arg specified an option but no value
   if (parseContext.state === ParseState.OPTION_VALUE_EXPECTED) {
     // special case if the last arg was for a boolean option where the value was implicitly `true`
-    if (parseContext.currentOption!.type === ArgumentValueTypeName.BOOLEAN) {
+    if (parseContext.currentOption!.type === ValueTypeName.BOOLEAN) {
       parseContext.setOptionValue("true");
     } else {
       parseContext.invalidArgument = {

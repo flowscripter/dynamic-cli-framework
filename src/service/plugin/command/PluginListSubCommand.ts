@@ -1,6 +1,6 @@
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
+import type { Values } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
@@ -14,7 +14,7 @@ export class PluginListSubCommand implements SubCommand {
   readonly options = [];
   readonly positionals = [];
 
-  async execute(context: Context, _argumentValues: ArgumentValues): Promise<void> {
+  async execute(context: Context, _argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 

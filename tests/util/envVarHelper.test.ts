@@ -12,7 +12,7 @@ import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,
 } from "../../src/util/envVarHelper.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("envVarHelper tests", () => {
   test("getGlobalCommandValuesFromEnvVars works", () => {
@@ -42,7 +42,7 @@ describe("envVarHelper tests", () => {
         "m",
         1,
         {
-          type: ArgumentValueTypeName.BOOLEAN,
+          type: ValueTypeName.BOOLEAN,
           configurationKey: "FOO_BAR",
         },
         true,
@@ -79,7 +79,7 @@ describe("envVarHelper tests", () => {
         true,
         false,
         false,
-        ArgumentValueTypeName.STRING,
+        ValueTypeName.STRING,
         undefined,
         true,
       );
@@ -97,7 +97,7 @@ describe("envVarHelper tests", () => {
         true,
         false,
         false,
-        ArgumentValueTypeName.STRING,
+        ValueTypeName.STRING,
         undefined,
         true,
         "FOO_BAR",
@@ -116,7 +116,7 @@ describe("envVarHelper tests", () => {
         true,
         false,
         false,
-        ArgumentValueTypeName.BOOLEAN,
+        ValueTypeName.BOOLEAN,
         undefined,
         true,
         "FOO_BAR",
@@ -152,13 +152,7 @@ describe("envVarHelper tests", () => {
 
       expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
-      command = getSubCommandWithPositional(
-        "blah",
-        true,
-        false,
-        ArgumentValueTypeName.STRING,
-        true,
-      );
+      command = getSubCommandWithPositional("blah", true, false, ValueTypeName.STRING, true);
 
       expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
 
@@ -172,7 +166,7 @@ describe("envVarHelper tests", () => {
         "blah",
         true,
         false,
-        ArgumentValueTypeName.STRING,
+        ValueTypeName.STRING,
         true,
         "FOO_BAR",
       );
@@ -189,7 +183,7 @@ describe("envVarHelper tests", () => {
         "blah",
         true,
         false,
-        ArgumentValueTypeName.BOOLEAN,
+        ValueTypeName.BOOLEAN,
         true,
         "FOO_BAR",
       );
