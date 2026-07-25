@@ -60,7 +60,17 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult | undefined> {
     if (!this.#upgradeCheckPromise) {
-      this.#upgradeCheckPromise = this.checkForUpgrade();
+      // Only cache a successful result. An `undefined` result can come from a transient
+      // failure (e.g. the opportunistic startup check's fetch exceeding
+      // VERSION_CHECK_TIMEOUT_MS) - caching that would permanently deny a later, deliberate
+      // caller (e.g. the `upgrade` command explicitly waiting via waitForResult=true) any
+      // chance of a fresh attempt for the rest of this process's lifetime.
+      this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
+        if (result === undefined) {
+          this.#upgradeCheckPromise = undefined;
+        }
+        return result;
+      });
     }
     if (waitForResult) {
       return this.#upgradeCheckPromise;
