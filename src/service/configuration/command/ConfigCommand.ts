@@ -1,9 +1,6 @@
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type ConfigurationServiceProvider from "../ConfigurationServiceProvider.ts";
 
@@ -15,7 +12,7 @@ export default class ConfigCommand implements GlobalModifierCommand {
   readonly description = "Set the configuration file location";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.STRING,
+    type: ValueTypeName.STRING,
     configurationKey: "CONFIG",
   };
   readonly executePriority: number;
@@ -30,7 +27,7 @@ export default class ConfigCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     const configLocation = argumentValue as string;
 
     this.#configurationServiceProvider.setConfigLocation(configLocation);

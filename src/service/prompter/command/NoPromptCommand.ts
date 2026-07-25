@@ -1,9 +1,6 @@
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type PrompterServiceProvider from "../PrompterServiceProvider.ts";
 
@@ -12,7 +9,7 @@ export default class NoPromptCommand implements GlobalModifierCommand {
   readonly description = "Disable interactive prompting";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.BOOLEAN,
+    type: ValueTypeName.BOOLEAN,
     defaultValue: false,
     configurationKey: "NO_PROMPT",
   };
@@ -25,7 +22,7 @@ export default class NoPromptCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     this.#prompterServiceProvider.prompterService.promptEnabled = !(argumentValue as boolean);
 
     return Promise.resolve();

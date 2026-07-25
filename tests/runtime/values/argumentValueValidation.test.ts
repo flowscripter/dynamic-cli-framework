@@ -10,9 +10,9 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import { getGlobalCommandWithShortAlias } from "../../fixtures/Command.ts";
 import {
-  ArgumentValueTypeName,
+  ValueTypeName,
   ComplexValueTypeName,
-  type PopulatedArgumentValues,
+  type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
@@ -23,7 +23,7 @@ describe("argumentValueValidation tests", () => {
   test("Option types", () => {
     let option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     let invalidArguments: Array<InvalidArgument> = [];
     expect(validateOptionValue(option, "foo", invalidArguments)).toEqual("foo");
@@ -31,112 +31,112 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validateOptionValue(option, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validateOptionValue(option, "1.1", invalidArguments)).toEqual(1.1);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validateOptionValue(option, "-1.1", invalidArguments)).toEqual(-1.1);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.INTEGER,
+      type: ValueTypeName.INTEGER,
     };
     expect(validateOptionValue(option, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.INTEGER,
+      type: ValueTypeName.INTEGER,
     };
     expect(validateOptionValue(option, "-1", invalidArguments)).toEqual(-1);
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.SECRET,
+      type: ValueTypeName.SECRET,
     };
     expect(validateOptionValue(option, "xxx", invalidArguments)).toEqual("xxx");
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "true", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "TRUE", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "True", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "false", invalidArguments)).toBeFalse();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "FALSE", invalidArguments)).toBeFalse();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, "False", invalidArguments)).toBeFalse();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, true, invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validateOptionValue(option, false, invalidArguments)).toBeFalse();
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     expect(validateOptionValue(option, "1", invalidArguments)).toEqual("1");
     expect(invalidArguments).toEqual([]);
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validateOptionValue(option, "foo", invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([
@@ -150,7 +150,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     invalidArguments = [];
     expect(validateOptionValue(option, "foo", invalidArguments)).toBeUndefined();
@@ -165,7 +165,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.INTEGER,
+      type: ValueTypeName.INTEGER,
     };
     invalidArguments = [];
     expect(validateOptionValue(option, "1.1", invalidArguments)).toBeUndefined();
@@ -182,7 +182,7 @@ describe("argumentValueValidation tests", () => {
   test("Option array", () => {
     let option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isArray: true,
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -191,7 +191,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
       isArray: true,
     };
     expect(validateOptionValue(option, ["1", "2"], invalidArguments)).toEqual([1, 2]);
@@ -199,7 +199,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
       isArray: true,
     };
     expect(validateOptionValue(option, ["true", "false"], invalidArguments)).toEqual([true, false]);
@@ -207,7 +207,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     expect(validateOptionValue(option, ["true", "false"], invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([
@@ -223,7 +223,7 @@ describe("argumentValueValidation tests", () => {
   test("Optional option", () => {
     let option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isOptional: true,
     };
     let invalidArguments: Array<InvalidArgument> = [];
@@ -232,7 +232,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isArray: true,
       isOptional: true,
     };
@@ -241,7 +241,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     expect(validateOptionValue(option, undefined, invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([
@@ -254,7 +254,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isArray: true,
     };
     invalidArguments = [];
@@ -271,7 +271,7 @@ describe("argumentValueValidation tests", () => {
   test("Invalid option argument value - not an allowable value", () => {
     let option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -280,7 +280,7 @@ describe("argumentValueValidation tests", () => {
 
     option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     expect(validateOptionValue(option, "goo", invalidArguments)).toBeUndefined();
@@ -297,7 +297,7 @@ describe("argumentValueValidation tests", () => {
   test("Invalid option argument value - not within range", () => {
     const option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.INTEGER,
+      type: ValueTypeName.INTEGER,
       minValueInclusive: 1,
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -322,11 +322,11 @@ describe("argumentValueValidation tests", () => {
       properties: [
         {
           name: "a",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
         {
           name: "b",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
     };
@@ -402,11 +402,11 @@ describe("argumentValueValidation tests", () => {
       properties: [
         {
           name: "a",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
         {
           name: "b",
-          type: ArgumentValueTypeName.NUMBER,
+          type: ValueTypeName.NUMBER,
         },
       ],
     };
@@ -495,12 +495,12 @@ describe("argumentValueValidation tests", () => {
             {
               name: "gamma",
               shortAlias: "g",
-              type: ArgumentValueTypeName.STRING,
+              type: ValueTypeName.STRING,
             },
             {
               name: "delta",
               shortAlias: "d",
-              type: ArgumentValueTypeName.NUMBER,
+              type: ValueTypeName.NUMBER,
               isArray: true,
             },
           ],
@@ -582,12 +582,12 @@ describe("argumentValueValidation tests", () => {
             {
               name: "gamma",
               shortAlias: "g",
-              type: ArgumentValueTypeName.STRING,
+              type: ValueTypeName.STRING,
             },
             {
               name: "delta",
               shortAlias: "d",
-              type: ArgumentValueTypeName.NUMBER,
+              type: ValueTypeName.NUMBER,
               isArray: true,
             },
           ],
@@ -595,7 +595,7 @@ describe("argumentValueValidation tests", () => {
       ],
     };
     const invalidArguments: Array<InvalidArgument> = [];
-    const value: Array<PopulatedArgumentValues> = [
+    const value: Array<PopulatedValues> = [
       {
         beta: [
           {},
@@ -620,7 +620,7 @@ describe("argumentValueValidation tests", () => {
   test("Positional types", () => {
     let positional: Positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     let invalidArguments: Array<InvalidArgument> = [];
     expect(validatePositionalValue(positional, "foo", invalidArguments), "foo");
@@ -628,28 +628,28 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validatePositionalValue(positional, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     expect(validatePositionalValue(positional, "true", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     expect(validatePositionalValue(positional, "1", invalidArguments)).toEqual("1");
     expect(invalidArguments).toEqual([]);
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     expect(validatePositionalValue(positional, "foo", invalidArguments)).toBeUndefined();
     expect(invalidArguments).toEqual([
@@ -663,7 +663,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     invalidArguments = [];
     expect(validatePositionalValue(positional, "foo", invalidArguments)).toBeUndefined();
@@ -680,7 +680,7 @@ describe("argumentValueValidation tests", () => {
   test("Positional varargs multiple", () => {
     let positional: Positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargMultiple: true,
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -692,7 +692,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
       isVarargMultiple: true,
     };
     expect(validatePositionalValue(positional, ["1", "2"], invalidArguments)).toEqual([1, 2]);
@@ -700,7 +700,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
       isVarargMultiple: true,
     };
     expect(validatePositionalValue(positional, ["true", "false"], invalidArguments)).toEqual([
@@ -711,7 +711,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
       isVarargMultiple: true,
     };
     expect(validatePositionalValue(positional, undefined, invalidArguments)).toBeUndefined();
@@ -727,7 +727,7 @@ describe("argumentValueValidation tests", () => {
   test("Positional varargs optional", () => {
     let positional: Positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     };
     let invalidArguments: Array<InvalidArgument> = [];
@@ -736,7 +736,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     };
     expect(validatePositionalValue(positional, "foo", invalidArguments), "foo");
@@ -744,7 +744,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargOptional: true,
     };
     expect(validatePositionalValue(positional, ["foo", "bar"], invalidArguments)).toBeUndefined();
@@ -759,7 +759,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isVarargMultiple: true,
       isVarargOptional: true,
     };
@@ -774,7 +774,7 @@ describe("argumentValueValidation tests", () => {
   test("Invalid positional argument value", () => {
     let positional: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -783,7 +783,7 @@ describe("argumentValueValidation tests", () => {
 
     positional = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     expect(validatePositionalValue(positional, "goo", invalidArguments)).toBeUndefined();
@@ -799,7 +799,7 @@ describe("argumentValueValidation tests", () => {
 
   test("Global command argument types", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     let invalidArguments: Array<InvalidArgument> = [];
@@ -807,28 +807,28 @@ describe("argumentValueValidation tests", () => {
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(validateGlobalCommandArgumentValue(globalCommand, "1", invalidArguments)).toEqual(1);
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(validateGlobalCommandArgumentValue(globalCommand, "true", invalidArguments)).toBeTrue();
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(validateGlobalCommandArgumentValue(globalCommand, "1", invalidArguments), "1");
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(
@@ -844,7 +844,7 @@ describe("argumentValueValidation tests", () => {
     ]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.BOOLEAN,
+      type: ValueTypeName.BOOLEAN,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     invalidArguments = [];
@@ -863,7 +863,7 @@ describe("argumentValueValidation tests", () => {
 
   test("Optional global command argument", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isOptional: true,
     };
     let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
@@ -874,7 +874,7 @@ describe("argumentValueValidation tests", () => {
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
     expect(
@@ -892,7 +892,7 @@ describe("argumentValueValidation tests", () => {
   test("Option with custom validator that passes", () => {
     const option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       validate: () => undefined,
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -903,7 +903,7 @@ describe("argumentValueValidation tests", () => {
   test("Option with custom validator that fails", () => {
     const option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       validate: (v) => ((v as string).length < 3 ? "min 3 chars" : undefined),
     };
     const invalidArguments: Array<InvalidArgument> = [];
@@ -922,7 +922,7 @@ describe("argumentValueValidation tests", () => {
   test("Positional with custom validator that passes and fails", () => {
     const positional: Positional = {
       name: "count",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
       validate: (v) => ((v as number) % 2 !== 0 ? "must be even" : undefined),
     };
     let invalidArguments: Array<InvalidArgument> = [];
@@ -944,7 +944,7 @@ describe("argumentValueValidation tests", () => {
 
   test("GlobalCommand argument with custom validator that passes and fails", () => {
     const globalCommandArgument: GlobalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       validate: (v) => ((v as string).startsWith("x") ? undefined : "must start with x"),
     };
     const globalCommand = getGlobalCommandWithShortAlias(
@@ -976,7 +976,7 @@ describe("argumentValueValidation tests", () => {
   test("Option isArray with custom validator checking uniqueness", () => {
     const option: Option = {
       name: "tags",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isArray: true,
       validate: (v) => {
         const arr = v as string[];
@@ -1003,7 +1003,7 @@ describe("argumentValueValidation tests", () => {
   test("Positional isVarargMultiple with custom validator checking uniqueness", () => {
     const positional: Positional = {
       name: "ids",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
       isVarargMultiple: true,
       validate: (v) => {
         const arr = v as number[];
@@ -1032,7 +1032,7 @@ describe("argumentValueValidation tests", () => {
   test("Custom validator not called when built-in validation fails", () => {
     const option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.NUMBER,
+      type: ValueTypeName.NUMBER,
       validate: () => {
         throw new Error("should not be called");
       },
@@ -1052,7 +1052,7 @@ describe("argumentValueValidation tests", () => {
   test("Custom validator not called when value is undefined and optional", () => {
     const option: Option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       isOptional: true,
       validate: () => {
         throw new Error("should not be called");
@@ -1065,7 +1065,7 @@ describe("argumentValueValidation tests", () => {
 
   test("Invalid global command argument value", () => {
     let globalCommandArgument: GlobalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     let globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);
@@ -1074,7 +1074,7 @@ describe("argumentValueValidation tests", () => {
     expect(invalidArguments).toEqual([]);
 
     globalCommandArgument = {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       allowableValues: ["bar", "two"],
     };
     globalCommand = getGlobalCommandWithShortAlias("globalCommand", "f", globalCommandArgument);

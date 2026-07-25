@@ -1,9 +1,6 @@
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  type ArgumentSingleValueType,
-  ArgumentValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
 
@@ -15,7 +12,7 @@ export default class DarkModeCommand implements GlobalModifierCommand {
   readonly description = "Enable dark mode for output";
   readonly enableConfiguration = true;
   readonly argument: GlobalCommandArgument = {
-    type: ArgumentValueTypeName.BOOLEAN,
+    type: ValueTypeName.BOOLEAN,
     defaultValue: false,
     configurationKey: "DARK_MODE",
   };
@@ -28,7 +25,7 @@ export default class DarkModeCommand implements GlobalModifierCommand {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: ArgumentSingleValueType): Promise<void> {
+  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
     this.#printerServiceProvider.printerService!.darkMode = argumentValue as boolean;
 
     return Promise.resolve();

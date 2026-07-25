@@ -1,10 +1,7 @@
 import { distance } from "fastest-levenshtein";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  ArgumentValueTypeName,
-  ComplexValueTypeName,
-} from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { UsageExample } from "@flowscripter/dynamic-cli-framework-api";
@@ -144,24 +141,21 @@ function getGlobalCommandArgumentForm(globalCommandArgument: GlobalCommandArgume
   let argumentSyntax = "";
 
   switch (globalCommandArgument.type) {
-    case ArgumentValueTypeName.BOOLEAN:
+    case ValueTypeName.BOOLEAN:
       argumentSyntax = "true|false";
       break;
-    case ArgumentValueTypeName.INTEGER:
+    case ValueTypeName.INTEGER:
       argumentSyntax = "<integer_value>";
       break;
-    case ArgumentValueTypeName.NUMBER:
+    case ValueTypeName.NUMBER:
       argumentSyntax = "<number_value>";
       break;
-    case ArgumentValueTypeName.STRING:
+    case ValueTypeName.STRING:
       argumentSyntax = "<string_value>";
       break;
   }
 
-  if (
-    globalCommandArgument.isOptional ||
-    globalCommandArgument.type === ArgumentValueTypeName.BOOLEAN
-  ) {
+  if (globalCommandArgument.isOptional || globalCommandArgument.type === ValueTypeName.BOOLEAN) {
     argumentSyntax = `[${argumentSyntax}]`;
   }
 
@@ -187,13 +181,13 @@ export function getGlobalArgumentHelpEntry(
     notesItems.push(`valid values: ${argument.allowableValues.join("|")}`);
   } else {
     switch (argument.type) {
-      case ArgumentValueTypeName.STRING:
+      case ValueTypeName.STRING:
         notesItems.push("string value");
         break;
-      case ArgumentValueTypeName.INTEGER:
+      case ValueTypeName.INTEGER:
         notesItems.push("integer value");
         break;
-      case ArgumentValueTypeName.NUMBER:
+      case ValueTypeName.NUMBER:
         notesItems.push("number value");
         break;
     }
@@ -240,17 +234,17 @@ export function getSubCommandArgumentsSyntax(subCommand: SubCommand): string {
 
   subCommand.options.forEach((option) => {
     let optionSyntax = `--${option.name}`;
-    switch (option.type as ArgumentValueTypeName | ComplexValueTypeName) {
-      case ArgumentValueTypeName.BOOLEAN:
+    switch (option.type as ValueTypeName | ComplexValueTypeName) {
+      case ValueTypeName.BOOLEAN:
         optionSyntax = `${optionSyntax} [true|false]`;
         break;
-      case ArgumentValueTypeName.INTEGER:
+      case ValueTypeName.INTEGER:
         optionSyntax = `${optionSyntax} <integer_value>`;
         break;
-      case ArgumentValueTypeName.NUMBER:
+      case ValueTypeName.NUMBER:
         optionSyntax = `${optionSyntax} <number_value>`;
         break;
-      case ArgumentValueTypeName.STRING:
+      case ValueTypeName.STRING:
         optionSyntax = `${optionSyntax} <string_value>`;
         break;
       case ComplexValueTypeName.COMPLEX:
@@ -318,16 +312,16 @@ function getOptionHelpEntry(
       notesItems.push(`valid values: ${option.allowableValues.join("|")}`);
     } else {
       switch (option.type) {
-        case ArgumentValueTypeName.STRING:
+        case ValueTypeName.STRING:
           notesItems.push(`string value`);
           break;
-        case ArgumentValueTypeName.INTEGER:
+        case ValueTypeName.INTEGER:
           notesItems.push(`integer value`);
           break;
-        case ArgumentValueTypeName.NUMBER:
+        case ValueTypeName.NUMBER:
           notesItems.push(`number value`);
           break;
-        case ArgumentValueTypeName.BOOLEAN:
+        case ValueTypeName.BOOLEAN:
           notesItems.push(`boolean value`);
           break;
       }
@@ -403,16 +397,16 @@ function getPositionalHelpEntry(
     notesItems.push(`valid values: ${positional.allowableValues.join("|")}`);
   } else {
     switch (positional.type) {
-      case ArgumentValueTypeName.STRING:
+      case ValueTypeName.STRING:
         notesItems.push(`string value`);
         break;
-      case ArgumentValueTypeName.INTEGER:
+      case ValueTypeName.INTEGER:
         notesItems.push(`integer value`);
         break;
-      case ArgumentValueTypeName.NUMBER:
+      case ValueTypeName.NUMBER:
         notesItems.push(`number value`);
         break;
-      case ArgumentValueTypeName.BOOLEAN:
+      case ValueTypeName.BOOLEAN:
         notesItems.push(`boolean value`);
         break;
     }
@@ -544,7 +538,7 @@ export function getMultiCommandAppSyntax(
           modifier.argument !== undefined &&
           !modifier.argument.isOptional &&
           modifier.argument.defaultValue === undefined &&
-          modifier.argument.type !== ArgumentValueTypeName.BOOLEAN,
+          modifier.argument.type !== ValueTypeName.BOOLEAN,
       );
       syntax += optionArgMandatory ? " <value>" : " [<value>]";
     }
@@ -571,7 +565,7 @@ export function getMultiCommandAppSyntax(
       argValueOptional = globalCommands.some(
         (globalCommand) =>
           globalCommand.argument !== undefined &&
-          globalCommand.argument.type === ArgumentValueTypeName.BOOLEAN,
+          globalCommand.argument.type === ValueTypeName.BOOLEAN,
       );
     }
   }
@@ -623,19 +617,17 @@ export function getMultiCommandAppSyntax(
           groupCommand.memberSubCommands.some((memberCommand) =>
             memberCommand.options.some(
               (option) =>
-                option.type === ArgumentValueTypeName.BOOLEAN ||
+                option.type === ValueTypeName.BOOLEAN ||
                 memberCommand.positionals.some(
-                  (positional) => positional.type === ArgumentValueTypeName.BOOLEAN,
+                  (positional) => positional.type === ValueTypeName.BOOLEAN,
                 ),
             ),
           ),
         ) ||
         subCommands.some(
           (subCommand) =>
-            subCommand.options.some((option) => option.type === ArgumentValueTypeName.BOOLEAN) ||
-            subCommand.positionals.some(
-              (positional) => positional.type === ArgumentValueTypeName.BOOLEAN,
-            ),
+            subCommand.options.some((option) => option.type === ValueTypeName.BOOLEAN) ||
+            subCommand.positionals.some((positional) => positional.type === ValueTypeName.BOOLEAN),
         );
       multipleArg =
         multipleArg ||

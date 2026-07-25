@@ -9,7 +9,7 @@ import {
 } from "../fixtures/Command.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { RunState } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
@@ -74,11 +74,11 @@ describe("BaseCLI tests", () => {
     let subHasRun = false;
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);
@@ -256,11 +256,11 @@ describe("BaseCLI tests", () => {
     }
 
     const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
     });
     const option = {
       name: "foo",
-      type: ArgumentValueTypeName.STRING,
+      type: ValueTypeName.STRING,
       shortAlias: "f",
     };
     const subCommand = getSubCommand("command", [option], []);

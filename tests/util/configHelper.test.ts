@@ -10,7 +10,7 @@ import {
   getSubCommandWithOption,
   getSubCommandWithPositional,
 } from "../fixtures/Command.ts";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
@@ -44,13 +44,13 @@ describe("configHelper tests", () => {
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
     ).toBeUndefined();
 
-    command = getSubCommandWithPositional("blah", true, false, ArgumentValueTypeName.BOOLEAN, true);
+    command = getSubCommandWithPositional("blah", true, false, ValueTypeName.BOOLEAN, true);
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
     ).toEqual("FOO_BLAH_FOO");
 
-    command = getSubCommandWithPositional("blah", true, true, ArgumentValueTypeName.BOOLEAN, true);
+    command = getSubCommandWithPositional("blah", true, true, ValueTypeName.BOOLEAN, true);
 
     expect(
       getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [command.positionals![0]!]),
@@ -60,7 +60,7 @@ describe("configHelper tests", () => {
       "blah",
       true,
       true,
-      ArgumentValueTypeName.BOOLEAN,
+      ValueTypeName.BOOLEAN,
       true,
       "FOO_BAR",
     );
@@ -84,7 +84,7 @@ describe("configHelper tests", () => {
       true,
       false,
       false,
-      ArgumentValueTypeName.BOOLEAN,
+      ValueTypeName.BOOLEAN,
       undefined,
       true,
     );
@@ -100,7 +100,7 @@ describe("configHelper tests", () => {
       true,
       false,
       true,
-      ArgumentValueTypeName.BOOLEAN,
+      ValueTypeName.BOOLEAN,
       undefined,
       true,
     );
@@ -116,7 +116,7 @@ describe("configHelper tests", () => {
       true,
       false,
       true,
-      ArgumentValueTypeName.BOOLEAN,
+      ValueTypeName.BOOLEAN,
       undefined,
       true,
       "FOO_BAR",

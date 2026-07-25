@@ -1,7 +1,7 @@
 import type {
-  ArgumentValueType,
-  PopulatedArgumentSingleValueType,
-  PopulatedArgumentValues,
+  ValueType,
+  PopulatedSingleValueType,
+  PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { InvalidArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
@@ -25,11 +25,11 @@ export type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
  * Parse the arguments for the specified {@link CommandClause} assuming it contains a {@link SubCommand}.
  *
  * @param commandClause the clause to parse.
- * @param defaultValues optional default {@link PopulatedArgumentValues} to use for population before parsing the provided arguments.
+ * @param defaultValues optional default {@link PopulatedValues} to use for population before parsing the provided arguments.
  */
 export function parseSubCommandClause(
   commandClause: CommandClause,
-  defaultValues?: PopulatedArgumentValues,
+  defaultValues?: PopulatedValues,
 ): ParseResult {
   const command = commandClause.command as SubCommand;
   const potentialArgs = commandClause.potentialArgs;
@@ -82,7 +82,7 @@ export function parseSubCommandClause(
       command.positionals.forEach((positional) => {
         const validatedValue = validatePositionalValue(
           positional,
-          populatedArgumentValues[positional.name] as ArgumentValueType,
+          populatedArgumentValues[positional.name] as ValueType,
           invalidArguments,
         );
         if (validatedValue !== undefined) {
@@ -117,11 +117,11 @@ export function parseSubCommandClause(
  * Parse the arguments for the specified {@link CommandClause} assuming it contains a {@link GlobalCommand} or {@link GlobalModifierCommand}.
  *
  * @param commandClause the clause to parse.
- * @param defaultValue optional default {@link PopulatedArgumentSingleValueType} to use for population before parsing the provided arguments.
+ * @param defaultValue optional default {@link PopulatedSingleValueType} to use for population before parsing the provided arguments.
  */
 export function parseGlobalCommandClause(
   commandClause: CommandClause,
-  defaultValue?: PopulatedArgumentSingleValueType,
+  defaultValue?: PopulatedSingleValueType,
 ): ParseResult {
   const command = commandClause.command as GlobalCommand;
   const potentialArgs = commandClause.potentialArgs;

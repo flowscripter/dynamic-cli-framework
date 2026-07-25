@@ -13,7 +13,7 @@ import {
 } from "../../src/command/MultiCommandCliHelpCommand.ts";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
-import { ArgumentValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 
 describe("MultiCommandCliHelpCommand tests", () => {
@@ -557,7 +557,7 @@ describe("MultiCommandCliHelpCommand tests", () => {
     const commandRegistry = getCommandRegistry([
       getGlobalCommand("global1", true, true),
       getGlobalCommand("global2", true),
-      getSubCommandWithOption("command_a", true, true, true, ArgumentValueTypeName.BOOLEAN),
+      getSubCommandWithOption("command_a", true, true, true, ValueTypeName.BOOLEAN),
       getSubCommandWithOption("command_b", true),
     ]);
     const help = new MultiCommandCliHelpGlobalCommand(true, commandRegistry);

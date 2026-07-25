@@ -4,7 +4,7 @@ import UsageCommand from "../../src/command/UsageCommand.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../../src/service/printer/DefaultPrinterService.ts";
-import type { ArgumentValues } from "@flowscripter/dynamic-cli-framework-api";
+import type { Values } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
@@ -35,7 +35,7 @@ describe("UsageCommand tests", () => {
       new (class implements Command {
         readonly name = "help";
 
-        execute(_argumentValues: ArgumentValues, _context: Context): Promise<void> {
+        execute(_argumentValues: Values, _context: Context): Promise<void> {
           return Promise.resolve(undefined);
         }
       })(),
