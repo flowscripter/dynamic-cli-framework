@@ -228,7 +228,7 @@ describe("UpgradeServiceProvider", () => {
       error: () => Promise.resolve(),
     });
 
-    // No upgrade location configured, so checkForUpgrade resolves undefined and nothing is printed.
+    // No upgrade location configured, so checkForUpgrade resolves "unsupported" and nothing is printed.
     await provider.initService(context);
     expect(printed).toEqual("");
   });

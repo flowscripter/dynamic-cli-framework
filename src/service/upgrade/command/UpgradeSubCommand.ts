@@ -53,11 +53,25 @@ export class UpgradeSubCommand implements SubCommand {
       os === undefined && installMethod === undefined
         ? await this.#upgradeService.getUpgradeCheckResult(true)
         : await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
-    if (!checkResult) {
+    if (checkResult.status === "unsupported") {
       await printerService.error(
         `No upgrade location is configured for the detected or requested platform.\n`,
         Icon.FAILURE,
       );
+      return;
+    }
+
+    if (checkResult.status === "failed") {
+      await printerService.error(
+        `Failed to check for updates: ${checkResult.error.message}. Please try again later.\n`,
+        Icon.FAILURE,
+      );
+      return;
+    }
+
+    if (checkResult.status === "pending") {
+      // Unreachable: getUpgradeCheckResult(true) and checkForUpgrade() always run to completion.
+      await printerService.error(`Failed to check for updates.\n`, Icon.FAILURE);
       return;
     }
 

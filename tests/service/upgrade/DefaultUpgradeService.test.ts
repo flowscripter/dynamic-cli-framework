@@ -45,6 +45,13 @@ function getFetchService(
   };
 }
 
+function githubReleaseRedirect(version: string): Response {
+  return new Response(null, {
+    status: 302,
+    headers: { location: `https://github.com/flowscripter/example-cli/releases/tag/v${version}` },
+  });
+}
+
 describe("DefaultUpgradeService", () => {
   test("detectOs maps process.platform to the current OS", () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
@@ -99,19 +106,19 @@ describe("DefaultUpgradeService", () => {
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
 
-  test("checkForUpgrade returns undefined for unsupported platform", async () => {
+  test("checkForUpgrade reports unsupported for unsupported platform", async () => {
     const service = new DefaultUpgradeService(
       getConfig({ supportedPlatforms: [] }),
       getCLIConfig(),
     );
     const result = await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64);
-    expect(result).toBeUndefined();
+    expect(result).toEqual({ status: "unsupported" });
   });
 
-  test("checkForUpgrade returns undefined when no install method resolved", async () => {
+  test("checkForUpgrade reports unsupported when no install method resolved", async () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
     const result = await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64);
-    expect(result).toBeUndefined();
+    expect(result).toEqual({ status: "unsupported" });
   });
 
   test("checkForUpgrade reports updateAvailable when latest GitHub release is newer", async () => {
@@ -123,16 +130,17 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
+      getFetchService(() => githubReleaseRedirect("9.9.9")),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
       SupportedArch.X64,
       InstallMethod.GITHUB_RELEASE,
     );
-    expect(result?.updateAvailable).toBe(true);
-    expect(result?.latestVersion).toEqual("9.9.9");
-    expect(result?.currentVersion).toEqual(getCLIConfig().version);
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.updateAvailable).toBe(true);
+    expect(result.latestVersion).toEqual("9.9.9");
+    expect(result.currentVersion).toEqual(getCLIConfig().version);
   });
 
   test("checkForUpgrade reports no update available when already latest", async () => {
@@ -144,14 +152,15 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() => new Response(JSON.stringify({ tag_name: "v0.0.0" }), { status: 200 })),
+      getFetchService(() => githubReleaseRedirect("0.0.0")),
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
       SupportedArch.X64,
       InstallMethod.GITHUB_RELEASE,
     );
-    expect(result?.updateAvailable).toBe(false);
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.updateAvailable).toBe(false);
   });
 
   test("checkForUpgrade does not pass a timeoutMs to the GitHub release lookup", async () => {
@@ -166,7 +175,7 @@ describe("DefaultUpgradeService", () => {
       undefined,
       getFetchService((_input, options) => {
         receivedOptions = options;
-        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+        return githubReleaseRedirect("9.9.9");
       }),
     );
     await service.checkForUpgrade(
@@ -177,7 +186,7 @@ describe("DefaultUpgradeService", () => {
     expect(receivedOptions?.timeoutMs).toBeUndefined();
   });
 
-  test("checkForUpgrade returns undefined when fetch fails", async () => {
+  test("checkForUpgrade reports failed when fetch fails", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
@@ -193,7 +202,30 @@ describe("DefaultUpgradeService", () => {
       SupportedArch.X64,
       InstallMethod.GITHUB_RELEASE,
     );
-    expect(result).toBeUndefined();
+    expect(result.status).toEqual("failed");
+    if (result.status !== "failed") throw new Error("expected failed");
+    expect(result.error.message).toContain("network error");
+  });
+
+  test("checkForUpgrade reports failed when GitHub does not respond with a redirect", async () => {
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => new Response(null, { status: 404 })),
+    );
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    expect(result.status).toEqual("failed");
+    if (result.status !== "failed") throw new Error("expected failed");
+    expect(result.error.message).toContain("404");
   });
 
   test("checkForUpgrade resolves latest homebrew version from tap formula file", async () => {
@@ -215,7 +247,8 @@ describe("DefaultUpgradeService", () => {
       SupportedArch.ARM64,
       InstallMethod.HOMEBREW,
     );
-    expect(result?.latestVersion).toEqual("9.9.9");
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("9.9.9");
   });
 
   test("upgrade returns error when no location configured", async () => {
@@ -234,7 +267,7 @@ describe("DefaultUpgradeService", () => {
     );
     service.setDependencies(
       undefined,
-      getFetchService(() => new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
+      getFetchService(() => githubReleaseRedirect("9.9.9")),
     );
     const result = await service.upgrade(
       SupportedOs.LINUX,
@@ -300,7 +333,7 @@ describe("DefaultUpgradeService", () => {
       undefined,
       getFetchService(() => {
         checkCount++;
-        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+        return githubReleaseRedirect("9.9.9");
       }),
     );
 
@@ -312,7 +345,7 @@ describe("DefaultUpgradeService", () => {
     expect(checkCount).toEqual(1);
   });
 
-  test("getUpgradeCheckResult resolves undefined if the cached check exceeds VERSION_CHECK_TIMEOUT_MS", async () => {
+  test("getUpgradeCheckResult resolves pending if the cached check exceeds VERSION_CHECK_TIMEOUT_MS", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
@@ -325,10 +358,10 @@ describe("DefaultUpgradeService", () => {
     );
 
     const result = await service.getUpgradeCheckResult();
-    expect(result).toBeUndefined();
+    expect(result).toEqual({ status: "pending" });
   });
 
-  test("a transient timeout on an opportunistic check does not poison a later deliberate wait", async () => {
+  test("a transient failure on an opportunistic check does not poison a later deliberate wait", async () => {
     let callCount = 0;
     const service = new DefaultUpgradeService(
       getConfig({
@@ -340,23 +373,25 @@ describe("DefaultUpgradeService", () => {
       undefined,
       getFetchService(() => {
         callCount++;
-        // first call (simulating the opportunistic startup check) fails as if its own
-        // internal timeoutMs fired; subsequent calls resolve immediately.
+        // first call (simulating the opportunistic startup check) fails; subsequent calls
+        // resolve immediately.
         if (callCount === 1) {
-          throw new Error("simulated fetch timeout");
+          throw new Error("simulated fetch failure");
         }
-        return new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 });
+        return githubReleaseRedirect("9.9.9");
       }),
     );
 
     // opportunistic, non-blocking call - its underlying fetch fails immediately.
     const opportunistic = await service.getUpgradeCheckResult();
-    expect(opportunistic).toBeUndefined();
+    expect(opportunistic.status).toEqual("failed");
 
     // a later, deliberate blocking call (e.g. the `upgrade` command) must get a fresh attempt
-    // rather than reusing the earlier timed-out promise forever.
+    // rather than reusing the earlier failed promise forever.
     const deliberate = await service.getUpgradeCheckResult(true);
-    expect(deliberate?.latestVersion).toEqual("9.9.9");
+    if (deliberate.status !== "checked")
+      throw new Error(`expected "checked", got ${deliberate.status}`);
+    expect(deliberate.latestVersion).toEqual("9.9.9");
     expect(callCount).toEqual(2);
   });
 
@@ -373,7 +408,7 @@ describe("DefaultUpgradeService", () => {
         () =>
           new Promise((resolve) =>
             setTimeout(
-              () => resolve(new Response(JSON.stringify({ tag_name: "v9.9.9" }), { status: 200 })),
+              () => resolve(githubReleaseRedirect("9.9.9")),
               VERSION_CHECK_TIMEOUT_MS + 50,
             ),
           ),
@@ -381,7 +416,8 @@ describe("DefaultUpgradeService", () => {
     );
 
     const result = await service.getUpgradeCheckResult(true);
-    expect(result?.latestVersion).toEqual("9.9.9");
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("9.9.9");
   });
 
   test("upgrade bypasses the cached check when an override is passed", async () => {

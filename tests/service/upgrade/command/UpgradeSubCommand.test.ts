@@ -12,7 +12,7 @@ import type DefaultUpgradeService from "../../../../src/service/upgrade/DefaultU
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 
 function getUpgradeService(
-  checkResult: UpgradeCheckResult | undefined,
+  checkResult: UpgradeCheckResult,
   upgradeResult?: UpgradeResult,
 ): DefaultUpgradeService {
   return {
@@ -40,7 +40,7 @@ function getContext(): { context: DefaultContext; messages: { info: string[]; er
 
 describe("UpgradeSubCommand", () => {
   test("prints error when no upgrade location configured", async () => {
-    const command = new UpgradeSubCommand(getUpgradeService(undefined));
+    const command = new UpgradeSubCommand(getUpgradeService({ status: "unsupported" }));
     const { context, messages } = getContext();
 
     await command.execute(context, {});
@@ -48,8 +48,20 @@ describe("UpgradeSubCommand", () => {
     expect(messages.error[0]).toContain("No upgrade location is configured");
   });
 
+  test("prints error when the check failed", async () => {
+    const command = new UpgradeSubCommand(
+      getUpgradeService({ status: "failed", error: new Error("network error") }),
+    );
+    const { context, messages } = getContext();
+
+    await command.execute(context, {});
+
+    expect(messages.error[0]).toContain("Failed to check for updates: network error");
+  });
+
   test("prints already up to date when no update available", async () => {
     const checkResult: UpgradeCheckResult = {
+      status: "checked",
       currentVersion: "1.0.0",
       latestVersion: "1.0.0",
       updateAvailable: false,
@@ -67,6 +79,7 @@ describe("UpgradeSubCommand", () => {
 
   test("prints upgraded message on success", async () => {
     const checkResult: UpgradeCheckResult = {
+      status: "checked",
       currentVersion: "1.0.0",
       latestVersion: "2.0.0",
       updateAvailable: true,
@@ -85,6 +98,7 @@ describe("UpgradeSubCommand", () => {
 
   test("prints error when upgrade fails", async () => {
     const checkResult: UpgradeCheckResult = {
+      status: "checked",
       currentVersion: "1.0.0",
       latestVersion: "2.0.0",
       updateAvailable: true,
