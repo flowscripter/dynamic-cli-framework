@@ -23,7 +23,9 @@ import getLogger from "../../util/logger.ts";
 const logger = getLogger("DefaultUpgradeService");
 
 // checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
-// so its version-check network/spawn calls must never be allowed to stall CLI startup.
+// so that opportunistic call is raced against this timeout so it never stalls CLI startup.
+// A deliberate caller (waitForResult=true, e.g. the `upgrade` command) awaits checkForUpgrade()
+// directly with no timeout, so its underlying network/spawn calls are never artificially cut off.
 export const VERSION_CHECK_TIMEOUT_MS = 250;
 
 function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): string {
@@ -61,10 +63,11 @@ export default class DefaultUpgradeService implements UpgradeService {
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult | undefined> {
     if (!this.#upgradeCheckPromise) {
       // Only cache a successful result. An `undefined` result can come from a transient
-      // failure (e.g. the opportunistic startup check's fetch exceeding
-      // VERSION_CHECK_TIMEOUT_MS) - caching that would permanently deny a later, deliberate
-      // caller (e.g. the `upgrade` command explicitly waiting via waitForResult=true) any
-      // chance of a fresh attempt for the rest of this process's lifetime.
+      // failure (e.g. the opportunistic startup check racing past VERSION_CHECK_TIMEOUT_MS
+      // before checkForUpgrade() itself resolves) - caching that would permanently deny a
+      // later, deliberate caller (e.g. the `upgrade` command explicitly waiting via
+      // waitForResult=true) any chance of a fresh attempt for the rest of this process's
+      // lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
         if (result === undefined) {
           this.#upgradeCheckPromise = undefined;
@@ -220,7 +223,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const result = await this.#spawnService.spawn(
       ["brew", "list", "--versions", this.#config.homebrew.formula],
-      { mode: "ignore", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
+      { mode: "ignore", longRunning: false },
     );
     return result.ok;
   }
@@ -231,7 +234,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const result = await this.#spawnService.spawn(
       ["winget", "list", "--id", this.#config.winget.packageId],
-      { mode: "ignore", longRunning: false, timeoutMs: VERSION_CHECK_TIMEOUT_MS },
+      { mode: "ignore", longRunning: false },
     );
     return result.ok;
   }
@@ -262,7 +265,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     try {
       const response = await this.#fetchService.fetch(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
       );
       if (!response.ok) {
         return undefined;
@@ -287,7 +289,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     try {
       const response = await this.#fetchService.fetch(
         `https://raw.githubusercontent.com/${tapOwner}/homebrew-${tapName}/main/${formula}.rb`,
-        { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
       );
       if (!response.ok) {
         return undefined;
@@ -310,7 +311,6 @@ export default class DefaultUpgradeService implements UpgradeService {
       {
         mode: "wrapped",
         longRunning: false,
-        timeoutMs: VERSION_CHECK_TIMEOUT_MS,
         onOutput: (line) => lines.push(line),
       },
     );
