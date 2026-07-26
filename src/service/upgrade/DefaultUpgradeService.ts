@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   CLIConfig,
-  CompletedUpgradeCheckResult,
   FetchService,
   SpawnResult,
   SpawnService,
@@ -45,7 +44,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
   #fetchService: FetchService | undefined;
-  #upgradeCheckPromise: Promise<CompletedUpgradeCheckResult> | undefined;
+  #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
 
@@ -62,8 +61,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#fetchService = fetchService;
   }
 
-  public getUpgradeCheckResult(waitForResult: true): Promise<CompletedUpgradeCheckResult>;
-  public getUpgradeCheckResult(waitForResult?: boolean): Promise<UpgradeCheckResult>;
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
       // Only cache a non-"failed" result. A "failed" result can come from a transient issue
@@ -134,7 +131,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     osOverride?: SupportedOs,
     archOverride?: SupportedArch,
     installMethodOverride?: InstallMethod,
-  ): Promise<CompletedUpgradeCheckResult> {
+  ): Promise<UpgradeCheckResult> {
     const os = osOverride ?? this.detectOs();
     const arch = archOverride ?? this.detectArch();
     if (!os || !arch || !this.#isPlatformSupported(os, arch)) {
@@ -194,6 +191,10 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     if (checkResult.status === "failed") {
       return { ok: false, oldVersion, error: checkResult.error };
+    }
+    if (checkResult.status === "pending") {
+      // Unreachable: checkForUpgrade() and getUpgradeCheckResult(true) always run to completion.
+      return { ok: false, oldVersion, error: new Error("Upgrade check did not complete") };
     }
     if (!this.#spawnService) {
       return { ok: false, oldVersion, error: new Error("SpawnService is not available") };
