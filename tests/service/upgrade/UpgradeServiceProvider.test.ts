@@ -72,10 +72,10 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: (key: string) => Promise.resolve(key === "upgrade-status"),
-      getKey: () => Promise.resolve("declined"),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: (key: string) => Promise.resolve(key === "upgrade-status"),
+      get: () => Promise.resolve("declined"),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await provider.initService(context);
@@ -93,10 +93,10 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await expect(provider.initService(context)).resolves.toBeUndefined();
@@ -117,10 +117,10 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await provider.initService(context);
@@ -143,14 +143,14 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: (key: string, value: string) => {
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: (key: string, value: string) => {
         storedKey = key;
         storedValue = value;
         return Promise.resolve();
       },
-      deleteKey: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await provider.initService(context);
@@ -173,13 +173,13 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: () => Promise.resolve(false),
-      getKey: () => Promise.resolve(""),
-      setKey: (key: string, value: string) => {
+      has: () => Promise.resolve(false),
+      get: () => Promise.resolve(""),
+      set: (key: string, value: string) => {
         storedEntries.push({ key, value });
         return Promise.resolve();
       },
-      deleteKey: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     await expect(provider.initService(context)).resolves.toBeUndefined();
@@ -213,10 +213,10 @@ describe("UpgradeServiceProvider", () => {
       promptAll: () => Promise.resolve([]),
     });
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      hasKey: (key: string) => Promise.resolve(key === "upgrade-status"),
-      getKey: () => Promise.resolve("enabled"),
-      setKey: () => Promise.resolve(),
-      deleteKey: () => Promise.resolve(),
+      has: (key: string) => Promise.resolve(key === "upgrade-status"),
+      get: () => Promise.resolve("enabled"),
+      set: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
     });
 
     let printed = "";

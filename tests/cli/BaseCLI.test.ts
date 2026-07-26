@@ -23,6 +23,7 @@ import NonTtyTerminal from "../../src/terminal/NonTtyTerminal.ts";
 import TtyStyler from "../../src/terminal/TtyStyler.ts";
 import type KeyReader from "../../src/terminal/KeyReader.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 const mockKeyReader: KeyReader = {
   enableRawMode() {},
@@ -169,14 +170,14 @@ describe("BaseCLI tests", () => {
       copyOfKeyValueService: KeyValueService | undefined;
 
       async serviceMethod(context: Context): Promise<void> {
-        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual("modifierCommand");
-        await this.copyOfKeyValueService!.setKey("name", "defaultService1+modifierCommand");
+        expect(await this.copyOfKeyValueService!.has("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual("modifierCommand");
+        await this.copyOfKeyValueService!.set("name", "defaultService1+modifierCommand");
 
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-        expect(await keyValueService.hasKey("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
+        expect(await keyValueService.has("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual(
           "defaultService1+modifierCommand",
         );
 
@@ -188,16 +189,14 @@ describe("BaseCLI tests", () => {
       copyOfKeyValueService: KeyValueService | undefined;
 
       async serviceMethod(context: Context): Promise<void> {
-        expect(await this.copyOfKeyValueService!.hasKey("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual("subCommand");
-        await this.copyOfKeyValueService!.setKey("name", "defaultService2+subCommand");
+        expect(await this.copyOfKeyValueService!.has("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual("subCommand");
+        await this.copyOfKeyValueService!.set("name", "defaultService2+subCommand");
 
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-        expect(await keyValueService.hasKey("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.getKey("name")).toEqual(
-          "defaultService2+subCommand",
-        );
+        expect(await keyValueService.has("name")).toBeTrue();
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual("defaultService2+subCommand");
 
         service2MethodInvoked = true;
       }
@@ -220,8 +219,8 @@ describe("BaseCLI tests", () => {
       async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-        expect(await keyValueService.hasKey("name")).toBeFalse();
-        await keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.has("name")).toBeFalse();
+        await keyValueService.set("name", "defaultService2");
 
         this.defaultService1!.copyOfKeyValueService = keyValueService;
 
@@ -246,8 +245,8 @@ describe("BaseCLI tests", () => {
       async initService(context: Context): Promise<void> {
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-        expect(await keyValueService.hasKey("name")).toBeFalse();
-        await keyValueService.setKey("name", "defaultService2");
+        expect(await keyValueService.has("name")).toBeFalse();
+        await keyValueService.set("name", "defaultService2");
 
         this.defaultService2!.copyOfKeyValueService = keyValueService;
 
@@ -268,8 +267,8 @@ describe("BaseCLI tests", () => {
     modifierCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-      expect(await keyValueService.hasKey("name")).toBeFalse();
-      await keyValueService.setKey("name", "modifierCommand");
+      expect(await keyValueService.has("name")).toBeFalse();
+      await keyValueService.set("name", "modifierCommand");
 
       const service1 = context.getServiceById(SERVICE_1) as ServiceInterface;
 
@@ -280,8 +279,8 @@ describe("BaseCLI tests", () => {
     subCommand.execute = async (context): Promise<void> => {
       const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-      expect(await keyValueService.hasKey("name")).toBeFalse();
-      await keyValueService.setKey("name", "subCommand");
+      expect(await keyValueService.has("name")).toBeFalse();
+      await keyValueService.set("name", "subCommand");
 
       const service2 = context.getServiceById(SERVICE_2) as ServiceInterface;
 
@@ -410,5 +409,47 @@ describe("BaseCLI tests", () => {
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(serviceExists).toBeFalse();
+  });
+
+  test("BaseCLI with pluginServiceEnabled registers PluginServiceProvider and its command", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      {
+        pluginServiceEnabled: true,
+        pluginServiceRemoteConfig: {
+          name: "test-remote",
+          registryUrl: "https://registry.npmjs.org",
+          packageJsonNamespace: "test-ns",
+        },
+        pluginServiceLocalConfig: {
+          nodeModulesPath: "/tmp/nonexistent-plugin-service-provider-test/node_modules",
+          packageJsonNamespace: "test-ns",
+        },
+      },
+    );
+
+    const command = getSubCommand("command", [], []);
+    let serviceExists: boolean | undefined;
+    command.execute = (context): Promise<void> => {
+      serviceExists = context.doesServiceExist(PLUGIN_SERVICE_ID);
+      return Promise.resolve();
+    };
+    baseCLI.addCommand(command);
+
+    const runResult = await baseCLI.run(["command"]);
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(serviceExists).toBeTrue();
   });
 });

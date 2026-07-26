@@ -1,4 +1,8 @@
 import type { UpgradeLocationsConfig } from "../service/upgrade/UpgradeLocationsConfig.ts";
+import type {
+  NpmjsPluginRepositoryConfig,
+  NpmPluginRepositoryConfig,
+} from "@flowscripter/dynamic-plugin-framework";
 
 export default interface BaseCLIFeatureOptions {
   readonly configFileSupportEnabled?: boolean;
@@ -12,6 +16,9 @@ export default interface BaseCLIFeatureOptions {
   readonly fetchServiceEnabled?: boolean;
   readonly upgradeServiceEnabled?: boolean;
   readonly upgradeLocationsConfig?: UpgradeLocationsConfig;
+  readonly pluginServiceEnabled?: boolean;
+  readonly pluginServiceRemoteConfig?: NpmjsPluginRepositoryConfig;
+  readonly pluginServiceLocalConfig?: NpmPluginRepositoryConfig;
   readonly validateAllCommands?: boolean;
   readonly promptingEnabled?: boolean;
 }

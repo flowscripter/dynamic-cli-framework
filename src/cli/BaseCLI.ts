@@ -54,6 +54,7 @@ import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterSer
 import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
 import FetchServiceProvider from "../service/fetch/FetchServiceProvider.ts";
 import UpgradeServiceProvider from "../service/upgrade/UpgradeServiceProvider.ts";
+import PluginServiceProvider from "../service/plugin/PluginServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
 /**
@@ -76,6 +77,7 @@ const logger = getLogger("BaseCLI");
  * * {@link FetchServiceProvider}
  * * {@link CompletionServiceProvider}
  * * {@link UpgradeServiceProvider}
+ * * {@link PluginServiceProvider}
  *
  * `keyReader` is optional. If omitted, or if the stderr {@link Terminal} is not a TTY, prompting is
  * unavailable: {@link PrompterServiceProvider} (and {@link ArgumentPrompterServiceProvider}, if
@@ -141,6 +143,9 @@ export default class BaseCLI implements CLI {
       fetchServiceEnabled: false,
       upgradeServiceEnabled: false,
       upgradeLocationsConfig: { supportedPlatforms: [] },
+      pluginServiceEnabled: false,
+      pluginServiceRemoteConfig: { name: "", registryUrl: "", packageJsonNamespace: "" },
+      pluginServiceLocalConfig: { nodeModulesPath: "", packageJsonNamespace: "" },
       validateAllCommands: false,
       promptingEnabled: true,
       ...options,
@@ -290,6 +295,18 @@ export default class BaseCLI implements CLI {
 
     if (this.#options.upgradeServiceEnabled) {
       this.addServiceProvider(new UpgradeServiceProvider(6, this.#options.upgradeLocationsConfig));
+    }
+
+    if (this.#options.pluginServiceEnabled) {
+      this.addServiceProvider(
+        new PluginServiceProvider(
+          50,
+          this.#options.pluginServiceRemoteConfig,
+          this.#options.pluginServiceLocalConfig,
+          this.#commandRegistry,
+          this.#serviceProviderRegistry,
+        ),
+      );
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(

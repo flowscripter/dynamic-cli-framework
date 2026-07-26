@@ -71,8 +71,8 @@ export default class UpgradeServiceProvider implements ServiceProvider {
 
     const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
-    if (await keyValueService.hasKey("upgrade-status")) {
-      const status = await keyValueService.getKey("upgrade-status");
+    if (await keyValueService.has("upgrade-status")) {
+      const status = await keyValueService.get("upgrade-status");
       if (status === "declined") {
         logger.debug(() => "Auto-upgrade previously declined, skipping");
         return;
@@ -120,11 +120,11 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     }
 
     if (enableResult.value !== true) {
-      await keyValueService.setKey("upgrade-status", "declined");
+      await keyValueService.set("upgrade-status", "declined");
       return;
     }
 
-    await keyValueService.setKey("upgrade-status", "enabled");
+    await keyValueService.set("upgrade-status", "enabled");
     await this.#checkAndUpgrade(context, upgradeService, cliConfig);
   }
 
