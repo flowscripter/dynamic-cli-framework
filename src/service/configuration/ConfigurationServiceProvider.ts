@@ -7,7 +7,7 @@ import ConfigCommand from "./command/ConfigCommand.ts";
 import type {
   SingleValueType,
   Values,
-  KeyValueData,
+  ValueNode,
   PopulatedValues,
   PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
@@ -131,7 +131,7 @@ const logger = getLogger("ConfigurationServiceProvider");
  *
  * The second and third level of properties is used to scope the key-values to specific command names
  * (via {@link Command.name} values) and specific service IDs (via {@link ServiceProvider.serviceId} values).
- * Keys are strings, but values are arbitrary JSON (see {@link KeyValueData}) - not limited to strings -
+ * Keys are strings, but values are arbitrary JSON (see {@link ValueNode}) - not limited to strings -
  * and may be deep objects or arrays.
  *
  * Any node within a value passed to {@link KeyValueService.set} can be wrapped in {@link Secret} -
@@ -197,11 +197,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
   // the configuration data to be used by the CLI runner implementation
   // when updating command scoped access to key-value data via the key-value service.
-  #commandKeyValueData = new Map<string, Map<string, KeyValueData>>();
+  #commandKeyValueData = new Map<string, Map<string, ValueNode>>();
 
   // the configuration data to be used by the CLI runner implementation
   // when updating service scoped access to key-value data via the key-value service.
-  #serviceKeyValueData = new Map<string, Map<string, KeyValueData>>();
+  #serviceKeyValueData = new Map<string, Map<string, ValueNode>>();
 
   // the optional service providing scope limited key-value data to commands and other services
   #defaultKeyValueService: DefaultKeyValueService | undefined;
@@ -538,8 +538,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     const config: {
       defaults?: Record<string, Values | SingleValueType>;
       "key-values"?: {
-        commands?: Record<string, Record<string, KeyValueData>>;
-        services?: Record<string, Record<string, KeyValueData>>;
+        commands?: Record<string, Record<string, ValueNode>>;
+        services?: Record<string, Record<string, ValueNode>>;
       };
     } = {};
 

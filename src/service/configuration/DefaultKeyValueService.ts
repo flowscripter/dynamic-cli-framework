@@ -1,14 +1,14 @@
 import type {
-  KeyValueData,
+  ValueNode,
   KeyValueService,
-  SettableKeyValueData,
+  SettableValueNode,
 } from "@flowscripter/dynamic-cli-framework-api";
 import { Secret, SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
 import type DefaultSecretService from "./DefaultSecretService.ts";
 import resolveSecrets from "./resolveSecrets.ts";
 
 export default class DefaultKeyValueService implements KeyValueService {
-  #keyValueData: Map<string, KeyValueData> | undefined;
+  #keyValueData: Map<string, ValueNode> | undefined;
   #dirty = false;
   readonly #secretService: DefaultSecretService | undefined;
 
@@ -16,7 +16,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     this.#secretService = secretService;
   }
 
-  public setKeyValueData(keyValueData: Map<string, KeyValueData>) {
+  public setKeyValueData(keyValueData: Map<string, ValueNode>) {
     if (this.#keyValueData) {
       throw new Error("Attempt to overwrite key-value data, it should be cleared first");
     }
@@ -33,7 +33,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     return this.#dirty;
   }
 
-  public async get<T extends KeyValueData = KeyValueData>(key: string): Promise<T> {
+  public async get<T extends ValueNode = ValueNode>(key: string): Promise<T> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
@@ -67,7 +67,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     return Promise.resolve(this.#keyValueData.has(key));
   }
 
-  public async set(key: string, value: SettableKeyValueData): Promise<void> {
+  public async set(key: string, value: SettableValueNode): Promise<void> {
     if (this.#keyValueData === undefined) {
       throw new Error("Attempt to access undefined key-value data");
     }
@@ -77,9 +77,9 @@ export default class DefaultKeyValueService implements KeyValueService {
 
   async #storeSecrets(
     key: string,
-    value: SettableKeyValueData,
+    value: SettableValueNode,
     path: Array<string>,
-  ): Promise<KeyValueData> {
+  ): Promise<ValueNode> {
     if (value instanceof Secret) {
       if (!this.#secretService) {
         throw new Error("Attempt to set a secret but no secret service is available");
@@ -92,21 +92,21 @@ export default class DefaultKeyValueService implements KeyValueService {
       return SECRET_SENTINEL_PREFIX + bunSecretName;
     }
     if (Array.isArray(value)) {
-      const result: Array<KeyValueData> = [];
+      const result: Array<ValueNode> = [];
       for (let i = 0; i < value.length; i += 1) {
         result.push(await this.#storeSecrets(key, value[i]!, [...path, String(i)]));
       }
-      return result as KeyValueData;
+      return result as ValueNode;
     }
     if (typeof value === "object" && value !== null) {
-      const result: Record<string, KeyValueData> = {};
+      const result: Record<string, ValueNode> = {};
       for (const [propertyName, propertyValue] of Object.entries(value)) {
         result[propertyName] = await this.#storeSecrets(key, propertyValue, [
           ...path,
           propertyName,
         ]);
       }
-      return result as KeyValueData;
+      return result as ValueNode;
     }
     return value;
   }
@@ -123,7 +123,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     this.#dirty = true;
   }
 
-  async #deleteSecrets(value: KeyValueData): Promise<void> {
+  async #deleteSecrets(value: ValueNode): Promise<void> {
     if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
       if (this.#secretService) {
         const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
@@ -139,7 +139,7 @@ export default class DefaultKeyValueService implements KeyValueService {
     }
     if (typeof value === "object" && value !== null) {
       for (const propertyValue of Object.values(value)) {
-        await this.#deleteSecrets(propertyValue as KeyValueData);
+        await this.#deleteSecrets(propertyValue as ValueNode);
       }
     }
   }
