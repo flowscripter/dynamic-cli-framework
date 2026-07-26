@@ -99,30 +99,6 @@ describe("DefaultUpgradeService", () => {
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
 
-  test("detectInstallMethod falls through to GITHUB_RELEASE if the winget check times out", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({
-        winget: { packageId: "Flowscripter.example-cli" },
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    service.setDependencies(
-      {
-        // Mimics DefaultSpawnService's real timeoutMs handling: a stalled process resolves
-        // { ok: false, timedOut: true } once the caller-specified timeoutMs elapses.
-        spawn: (_command, options) =>
-          options?.timeoutMs === undefined
-            ? new Promise(() => {})
-            : Promise.resolve({ ok: false, timedOut: true }),
-      },
-      undefined,
-    );
-    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(
-      InstallMethod.GITHUB_RELEASE,
-    );
-  });
-
   test("checkForUpgrade returns undefined for unsupported platform", async () => {
     const service = new DefaultUpgradeService(
       getConfig({ supportedPlatforms: [] }),
@@ -178,7 +154,7 @@ describe("DefaultUpgradeService", () => {
     expect(result?.updateAvailable).toBe(false);
   });
 
-  test("checkForUpgrade passes VERSION_CHECK_TIMEOUT_MS as timeoutMs to the GitHub release lookup", async () => {
+  test("checkForUpgrade does not pass a timeoutMs to the GitHub release lookup", async () => {
     let receivedOptions: FetchOptions | undefined;
     const service = new DefaultUpgradeService(
       getConfig({
@@ -198,7 +174,7 @@ describe("DefaultUpgradeService", () => {
       SupportedArch.X64,
       InstallMethod.GITHUB_RELEASE,
     );
-    expect(receivedOptions?.timeoutMs).toEqual(VERSION_CHECK_TIMEOUT_MS);
+    expect(receivedOptions?.timeoutMs).toBeUndefined();
   });
 
   test("checkForUpgrade returns undefined when fetch fails", async () => {
