@@ -135,7 +135,11 @@ export default class UpgradeServiceProvider implements ServiceProvider {
   ): Promise<void> {
     try {
       const checkResult = await upgradeService.getUpgradeCheckResult();
-      if (!checkResult?.updateAvailable) {
+      if (checkResult.status === "failed") {
+        logger.debug(() => `Auto-upgrade check failed: ${checkResult.error.message}`);
+        return;
+      }
+      if (checkResult.status !== "checked" || !checkResult.updateAvailable) {
         return;
       }
       const upgradeResult = await upgradeService.upgrade();

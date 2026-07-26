@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   CLIConfig,
+  CompletedUpgradeCheckResult,
   FetchService,
   SpawnResult,
   SpawnService,
@@ -18,15 +19,16 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import semver from "semver";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
-import getLogger from "../../util/logger.ts";
-
-const logger = getLogger("DefaultUpgradeService");
 
 // checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
 // so that opportunistic call is raced against this timeout so it never stalls CLI startup.
 // A deliberate caller (waitForResult=true, e.g. the `upgrade` command) awaits checkForUpgrade()
 // directly with no timeout, so its underlying network/spawn calls are never artificially cut off.
 export const VERSION_CHECK_TIMEOUT_MS = 250;
+
+type VersionLookupResult =
+  | { readonly ok: true; readonly version: string }
+  | { readonly ok: false; readonly error: Error };
 
 function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): string {
   return "timedOut" in result
@@ -43,7 +45,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
   #fetchService: FetchService | undefined;
-  #upgradeCheckPromise: Promise<UpgradeCheckResult | undefined> | undefined;
+  #upgradeCheckPromise: Promise<CompletedUpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
 
@@ -60,16 +62,18 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#fetchService = fetchService;
   }
 
-  public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult | undefined> {
+  public getUpgradeCheckResult(waitForResult: true): Promise<CompletedUpgradeCheckResult>;
+  public getUpgradeCheckResult(waitForResult?: boolean): Promise<UpgradeCheckResult>;
+  public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
-      // Only cache a successful result. An `undefined` result can come from a transient
-      // failure (e.g. the opportunistic startup check racing past VERSION_CHECK_TIMEOUT_MS
-      // before checkForUpgrade() itself resolves) - caching that would permanently deny a
-      // later, deliberate caller (e.g. the `upgrade` command explicitly waiting via
-      // waitForResult=true) any chance of a fresh attempt for the rest of this process's
-      // lifetime.
+      // Only cache a non-"failed" result. A "failed" result can come from a transient issue
+      // (e.g. a network blip, or the opportunistic startup check racing past
+      // VERSION_CHECK_TIMEOUT_MS before checkForUpgrade() itself resolves) - caching that would
+      // permanently deny a later, deliberate caller (e.g. the `upgrade` command explicitly
+      // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
+      // process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
-        if (result === undefined) {
+        if (result.status === "failed") {
           this.#upgradeCheckPromise = undefined;
         }
         return result;
@@ -80,8 +84,8 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     return Promise.race([
       this.#upgradeCheckPromise,
-      new Promise<undefined>((resolve) =>
-        setTimeout(() => resolve(undefined), VERSION_CHECK_TIMEOUT_MS),
+      new Promise<UpgradeCheckResult>((resolve) =>
+        setTimeout(() => resolve({ status: "pending" }), VERSION_CHECK_TIMEOUT_MS),
       ),
     ]);
   }
@@ -130,34 +134,39 @@ export default class DefaultUpgradeService implements UpgradeService {
     osOverride?: SupportedOs,
     archOverride?: SupportedArch,
     installMethodOverride?: InstallMethod,
-  ): Promise<UpgradeCheckResult | undefined> {
+  ): Promise<CompletedUpgradeCheckResult> {
     const os = osOverride ?? this.detectOs();
     const arch = archOverride ?? this.detectArch();
     if (!os || !arch || !this.#isPlatformSupported(os, arch)) {
-      return undefined;
+      return { status: "unsupported" };
     }
 
     const installMethod = installMethodOverride ?? (await this.detectInstallMethod(os));
     if (!installMethod) {
-      return undefined;
+      return { status: "unsupported" };
     }
 
-    const latestVersion = await this.#getLatestVersion(installMethod);
-    if (!latestVersion) {
-      return undefined;
+    const versionLookup = await this.#getLatestVersion(installMethod);
+    if (!versionLookup.ok) {
+      return { status: "failed", error: versionLookup.error };
     }
 
     const currentVersion = this.#cliConfig.version;
     const coercedCurrent = semver.coerce(currentVersion);
-    const coercedLatest = semver.coerce(latestVersion);
+    const coercedLatest = semver.coerce(versionLookup.version);
     if (!coercedCurrent || !coercedLatest) {
-      logger.debug(() => `Unable to compare versions '${currentVersion}' and '${latestVersion}'`);
-      return undefined;
+      return {
+        status: "failed",
+        error: new Error(
+          `Unable to compare versions '${currentVersion}' and '${versionLookup.version}'`,
+        ),
+      };
     }
 
     return {
+      status: "checked",
       currentVersion,
-      latestVersion,
+      latestVersion: versionLookup.version,
       updateAvailable: semver.gt(coercedLatest, coercedCurrent),
       os,
       arch,
@@ -176,12 +185,15 @@ export default class DefaultUpgradeService implements UpgradeService {
     const checkResult = hasOverride
       ? await this.checkForUpgrade(osOverride, archOverride, installMethodOverride)
       : await this.getUpgradeCheckResult(true);
-    if (!checkResult) {
+    if (checkResult.status === "unsupported") {
       return {
         ok: false,
         oldVersion,
         error: new Error("No upgrade location configured for the detected or requested platform"),
       };
+    }
+    if (checkResult.status === "failed") {
+      return { ok: false, oldVersion, error: checkResult.error };
     }
     if (!this.#spawnService) {
       return { ok: false, oldVersion, error: new Error("SpawnService is not available") };
@@ -243,7 +255,7 @@ export default class DefaultUpgradeService implements UpgradeService {
     return process.execPath.startsWith("/usr/local/bin/");
   }
 
-  async #getLatestVersion(installMethod: InstallMethod): Promise<string | undefined> {
+  async #getLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
     switch (installMethod) {
       case InstallMethod.GITHUB_RELEASE:
       case InstallMethod.LINUX_SCRIPT:
@@ -252,58 +264,91 @@ export default class DefaultUpgradeService implements UpgradeService {
         return this.#getLatestHomebrewVersion();
       case InstallMethod.WINGET:
         return this.#getLatestWingetVersion();
-      default:
-        return undefined;
     }
   }
 
-  async #getLatestGithubReleaseVersion(): Promise<string | undefined> {
-    if (!this.#config.githubRelease || !this.#fetchService) {
-      return undefined;
+  async #getLatestGithubReleaseVersion(): Promise<VersionLookupResult> {
+    if (!this.#config.githubRelease) {
+      return { ok: false, error: new Error("No githubRelease location configured") };
+    }
+    if (!this.#fetchService) {
+      return { ok: false, error: new Error("FetchService is not available") };
     }
     const { owner, repo } = this.#config.githubRelease;
     try {
+      // Uses the plain web redirect rather than the api.github.com REST endpoint, since the
+      // latter's unauthenticated rate limit (60 requests/hour/IP) is easily exhausted, e.g. by
+      // CI runners sharing an IP pool.
       const response = await this.#fetchService.fetch(
-        `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
+        `https://github.com/${owner}/${repo}/releases/latest`,
+        { redirect: "manual" },
       );
-      if (!response.ok) {
-        return undefined;
+      const location = response.headers.get("location");
+      const version = location ? /\/releases\/tag\/v?([^/]+)$/.exec(location)?.[1] : undefined;
+      if (!version) {
+        return {
+          ok: false,
+          error: new Error(
+            `Unexpected response resolving latest release for ${owner}/${repo}: HTTP ${response.status}`,
+          ),
+        };
       }
-      const data = (await response.json()) as { tag_name?: string };
-      return data.tag_name?.replace(/^v/, "");
+      return { ok: true, version };
     } catch (error) {
-      logger.debug(() => `Failed to fetch latest GitHub release for ${owner}/${repo}: ${error}`);
-      return undefined;
+      return {
+        ok: false,
+        error: new Error(`Failed to fetch latest GitHub release for ${owner}/${repo}: ${error}`),
+      };
     }
   }
 
-  async #getLatestHomebrewVersion(): Promise<string | undefined> {
-    if (!this.#config.homebrew || !this.#fetchService) {
-      return undefined;
+  async #getLatestHomebrewVersion(): Promise<VersionLookupResult> {
+    if (!this.#config.homebrew) {
+      return { ok: false, error: new Error("No homebrew location configured") };
+    }
+    if (!this.#fetchService) {
+      return { ok: false, error: new Error("FetchService is not available") };
     }
     const { tap, formula } = this.#config.homebrew;
     const [tapOwner, tapName] = tap.split("/");
     if (!tapOwner || !tapName) {
-      return undefined;
+      return { ok: false, error: new Error(`Invalid homebrew tap '${tap}'`) };
     }
     try {
       const response = await this.#fetchService.fetch(
         `https://raw.githubusercontent.com/${tapOwner}/homebrew-${tapName}/main/${formula}.rb`,
       );
       if (!response.ok) {
-        return undefined;
+        return {
+          ok: false,
+          error: new Error(
+            `Failed to fetch homebrew formula for ${tap}/${formula}: HTTP ${response.status}`,
+          ),
+        };
       }
       const text = await response.text();
-      return /version\s+"v?([^"]+)"/.exec(text)?.[1];
+      const version = /version\s+"v?([^"]+)"/.exec(text)?.[1];
+      if (!version) {
+        return {
+          ok: false,
+          error: new Error(`Could not parse version from homebrew formula ${tap}/${formula}`),
+        };
+      }
+      return { ok: true, version };
     } catch (error) {
-      logger.debug(() => `Failed to fetch homebrew formula for ${tap}/${formula}: ${error}`);
-      return undefined;
+      return {
+        ok: false,
+        error: new Error(`Failed to fetch homebrew formula for ${tap}/${formula}: ${error}`),
+      };
     }
   }
 
-  async #getLatestWingetVersion(): Promise<string | undefined> {
-    if (!this.#spawnService || !this.#config.winget) {
-      return undefined;
+  async #getLatestWingetVersion(): Promise<VersionLookupResult> {
+    if (!this.#config.winget) {
+      return { ok: false, error: new Error("No winget location configured") };
+    }
+    if (!this.#spawnService) {
+      return { ok: false, error: new Error("SpawnService is not available") };
     }
     const lines: string[] = [];
     const result = await this.#spawnService.spawn(
@@ -315,15 +360,15 @@ export default class DefaultUpgradeService implements UpgradeService {
       },
     );
     if (!result.ok) {
-      return undefined;
+      return { ok: false, error: new Error(`winget show failed: ${describeSpawnFailure(result)}`) };
     }
     for (const line of lines) {
       const match = /Version:\s*(\S+)/.exec(line);
       if (match?.[1]) {
-        return match[1];
+        return { ok: true, version: match[1] };
       }
     }
-    return undefined;
+    return { ok: false, error: new Error("Could not parse version from winget output") };
   }
 
   async #upgradeViaLinuxScript(): Promise<void> {

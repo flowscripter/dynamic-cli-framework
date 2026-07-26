@@ -19,8 +19,8 @@ export default class VersionCommand implements GlobalCommand {
     let line = context.cliConfig.version;
     if (context.doesServiceExist(UPGRADE_SERVICE_ID)) {
       const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
-      const result = await upgradeService.getUpgradeCheckResult().catch(() => undefined);
-      if (result?.updateAvailable) {
+      const result = await upgradeService.getUpgradeCheckResult();
+      if (result.status === "checked" && result.updateAvailable) {
         line += ` (${result.latestVersion} available, run '${context.cliConfig.name} upgrade')`;
       }
     }

@@ -55,6 +55,7 @@ describe("VersionCommand tests", () => {
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
       getUpgradeCheckResult: () =>
         Promise.resolve({
+          status: "checked",
           currentVersion: "foobar",
           latestVersion: "9.9.9",
           updateAvailable: true,
@@ -86,7 +87,7 @@ describe("VersionCommand tests", () => {
 
     context.addServiceInstance(PRINTER_SERVICE_ID, printer);
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
-      getUpgradeCheckResult: () => Promise.resolve({ updateAvailable: false }),
+      getUpgradeCheckResult: () => Promise.resolve({ status: "unsupported" }),
     });
 
     const versionCommand = new VersionCommand();

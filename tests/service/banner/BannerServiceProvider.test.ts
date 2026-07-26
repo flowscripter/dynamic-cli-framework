@@ -108,6 +108,7 @@ describe("BannerServiceProvider tests", () => {
     context.addServiceInstance(UPGRADE_SERVICE_ID, {
       getUpgradeCheckResult: () =>
         Promise.resolve({
+          status: "checked",
           currentVersion: "foobar",
           latestVersion: "9.9.9",
           updateAvailable: true,
