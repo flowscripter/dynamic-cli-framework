@@ -136,7 +136,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
       if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
         const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
         await printerService.error(
-          `Failed to install completion: ${(error as Error).message}`,
+          `Failed to install completion: ${(error as Error).message}\n`,
           Icon.FAILURE,
         );
       }
@@ -194,7 +194,7 @@ export default class CompletionServiceProvider implements ServiceProvider {
     if (context.doesServiceExist(PRINTER_SERVICE_ID)) {
       const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
       await printerService.info(
-        `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.`,
+        `Shell completion installed for ${shellType}. Restart your shell or run 'source ${configPath}' to activate.\n`,
         Icon.SUCCESS,
       );
     }
