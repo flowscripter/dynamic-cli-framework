@@ -35,7 +35,7 @@ describe("VersionCommand tests", () => {
     expectStringEquals(dummyStdout.getString(), "foobar\n");
   });
 
-  test("Version shows available upgrade when UpgradeService reports one", async () => {
+  test("Version does not show upgrade hint even when UpgradeService reports one available", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const printer = new DefaultPrinterService(
@@ -66,7 +66,7 @@ describe("VersionCommand tests", () => {
 
     await versionCommand.execute(context);
 
-    expectStringEquals(dummyStdout.getString(), "foobar (9.9.9 available, run 'foo upgrade')\n");
+    expectStringEquals(dummyStdout.getString(), "foobar\n");
   });
 
   test("Version omits upgrade line when no update available", async () => {
