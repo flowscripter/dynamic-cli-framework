@@ -811,4 +811,69 @@ describe("DefaultPrinterService tests", () => {
     await printerService.clearMarked(100);
     expect(Date.now() - start).toBeGreaterThanOrEqual(90);
   });
+
+  test("discardMark() resets mark tracking without writing anything", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    printerService.startMark();
+    printerService.discardMark();
+
+    expect(dummyStderr.getString()).toEqual("");
+    // A fresh startMark() after discardMark() must not throw "already marking".
+    expect(() => printerService.startMark()).not.toThrow();
+  });
+
+  test("discardMark() leaves preceding, non-marked stderr output untouched", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+
+    await printerService.info("preceding line1\n");
+    await printerService.info("preceding line2\n");
+
+    printerService.startMark();
+    await printerService.info("marked line1\n");
+    printerService.endMark();
+    printerService.discardMark();
+
+    expect(dummyStderr.getString()).toEqual("preceding line1\npreceding line2\nmarked line1\n");
+  });
+
+  test("discardMark() without startMark() throws", () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    expect(() => printerService.discardMark()).toThrow(
+      "discardMark() called without a preceding startMark()",
+    );
+  });
 });

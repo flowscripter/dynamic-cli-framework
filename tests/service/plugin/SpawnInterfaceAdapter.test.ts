@@ -33,6 +33,9 @@ function getFakePrinterService(): {
       state.calls.push(`clearMarked(${minimumDisplayTimeMs ?? ""})`);
       return Promise.resolve();
     },
+    discardMark: () => {
+      state.calls.push("discardMark");
+    },
     info: (message: string) => {
       state.calls.push("info");
       state.infoMessages.push(message);
@@ -108,5 +111,47 @@ describe("SpawnInterfaceAdapter tests", () => {
     const result = await adapter.spawn(["nonexistent"], { cwd: "/tmp" });
 
     expect(result).toEqual({ ok: false, exitCode: undefined, error });
+  });
+
+  test("does not clear the marked/quoted block on failure, but resets mark bookkeeping", async () => {
+    const { printerService, state } = getFakePrinterService();
+    const spawnService = getFakeSpawnService(
+      [{ line: "some diagnostic output", stream: "stderr" }],
+      { ok: false, exitCode: 1, error: undefined },
+    );
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    await adapter.spawn(["bun", "add", "foo"], { cwd: "/tmp" });
+
+    expect(state.calls).toEqual([
+      "startQuote()",
+      "startMark",
+      "info",
+      "endQuote",
+      "endMark",
+      "discardMark",
+    ]);
+    expect(state.calls).not.toContain("clearMarked(1000)");
+  });
+
+  test("clears the marked/quoted block on success", async () => {
+    const { printerService, state } = getFakePrinterService();
+    const spawnService = getFakeSpawnService([{ line: "installed ok", stream: "stdout" }], {
+      ok: true,
+      exitCode: 0,
+    });
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    await adapter.spawn(["bun", "add", "foo"], { cwd: "/tmp" });
+
+    expect(state.calls).toEqual([
+      "startQuote()",
+      "startMark",
+      "info",
+      "endQuote",
+      "endMark",
+      "clearMarked(1000)",
+    ]);
+    expect(state.calls).not.toContain("discardMark");
   });
 });
