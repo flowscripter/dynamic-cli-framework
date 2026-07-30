@@ -68,18 +68,15 @@ export default class BannerServiceProvider implements ServiceProvider {
       await printerService.info(`  ${printerService.primary(cliConfig.description)}\n`);
     }
     if (cliConfig.version.length > 0) {
-      await printerService.info(`  ${printerService.secondary("version: " + cliConfig.version)}\n`);
-    }
-    if (context.doesServiceExist(UPGRADE_SERVICE_ID)) {
-      const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
-      const result = await upgradeService.getUpgradeCheckResult();
-      if (result.status === "checked" && result.updateAvailable) {
-        await printerService.info(
-          `  ${printerService.secondary(
-            `(${result.latestVersion} available, run '${cliConfig.name} upgrade')`,
-          )}\n`,
-        );
+      let versionLine = "version: " + cliConfig.version;
+      if (context.doesServiceExist(UPGRADE_SERVICE_ID)) {
+        const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
+        const result = await upgradeService.getUpgradeCheckResult();
+        if (result.status === "checked" && result.updateAvailable) {
+          versionLine += ` (${result.latestVersion} available, run '${cliConfig.name} upgrade')`;
+        }
       }
+      await printerService.info(`  ${printerService.secondary(versionLine)}\n`);
     }
     if (this.#configurationServiceProvider) {
       const configLocation = this.#configurationServiceProvider.configLocation;
