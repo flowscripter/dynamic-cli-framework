@@ -118,6 +118,8 @@ describe("BannerServiceProvider tests", () => {
     const bannerServiceProvider = new BannerServiceProvider(100);
     await bannerServiceProvider.initService(context);
 
-    expect(dummyStderr.getString()).toContain("(9.9.9 available, run 'foo upgrade')");
+    expect(dummyStderr.getString()).toContain(
+      "version: foobar (9.9.9 available, run 'foo upgrade')",
+    );
   });
 });
