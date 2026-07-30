@@ -1,7 +1,7 @@
 import process from "node:process";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type {
   CLIConfig,
   FetchService,
@@ -413,8 +413,10 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaGithubRelease(os: SupportedOs, arch: SupportedArch): Promise<void> {
     const { owner, repo, assetPattern } = this.#config.githubRelease!;
+    // macOS release assets use "aarch64" rather than "arm64" for the arm64 build; x64 (including
+    // Intel Macs) always uses "x64" regardless of os.
     const archLabel =
-      os === SupportedOs.MACOS ? "aarch64" : arch === SupportedArch.X64 ? "x64" : "arm64";
+      arch === SupportedArch.X64 ? "x64" : os === SupportedOs.MACOS ? "aarch64" : "arm64";
     const assetName = assetPattern.replace("{os}", OS_LABELS[os]).replace("{arch}", archLabel);
     const url = `https://github.com/${owner}/${repo}/releases/latest/download/${assetName}`;
 
@@ -446,6 +448,16 @@ export default class DefaultUpgradeService implements UpgradeService {
       }
       const extractedBinary = join(tmpDir, `${this.#cliConfig.name}.exe`);
       const oldPath = `${currentExecutable}.old.exe`;
+
+      // Best-effort cleanup of a stale "<exe>.old.exe" left behind by a *previous* upgrade run.
+      // Windows won't let us delete the just-renamed-aside exe while this process still has it
+      // open/mapped - that can only happen once we're no longer holding it, i.e. at the start of
+      // the NEXT invocation, before we move today's running exe aside. Ignore failures: the file
+      // may not exist, or may still be locked (e.g. another instance still running).
+      await this.#spawnService!.spawn(["cmd", "/c", "del", "/f", "/q", oldPath], {
+        mode: "ignore",
+      });
+
       const moveResult = await this.#spawnService!.spawn(
         ["cmd", "/c", "move", "/y", currentExecutable, oldPath],
         { mode: "ignore" },
@@ -471,8 +483,22 @@ export default class DefaultUpgradeService implements UpgradeService {
         throw new Error("Failed to extract release archive");
       }
       const extractedBinary = join(tmpDir, this.#cliConfig.name);
-      await Bun.write(currentExecutable, Bun.file(extractedBinary));
-      await this.#spawnService!.spawn(["chmod", "+x", currentExecutable], { mode: "ignore" });
+
+      // Extract into a staging file in the SAME directory as the running executable (not
+      // os.tmpdir(), which may be a different filesystem/mount), then atomically rename it over
+      // currentExecutable. This avoids ETXTBSY: the kernel refuses to open-for-write the inode
+      // mapped as a running process's text segment, but rename() only swaps the directory entry
+      // to point at a different inode - the running process keeps executing from its original,
+      // now-unlinked-but-still-open inode until it next execs/restarts.
+      const stagingDir = await mkdtemp(join(dirname(currentExecutable), ".upgrade-"));
+      try {
+        const stagingBinary = join(stagingDir, this.#cliConfig.name);
+        await Bun.write(stagingBinary, Bun.file(extractedBinary));
+        await this.#spawnService!.spawn(["chmod", "+x", stagingBinary], { mode: "ignore" });
+        await rename(stagingBinary, currentExecutable);
+      } finally {
+        await rm(stagingDir, { recursive: true, force: true });
+      }
     }
   }
 }

@@ -1,5 +1,9 @@
 import process from "node:process";
-import { describe, expect, test } from "bun:test";
+import { rmSync, writeFileSync } from "node:fs";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
 import type {
   FetchOptions,
@@ -15,8 +19,8 @@ import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/Upgrad
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
 
 // The shared fixture uses a non-semver "foobar" version; version comparison tests need a real one.
-function getCLIConfig(): CLIConfig {
-  return { ...getFixtureCLIConfig(), version: "1.0.0" };
+function getCLIConfig(name?: string): CLIConfig {
+  return { ...getFixtureCLIConfig(name), version: "1.0.0" };
 }
 
 function getConfig(overrides: Partial<UpgradeLocationsConfig> = {}): UpgradeLocationsConfig {
@@ -49,6 +53,23 @@ function githubReleaseRedirect(version: string): Response {
   return new Response(null, {
     status: 302,
     headers: { location: `https://github.com/flowscripter/example-cli/releases/tag/v${version}` },
+  });
+}
+
+// upgrade() with an override first calls checkForUpgrade() (a redirect response resolving the
+// latest version tag), then separately downloads the release asset itself (a 200 with a body).
+// Track a URL callback so tests can inspect which asset was requested.
+function getGithubReleaseFetchService(
+  version: string,
+  onAssetUrl?: (url: string) => void,
+): FetchService {
+  return getFetchService((input) => {
+    const url = input.toString();
+    if (url.endsWith("/releases/latest")) {
+      return githubReleaseRedirect(version);
+    }
+    onAssetUrl?.(url);
+    return new Response("new binary content", { status: 200 });
   });
 }
 
@@ -446,5 +467,222 @@ describe("DefaultUpgradeService", () => {
     );
     expect(result.ok).toBe(true);
     expect(result.newVersion).toEqual("9.9.9");
+  });
+
+  describe("upgrade via GitHub release", () => {
+    let workDir: string;
+    let currentExecutable: string;
+    let originalExecPath: string;
+
+    beforeEach(async () => {
+      workDir = await mkdtemp(join(tmpdir(), "dcf-upgrade-test-"));
+      currentExecutable = join(workDir, "example-cli");
+      await writeFile(currentExecutable, "old binary content");
+      originalExecPath = process.execPath;
+      // #upgradeViaGithubRelease reads process.execPath directly (it must always operate on the
+      // real running executable in production); override it for the duration of the test so the
+      // fix's fs operations run against a disposable fixture file instead of the real test
+      // runner binary.
+      Object.defineProperty(process, "execPath", { value: currentExecutable, configurable: true });
+    });
+
+    afterEach(async () => {
+      Object.defineProperty(process, "execPath", { value: originalExecPath, configurable: true });
+      await rm(workDir, { recursive: true, force: true });
+    });
+
+    test("upgrade via GitHub release on Linux extracts to a staging file and renames it into place, avoiding ETXTBSY", async () => {
+      const spawnedCommands: ReadonlyArray<string>[] = [];
+      let stagingBinaryChmodPath: string | undefined;
+      const service = new DefaultUpgradeService(
+        getConfig({
+          githubRelease: {
+            owner: "flowscripter",
+            repo: "example-cli",
+            assetPattern: "example-cli_{os}_{arch}.zip",
+          },
+        }),
+        getCLIConfig("example-cli"),
+      );
+      service.setDependencies(
+        getSpawnService((command) => {
+          spawnedCommands.push(command);
+          if (command[0] === "unzip") {
+            // Simulate the archive extraction step: `unzip -o <archive> -d <tmpDir>` produces
+            // an extracted binary at <tmpDir>/example-cli.
+            const tmpDir = command[4] as string;
+            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
+          }
+          if (command[0] === "chmod") {
+            stagingBinaryChmodPath = command[2];
+          }
+          return { ok: true, exitCode: 0 };
+        }),
+        getGithubReleaseFetchService("9.9.9"),
+      );
+
+      const result = await service.upgrade(
+        SupportedOs.LINUX,
+        SupportedArch.X64,
+        InstallMethod.GITHUB_RELEASE,
+      );
+
+      expect(result.ok).toBe(true);
+      // The final content at currentExecutable must be the new binary - proving a real
+      // replacement happened (via rename), not a no-op.
+      expect(await readFile(currentExecutable, "utf8")).toEqual("new binary content");
+      // chmod +x must run against a staging path in the SAME directory as currentExecutable
+      // (same filesystem, required for rename() to be atomic), not os.tmpdir().
+      expect(stagingBinaryChmodPath).toBeDefined();
+      expect(join(stagingBinaryChmodPath!, "..")).not.toEqual(tmpdir());
+      expect(stagingBinaryChmodPath!.startsWith(workDir)).toBe(true);
+      // No leftover staging directory (created via mkdtemp) should remain.
+      const stagingDirEntries = spawnedCommands.filter((c) => c[0] === "chmod").map((c) => c[2]);
+      expect(stagingDirEntries.length).toEqual(1);
+    });
+
+    test("upgrade via GitHub release requests the 'aarch64' asset label for macOS arm64", async () => {
+      let requestedUrl: string | undefined;
+      const service = new DefaultUpgradeService(
+        getConfig({
+          githubRelease: {
+            owner: "flowscripter",
+            repo: "example-cli",
+            assetPattern: "example-cli_{os}_{arch}.zip",
+          },
+        }),
+        getCLIConfig("example-cli"),
+      );
+      service.setDependencies(
+        getSpawnService((command) => {
+          if (command[0] === "unzip") {
+            const tmpDir = command[4] as string;
+            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
+          }
+          return { ok: true, exitCode: 0 };
+        }),
+        getGithubReleaseFetchService("9.9.9", (url) => {
+          requestedUrl = url;
+        }),
+      );
+
+      const result = await service.upgrade(
+        SupportedOs.MACOS,
+        SupportedArch.ARM64,
+        InstallMethod.GITHUB_RELEASE,
+      );
+      expect(result.ok).toBe(true);
+      expect(requestedUrl).toContain("example-cli_MacOS_aarch64.zip");
+    });
+
+    test("upgrade via GitHub release requests the 'x64' asset label for macOS x64 (Intel)", async () => {
+      let requestedUrl: string | undefined;
+      const service = new DefaultUpgradeService(
+        getConfig({
+          supportedPlatforms: [{ os: SupportedOs.MACOS, arch: SupportedArch.X64 }],
+          githubRelease: {
+            owner: "flowscripter",
+            repo: "example-cli",
+            assetPattern: "example-cli_{os}_{arch}.zip",
+          },
+        }),
+        getCLIConfig("example-cli"),
+      );
+      service.setDependencies(
+        getSpawnService((command) => {
+          if (command[0] === "unzip") {
+            const tmpDir = command[4] as string;
+            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
+          }
+          return { ok: true, exitCode: 0 };
+        }),
+        getGithubReleaseFetchService("9.9.9", (url) => {
+          requestedUrl = url;
+        }),
+      );
+
+      const result = await service.upgrade(
+        SupportedOs.MACOS,
+        SupportedArch.X64,
+        InstallMethod.GITHUB_RELEASE,
+      );
+      expect(result.ok).toBe(true);
+      expect(requestedUrl).toContain("example-cli_MacOS_x64.zip");
+    });
+
+    test("upgrade via GitHub release requests the 'arm64' asset label for Linux arm64", async () => {
+      let requestedUrl: string | undefined;
+      const service = new DefaultUpgradeService(
+        getConfig({
+          githubRelease: {
+            owner: "flowscripter",
+            repo: "example-cli",
+            assetPattern: "example-cli_{os}_{arch}.zip",
+          },
+        }),
+        getCLIConfig("example-cli"),
+      );
+      service.setDependencies(
+        getSpawnService((command) => {
+          if (command[0] === "unzip") {
+            const tmpDir = command[4] as string;
+            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
+          }
+          return { ok: true, exitCode: 0 };
+        }),
+        getGithubReleaseFetchService("9.9.9", (url) => {
+          requestedUrl = url;
+        }),
+      );
+
+      const result = await service.upgrade(
+        SupportedOs.LINUX,
+        SupportedArch.ARM64,
+        InstallMethod.GITHUB_RELEASE,
+      );
+      expect(result.ok).toBe(true);
+      expect(requestedUrl).toContain("example-cli_Linux_arm64.zip");
+    });
+
+    test("upgrade via GitHub release on Windows deletes any stale '.old.exe' before moving the current exe aside", async () => {
+      const spawnedCommands: ReadonlyArray<string>[] = [];
+      const oldPath = `${currentExecutable}.old.exe`;
+      // Simulate a stale leftover from a previous upgrade run.
+      await writeFile(oldPath, "stale leftover from a previous upgrade");
+
+      const service = new DefaultUpgradeService(
+        getConfig({
+          githubRelease: {
+            owner: "flowscripter",
+            repo: "example-cli",
+            assetPattern: "example-cli_{os}_{arch}.zip",
+          },
+        }),
+        getCLIConfig("example-cli"),
+      );
+      service.setDependencies(
+        getSpawnService((command) => {
+          spawnedCommands.push(command);
+          if (command[0] === "cmd" && command[2] === "del") {
+            rmSync(oldPath, { force: true });
+          }
+          return { ok: true, exitCode: 0 };
+        }),
+        getGithubReleaseFetchService("9.9.9"),
+      );
+
+      const result = await service.upgrade(
+        SupportedOs.WINDOWS,
+        SupportedArch.X64,
+        InstallMethod.GITHUB_RELEASE,
+      );
+
+      expect(result.ok).toBe(true);
+      const delIndex = spawnedCommands.findIndex((c) => c[0] === "cmd" && c[2] === "del");
+      const moveIndex = spawnedCommands.findIndex((c) => c[0] === "cmd" && c[2] === "move");
+      expect(delIndex).toBeGreaterThanOrEqual(0);
+      expect(moveIndex).toBeGreaterThan(delIndex);
+      expect(spawnedCommands[delIndex]).toEqual(["cmd", "/c", "del", "/f", "/q", oldPath]);
+    });
   });
 });
