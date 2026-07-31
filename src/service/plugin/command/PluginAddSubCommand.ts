@@ -8,6 +8,7 @@ import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 import type { VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-framework";
 import { getPluginId } from "./getPluginId.ts";
+import { parsePluginSpecifier } from "./parsePluginSpecifier.ts";
 
 export class PluginAddSubCommand implements SubCommand {
   readonly name = "add";
@@ -17,7 +18,7 @@ export class PluginAddSubCommand implements SubCommand {
   readonly positionals = [
     {
       name: "pluginId",
-      description: "Plugin ID to install (e.g. @scope/name)",
+      description: "Plugin ID to install (e.g. @scope/name or @scope/name:version)",
       type: ValueTypeName.STRING,
     },
   ];
@@ -26,7 +27,7 @@ export class PluginAddSubCommand implements SubCommand {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
-    const pluginId = argumentValues["pluginId"] as string;
+    const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
     await printerService.info(`Searching for plugin: ${pluginId}\n`, Icon.INFORMATION);
 
     let descriptor: VersionedPluginDescriptor | undefined;
@@ -35,6 +36,12 @@ export class PluginAddSubCommand implements SubCommand {
         descriptor = d;
         break;
       }
+    }
+
+    if (descriptor && version) {
+      // search only ever returns the latest version - substitute the explicitly requested
+      // version so install() is asked for the correct one.
+      descriptor = { ...descriptor, version };
     }
 
     if (!descriptor) {
@@ -52,7 +59,7 @@ export class PluginAddSubCommand implements SubCommand {
         pluginId,
         scope,
         name,
-        version: "latest",
+        version: version ?? "latest",
         extensionPoints: [],
       };
     }
