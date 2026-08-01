@@ -57,16 +57,11 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
     this.#printerService.endMark();
     if (result.ok) {
       await this.#printerService.clearMarked(this.#markMinimumDisplayTimeMs);
-    } else if ("discardMark" in this.#printerService) {
+    } else {
       // Leave the marked/quoted output on screen so the failing command's diagnostic output is
       // visible, but still reset the mark/quote bookkeeping so a subsequent spawn() can start a
       // fresh mark region.
-      //
-      // discardMark() is being promoted to a first-class PrinterService interface method
-      // (flowscripter/dynamic-cli-framework-api#12); once that's released and this repo's
-      // @flowscripter/dynamic-cli-framework-api dependency is bumped, this can call
-      // this.#printerService.discardMark() directly instead of feature-detecting it.
-      (this.#printerService as unknown as { discardMark: () => void }).discardMark();
+      this.#printerService.discardMark();
     }
 
     if (result.ok) {
