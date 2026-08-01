@@ -132,9 +132,7 @@ export default class DefaultSpawnService implements SpawnService {
     // These are intentionally not awaited here - they only complete once the child's stdout/
     // stderr streams reach EOF, which can happen slightly after proc.exited resolves. They are
     // awaited below, before returning, so that every onOutput callback (and thus every write it
-    // triggers) is guaranteed to have completed before the caller acts on the result - otherwise
-    // a caller tracking "lines written during this spawn" (e.g. for a subsequent screen clear)
-    // could observe a count that is missing lines still in flight.
+    // triggers) is guaranteed to have completed before the caller acts on the result.
     let pipeStdout: Promise<void> = Promise.resolve();
     let pipeStderr: Promise<void> = Promise.resolve();
     if (mode === "wrapped" && options.onOutput) {

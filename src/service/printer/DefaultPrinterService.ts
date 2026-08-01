@@ -316,10 +316,6 @@ export default class DefaultPrinterService implements PrinterService {
    * Stop tracking rows for the current mark region without erasing them - e.g. when the marked
    * output should be left on screen (such as a spawned command's output on failure), but the
    * mark/quote bookkeeping still needs to be reset so a later startMark() doesn't throw.
-   *
-   * Not part of the public PrinterService interface - callers that want to leave marked output
-   * in place should feature-detect it (`"discardMark" in printerService`) since a PrinterService
-   * received via dependency injection is not guaranteed to be a DefaultPrinterService.
    */
   public discardMark(): void {
     if (this.#markedLineCount === undefined) {
