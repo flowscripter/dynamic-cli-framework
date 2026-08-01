@@ -193,6 +193,27 @@ describe("DefaultSpawnService tests", () => {
     expect(result).toEqual({ ok: false, timedOut: true });
   });
 
+  test("spawn() waits for all buffered output to be delivered via onOutput before resolving", async () => {
+    const service = new DefaultSpawnService();
+    const { printerService } = getFakePrinterService();
+    const { shutdownService } = getFakeShutdownService();
+    service.setDependencies(printerService, shutdownService);
+
+    const lines: Array<{ line: string; stream: "stdout" | "stderr" }> = [];
+    const lineCount = 200;
+    const result = await service.spawn(
+      ["sh", "-c", `for i in $(seq 1 ${lineCount}); do echo line$i; done`],
+      {
+        mode: "wrapped",
+        onOutput: (line, stream) => lines.push({ line, stream }),
+      },
+    );
+
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+    expect(lines.length).toEqual(lineCount);
+    expect(lines[lineCount - 1]).toEqual({ line: `line${lineCount}`, stream: "stdout" });
+  });
+
   test("spawn() with mode ignore discards output and does not touch the printer", async () => {
     const service = new DefaultSpawnService();
     const { printerService, state } = getFakePrinterService();

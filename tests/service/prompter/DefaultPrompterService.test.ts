@@ -107,6 +107,7 @@ function getMockPrinterService(): PrinterService {
     endQuote: () => {},
     startMark: () => {},
     endMark: () => {},
+    discardMark: () => {},
     clearMarked: () => Promise.resolve(),
     stdoutColumns: () => 80,
     stderrColumns: () => 80,

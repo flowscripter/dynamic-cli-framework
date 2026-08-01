@@ -129,15 +129,22 @@ export default class DefaultSpawnService implements SpawnService {
       await this.#terminate(proc, command);
     });
 
+    // These are intentionally not awaited here - they only complete once the child's stdout/
+    // stderr streams reach EOF, which can happen slightly after proc.exited resolves. They are
+    // awaited below, before returning, so that every onOutput callback (and thus every write it
+    // triggers) is guaranteed to have completed before the caller acts on the result.
+    let pipeStdout: Promise<void> = Promise.resolve();
+    let pipeStderr: Promise<void> = Promise.resolve();
     if (mode === "wrapped" && options.onOutput) {
       const onOutput = options.onOutput;
-      void this.#pipeLines(proc.stdout, "stdout", onOutput);
-      void this.#pipeLines(proc.stderr, "stderr", onOutput);
+      pipeStdout = this.#pipeLines(proc.stdout, "stdout", onOutput);
+      pipeStderr = this.#pipeLines(proc.stderr, "stderr", onOutput);
     }
 
     try {
       if (options.timeoutMs === undefined) {
         const exitCode = await proc.exited;
+        await Promise.all([pipeStdout, pipeStderr]);
         settled = true;
         return exitCode === 0 ? { ok: true, exitCode } : { ok: false, exitCode };
       }
@@ -154,11 +161,13 @@ export default class DefaultSpawnService implements SpawnService {
       if (timedOut) {
         logger.debug(() => `Command '${command.join(" ")}' timed out after ${options.timeoutMs}ms`);
         await this.#terminate(proc, command);
+        await Promise.all([pipeStdout, pipeStderr]);
         settled = true;
         return { ok: false, timedOut: true };
       }
 
       const exitCode = await proc.exited;
+      await Promise.all([pipeStdout, pipeStderr]);
       settled = true;
       return exitCode === 0 ? { ok: true, exitCode } : { ok: false, exitCode };
     } finally {
