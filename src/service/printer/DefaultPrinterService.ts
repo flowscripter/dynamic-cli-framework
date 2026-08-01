@@ -152,6 +152,10 @@ export default class DefaultPrinterService implements PrinterService {
     return this.#styler.italicText(message);
   }
 
+  public dim(message: string): string {
+    return this.#styler.dimText(message);
+  }
+
   public yellow(message: string): string {
     return this.#styler.colorText(message, this.#theme[Color.YELLOW]!);
   }

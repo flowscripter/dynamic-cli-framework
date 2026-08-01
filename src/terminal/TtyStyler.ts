@@ -1,5 +1,7 @@
 import {
   BACKGROUND_COLOR_END,
+  DIM_END,
+  DIM_START,
   FOREGROUND_COLOR_END,
   HYPERLINK_END,
   hyperlinkStart,
@@ -73,6 +75,13 @@ export default class TtyStyler implements Styler {
       return text;
     }
     return ITALIC_START + text + ITALIC_END;
+  }
+
+  dimText(text: string): string {
+    if (!this.colorEnabled || this.colorLevel === 0) {
+      return text;
+    }
+    return DIM_START + text + DIM_END;
   }
 
   hyperlink(text: string, url: string): string {

@@ -551,6 +551,32 @@ describe("DefaultPrinterService tests", () => {
     expectStringEquals(dummyStderr.getString(), "┐ line1\n│ line2\nline3\n");
   });
 
+  test("startQuote/endQuote dims quoted content but not the quoting marks", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+
+    printerService.startQuote();
+    await printerService.info("line1\n");
+    printerService.endQuote();
+
+    const output = dummyStderr.getString();
+
+    // the quoted content is wrapped in dim ... normal-intensity codes
+    expect(output).toContain("\x1b[2m");
+    expect(output).toContain("\x1b[22m");
+    // the quoting mark itself is emitted before the dim start code, i.e. not dimmed
+    expect(output.indexOf("┐")).toBeLessThan(output.indexOf("\x1b[2m"));
+  });
+
   test("nested startQuote/endQuote prefixes lines with branch column on stderr", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();

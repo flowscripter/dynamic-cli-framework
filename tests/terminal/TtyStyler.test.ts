@@ -43,4 +43,25 @@ describe("TtyStyler tests", () => {
 
     expect(styler.italicText("hello")).not.toEqual("hello");
   });
+
+  test("colorLevel 0 returns plain text from dimText", () => {
+    const styler = new TtyStyler(0);
+    styler.colorEnabled = true;
+
+    expect(styler.dimText("hello")).toEqual("hello");
+  });
+
+  test("colorEnabled false returns plain text from dimText", () => {
+    const styler = new TtyStyler(3);
+    styler.colorEnabled = false;
+
+    expect(styler.dimText("hello")).toEqual("hello");
+  });
+
+  test("colorLevel 3 still dims text when colorEnabled", () => {
+    const styler = new TtyStyler(3);
+    styler.colorEnabled = true;
+
+    expect(styler.dimText("hello")).not.toEqual("hello");
+  });
 });
