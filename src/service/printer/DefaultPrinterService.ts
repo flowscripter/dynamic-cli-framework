@@ -316,6 +316,19 @@ export default class DefaultPrinterService implements PrinterService {
     this.#markEndedAt = Date.now();
   }
 
+  /**
+   * Stop tracking rows for the current mark region without erasing them - e.g. when the marked
+   * output should be left on screen (such as a spawned command's output on failure), but the
+   * mark/quote bookkeeping still needs to be reset so a later startMark() doesn't throw.
+   */
+  public discardMark(): void {
+    if (this.#markedLineCount === undefined) {
+      throw new Error("discardMark() called without a preceding startMark()");
+    }
+    this.#markedLineCount = undefined;
+    this.#markEndedAt = undefined;
+  }
+
   public async clearMarked(minimumDisplayTimeMs = 0): Promise<void> {
     if (this.#markedLineCount === undefined || this.#markEndedAt === undefined) {
       throw new Error("clearMarked() called without a preceding endMark()");

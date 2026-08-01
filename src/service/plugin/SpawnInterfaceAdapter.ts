@@ -8,8 +8,10 @@ export interface SpawnInterfaceAdapterOptions {
 
 /**
  * Adapts a {@link SpawnService} to dynamic-plugin-framework's {@link SpawnInterface}, wrapping
- * spawned process output in a quoted, marked block via {@link PrinterService} that is cleared
- * again once the process exits (subject to {@link SpawnInterfaceAdapterOptions.markMinimumDisplayTimeMs}).
+ * spawned process output in a quoted, marked block via {@link PrinterService}. On success the
+ * block is cleared once the process exits (subject to
+ * {@link SpawnInterfaceAdapterOptions.markMinimumDisplayTimeMs}); on failure the block is left
+ * on screen so the diagnostic output from the failing command remains visible.
  */
 export default class SpawnInterfaceAdapter implements SpawnInterface {
   readonly #spawnService: SpawnService;
@@ -53,7 +55,14 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
 
     this.#printerService.endQuote();
     this.#printerService.endMark();
-    await this.#printerService.clearMarked(this.#markMinimumDisplayTimeMs);
+    if (result.ok) {
+      await this.#printerService.clearMarked(this.#markMinimumDisplayTimeMs);
+    } else {
+      // Leave the marked/quoted output on screen so the failing command's diagnostic output is
+      // visible, but still reset the mark/quote bookkeeping so a subsequent spawn() can start a
+      // fresh mark region.
+      this.#printerService.discardMark();
+    }
 
     if (result.ok) {
       return { ok: true, exitCode: result.exitCode };
