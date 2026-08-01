@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/dynamic-cli-framework",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "A framework for developing CLI applications which supports dynamic discovery and installation of new commands",
   "keywords": [
     "bun",
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@flowscripter/dynamic-cli-framework-api": "^2.0.0",
-    "@flowscripter/dynamic-plugin-framework": "2.0.3",
+    "@flowscripter/dynamic-plugin-framework": "2.1.1",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.11.0",
