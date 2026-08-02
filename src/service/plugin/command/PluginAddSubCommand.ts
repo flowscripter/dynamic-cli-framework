@@ -10,6 +10,15 @@ import type { VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-fra
 import { getPluginId } from "./getPluginId.ts";
 import { parsePluginSpecifier } from "./parsePluginSpecifier.ts";
 
+/**
+ * `DefaultPluginService` implements this ahead of it being added to the `PluginService`
+ * interface (see `dynamic-cli-framework-api`) - guarded with a `typeof` check below so this
+ * command still works against any other `PluginService` implementation that doesn't have it.
+ */
+interface PluginServiceWithAvailabilityCheck extends PluginService {
+  assertPluginAvailable?(pluginId: string, version?: string): Promise<void>;
+}
+
 export class PluginAddSubCommand implements SubCommand {
   readonly name = "add";
   readonly description = "Install a remote plugin";
@@ -69,7 +78,27 @@ export class PluginAddSubCommand implements SubCommand {
       descriptor.version && descriptor.version !== "latest"
         ? `${descriptor.pluginId}@${descriptor.version}`
         : descriptor.pluginId;
-    await printerService.info(`Installing ${installLabel}...\n`, Icon.INFORMATION);
+
+    const availabilityCheck = (pluginService as PluginServiceWithAvailabilityCheck)
+      .assertPluginAvailable;
+    if (typeof availabilityCheck === "function") {
+      // Confirm the package (and specific version/tag, if requested) actually exists on the
+      // remote registry via a direct lookup before invoking the package manager - so a
+      // non-existent plugin or version is reported clearly instead of failing later (and less
+      // clearly) inside `bun add`/`npm install`.
+      await availabilityCheck.call(pluginService, descriptor.pluginId, descriptor.version);
+    }
+
+    // A cold package manager cache (first install after a fresh `~/.example-cli`, container,
+    // or CI runner) can take noticeably longer to resolve dependencies than a warm one - long
+    // enough that, without a hint, it can look hung. This is a static, always-shown message
+    // rather than a timer-based "still working..." indicator, since spawn output is streamed
+    // through as it arrives (see SpawnInterfaceAdapter) and there's no reliable signal here for
+    // "this specific run is unusually slow" versus "this is just how long it takes".
+    await printerService.info(
+      `Installing ${installLabel}... (this may take a while on first run)\n`,
+      Icon.INFORMATION,
+    );
     await pluginService.install(descriptor);
     await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
   }

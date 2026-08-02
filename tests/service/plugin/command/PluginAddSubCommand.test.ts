@@ -63,7 +63,7 @@ describe("PluginAddSubCommand", () => {
 
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin@1.0.0...\n",
+      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin@1.0.0... (this may take a while on first run)\n",
     );
   });
 
@@ -93,7 +93,7 @@ describe("PluginAddSubCommand", () => {
     expect(installedDescriptor?.version).toEqual("3.0.0");
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin:3.0.0\nℹ Installing @scope/plugin@3.0.0...\n",
+      "ℹ Searching for plugin: @scope/plugin:3.0.0\nℹ Installing @scope/plugin@3.0.0... (this may take a while on first run)\n",
     );
   });
 
@@ -149,7 +149,70 @@ describe("PluginAddSubCommand", () => {
       dummyStderr.getString(),
       "ℹ Searching for plugin: @other/plugin:2.5.0\n" +
         "ℹ Plugin not found via search, attempting direct install of @other/plugin:2.5.0...\n" +
-        "ℹ Installing @other/plugin@2.5.0...\n",
+        "ℹ Installing @other/plugin@2.5.0... (this may take a while on first run)\n",
     );
+  });
+
+  test("checks availability before install and installs when it resolves", async () => {
+    const { context } = buildContext();
+
+    let installCalled = false;
+    let checkedPluginId: string | undefined;
+    let checkedVersion: string | undefined;
+    const fakePluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      install: async () => {
+        installCalled = true;
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+      assertPluginAvailable: async (pluginId: string, version?: string) => {
+        checkedPluginId = pluginId;
+        checkedVersion = version;
+      },
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+
+    expect(checkedPluginId).toEqual(descriptor.pluginId);
+    expect(checkedVersion).toEqual("3.0.0");
+    expect(installCalled).toBeTrue();
+  });
+
+  test("does not install when the availability check rejects", async () => {
+    const { context } = buildContext();
+
+    let installCalled = false;
+    const fakePluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      install: async () => {
+        installCalled = true;
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+      assertPluginAvailable: async () => {
+        throw new Error(
+          "Version 9.9.9 of plugin @scope/plugin was not found in the configured plugin registry",
+        );
+      },
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await expect(
+      command.execute(context, { pluginId: `${descriptor.pluginId}:9.9.9` }),
+    ).rejects.toThrow(
+      "Version 9.9.9 of plugin @scope/plugin was not found in the configured plugin registry",
+    );
+
+    expect(installCalled).toBeFalse();
   });
 });
