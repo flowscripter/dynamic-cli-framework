@@ -4,6 +4,5 @@ export default interface Styler {
   colorText(text: string, colorValue: number): string;
   backgroundColorText(text: string, colorValue: number): string;
   italicText(text: string): string;
-  dimText(text: string): string;
   hyperlink(text: string, url: string): string;
 }
