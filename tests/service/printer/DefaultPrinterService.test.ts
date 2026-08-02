@@ -551,7 +551,7 @@ describe("DefaultPrinterService tests", () => {
     expectStringEquals(dummyStderr.getString(), "┐ line1\n│ line2\nline3\n");
   });
 
-  test("startQuote/endQuote dims quoted content but not the quoting marks", async () => {
+  test("startQuote/endQuote colors quoted content with the same secondary color as the quoting marks", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const printerService = new DefaultPrinterService(
@@ -570,11 +570,14 @@ describe("DefaultPrinterService tests", () => {
 
     const output = dummyStderr.getString();
 
-    // the quoted content is wrapped in dim ... normal-intensity codes
-    expect(output).toContain("\x1b[2m");
-    expect(output).toContain("\x1b[22m");
-    // the quoting mark itself is emitted before the dim start code, i.e. not dimmed
-    expect(output.indexOf("┐")).toBeLessThan(output.indexOf("\x1b[2m"));
+    // no dim/normal-intensity SGR codes are emitted
+    expect(output).not.toContain("\x1b[2m");
+    expect(output).not.toContain("\x1b[22m");
+    // the quote mark and the quoted content are wrapped in the same truecolor foreground code
+    const colorStartIndex = output.indexOf("\x1b[38;2;");
+    expect(colorStartIndex).toBeGreaterThanOrEqual(0);
+    const colorStart = output.slice(colorStartIndex, output.indexOf("m", colorStartIndex) + 1);
+    expect(output.split(colorStart).length - 1).toBeGreaterThanOrEqual(2);
   });
 
   test("nested startQuote/endQuote prefixes lines with branch column on stderr", async () => {

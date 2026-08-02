@@ -80,7 +80,6 @@ function getMockPrinterService(): PrinterService {
     emphasised: (m: string) => m,
     selected: (m: string) => m,
     italic: (m: string) => m,
-    dim: (m: string) => m,
     yellow: (m: string) => m,
     orange: (m: string) => m,
     red: (m: string) => m,

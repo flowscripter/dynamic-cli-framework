@@ -60,7 +60,10 @@ export default class Quote {
     }
     const endsWithNewline = message.endsWith("\n");
     const raw = endsWithNewline ? message.slice(0, -1) : message;
-    const lines = raw.split("\n").map((line) => this.#prefixLine() + this.#styler.dimText(line));
+    const color = this.#levels[this.#levels.length - 1]!.color;
+    const lines = raw
+      .split("\n")
+      .map((line) => this.#prefixLine() + this.#styler.colorText(line, color));
     return lines.join("\n") + (endsWithNewline ? "\n" : "");
   }
 }
