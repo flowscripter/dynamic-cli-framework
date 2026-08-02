@@ -12,7 +12,6 @@ import { DYNAMIC_CLI_FRAMEWORK_SERVICE_PROVIDER_FACTORY_EXTENSION_POINT } from "
 import type { CommandFactory } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceProviderFactory } from "@flowscripter/dynamic-cli-framework-api";
 import type {
-  FetchCapable,
   NpmjsPluginRepositoryConfig,
   NpmPluginRepositoryConfig,
   SpawnCapable,
@@ -98,13 +97,11 @@ export default class PluginServiceProvider implements ServiceProvider {
     }
 
     if (!context.doesServiceExist(FETCH_SERVICE_ID)) {
-      logger.debug("FetchService not available, plugin manager will fetch directly");
-    } else if (!("setFetch" in pluginManager)) {
-      logger.debug("Plugin manager does not support FetchCapable, skipping fetch injection");
+      logger.debug("FetchService not available, plugin service will fetch directly");
     } else {
       const fetchService = context.getServiceById(FETCH_SERVICE_ID) as FetchService;
       const adapter = new FetchInterfaceAdapter(fetchService, this.#fetchInterfaceAdapterOptions);
-      (pluginManager as unknown as FetchCapable).setFetch(adapter);
+      pluginService.setFetch(adapter);
     }
 
     await pluginManager.registerExtensions(DYNAMIC_CLI_FRAMEWORK_COMMAND_FACTORY_EXTENSION_POINT);
