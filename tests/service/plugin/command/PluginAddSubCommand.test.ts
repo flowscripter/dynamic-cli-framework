@@ -63,7 +63,7 @@ describe("PluginAddSubCommand", () => {
 
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin...\n",
+      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin@1.0.0...\n",
     );
   });
 
@@ -93,7 +93,7 @@ describe("PluginAddSubCommand", () => {
     expect(installedDescriptor?.version).toEqual("3.0.0");
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin...\n",
+      "ℹ Searching for plugin: @scope/plugin:3.0.0\nℹ Installing @scope/plugin@3.0.0...\n",
     );
   });
 
@@ -121,7 +121,7 @@ describe("PluginAddSubCommand", () => {
   });
 
   test("falls back to direct install with parsed version when search finds no match", async () => {
-    const { context } = buildContext();
+    const { context, dummyStderr } = buildContext();
 
     const searchQueries: Readonly<SearchQuery>[] = [];
     let installedDescriptor: VersionedPluginDescriptor | undefined;
@@ -145,5 +145,11 @@ describe("PluginAddSubCommand", () => {
     expect(searchQueries).toEqual([{ text: "@other/plugin" }]);
     expect(installedDescriptor?.pluginId).toEqual("@other/plugin");
     expect(installedDescriptor?.version).toEqual("2.5.0");
+    expectStringEquals(
+      dummyStderr.getString(),
+      "ℹ Searching for plugin: @other/plugin:2.5.0\n" +
+        "ℹ Plugin not found via search, attempting direct install of @other/plugin:2.5.0...\n" +
+        "ℹ Installing @other/plugin@2.5.0...\n",
+    );
   });
 });

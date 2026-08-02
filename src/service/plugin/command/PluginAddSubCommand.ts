@@ -28,7 +28,8 @@ export class PluginAddSubCommand implements SubCommand {
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
     const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
-    await printerService.info(`Searching for plugin: ${pluginId}\n`, Icon.INFORMATION);
+    const searchLabel = version ? `${pluginId}:${version}` : pluginId;
+    await printerService.info(`Searching for plugin: ${searchLabel}\n`, Icon.INFORMATION);
 
     let descriptor: VersionedPluginDescriptor | undefined;
     for await (const d of pluginService.search({ text: pluginId })) {
@@ -49,7 +50,7 @@ export class PluginAddSubCommand implements SubCommand {
       // This handles cases where the package exists on the registry but is not
       // returned by search (e.g. recently published or low search ranking).
       await printerService.info(
-        `Plugin not found via search, attempting direct install of ${pluginId}...\n`,
+        `Plugin not found via search, attempting direct install of ${searchLabel}...\n`,
         Icon.INFORMATION,
       );
       const parts = pluginId.startsWith("@") ? pluginId.slice(1).split("/") : [undefined, pluginId];
@@ -64,7 +65,11 @@ export class PluginAddSubCommand implements SubCommand {
       };
     }
 
-    await printerService.info(`Installing ${descriptor.pluginId}...\n`, Icon.INFORMATION);
+    const installLabel =
+      descriptor.version && descriptor.version !== "latest"
+        ? `${descriptor.pluginId}@${descriptor.version}`
+        : descriptor.pluginId;
+    await printerService.info(`Installing ${installLabel}...\n`, Icon.INFORMATION);
     await pluginService.install(descriptor);
     await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
   }
