@@ -167,7 +167,7 @@ describe("DefaultPluginService", () => {
       service.setFetch(
         makeFetch((url) => {
           requestedUrls.push(url);
-          return { ok: url.startsWith("https://second.example.com") };
+          return { ok: url === "https://second.example.com/@scope/plugin" };
         }),
       );
 
