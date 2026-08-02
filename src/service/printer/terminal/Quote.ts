@@ -1,3 +1,4 @@
+import { stripSgr } from "../../../terminal/Ansi.ts";
 import type Styler from "../../../terminal/Styler.ts";
 
 interface Level {
@@ -60,7 +61,9 @@ export default class Quote {
     }
     const endsWithNewline = message.endsWith("\n");
     const raw = endsWithNewline ? message.slice(0, -1) : message;
-    const lines = raw.split("\n").map((line) => this.#prefixLine() + this.#styler.dimText(line));
+    const lines = raw
+      .split("\n")
+      .map((line) => this.#prefixLine() + this.#styler.dimText(stripSgr(line)));
     return lines.join("\n") + (endsWithNewline ? "\n" : "");
   }
 }

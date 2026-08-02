@@ -575,6 +575,12 @@ describe("DefaultPrinterService tests", () => {
     expect(output).toContain("\x1b[22m");
     // the quoting mark itself is emitted before the dim start code, i.e. not dimmed
     expect(output.indexOf("┐")).toBeLessThan(output.indexOf("\x1b[2m"));
+    // info() applies an explicit truecolor foreground to the message content before it reaches
+    // the quote - that color must be stripped from the dimmed segment (the quote mark itself is
+    // still colored, which is fine) so it doesn't sit alongside - and visually neutralize, in
+    // most terminal emulators - the dim/faint SGR attribute
+    const dimmedSegment = output.slice(output.indexOf("\x1b[2m"), output.indexOf("\x1b[22m"));
+    expect(dimmedSegment).not.toContain("\x1b[38;2;");
   });
 
   test("nested startQuote/endQuote prefixes lines with branch column on stderr", async () => {

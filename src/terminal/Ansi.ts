@@ -27,3 +27,11 @@ export function backgroundColorStart(r: number, g: number, b: number): string {
 export function hyperlinkStart(url: string): string {
   return `${OSC}8${SEP}${SEP}${url}${BEL}`;
 }
+
+/**
+ * Strips CSI ("\x1b[...m") SGR escape sequences - e.g. foreground/background color, italic, dim -
+ * from text. Does not touch OSC hyperlink sequences ("\x1b]8;;...").
+ */
+export function stripSgr(text: string): string {
+  return text.replace(/\x1b\[[0-9;]*m/g, ""); // oxlint-disable-line no-control-regex
+}
