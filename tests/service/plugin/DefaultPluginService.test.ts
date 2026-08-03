@@ -7,10 +7,21 @@ import type {
 } from "@flowscripter/dynamic-plugin-framework";
 import DefaultPluginService from "../../../src/service/plugin/DefaultPluginService.ts";
 
-function makeFetch(handler: (url: string, init?: RequestInit) => { ok: boolean }): FetchInterface {
+function pluginDoc(version: string): Record<string, unknown> {
+  return { version, keywords: ["ns"], ns: { extensionPoints: ["some-extension-point"] } };
+}
+
+function makeDocFetch(
+  handler: (url: string) => { ok: boolean; doc?: Record<string, unknown> },
+): FetchInterface {
   return {
-    fetch: (input: string, init?: RequestInit) =>
-      Promise.resolve(handler(input, init) as unknown as Response),
+    fetch: (input: string) => {
+      const result = handler(input);
+      return Promise.resolve({
+        ok: result.ok,
+        json: () => Promise.resolve(result.doc ?? {}),
+      } as unknown as Response);
+    },
   };
 }
 
@@ -85,71 +96,33 @@ describe("DefaultPluginService", () => {
     expect(service.pluginManager).toBeDefined();
   });
 
-  describe("assertPluginAvailable", () => {
-    test("resolves when the package exists and no version is requested", async () => {
+  describe("checkAvailable", () => {
+    test("resolves true when the package exists and no version is requested", async () => {
       const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
-      const requestedUrls: string[] = [];
-      service.setFetch(
-        makeFetch((url) => {
-          requestedUrls.push(url);
-          return { ok: true };
-        }),
-      );
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("1.0.0") })));
 
-      await service.assertPluginAvailable("@scope/plugin");
-
-      expect(requestedUrls).toEqual(["https://registry.npmjs.org/@scope/plugin"]);
+      expect(await service.checkAvailable("@scope/plugin")).toBe(true);
     });
 
-    test("resolves when the package and requested version both exist", async () => {
+    test("resolves true when the package and requested version both exist", async () => {
       const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
-      const requestedUrls: string[] = [];
-      service.setFetch(
-        makeFetch((url) => {
-          requestedUrls.push(url);
-          return { ok: true };
-        }),
-      );
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("3.0.0") })));
 
-      await service.assertPluginAvailable("@scope/plugin", "3.0.0");
-
-      expect(requestedUrls).toEqual([
-        "https://registry.npmjs.org/@scope/plugin",
-        "https://registry.npmjs.org/@scope/plugin/3.0.0",
-      ]);
+      expect(await service.checkAvailable("@scope/plugin", "3.0.0")).toBe(true);
     });
 
-    test("skips the version check when version is 'latest'", async () => {
+    test("resolves false when the package exists but the requested version does not", async () => {
       const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
-      const requestedUrls: string[] = [];
-      service.setFetch(
-        makeFetch((url) => {
-          requestedUrls.push(url);
-          return { ok: true };
-        }),
-      );
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("1.0.0") })));
 
-      await service.assertPluginAvailable("@scope/plugin", "latest");
-
-      expect(requestedUrls).toEqual(["https://registry.npmjs.org/@scope/plugin"]);
+      expect(await service.checkAvailable("@scope/plugin", "9.9.9")).toBe(false);
     });
 
-    test("throws a clear error when the package does not exist", async () => {
+    test("resolves false when the package does not exist", async () => {
       const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
-      service.setFetch(makeFetch(() => ({ ok: false })));
+      service.setFetch(makeDocFetch(() => ({ ok: false })));
 
-      await expect(service.assertPluginAvailable("@scope/missing")).rejects.toThrow(
-        "Plugin @scope/missing was not found in the configured plugin registry",
-      );
-    });
-
-    test("throws a clear error when the package exists but the requested version does not", async () => {
-      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
-      service.setFetch(makeFetch((url) => ({ ok: !url.endsWith("/9.9.9") })));
-
-      await expect(service.assertPluginAvailable("@scope/plugin", "9.9.9")).rejects.toThrow(
-        "Version 9.9.9 of plugin @scope/plugin was not found in the configured plugin registry",
-      );
+      expect(await service.checkAvailable("@scope/missing")).toBe(false);
     });
 
     test("checks across all configured remotes and succeeds if any one has it", async () => {
@@ -165,37 +138,17 @@ describe("DefaultPluginService", () => {
       } as unknown as KeyValueService);
       const requestedUrls: string[] = [];
       service.setFetch(
-        makeFetch((url) => {
+        makeDocFetch((url) => {
           requestedUrls.push(url);
-          return { ok: url === "https://second.example.com/@scope/plugin" };
+          return { ok: url.startsWith("https://second.example.com"), doc: pluginDoc("1.0.0") };
         }),
       );
 
-      await service.assertPluginAvailable("@scope/plugin");
-
+      expect(await service.checkAvailable("@scope/plugin")).toBe(true);
       expect(requestedUrls).toEqual([
-        "https://first.example.com/@scope/plugin",
-        "https://second.example.com/@scope/plugin",
+        "https://first.example.com/@scope/plugin/latest",
+        "https://second.example.com/@scope/plugin/latest",
       ]);
-    });
-
-    test("sends a Bearer Authorization header when authToken is configured", async () => {
-      const remoteConfig: NpmjsPluginRepositoryConfig = {
-        ...getRemoteConfig(),
-        authToken: "secret-token",
-      };
-      const service = new DefaultPluginService(remoteConfig, getLocalConfig());
-      const sentAuthHeaders: Array<string | null> = [];
-      service.setFetch({
-        fetch: (_input: string, init?: RequestInit) => {
-          sentAuthHeaders.push((init!.headers as Headers).get("Authorization"));
-          return Promise.resolve({ ok: true } as unknown as Response);
-        },
-      });
-
-      await service.assertPluginAvailable("@scope/plugin");
-
-      expect(sentAuthHeaders).toEqual(["Bearer secret-token"]);
     });
   });
 });

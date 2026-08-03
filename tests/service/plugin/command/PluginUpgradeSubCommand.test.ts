@@ -46,6 +46,7 @@ describe("PluginUpgradeSubCommand", () => {
 
     const fakePluginService: PluginService = {
       search: async function* () {},
+      checkAvailable: async () => true,
       install: async () => {},
       uninstall: async () => {},
       listInstalled: async function* () {},
