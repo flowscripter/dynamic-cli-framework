@@ -10,6 +10,7 @@ import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterSe
 import DefaultSpawnService from "../../../src/service/spawn/DefaultSpawnService.ts";
 import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
+import { tmpdir } from "node:os";
 import StreamString from "../../fixtures/StreamString.ts";
 
 interface FakePrinterServiceState {
@@ -196,7 +197,7 @@ describe("SpawnInterfaceAdapter tests", () => {
         "-e",
         `for (let i = 1; i <= ${lineCount}; i++) { console.log("line" + i); }`,
       ],
-      { cwd: "/tmp" },
+      { cwd: tmpdir() },
     );
 
     expect(result).toEqual({ ok: true, exitCode: 0 });
@@ -237,7 +238,7 @@ describe("SpawnInterfaceAdapter tests", () => {
 
     const result = await adapter.spawn(
       [process.execPath, "-e", `console.log("diagnostic output"); process.exit(1);`],
-      { cwd: "/tmp" },
+      { cwd: tmpdir() },
     );
 
     expect(result).toEqual({ ok: false, exitCode: 1 });
@@ -247,7 +248,7 @@ describe("SpawnInterfaceAdapter tests", () => {
 
     // A subsequent spawn() must not throw "already marking" - bookkeeping was reset.
     const secondResult = await adapter.spawn([process.execPath, "-e", `console.log("hello");`], {
-      cwd: "/tmp",
+      cwd: tmpdir(),
     });
     expect(secondResult.ok).toBeTrue();
   });
