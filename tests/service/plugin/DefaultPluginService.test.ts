@@ -140,7 +140,7 @@ describe("DefaultPluginService", () => {
       service.setFetch(
         makeDocFetch((url) => {
           requestedUrls.push(url);
-          return { ok: url.startsWith("https://second.example.com"), doc: pluginDoc("1.0.0") };
+          return { ok: new URL(url).origin === "https://second.example.com", doc: pluginDoc("1.0.0") };
         }),
       );
 
