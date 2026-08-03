@@ -6,12 +6,18 @@ import type {
   VersionedPluginDescriptor,
   NpmjsPluginRepositoryConfig,
   NpmPluginRepositoryConfig,
+  FetchCapable,
+  FetchInterface,
 } from "@flowscripter/dynamic-plugin-framework";
 import {
   NpmPluginManager,
   NpmjsPluginRepository,
   NpmPluginRepository,
 } from "@flowscripter/dynamic-plugin-framework";
+
+function isFetchCapable(value: unknown): value is FetchCapable {
+  return typeof value === "object" && value !== null && "setFetch" in value;
+}
 
 export default class DefaultPluginService implements PluginService {
   readonly #defaultRemoteConfig: NpmjsPluginRepositoryConfig;
@@ -48,6 +54,20 @@ export default class DefaultPluginService implements PluginService {
       remotesConfig.map((config) => new NpmjsPluginRepository(config)),
       new NpmPluginRepository(localConfig),
     );
+  }
+
+  /**
+   * Supply the {@link FetchInterface} for the underlying `pluginManager` to delegate fetch calls
+   * to, so it respects the host CLI's shutdown handling and default timeout.
+   */
+  setFetch(fetchInterface: FetchInterface): void {
+    if (isFetchCapable(this.#pluginManager)) {
+      this.#pluginManager.setFetch(fetchInterface);
+    }
+  }
+
+  async checkAvailable(pluginId: string, version?: string): Promise<boolean> {
+    return this.#pluginManager.checkAvailable(pluginId, version);
   }
 
   search(query: Readonly<SearchQuery>): AsyncIterable<Readonly<VersionedPluginDescriptor>> {

@@ -1,10 +1,29 @@
 import { describe, expect, test } from "bun:test";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import type {
+  FetchInterface,
   NpmjsPluginRepositoryConfig,
   NpmPluginRepositoryConfig,
 } from "@flowscripter/dynamic-plugin-framework";
 import DefaultPluginService from "../../../src/service/plugin/DefaultPluginService.ts";
+
+function pluginDoc(version: string): Record<string, unknown> {
+  return { version, keywords: ["ns"], ns: { extensionPoints: ["some-extension-point"] } };
+}
+
+function makeDocFetch(
+  handler: (url: string) => { ok: boolean; doc?: Record<string, unknown> },
+): FetchInterface {
+  return {
+    fetch: (input: string) => {
+      const result = handler(input);
+      return Promise.resolve({
+        ok: result.ok,
+        json: () => Promise.resolve(result.doc ?? {}),
+      } as unknown as Response);
+    },
+  };
+}
 
 function getRemoteConfig(): NpmjsPluginRepositoryConfig {
   return {
@@ -75,5 +94,64 @@ describe("DefaultPluginService", () => {
       }),
     );
     expect(service.pluginManager).toBeDefined();
+  });
+
+  describe("checkAvailable", () => {
+    test("resolves true when the package exists and no version is requested", async () => {
+      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("1.0.0") })));
+
+      expect(await service.checkAvailable("@scope/plugin")).toBe(true);
+    });
+
+    test("resolves true when the package and requested version both exist", async () => {
+      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("3.0.0") })));
+
+      expect(await service.checkAvailable("@scope/plugin", "3.0.0")).toBe(true);
+    });
+
+    test("resolves false when the package exists but the requested version does not", async () => {
+      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
+      service.setFetch(makeDocFetch(() => ({ ok: true, doc: pluginDoc("1.0.0") })));
+
+      expect(await service.checkAvailable("@scope/plugin", "9.9.9")).toBe(false);
+    });
+
+    test("resolves false when the package does not exist", async () => {
+      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
+      service.setFetch(makeDocFetch(() => ({ ok: false })));
+
+      expect(await service.checkAvailable("@scope/missing")).toBe(false);
+    });
+
+    test("checks across all configured remotes and succeeds if any one has it", async () => {
+      const service = new DefaultPluginService(getRemoteConfig(), getLocalConfig());
+      const remotesConfig: NpmjsPluginRepositoryConfig[] = [
+        { name: "first", registryUrl: "https://first.example.com", packageJsonNamespace: "ns" },
+        { name: "second", registryUrl: "https://second.example.com", packageJsonNamespace: "ns" },
+      ];
+      await service.applyKeyValueOverrides({
+        has: (key: string) => Promise.resolve(key === "remotes-config"),
+        get: () => Promise.resolve(remotesConfig),
+        set: () => Promise.resolve(),
+      } as unknown as KeyValueService);
+      const requestedUrls: string[] = [];
+      service.setFetch(
+        makeDocFetch((url) => {
+          requestedUrls.push(url);
+          return {
+            ok: new URL(url).origin === "https://second.example.com",
+            doc: pluginDoc("1.0.0"),
+          };
+        }),
+      );
+
+      expect(await service.checkAvailable("@scope/plugin")).toBe(true);
+      expect(requestedUrls).toEqual([
+        "https://first.example.com/@scope/plugin/latest",
+        "https://second.example.com/@scope/plugin/latest",
+      ]);
+    });
   });
 });

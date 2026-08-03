@@ -69,6 +69,20 @@ export class PluginAddSubCommand implements SubCommand {
       descriptor.version && descriptor.version !== "latest"
         ? `${descriptor.pluginId}@${descriptor.version}`
         : descriptor.pluginId;
+
+    // Confirm the package (and specific version/tag, if requested) actually exists on the
+    // remote marketplace before invoking the package manager - so a non-existent plugin or
+    // version is reported clearly instead of failing later (and less clearly) inside
+    // `bun add`/`npm install`.
+    const versionToCheck = descriptor.version === "latest" ? undefined : descriptor.version;
+    if (!(await pluginService.checkAvailable(descriptor.pluginId, versionToCheck))) {
+      throw new Error(
+        versionToCheck
+          ? `Version ${versionToCheck} of plugin ${descriptor.pluginId} was not found in the configured plugin registry`
+          : `Plugin ${descriptor.pluginId} was not found in the configured plugin registry`,
+      );
+    }
+
     await printerService.info(`Installing ${installLabel}...\n`, Icon.INFORMATION);
     await pluginService.install(descriptor);
     await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);

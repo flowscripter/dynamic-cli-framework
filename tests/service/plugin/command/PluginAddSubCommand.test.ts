@@ -51,6 +51,7 @@ describe("PluginAddSubCommand", () => {
       search: async function* (_query: Readonly<SearchQuery>) {
         yield descriptor;
       },
+      checkAvailable: async () => true,
       install: async () => {},
       uninstall: async () => {},
       listInstalled: async function* () {},
@@ -77,6 +78,7 @@ describe("PluginAddSubCommand", () => {
         searchQueries.push(query);
         yield descriptor;
       },
+      checkAvailable: async () => true,
       install: async (d: Readonly<VersionedPluginDescriptor>) => {
         installedDescriptor = d as VersionedPluginDescriptor;
       },
@@ -105,6 +107,7 @@ describe("PluginAddSubCommand", () => {
       search: async function* (_query: Readonly<SearchQuery>) {
         yield descriptor;
       },
+      checkAvailable: async () => true,
       install: async (d: Readonly<VersionedPluginDescriptor>) => {
         installedDescriptor = d as VersionedPluginDescriptor;
       },
@@ -130,6 +133,7 @@ describe("PluginAddSubCommand", () => {
         searchQueries.push(query);
         yield* [];
       },
+      checkAvailable: async () => true,
       install: async (d: Readonly<VersionedPluginDescriptor>) => {
         installedDescriptor = d as VersionedPluginDescriptor;
       },
@@ -151,5 +155,90 @@ describe("PluginAddSubCommand", () => {
         "ℹ Plugin not found via search, attempting direct install of @other/plugin:2.5.0...\n" +
         "ℹ Installing @other/plugin@2.5.0...\n",
     );
+  });
+
+  test("checks availability before install and installs when it resolves", async () => {
+    const { context } = buildContext();
+
+    let installCalled = false;
+    let checkedPluginId: string | undefined;
+    let checkedVersion: string | undefined;
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      checkAvailable: async (pluginId: string, version?: string) => {
+        checkedPluginId = pluginId;
+        checkedVersion = version;
+        return true;
+      },
+      install: async () => {
+        installCalled = true;
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+
+    expect(checkedPluginId).toEqual(descriptor.pluginId);
+    expect(checkedVersion).toEqual("3.0.0");
+    expect(installCalled).toBeTrue();
+  });
+
+  test("does not install when the availability check resolves false", async () => {
+    const { context } = buildContext();
+
+    let installCalled = false;
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      checkAvailable: async () => false,
+      install: async () => {
+        installCalled = true;
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await expect(
+      command.execute(context, { pluginId: `${descriptor.pluginId}:9.9.9` }),
+    ).rejects.toThrow(
+      "Version 9.9.9 of plugin @scope/plugin was not found in the configured plugin registry",
+    );
+
+    expect(installCalled).toBeFalse();
+  });
+
+  test("skips the version check when the resolved version is 'latest'", async () => {
+    const { context } = buildContext();
+
+    let checkedVersion: string | undefined;
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield* [];
+      },
+      checkAvailable: async (_pluginId: string, version?: string) => {
+        checkedVersion = version;
+        return true;
+      },
+      install: async () => {},
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: "@other/plugin" });
+
+    expect(checkedVersion).toBeUndefined();
   });
 });
