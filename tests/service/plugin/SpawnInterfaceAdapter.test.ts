@@ -191,7 +191,11 @@ describe("SpawnInterfaceAdapter tests", () => {
 
     const lineCount = 11;
     const result = await adapter.spawn(
-      ["sh", "-c", `for i in $(seq 1 ${lineCount}); do echo line$i; done`],
+      [
+        process.execPath,
+        "-e",
+        `for (let i = 1; i <= ${lineCount}; i++) { console.log("line" + i); }`,
+      ],
       { cwd: "/tmp" },
     );
 
@@ -231,9 +235,10 @@ describe("SpawnInterfaceAdapter tests", () => {
     spawnService.setDependencies(printerService, shutdownService);
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
-    const result = await adapter.spawn(["sh", "-c", "echo diagnostic output; exit 1"], {
-      cwd: "/tmp",
-    });
+    const result = await adapter.spawn(
+      [process.execPath, "-e", `console.log("diagnostic output"); process.exit(1);`],
+      { cwd: "/tmp" },
+    );
 
     expect(result).toEqual({ ok: false, exitCode: 1 });
     const output = dummyStderr.getString();
@@ -241,7 +246,9 @@ describe("SpawnInterfaceAdapter tests", () => {
     expect(output).toContain("diagnostic output");
 
     // A subsequent spawn() must not throw "already marking" - bookkeeping was reset.
-    const secondResult = await adapter.spawn(["echo", "hello"], { cwd: "/tmp" });
+    const secondResult = await adapter.spawn([process.execPath, "-e", `console.log("hello");`], {
+      cwd: "/tmp",
+    });
     expect(secondResult.ok).toBeTrue();
   });
 });
