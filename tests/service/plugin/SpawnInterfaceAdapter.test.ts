@@ -2,9 +2,15 @@ import { describe, expect, test } from "bun:test";
 import SpawnInterfaceAdapter from "../../../src/service/plugin/SpawnInterfaceAdapter.ts";
 import type {
   PrinterService,
+  ShutdownService,
   SpawnOptions,
   SpawnService,
 } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
+import DefaultSpawnService from "../../../src/service/spawn/DefaultSpawnService.ts";
+import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
+import TtyStyler from "../../../src/terminal/TtyStyler.ts";
+import StreamString from "../../fixtures/StreamString.ts";
 
 interface FakePrinterServiceState {
   calls: string[];
@@ -153,5 +159,89 @@ describe("SpawnInterfaceAdapter tests", () => {
       "clearMarked(1000)",
     ]);
     expect(state.calls).not.toContain("discardMark");
+  });
+
+  test("integration: clears only the spawned block's rows on success, leaving earlier stderr output (e.g. a banner) untouched", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+    const shutdownService: ShutdownService = {
+      addShutdownListener: () => {},
+      enterLongRunningMode: () => {},
+      leaveLongRunningMode: () => {},
+      isShutdownRequested: false,
+    };
+    const spawnService = new DefaultSpawnService();
+    spawnService.setDependencies(printerService, shutdownService);
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    // Simulate a banner printed before the spawn runs - this must survive the clear.
+    await printerService.info("banner line 1\n");
+    await printerService.info("banner line 2\n");
+    const preSpawnOutput = dummyStderr.getString();
+
+    const lineCount = 11;
+    const result = await adapter.spawn(
+      ["sh", "-c", `for i in $(seq 1 ${lineCount}); do echo line$i; done`],
+      { cwd: "/tmp" },
+    );
+
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+
+    const finalOutput = dummyStderr.getString();
+    expect(finalOutput.startsWith(preSpawnOutput)).toBeTrue();
+
+    const postSpawnOutput = finalOutput.slice(preSpawnOutput.length);
+    // Exactly `lineCount` erase operations, matching the number of physical lines actually
+    // written by the spawned command - not double, and not extending into the banner.
+    const clearCount = postSpawnOutput.split("\x1b[1A\x1b[2K").length - 1;
+    expect(clearCount).toEqual(lineCount);
+    expect(preSpawnOutput).toEqual("banner line 1\nbanner line 2\n");
+  });
+
+  test("integration: leaves output on screen (does not clear) on failure, via real spawn/printer services", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+    const shutdownService: ShutdownService = {
+      addShutdownListener: () => {},
+      enterLongRunningMode: () => {},
+      leaveLongRunningMode: () => {},
+      isShutdownRequested: false,
+    };
+    const spawnService = new DefaultSpawnService();
+    spawnService.setDependencies(printerService, shutdownService);
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    const result = await adapter.spawn(["sh", "-c", "echo diagnostic output; exit 1"], {
+      cwd: "/tmp",
+    });
+
+    expect(result).toEqual({ ok: false, exitCode: 1 });
+    const output = dummyStderr.getString();
+    expect(output).not.toContain("\x1b[1A\x1b[2K");
+    expect(output).toContain("diagnostic output");
+
+    // A subsequent spawn() must not throw "already marking" - bookkeeping was reset.
+    const secondResult = await adapter.spawn(["echo", "hello"], { cwd: "/tmp" });
+    expect(secondResult.ok).toBeTrue();
   });
 });
