@@ -54,10 +54,12 @@ function getFakePrinterService(): {
 
 function getFakeSpawnService(
   onOutputLines: Array<{ line: string; stream: "stdout" | "stderr" }>,
-  result: { ok: boolean; exitCode?: number; error?: Error },
-): SpawnService {
-  return {
+  result: { ok: boolean; exitCode?: number; error?: Error; timedOut?: boolean },
+): { spawnService: SpawnService; receivedOptions: Array<SpawnOptions | undefined> } {
+  const receivedOptions: Array<SpawnOptions | undefined> = [];
+  const spawnService = {
     spawn: (_command: ReadonlyArray<string>, options?: SpawnOptions) => {
+      receivedOptions.push(options);
       if (options?.onOutput) {
         for (const { line, stream } of onOutputLines) {
           options.onOutput(line, stream);
@@ -66,12 +68,13 @@ function getFakeSpawnService(
       return Promise.resolve(result);
     },
   } as unknown as SpawnService;
+  return { spawnService, receivedOptions };
 }
 
 describe("SpawnInterfaceAdapter tests", () => {
   test("wraps spawn output in a quoted, marked block written via info()", async () => {
     const { printerService, state } = getFakePrinterService();
-    const spawnService = getFakeSpawnService(
+    const { spawnService } = getFakeSpawnService(
       [
         { line: "line1", stream: "stdout" },
         { line: "line2", stream: "stderr" },
@@ -97,7 +100,7 @@ describe("SpawnInterfaceAdapter tests", () => {
 
   test("passes quoteColor and markMinimumDisplayTimeMs options through", async () => {
     const { printerService, state } = getFakePrinterService();
-    const spawnService = getFakeSpawnService([], { ok: true, exitCode: 0 });
+    const { spawnService } = getFakeSpawnService([], { ok: true, exitCode: 0 });
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService, {
       quoteColor: "#ff0000",
       markMinimumDisplayTimeMs: 2000,
@@ -112,7 +115,7 @@ describe("SpawnInterfaceAdapter tests", () => {
   test("maps a failed SpawnResult through", async () => {
     const { printerService } = getFakePrinterService();
     const error = new Error("ENOENT");
-    const spawnService = getFakeSpawnService([], { ok: false, error });
+    const { spawnService } = getFakeSpawnService([], { ok: false, error });
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
     const result = await adapter.spawn(["nonexistent"], { cwd: "/tmp" });
@@ -122,7 +125,7 @@ describe("SpawnInterfaceAdapter tests", () => {
 
   test("does not clear the marked/quoted block on failure, but resets mark bookkeeping", async () => {
     const { printerService, state } = getFakePrinterService();
-    const spawnService = getFakeSpawnService(
+    const { spawnService } = getFakeSpawnService(
       [{ line: "some diagnostic output", stream: "stderr" }],
       { ok: false, exitCode: 1, error: undefined },
     );
@@ -143,7 +146,7 @@ describe("SpawnInterfaceAdapter tests", () => {
 
   test("clears the marked/quoted block on success", async () => {
     const { printerService, state } = getFakePrinterService();
-    const spawnService = getFakeSpawnService([{ line: "installed ok", stream: "stdout" }], {
+    const { spawnService } = getFakeSpawnService([{ line: "installed ok", stream: "stdout" }], {
       ok: true,
       exitCode: 0,
     });
@@ -251,5 +254,35 @@ describe("SpawnInterfaceAdapter tests", () => {
       cwd: tmpdir(),
     });
     expect(secondResult.ok).toBeTrue();
+  });
+
+  test("forwards timeoutMs from spawn() options through to the underlying SpawnService", async () => {
+    const { printerService } = getFakePrinterService();
+    const { spawnService, receivedOptions } = getFakeSpawnService([], { ok: true, exitCode: 0 });
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    await adapter.spawn(["bun", "add", "foo"], { cwd: "/tmp", timeoutMs: 5000 });
+
+    expect(receivedOptions[0]?.timeoutMs).toBe(5000);
+  });
+
+  test("omits timeoutMs when not provided to spawn()", async () => {
+    const { printerService } = getFakePrinterService();
+    const { spawnService, receivedOptions } = getFakeSpawnService([], { ok: true, exitCode: 0 });
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    await adapter.spawn(["bun", "add", "foo"], { cwd: "/tmp" });
+
+    expect(receivedOptions[0]?.timeoutMs).toBeUndefined();
+  });
+
+  test("maps a timed-out SpawnService result to a timedOut SpawnResult", async () => {
+    const { printerService } = getFakePrinterService();
+    const { spawnService } = getFakeSpawnService([], { ok: false, timedOut: true });
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    const result = await adapter.spawn(["bun", "add", "foo"], { cwd: "/tmp", timeoutMs: 5000 });
+
+    expect(result).toEqual({ ok: false, timedOut: true });
   });
 });
