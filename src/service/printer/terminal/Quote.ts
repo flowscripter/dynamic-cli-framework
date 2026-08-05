@@ -58,12 +58,24 @@ export default class Quote {
     if (!this.isActive) {
       return message;
     }
-    const endsWithNewline = message.endsWith("\n");
-    const raw = endsWithNewline ? message.slice(0, -1) : message;
+    // colorText()/italicText() etc. wrap an entire passed-in string - including a trailing
+    // "\n", when the caller's message already ends with one - with a reset sequence appended
+    // *after* that newline (e.g. "foo\n" -> "<color>foo\n<reset>"). Naively checking
+    // endsWith("\n") on such styled text is always false, and splitting on "\n" then treats the
+    // trailing reset sequence as a spurious extra line, which gets its own quote prefix -
+    // rendering as if two quote levels were active for a single actual line (see #150). Strip
+    // any trailing run of ANSI CSI sequences first, apply quote prefixing to the real content,
+    // then restore them at the very end.
+    const trailingAnsiMatch = /(?:\x1b\[[0-9;]*[a-zA-Z])+$/.exec(message);
+    const trailingAnsi = trailingAnsiMatch ? trailingAnsiMatch[0] : "";
+    const body = trailingAnsi ? message.slice(0, -trailingAnsi.length) : message;
+
+    const endsWithNewline = body.endsWith("\n");
+    const raw = endsWithNewline ? body.slice(0, -1) : body;
     const color = this.#levels[this.#levels.length - 1]!.color;
     const lines = raw
       .split("\n")
       .map((line) => this.#prefixLine() + this.#styler.colorText(line, color));
-    return lines.join("\n") + (endsWithNewline ? "\n" : "");
+    return lines.join("\n") + (endsWithNewline ? "\n" : "") + trailingAnsi;
   }
 }
