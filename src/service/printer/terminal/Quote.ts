@@ -66,9 +66,16 @@ export default class Quote {
     // rendering as if two quote levels were active for a single actual line (see #150). Strip
     // any trailing run of ANSI CSI sequences first, apply quote prefixing to the real content,
     // then restore them at the very end.
-    const trailingAnsiMatch = /(?:\x1b\[[0-9;]*[a-zA-Z])+$/.exec(message);
-    const trailingAnsi = trailingAnsiMatch ? trailingAnsiMatch[0] : "";
-    const body = trailingAnsi ? message.slice(0, -trailingAnsi.length) : message;
+    let body = message;
+    let trailingAnsi = "";
+    // Strip one trailing CSI sequence at a time (rather than a single regex with a repeated
+    // group) to avoid catastrophic-backtracking risk on adversarial input.
+    let trailingAnsiMatch = /\x1b\[[0-9;]*[a-zA-Z]$/.exec(body);
+    while (trailingAnsiMatch) {
+      trailingAnsi = trailingAnsiMatch[0] + trailingAnsi;
+      body = body.slice(0, -trailingAnsiMatch[0].length);
+      trailingAnsiMatch = /\x1b\[[0-9;]*[a-zA-Z]$/.exec(body);
+    }
 
     const endsWithNewline = body.endsWith("\n");
     const raw = endsWithNewline ? body.slice(0, -1) : body;
