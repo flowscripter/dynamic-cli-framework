@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@flowscripter/dynamic-cli-framework-api": "^2.3.0",
-    "@flowscripter/dynamic-plugin-framework": "^2.2.1",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.2",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.11.0",

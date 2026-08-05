@@ -32,7 +32,7 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
 
   public async spawn(
     command: ReadonlyArray<string>,
-    options: { cwd: string },
+    options: { cwd: string; timeoutMs?: number },
   ): Promise<SpawnResult> {
     this.#printerService.startQuote(this.#quoteColor);
     this.#printerService.startMark();
@@ -49,6 +49,7 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
       cwd: options.cwd,
       mode: "wrapped",
       onOutput,
+      timeoutMs: options.timeoutMs,
     });
 
     await writeQueue;
@@ -68,7 +69,7 @@ export default class SpawnInterfaceAdapter implements SpawnInterface {
       return { ok: true, exitCode: result.exitCode };
     }
     return "timedOut" in result
-      ? { ok: false, error: new Error("Command timed out") }
+      ? { ok: false, timedOut: true }
       : { ok: false, exitCode: result.exitCode, error: result.error };
   }
 }
