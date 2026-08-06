@@ -89,13 +89,13 @@ describe("PluginAddSubCommand", () => {
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
 
     const command = new PluginAddSubCommand();
-    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+    await command.execute(context, { pluginId: `${descriptor.pluginId}@3.0.0` });
 
     expect(searchQueries).toEqual([{ text: descriptor.pluginId }]);
     expect(installedDescriptor?.version).toEqual("3.0.0");
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin:3.0.0\nℹ Installing @scope/plugin@3.0.0...\n",
+      "ℹ Searching for plugin: @scope/plugin@3.0.0\nℹ Installing @scope/plugin@3.0.0...\n",
     );
   });
 
@@ -118,7 +118,7 @@ describe("PluginAddSubCommand", () => {
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
 
     const command = new PluginAddSubCommand();
-    await command.execute(context, { pluginId: `${descriptor.pluginId}:latest` });
+    await command.execute(context, { pluginId: `${descriptor.pluginId}@latest` });
 
     expect(installedDescriptor?.version).toEqual("latest");
   });
@@ -144,15 +144,15 @@ describe("PluginAddSubCommand", () => {
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
 
     const command = new PluginAddSubCommand();
-    await command.execute(context, { pluginId: "@other/plugin:2.5.0" });
+    await command.execute(context, { pluginId: "@other/plugin@2.5.0" });
 
     expect(searchQueries).toEqual([{ text: "@other/plugin" }]);
     expect(installedDescriptor?.pluginId).toEqual("@other/plugin");
     expect(installedDescriptor?.version).toEqual("2.5.0");
     expectStringEquals(
       dummyStderr.getString(),
-      "ℹ Searching for plugin: @other/plugin:2.5.0\n" +
-        "ℹ Plugin not found via search, attempting direct install of @other/plugin:2.5.0...\n" +
+      "ℹ Searching for plugin: @other/plugin@2.5.0\n" +
+        "ℹ Plugin not found via search, attempting direct install of @other/plugin@2.5.0...\n" +
         "ℹ Installing @other/plugin@2.5.0...\n",
     );
   });
@@ -182,7 +182,7 @@ describe("PluginAddSubCommand", () => {
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
 
     const command = new PluginAddSubCommand();
-    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+    await command.execute(context, { pluginId: `${descriptor.pluginId}@3.0.0` });
 
     expect(checkedPluginId).toEqual(descriptor.pluginId);
     expect(checkedVersion).toEqual("3.0.0");
@@ -209,7 +209,7 @@ describe("PluginAddSubCommand", () => {
 
     const command = new PluginAddSubCommand();
     await expect(
-      command.execute(context, { pluginId: `${descriptor.pluginId}:9.9.9` }),
+      command.execute(context, { pluginId: `${descriptor.pluginId}@9.9.9` }),
     ).rejects.toThrow(
       "Version 9.9.9 of plugin @scope/plugin was not found in the configured plugin registry",
     );

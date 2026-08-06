@@ -18,8 +18,7 @@ export class PluginAddSubCommand implements SubCommand {
   readonly positionals = [
     {
       name: "pluginId",
-      description:
-        "Plugin ID to install (e.g. @scope/name, @scope/name:version or @scope/name@version)",
+      description: "Plugin ID to install (e.g. @scope/name or @scope/name@version)",
       type: ValueTypeName.STRING,
     },
   ];
@@ -29,7 +28,7 @@ export class PluginAddSubCommand implements SubCommand {
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
     const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
-    const searchLabel = version ? `${pluginId}:${version}` : pluginId;
+    const searchLabel = version ? `${pluginId}@${version}` : pluginId;
     await printerService.info(`Searching for plugin: ${searchLabel}\n`, Icon.INFORMATION);
 
     let descriptor: VersionedPluginDescriptor | undefined;
