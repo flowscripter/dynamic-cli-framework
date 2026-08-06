@@ -63,26 +63,16 @@ export default class Quote {
     // *after* that newline (e.g. "foo\n" -> "<color>foo\n<reset>"). Naively checking
     // endsWith("\n") on such styled text is always false, and splitting on "\n" then treats the
     // trailing reset sequence as a spurious extra line, which gets its own quote prefix -
-    // rendering as if two quote levels were active for a single actual line (see #150). Strip
-    // any trailing run of ANSI CSI sequences first, apply quote prefixing to the real content,
-    // then restore them at the very end.
-    let body = message;
-    let trailingAnsi = "";
-    // Strip one trailing CSI sequence at a time (rather than a single regex with a repeated
-    // group) to avoid catastrophic-backtracking risk on adversarial input.
-    let trailingAnsiMatch = /\x1b\[[0-9;]*[a-zA-Z]$/.exec(body);
-    while (trailingAnsiMatch) {
-      trailingAnsi = trailingAnsiMatch[0] + trailingAnsi;
-      body = body.slice(0, -trailingAnsiMatch[0].length);
-      trailingAnsiMatch = /\x1b\[[0-9;]*[a-zA-Z]$/.exec(body);
-    }
-
+    // rendering as if two quote levels were active for a single actual line (see #150). Every
+    // line gets re-colored below regardless, so strip all existing ANSI upfront rather than
+    // trying to preserve and restore it.
+    const body = Bun.stripANSI(message);
     const endsWithNewline = body.endsWith("\n");
     const raw = endsWithNewline ? body.slice(0, -1) : body;
     const color = this.#levels[this.#levels.length - 1]!.color;
     const lines = raw
       .split("\n")
       .map((line) => this.#prefixLine() + this.#styler.colorText(line, color));
-    return lines.join("\n") + (endsWithNewline ? "\n" : "") + trailingAnsi;
+    return lines.join("\n") + (endsWithNewline ? "\n" : "");
   }
 }
