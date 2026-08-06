@@ -261,7 +261,7 @@ describe("PluginAddSubCommand", () => {
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
 
     const command = new PluginAddSubCommand();
-    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+    await command.execute(context, { pluginId: `${descriptor.pluginId}@3.0.0` });
 
     expectStringEquals(dummyStdout.getString(), "✔ Plugin @scope/plugin@3.0.0 installed.\n");
   });
