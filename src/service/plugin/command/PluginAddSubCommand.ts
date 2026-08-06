@@ -85,6 +85,21 @@ export class PluginAddSubCommand implements SubCommand {
 
     await printerService.info(`Installing ${installLabel}...\n`, Icon.INFORMATION);
     await pluginService.install(descriptor);
-    await printerService.print(`Plugin ${descriptor.pluginId} installed.\n`, Icon.SUCCESS);
+
+    // Look up the actually-installed version rather than trusting `descriptor.version`: when no
+    // version was requested and the plugin wasn't found via search (direct-install fallback),
+    // `descriptor.version` is still the literal placeholder "latest", not a real version number.
+    let installedVersion = descriptor.version;
+    for await (const installed of pluginService.listInstalled()) {
+      if (installed.pluginId === descriptor.pluginId) {
+        installedVersion = installed.version;
+        break;
+      }
+    }
+
+    await printerService.print(
+      `Plugin ${descriptor.pluginId}@${installedVersion} installed.\n`,
+      Icon.SUCCESS,
+    );
   }
 }

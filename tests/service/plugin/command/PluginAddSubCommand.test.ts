@@ -32,7 +32,7 @@ function buildContext() {
   const context = new DefaultContext(getCLIConfig());
   context.addServiceInstance(PRINTER_SERVICE_ID, printer);
 
-  return { context, dummyStderr };
+  return { context, dummyStdout, dummyStderr };
 }
 
 const descriptor: VersionedPluginDescriptor = {
@@ -240,5 +240,55 @@ describe("PluginAddSubCommand", () => {
     await command.execute(context, { pluginId: "@other/plugin" });
 
     expect(checkedVersion).toBeUndefined();
+  });
+
+  test("confirms the explicitly requested version in the installed message", async () => {
+    const { context, dummyStdout } = buildContext();
+
+    const installedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "3.0.0" };
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      checkAvailable: async () => true,
+      install: async () => {},
+      uninstall: async () => {},
+      listInstalled: async function* () {
+        yield installedDescriptor;
+      },
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: `${descriptor.pluginId}:3.0.0` });
+
+    expectStringEquals(dummyStdout.getString(), "✔ Plugin @scope/plugin@3.0.0 installed.\n");
+  });
+
+  test("shows the actually-resolved latest version in the installed message, not the literal 'latest'", async () => {
+    const { context, dummyStdout } = buildContext();
+
+    const resolvedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "4.2.1" };
+    const fakePluginService: PluginService = {
+      // Not found via search, so PluginAddSubCommand falls back to a direct install with
+      // descriptor.version left as the literal placeholder "latest".
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield* [];
+      },
+      checkAvailable: async () => true,
+      install: async () => {},
+      uninstall: async () => {},
+      listInstalled: async function* () {
+        yield resolvedDescriptor;
+      },
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: descriptor.pluginId });
+
+    expectStringEquals(dummyStdout.getString(), "✔ Plugin @scope/plugin@4.2.1 installed.\n");
   });
 });
