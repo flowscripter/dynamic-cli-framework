@@ -33,7 +33,15 @@ export default class DefaultPrinterService implements PrinterService {
   #markEndedAt: number | undefined;
 
   #countLines(message: string): number {
-    return message.split("\n").length - (message.endsWith("\n") ? 1 : 0);
+    // Strip ANSI escape sequences first: colorText()/italicText() etc. wrap the *entire*
+    // passed-in text (including a trailing "\n", when the caller's message already ends with
+    // one) with a reset sequence appended *after* that newline, e.g. "foo\n" -> "<color>foo\n
+    // <reset>". Checking endsWith("\n") on the styled text is then always false, so the
+    // subtraction below never fires and every such line is over-counted by one - which, summed
+    // across every write in a marked region, causes clearMarked() to erase far more physical
+    // rows than were actually written (see #150).
+    const stripped = Bun.stripANSI(message);
+    return stripped.split("\n").length - (stripped.endsWith("\n") ? 1 : 0);
   }
 
   #recordMarkedWrite(message: string): void {
