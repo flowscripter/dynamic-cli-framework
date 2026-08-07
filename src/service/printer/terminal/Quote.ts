@@ -58,8 +58,17 @@ export default class Quote {
     if (!this.isActive) {
       return message;
     }
-    const endsWithNewline = message.endsWith("\n");
-    const raw = endsWithNewline ? message.slice(0, -1) : message;
+    // colorText()/italicText() etc. wrap an entire passed-in string - including a trailing
+    // "\n", when the caller's message already ends with one - with a reset sequence appended
+    // *after* that newline (e.g. "foo\n" -> "<color>foo\n<reset>"). Naively checking
+    // endsWith("\n") on such styled text is always false, and splitting on "\n" then treats the
+    // trailing reset sequence as a spurious extra line, which gets its own quote prefix -
+    // rendering as if two quote levels were active for a single actual line (see #150). Every
+    // line gets re-colored below regardless, so strip all existing ANSI upfront rather than
+    // trying to preserve and restore it.
+    const body = Bun.stripANSI(message);
+    const endsWithNewline = body.endsWith("\n");
+    const raw = endsWithNewline ? body.slice(0, -1) : body;
     const color = this.#levels[this.#levels.length - 1]!.color;
     const lines = raw
       .split("\n")

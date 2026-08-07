@@ -216,6 +216,74 @@ describe("SpawnInterfaceAdapter tests", () => {
     expect(preSpawnOutput).toEqual("banner line 1\nbanner line 2\n");
   });
 
+  test("integration: with color enabled, clears exactly the spawned block's rows on success, leaving an earlier colored banner byte-for-byte intact (#150)", async () => {
+    // Regression test for #150: colorText()/prefixLines() wrap an entire message - including a
+    // trailing "\n" - with ANSI codes appended *after* that newline (e.g. "foo\n" becomes
+    // "<color>foo\n<reset>"). Line-counting logic that naively checks endsWith("\n") on already
+    // -colored text mis-detects such lines as 2 physical rows instead of 1, so a marked block's
+    // tracked row count silently drifts above its real height - and clearMarked() then erases
+    // past the top of the block into whatever was printed earlier (e.g. the startup banner).
+    // This only reproduces with color enabled - colorText() is a no-op when colors are off,
+    // which is why the color-disabled integration test above did not catch it.
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    const shutdownService: ShutdownService = {
+      addShutdownListener: () => {},
+      enterLongRunningMode: () => {},
+      leaveLongRunningMode: () => {},
+      isShutdownRequested: false,
+    };
+    const spawnService = new DefaultSpawnService();
+    spawnService.setDependencies(printerService, shutdownService);
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    // Simulate a real (colored) startup banner printed before the spawn runs, including a
+    // blank trailing line, matching BannerServiceProvider's actual usage.
+    await printerService.info(printerService.blue("banner line 1\n"));
+    await printerService.info(`  ${printerService.primary("banner line 2")}\n`);
+    await printerService.info(`  ${printerService.secondary("version: 1.0.0")}\n`);
+    await printerService.info("\n");
+    const preSpawnOutput = dummyStderr.getString();
+
+    // Mix stdout/stderr lines, including a blank line, to mirror a real `bun add` invocation.
+    const lineCount = 11;
+    const result = await adapter.spawn(
+      [
+        process.execPath,
+        "-e",
+        `for (let i = 1; i <= ${lineCount}; i++) { ` +
+          `if (i % 2 === 0) { console.error(i === 6 ? "" : "line" + i); } ` +
+          `else { console.log("line" + i); } }`,
+      ],
+      { cwd: tmpdir() },
+    );
+
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+
+    const finalOutput = dummyStderr.getString();
+    // The banner must survive byte-for-byte - the clear must not eat into it.
+    expect(finalOutput.startsWith(preSpawnOutput)).toBeTrue();
+
+    const postSpawnOutput = finalOutput.slice(preSpawnOutput.length);
+    const clearCount = postSpawnOutput.split("\x1b[1A\x1b[2K").length - 1;
+    // Exactly `lineCount` erase operations - not double (the historical symptom), and not
+    // extending into the banner printed beforehand.
+    expect(clearCount).toEqual(lineCount);
+
+    // The doubled quote-prefix symptom from #150's original report ("Quote's │ prefix rendered
+    // as if two quote levels were active") must not reappear either.
+    expect(postSpawnOutput).not.toContain("│ │");
+  });
+
   test("integration: leaves output on screen (does not clear) on failure, via real spawn/printer services", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
