@@ -18,6 +18,9 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import semver from "semver";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
+import getLogger from "../../util/logger.ts";
+
+const logger = getLogger("DefaultUpgradeService");
 
 // checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
 // so that opportunistic call is raced against this timeout so it never stalls CLI startup.
@@ -63,6 +66,7 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
+      logger.debug(() => "Starting upgrade check");
       // Only cache a non-"failed" result. A "failed" result can come from a transient issue
       // (e.g. a network blip, or the opportunistic startup check racing past
       // VERSION_CHECK_TIMEOUT_MS before checkForUpgrade() itself resolves) - caching that would
@@ -70,6 +74,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
       // process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
+        logger.debug(() => `Upgrade check result: ${JSON.stringify(result)}`);
         if (result.status === "failed") {
           this.#upgradeCheckPromise = undefined;
         }
