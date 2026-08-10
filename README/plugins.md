@@ -25,11 +25,11 @@ installing a plugin doesn't also pull in this framework's concrete
 service implementations and their dependencies (`figlet`, `emphasize`,
 `highlight.js`, `prettier`, etc.). Declare it as a `peerDependency`:
 
-```jsonc
+```json
 {
   "peerDependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "*",
-  },
+    "@flowscripter/dynamic-cli-framework-api": "*"
+  }
 }
 ```
 
@@ -160,7 +160,7 @@ An end user of the CLI can override the CLI author's default `pluginServiceRemot
 for the full configuration file format), under the `key-values` property scoped to the
 `PluginServiceProvider`'s service ID (`PLUGIN_SERVICE`):
 
-```jsonc
+```json
 {
   "key-values": {
     "services": {
@@ -169,16 +169,16 @@ for the full configuration file format), under the `key-values` property scoped 
           {
             "name": "npmjs",
             "registryUrl": "https://registry.npmjs.org",
-            "packageJsonNamespace": "mypluginframework",
-          },
+            "packageJsonNamespace": "mypluginframework"
+          }
         ],
         "local-config": {
           "nodeModulesPath": "/home/user/.my-cli/plugins/node_modules",
-          "packageJsonNamespace": "mypluginframework",
-        },
-      },
-    },
-  },
+          "packageJsonNamespace": "mypluginframework"
+        }
+      }
+    }
+  }
 }
 ```
 
