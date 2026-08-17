@@ -48,26 +48,26 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "^2.3.0",
+    "@flowscripter/dynamic-cli-framework-api": "^2.3.2",
     "@flowscripter/dynamic-plugin-framework": "^2.2.3",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
-    "figlet": "^1.11.0",
-    "highlight.js": "^11.11.1",
-    "prettier": "^3.9.4",
-    "semver": "^7.7.3",
-    "supports-color": "^10.2.2",
+    "figlet": "^1.11.4",
+    "highlight.js": "^11.12.0",
+    "prettier": "^3.9.6",
+    "semver": "^7.8.5",
+    "supports-color": "^11.0.0",
     "supports-terminal-graphics": "^0.1.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
-    "@types/node": "^26.1.0",
-    "@types/semver": "^7.7.1",
-    "oxfmt": "0.57.0",
-    "oxlint": "1.72.0"
+    "@types/node": "^26.2.0",
+    "@types/semver": "^7.8.0",
+    "oxfmt": "0.63.0",
+    "oxlint": "1.78.0"
   },
   "peerDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "typedocOptions": {
     "readme": "none",
