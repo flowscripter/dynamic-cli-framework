@@ -74,7 +74,13 @@ export default class DefaultUpgradeService implements UpgradeService {
       // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
       // process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
-        logger.debug(() => `Upgrade check result: ${JSON.stringify(result)}`);
+        // JSON.stringify() on an Error drops message/stack (non-enumerable own properties),
+        // logging as "error":{} and hiding the actual failure reason - surface it explicitly.
+        logger.debug(() =>
+          result.status === "failed"
+            ? `Upgrade check result: failed - ${result.error.message}`
+            : `Upgrade check result: ${JSON.stringify(result)}`,
+        );
         if (result.status === "failed") {
           this.#upgradeCheckPromise = undefined;
         }
