@@ -14,6 +14,13 @@ function getConfig(): UpgradeLocationsConfig {
   return { supportedPlatforms: [] };
 }
 
+function addPrinterService(context: DefaultContext): void {
+  context.addServiceInstance(PRINTER_SERVICE_ID, {
+    info: () => Promise.resolve(),
+    error: () => Promise.resolve(),
+  });
+}
+
 const PROMPTER_SERVICE_ID = "@flowscripter/dynamic-cli-framework/prompter-service";
 const KEY_VALUE_SERVICE_ID = "@flowscripter/dynamic-cli-framework/key-value-service";
 const SPAWN_SERVICE_ID = "@flowscripter/dynamic-cli-framework/spawn-service";
@@ -42,6 +49,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
     await expect(provider.initService(context)).resolves.toBeUndefined();
   });
 
@@ -49,6 +57,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
     context.addServiceInstance(PROMPTER_SERVICE_ID, {
       promptEnabled: true,
       prompt: () => Promise.resolve({ name: "", value: false }),
@@ -61,6 +70,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     let promptCalled = false;
     context.addServiceInstance(PROMPTER_SERVICE_ID, {
@@ -86,6 +96,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     context.addServiceInstance(PROMPTER_SERVICE_ID, {
       promptEnabled: false,
@@ -106,6 +117,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     let promptCalled = false;
     context.addServiceInstance(PROMPTER_SERVICE_ID, {
@@ -134,6 +146,7 @@ describe("UpgradeServiceProvider", () => {
     });
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     let storedKey = "";
     let storedValue = "";
@@ -165,6 +178,7 @@ describe("UpgradeServiceProvider", () => {
     });
     await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     const storedEntries: Array<{ key: string; value: string }> = [];
     context.addServiceInstance(PROMPTER_SERVICE_ID, {
@@ -191,6 +205,7 @@ describe("UpgradeServiceProvider", () => {
     const provider = new UpgradeServiceProvider(6, getConfig());
     const serviceInfo = await provider.getServiceInfo(getCLIConfig());
     const context = new DefaultContext(getCLIConfig());
+    addPrinterService(context);
 
     context.addServiceInstance(SPAWN_SERVICE_ID, {
       spawn: () => Promise.resolve({ ok: true, exitCode: 0 }),

@@ -5,12 +5,14 @@ import { dirname, join } from "node:path";
 import type {
   CLIConfig,
   FetchService,
+  PrinterService,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
   UpgradeResult,
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
+  Icon,
   InstallMethod,
   SupportedArch,
   SupportedOs,
@@ -47,6 +49,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
   #fetchService: FetchService | undefined;
+  #printerService: PrinterService | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
@@ -59,9 +62,45 @@ export default class DefaultUpgradeService implements UpgradeService {
   public setDependencies(
     spawnService: SpawnService | undefined,
     fetchService: FetchService | undefined,
+    printerService: PrinterService | undefined,
   ): void {
     this.#spawnService = spawnService;
     this.#fetchService = fetchService;
+    this.#printerService = printerService;
+  }
+
+  // Mirrors SpawnInterfaceAdapter's plugin:add/plugin:remove pattern: wrap a spawned command's
+  // output in a quoted, marked block that's cleared on success (so a clean install stays quiet)
+  // but left on screen on failure (so the diagnostic output remains visible).
+  async #spawnQuoted(command: ReadonlyArray<string>): Promise<SpawnResult> {
+    const spawnService = this.#spawnService!;
+    const printerService = this.#printerService;
+    if (!printerService) {
+      return spawnService.spawn(command, { mode: "ignore" });
+    }
+
+    printerService.startQuote();
+    printerService.startMark();
+
+    // onOutput is synchronous and may be called concurrently for stdout/stderr lines, but
+    // printerService.info() is async and must not be invoked concurrently with itself - queue
+    // writes so they're applied one at a time, in call order.
+    let writeQueue: Promise<void> = Promise.resolve();
+    const onOutput = (line: string): void => {
+      writeQueue = writeQueue.then(() => printerService.info(`${line}\n`));
+    };
+
+    const result = await spawnService.spawn(command, { mode: "wrapped", onOutput });
+    await writeQueue;
+
+    printerService.endQuote();
+    printerService.endMark();
+    if (result.ok) {
+      await printerService.clearMarked();
+    } else {
+      printerService.discardMark();
+    }
+    return result;
   }
 
   public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
@@ -206,6 +245,13 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     if (checkResult.installMethod === InstallMethod.GITHUB_RELEASE && !this.#fetchService) {
       return { ok: false, oldVersion, error: new Error("FetchService is not available") };
+    }
+
+    if (this.#printerService) {
+      await this.#printerService.info(
+        `Installing version ${checkResult.latestVersion}...\n`,
+        Icon.INFORMATION,
+      );
     }
 
     try {
@@ -379,9 +425,7 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaLinuxScript(): Promise<void> {
     const { scriptUrl } = this.#config.linuxScript!;
-    const result = await this.#spawnService!.spawn(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`], {
-      mode: "ignore",
-    });
+    const result = await this.#spawnQuoted(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`]);
     if (!result.ok) {
       throw new Error(`Install script failed: ${describeSpawnFailure(result)}`);
     }
@@ -389,9 +433,7 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaHomebrew(): Promise<void> {
     const { tap, formula } = this.#config.homebrew!;
-    const result = await this.#spawnService!.spawn(["brew", "upgrade", `${tap}/${formula}`], {
-      mode: "ignore",
-    });
+    const result = await this.#spawnQuoted(["brew", "upgrade", `${tap}/${formula}`]);
     if (!result.ok) {
       throw new Error(`brew upgrade failed: ${describeSpawnFailure(result)}`);
     }
@@ -399,18 +441,15 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #upgradeViaWinget(): Promise<void> {
     const { packageId } = this.#config.winget!;
-    const result = await this.#spawnService!.spawn(
-      [
-        "winget",
-        "upgrade",
-        "--id",
-        packageId,
-        "--silent",
-        "--accept-package-agreements",
-        "--accept-source-agreements",
-      ],
-      { mode: "ignore" },
-    );
+    const result = await this.#spawnQuoted([
+      "winget",
+      "upgrade",
+      "--id",
+      packageId,
+      "--silent",
+      "--accept-package-agreements",
+      "--accept-source-agreements",
+    ]);
     if (!result.ok) {
       throw new Error(`winget upgrade failed: ${describeSpawnFailure(result)}`);
     }
@@ -440,14 +479,11 @@ export default class DefaultUpgradeService implements UpgradeService {
     const currentExecutable = process.execPath;
 
     if (os === SupportedOs.WINDOWS) {
-      const extractResult = await this.#spawnService!.spawn(
-        [
-          "powershell",
-          "-Command",
-          `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}' -Force`,
-        ],
-        { mode: "ignore" },
-      );
+      const extractResult = await this.#spawnQuoted([
+        "powershell",
+        "-Command",
+        `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}' -Force`,
+      ]);
       if (!extractResult.ok) {
         throw new Error("Failed to extract release archive");
       }
@@ -458,32 +494,36 @@ export default class DefaultUpgradeService implements UpgradeService {
       // Windows won't let us delete the just-renamed-aside exe while this process still has it
       // open/mapped - that can only happen once we're no longer holding it, i.e. at the start of
       // the NEXT invocation, before we move today's running exe aside. Ignore failures: the file
-      // may not exist, or may still be locked (e.g. another instance still running).
+      // may not exist, or may still be locked (e.g. another instance still running). Not quoted -
+      // this is expected to fail silently, there's nothing worth showing the user.
       await this.#spawnService!.spawn(["cmd", "/c", "del", "/f", "/q", oldPath], {
         mode: "ignore",
       });
 
-      const moveResult = await this.#spawnService!.spawn(
-        ["cmd", "/c", "move", "/y", currentExecutable, oldPath],
-        { mode: "ignore" },
-      );
+      const moveResult = await this.#spawnQuoted([
+        "cmd",
+        "/c",
+        "move",
+        "/y",
+        currentExecutable,
+        oldPath,
+      ]);
       if (!moveResult.ok) {
         throw new Error("Failed to move current executable aside");
       }
-      const copyResult = await this.#spawnService!.spawn(
-        ["cmd", "/c", "copy", "/y", extractedBinary, currentExecutable],
-        { mode: "ignore" },
-      );
+      const copyResult = await this.#spawnQuoted([
+        "cmd",
+        "/c",
+        "copy",
+        "/y",
+        extractedBinary,
+        currentExecutable,
+      ]);
       if (!copyResult.ok) {
         throw new Error("Failed to copy new executable into place");
       }
     } else {
-      const extractResult = await this.#spawnService!.spawn(
-        ["unzip", "-o", archivePath, "-d", tmpDir],
-        {
-          mode: "ignore",
-        },
-      );
+      const extractResult = await this.#spawnQuoted(["unzip", "-o", archivePath, "-d", tmpDir]);
       if (!extractResult.ok) {
         throw new Error("Failed to extract release archive");
       }

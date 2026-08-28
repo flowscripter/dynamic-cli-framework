@@ -44,10 +44,16 @@ export class UpgradeSubCommand implements SubCommand {
   public async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const cliName = context.cliConfig.name;
+    const currentVersion = context.cliConfig.version;
 
     const os = argumentValues.os as SupportedOs | undefined;
     const arch = undefined as SupportedArch | undefined;
     const installMethod = argumentValues["install-method"] as InstallMethod | undefined;
+
+    await printerService.info(
+      `Looking for version newer than ${currentVersion}\n`,
+      Icon.INFORMATION,
+    );
 
     const checkResult =
       os === undefined && installMethod === undefined
@@ -77,7 +83,8 @@ export class UpgradeSubCommand implements SubCommand {
 
     if (!checkResult.updateAvailable) {
       await printerService.print(
-        `${cliName} is already up to date (${checkResult.currentVersion}).\n`,
+        `${cliName} is already up to date: ${checkResult.currentVersion}\n`,
+        Icon.INFORMATION,
       );
       return;
     }
