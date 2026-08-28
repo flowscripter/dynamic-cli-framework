@@ -10,9 +10,11 @@ import type {
   FetchService,
   SpawnResult,
   SpawnService,
+  UpgradeCheckResult,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
+  describeUpgradeCheckResult,
   VERSION_CHECK_TIMEOUT_MS,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
@@ -74,6 +76,29 @@ function getGithubReleaseFetchService(
 }
 
 describe("DefaultUpgradeService", () => {
+  test("describeUpgradeCheckResult surfaces the error message for a failed check", () => {
+    const result: UpgradeCheckResult = { status: "failed", error: new Error("boom") };
+    // JSON.stringify(new Error(...)) drops message/stack (non-enumerable own properties) and
+    // would otherwise log "error":{} - this is exactly the case the helper exists to fix.
+    expect(JSON.stringify(result)).toEqual('{"status":"failed","error":{}}');
+    expect(describeUpgradeCheckResult(result)).toEqual("Upgrade check result: failed - boom");
+  });
+
+  test("describeUpgradeCheckResult JSON-serializes a non-failed result", () => {
+    const result: UpgradeCheckResult = {
+      status: "checked",
+      currentVersion: "1.0.0",
+      latestVersion: "2.0.0",
+      updateAvailable: true,
+      os: SupportedOs.LINUX,
+      arch: SupportedArch.X64,
+      installMethod: InstallMethod.GITHUB_RELEASE,
+    };
+    expect(describeUpgradeCheckResult(result)).toEqual(
+      `Upgrade check result: ${JSON.stringify(result)}`,
+    );
+  });
+
   test("detectOs maps process.platform to the current OS", () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
     const expected =
