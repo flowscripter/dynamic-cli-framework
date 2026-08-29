@@ -79,6 +79,14 @@ function getFakePrinterService(): {
       state.infoMessages.push(message);
       return Promise.resolve();
     },
+    showSpinner: () => {
+      state.calls.push("showSpinner");
+      return Promise.resolve();
+    },
+    hideSpinner: () => {
+      state.calls.push("hideSpinner");
+      return Promise.resolve();
+    },
   } as unknown as PrinterService;
   return { printerService, state };
 }
@@ -461,7 +469,8 @@ describe("DefaultUpgradeService", () => {
     expect(result.ok).toBe(true);
     expect(receivedModes).toEqual(["wrapped"]);
     expect(state.calls).toEqual([
-      "info", // "Installing version 9.9.9..."
+      "showSpinner", // "Installing version 9.9.9..."
+      "hideSpinner",
       "startQuote",
       "startMark",
       "info", // "Updating Homebrew..."

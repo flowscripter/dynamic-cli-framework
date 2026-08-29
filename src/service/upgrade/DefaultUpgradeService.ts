@@ -12,7 +12,6 @@ import type {
   UpgradeResult,
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  Icon,
   InstallMethod,
   SupportedArch,
   SupportedOs,
@@ -254,13 +253,13 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
 
     if (this.#printerService) {
-      await this.#printerService.info(
-        `Installing version ${checkResult.latestVersion}...\n`,
-        Icon.INFORMATION,
-      );
+      await this.#printerService.showSpinner(`Installing version ${checkResult.latestVersion}...`);
     }
 
     try {
+      if (this.#printerService) {
+        await this.#printerService.hideSpinner();
+      }
       switch (checkResult.installMethod) {
         case InstallMethod.LINUX_SCRIPT:
           await this.#upgradeViaLinuxScript();

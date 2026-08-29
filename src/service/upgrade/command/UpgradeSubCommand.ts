@@ -50,15 +50,14 @@ export class UpgradeSubCommand implements SubCommand {
     const arch = undefined as SupportedArch | undefined;
     const installMethod = argumentValues["install-method"] as InstallMethod | undefined;
 
-    await printerService.info(
-      `Looking for version newer than ${currentVersion}\n`,
-      Icon.INFORMATION,
-    );
+    await printerService.showSpinner(`Looking for version newer than ${currentVersion}`);
 
     const checkResult =
       os === undefined && installMethod === undefined
         ? await this.#upgradeService.getUpgradeCheckResult(true)
         : await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
+
+    await printerService.hideSpinner();
     if (checkResult.status === "unsupported") {
       await printerService.error(
         `No upgrade location is configured for the detected or requested platform.\n`,
