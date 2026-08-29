@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import type { VersionedPluginDescriptor } from "@flowscripter/dynamic-plugin-framework";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import { PluginRemoveSubCommand } from "../../../../src/service/plugin/command/PluginRemoveSubCommand.ts";
@@ -6,30 +6,28 @@ import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
-import StreamString from "../../../fixtures/StreamString.ts";
-import { expectStringEquals } from "../../../fixtures/util.ts";
-import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
-function buildContext() {
-  const dummyStdout = new StreamString();
-  const dummyStderr = new StreamString();
-  const printer = new DefaultPrinterService(
-    dummyStdout.writableStream,
-    dummyStderr.writableStream,
-    true,
-    true,
-    new TtyTerminal(dummyStdout.writeStream),
-    new TtyTerminal(dummyStderr.writeStream),
-    new TtyStyler(3),
-  );
-  printer.colorEnabled = false;
-
+function buildContext(): {
+  context: DefaultContext;
+  messages: { print: string[]; spinner: string[]; spinnerHidden: number };
+} {
   const context = new DefaultContext(getCLIConfig());
-  context.addServiceInstance(PRINTER_SERVICE_ID, printer);
-
-  return { context, dummyStderr };
+  const messages = { print: [] as string[], spinner: [] as string[], spinnerHidden: 0 };
+  context.addServiceInstance(PRINTER_SERVICE_ID, {
+    print: (msg: string) => {
+      messages.print.push(msg);
+      return Promise.resolve();
+    },
+    showSpinner: (msg: string) => {
+      messages.spinner.push(msg);
+      return Promise.resolve();
+    },
+    hideSpinner: () => {
+      messages.spinnerHidden += 1;
+      return Promise.resolve();
+    },
+  });
+  return { context, messages };
 }
 
 const descriptor: VersionedPluginDescriptor = {
@@ -41,8 +39,8 @@ const descriptor: VersionedPluginDescriptor = {
 };
 
 describe("PluginRemoveSubCommand", () => {
-  test("prints removal message on its own line", async () => {
-    const { context, dummyStderr } = buildContext();
+  test("shows a spinner while removing and prints the removal message", async () => {
+    const { context, messages } = buildContext();
 
     const fakePluginService: PluginService = {
       search: async function* () {},
@@ -57,6 +55,8 @@ describe("PluginRemoveSubCommand", () => {
     const command = new PluginRemoveSubCommand();
     await command.execute(context, { pluginId: descriptor.pluginId });
 
-    expectStringEquals(dummyStderr.getString(), "ℹ Removing plugin: @scope/plugin...\n");
+    expect(messages.spinner).toEqual(["Removing plugin: @scope/plugin..."]);
+    expect(messages.spinnerHidden).toEqual(1);
+    expect(messages.print).toEqual(["Plugin @scope/plugin removed.\n"]);
   });
 });

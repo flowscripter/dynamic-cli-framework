@@ -8,6 +8,7 @@ import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic
 import type {
   FetchOptions,
   FetchService,
+  PrinterService,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
@@ -41,6 +42,74 @@ function getSpawnService(handler: (command: ReadonlyArray<string>) => SpawnResul
   return {
     spawn: (command) => Promise.resolve(handler(command)),
   };
+}
+
+interface FakePrinterServiceState {
+  calls: string[];
+  infoMessages: string[];
+}
+
+function getFakePrinterService(): {
+  printerService: PrinterService;
+  state: FakePrinterServiceState;
+} {
+  const state: FakePrinterServiceState = { calls: [], infoMessages: [] };
+  const printerService = {
+    startQuote: () => {
+      state.calls.push("startQuote");
+    },
+    endQuote: () => {
+      state.calls.push("endQuote");
+    },
+    startMark: () => {
+      state.calls.push("startMark");
+    },
+    endMark: () => {
+      state.calls.push("endMark");
+    },
+    clearMarked: () => {
+      state.calls.push("clearMarked");
+      return Promise.resolve();
+    },
+    discardMark: () => {
+      state.calls.push("discardMark");
+    },
+    info: (message: string) => {
+      state.calls.push("info");
+      state.infoMessages.push(message);
+      return Promise.resolve();
+    },
+    showSpinner: () => {
+      state.calls.push("showSpinner");
+      return Promise.resolve();
+    },
+    hideSpinner: () => {
+      state.calls.push("hideSpinner");
+      return Promise.resolve();
+    },
+  } as unknown as PrinterService;
+  return { printerService, state };
+}
+
+// Unlike getSpawnService(), captures the options passed to spawn() (mode, onOutput) so quote/mark
+// wrapping can be verified, and feeds the given output lines through onOutput when present.
+function getSpawnServiceWithOutput(
+  outputLines: ReadonlyArray<string>,
+  result: SpawnResult,
+): { spawnService: SpawnService; receivedModes: Array<string | undefined> } {
+  const receivedModes: Array<string | undefined> = [];
+  const spawnService = {
+    spawn: (_command: ReadonlyArray<string>, options?: { mode?: string; onOutput?: unknown }) => {
+      receivedModes.push(options?.mode);
+      if (typeof options?.onOutput === "function") {
+        for (const line of outputLines) {
+          (options.onOutput as (line: string, stream: "stdout" | "stderr") => void)(line, "stdout");
+        }
+      }
+      return Promise.resolve(result);
+    },
+  } as unknown as SpawnService;
+  return { spawnService, receivedModes };
 }
 
 function getFetchService(
@@ -146,6 +215,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       getSpawnService(() => ({ ok: true, exitCode: 0 })),
       undefined,
+      undefined,
     );
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
   });
@@ -175,6 +245,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
+      undefined,
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -197,6 +268,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => githubReleaseRedirect("0.0.0")),
+      undefined,
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -221,6 +293,7 @@ describe("DefaultUpgradeService", () => {
         receivedOptions = options;
         return githubReleaseRedirect("9.9.9");
       }),
+      undefined,
     );
     await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -240,6 +313,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => Promise.reject(new Error("network error"))),
+      undefined,
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -261,6 +335,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => new Response(null, { status: 404 })),
+      undefined,
     );
     const result = await service.checkForUpgrade(
       SupportedOs.LINUX,
@@ -285,6 +360,7 @@ describe("DefaultUpgradeService", () => {
         );
         return new Response('version "v9.9.9"', { status: 200 });
       }),
+      undefined,
     );
     const result = await service.checkForUpgrade(
       SupportedOs.MACOS,
@@ -312,6 +388,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
+      undefined,
     );
     const result = await service.upgrade(
       SupportedOs.LINUX,
@@ -334,6 +411,7 @@ describe("DefaultUpgradeService", () => {
         return { ok: true, exitCode: 0 };
       }),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
     );
 
     const result = await service.upgrade(
@@ -354,6 +432,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       getSpawnService(() => ({ ok: false, exitCode: 1 })),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
     );
 
     const result = await service.upgrade(
@@ -363,6 +442,72 @@ describe("DefaultUpgradeService", () => {
     );
     expect(result.ok).toBe(false);
     expect(result.error?.message).toContain("brew upgrade failed");
+  });
+
+  test("upgrade wraps the spawned install output in quote/mark and clears it on success", async () => {
+    const { spawnService, receivedModes } = getSpawnServiceWithOutput(
+      ["Updating Homebrew...", "==> Upgrading example-cli"],
+      { ok: true, exitCode: 0 },
+    );
+    const { printerService, state } = getFakePrinterService();
+    const service = new DefaultUpgradeService(
+      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      spawnService,
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      printerService,
+    );
+
+    const result = await service.upgrade(
+      SupportedOs.MACOS,
+      SupportedArch.ARM64,
+      InstallMethod.HOMEBREW,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(receivedModes).toEqual(["wrapped"]);
+    expect(state.calls).toEqual([
+      "showSpinner", // "Installing version 9.9.9..."
+      "hideSpinner",
+      "startQuote",
+      "startMark",
+      "info", // "Updating Homebrew..."
+      "info", // "==> Upgrading example-cli"
+      "endQuote",
+      "endMark",
+      "clearMarked",
+    ]);
+    expect(state.infoMessages).toContain("Updating Homebrew...\n");
+    expect(state.infoMessages).toContain("==> Upgrading example-cli\n");
+  });
+
+  test("upgrade leaves the spawned install output visible when it fails", async () => {
+    const { spawnService } = getSpawnServiceWithOutput(["Error: formula not found"], {
+      ok: false,
+      exitCode: 1,
+    });
+    const { printerService, state } = getFakePrinterService();
+    const service = new DefaultUpgradeService(
+      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      spawnService,
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      printerService,
+    );
+
+    const result = await service.upgrade(
+      SupportedOs.MACOS,
+      SupportedArch.ARM64,
+      InstallMethod.HOMEBREW,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(state.calls).toContain("discardMark");
+    expect(state.calls).not.toContain("clearMarked");
   });
 
   test("getUpgradeCheckResult caches the same promise across calls", async () => {
@@ -379,6 +524,7 @@ describe("DefaultUpgradeService", () => {
         checkCount++;
         return githubReleaseRedirect("9.9.9");
       }),
+      undefined,
     );
 
     const first = service.getUpgradeCheckResult(true);
@@ -399,6 +545,7 @@ describe("DefaultUpgradeService", () => {
     service.setDependencies(
       undefined,
       getFetchService(() => new Promise(() => {})),
+      undefined,
     );
 
     const result = await service.getUpgradeCheckResult();
@@ -424,6 +571,7 @@ describe("DefaultUpgradeService", () => {
         }
         return githubReleaseRedirect("9.9.9");
       }),
+      undefined,
     );
 
     // opportunistic, non-blocking call - its underlying fetch fails immediately.
@@ -457,6 +605,7 @@ describe("DefaultUpgradeService", () => {
             ),
           ),
       ),
+      undefined,
     );
 
     const result = await service.getUpgradeCheckResult(true);
@@ -476,6 +625,7 @@ describe("DefaultUpgradeService", () => {
         return { ok: true, exitCode: 0 };
       }),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
     );
 
     // Prime the cache with default (no-override) detection, which resolves undefined since
@@ -542,6 +692,7 @@ describe("DefaultUpgradeService", () => {
           return { ok: true, exitCode: 0 };
         }),
         getGithubReleaseFetchService("9.9.9"),
+        undefined,
       );
 
       const result = await service.upgrade(
@@ -587,6 +738,7 @@ describe("DefaultUpgradeService", () => {
         getGithubReleaseFetchService("9.9.9", (url) => {
           requestedUrl = url;
         }),
+        undefined,
       );
 
       const result = await service.upgrade(
@@ -622,6 +774,7 @@ describe("DefaultUpgradeService", () => {
         getGithubReleaseFetchService("9.9.9", (url) => {
           requestedUrl = url;
         }),
+        undefined,
       );
 
       const result = await service.upgrade(
@@ -656,6 +809,7 @@ describe("DefaultUpgradeService", () => {
         getGithubReleaseFetchService("9.9.9", (url) => {
           requestedUrl = url;
         }),
+        undefined,
       );
 
       const result = await service.upgrade(
@@ -692,6 +846,7 @@ describe("DefaultUpgradeService", () => {
           return { ok: true, exitCode: 0 };
         }),
         getGithubReleaseFetchService("9.9.9"),
+        undefined,
       );
 
       const result = await service.upgrade(

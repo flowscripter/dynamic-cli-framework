@@ -9,30 +9,37 @@ import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
-import StreamString from "../../../fixtures/StreamString.ts";
-import { expectStringEquals } from "../../../fixtures/util.ts";
-import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
-import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
-function buildContext() {
-  const dummyStdout = new StreamString();
-  const dummyStderr = new StreamString();
-  const printer = new DefaultPrinterService(
-    dummyStdout.writableStream,
-    dummyStderr.writableStream,
-    true,
-    true,
-    new TtyTerminal(dummyStdout.writeStream),
-    new TtyTerminal(dummyStderr.writeStream),
-    new TtyStyler(3),
-  );
-  printer.colorEnabled = false;
-
+function buildContext(): {
+  context: DefaultContext;
+  messages: { print: string[]; info: string[]; spinner: string[]; spinnerHidden: number };
+} {
   const context = new DefaultContext(getCLIConfig());
-  context.addServiceInstance(PRINTER_SERVICE_ID, printer);
-
-  return { context, dummyStdout, dummyStderr };
+  const messages = {
+    print: [] as string[],
+    info: [] as string[],
+    spinner: [] as string[],
+    spinnerHidden: 0,
+  };
+  context.addServiceInstance(PRINTER_SERVICE_ID, {
+    print: (msg: string) => {
+      messages.print.push(msg);
+      return Promise.resolve();
+    },
+    info: (msg: string) => {
+      messages.info.push(msg);
+      return Promise.resolve();
+    },
+    showSpinner: (msg: string) => {
+      messages.spinner.push(msg);
+      return Promise.resolve();
+    },
+    hideSpinner: () => {
+      messages.spinnerHidden += 1;
+      return Promise.resolve();
+    },
+  });
+  return { context, messages };
 }
 
 const descriptor: VersionedPluginDescriptor = {
@@ -44,8 +51,8 @@ const descriptor: VersionedPluginDescriptor = {
 };
 
 describe("PluginAddSubCommand", () => {
-  test("prints search and install messages on separate lines", async () => {
-    const { context, dummyStderr } = buildContext();
+  test("shows a spinner for search and install", async () => {
+    const { context, messages } = buildContext();
 
     const fakePluginService: PluginService = {
       search: async function* (_query: Readonly<SearchQuery>) {
@@ -62,14 +69,15 @@ describe("PluginAddSubCommand", () => {
     const command = new PluginAddSubCommand();
     await command.execute(context, { pluginId: descriptor.pluginId });
 
-    expectStringEquals(
-      dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin\nℹ Installing @scope/plugin@1.0.0...\n",
-    );
+    expect(messages.spinner).toEqual([
+      "Searching for plugin: @scope/plugin",
+      "Installing @scope/plugin@1.0.0...",
+    ]);
+    expect(messages.spinnerHidden).toEqual(2);
   });
 
   test("strips the version from the specifier before searching, and passes it to install", async () => {
-    const { context, dummyStderr } = buildContext();
+    const { context, messages } = buildContext();
 
     const searchQueries: Readonly<SearchQuery>[] = [];
     let installedDescriptor: VersionedPluginDescriptor | undefined;
@@ -93,10 +101,10 @@ describe("PluginAddSubCommand", () => {
 
     expect(searchQueries).toEqual([{ text: descriptor.pluginId }]);
     expect(installedDescriptor?.version).toEqual("3.0.0");
-    expectStringEquals(
-      dummyStderr.getString(),
-      "ℹ Searching for plugin: @scope/plugin@3.0.0\nℹ Installing @scope/plugin@3.0.0...\n",
-    );
+    expect(messages.spinner).toEqual([
+      "Searching for plugin: @scope/plugin@3.0.0",
+      "Installing @scope/plugin@3.0.0...",
+    ]);
   });
 
   test("passes a non-semver version tag (e.g. latest) through to install unchanged", async () => {
@@ -124,7 +132,7 @@ describe("PluginAddSubCommand", () => {
   });
 
   test("falls back to direct install with parsed version when search finds no match", async () => {
-    const { context, dummyStderr } = buildContext();
+    const { context, messages } = buildContext();
 
     const searchQueries: Readonly<SearchQuery>[] = [];
     let installedDescriptor: VersionedPluginDescriptor | undefined;
@@ -149,12 +157,13 @@ describe("PluginAddSubCommand", () => {
     expect(searchQueries).toEqual([{ text: "@other/plugin" }]);
     expect(installedDescriptor?.pluginId).toEqual("@other/plugin");
     expect(installedDescriptor?.version).toEqual("2.5.0");
-    expectStringEquals(
-      dummyStderr.getString(),
-      "ℹ Searching for plugin: @other/plugin@2.5.0\n" +
-        "ℹ Plugin not found via search, attempting direct install of @other/plugin@2.5.0...\n" +
-        "ℹ Installing @other/plugin@2.5.0...\n",
-    );
+    expect(messages.spinner).toEqual([
+      "Searching for plugin: @other/plugin@2.5.0",
+      "Installing @other/plugin@2.5.0...",
+    ]);
+    expect(messages.info).toEqual([
+      "Plugin not found via search, attempting direct install of @other/plugin@2.5.0...\n",
+    ]);
   });
 
   test("checks availability before install and installs when it resolves", async () => {
@@ -243,7 +252,7 @@ describe("PluginAddSubCommand", () => {
   });
 
   test("confirms the explicitly requested version in the installed message", async () => {
-    const { context, dummyStdout } = buildContext();
+    const { context, messages } = buildContext();
 
     const installedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "3.0.0" };
     const fakePluginService: PluginService = {
@@ -263,11 +272,11 @@ describe("PluginAddSubCommand", () => {
     const command = new PluginAddSubCommand();
     await command.execute(context, { pluginId: `${descriptor.pluginId}@3.0.0` });
 
-    expectStringEquals(dummyStdout.getString(), "✔ Plugin @scope/plugin@3.0.0 installed.\n");
+    expect(messages.print).toEqual(["Plugin @scope/plugin@3.0.0 installed.\n"]);
   });
 
   test("shows the actually-resolved latest version in the installed message, not the literal 'latest'", async () => {
-    const { context, dummyStdout } = buildContext();
+    const { context, messages } = buildContext();
 
     const resolvedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "4.2.1" };
     const fakePluginService: PluginService = {
@@ -289,6 +298,6 @@ describe("PluginAddSubCommand", () => {
     const command = new PluginAddSubCommand();
     await command.execute(context, { pluginId: descriptor.pluginId });
 
-    expectStringEquals(dummyStdout.getString(), "✔ Plugin @scope/plugin@4.2.1 installed.\n");
+    expect(messages.print).toEqual(["Plugin @scope/plugin@4.2.1 installed.\n"]);
   });
 });

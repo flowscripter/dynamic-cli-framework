@@ -29,7 +29,7 @@ export class PluginAddSubCommand implements SubCommand {
 
     const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
     const searchLabel = version ? `${pluginId}@${version}` : pluginId;
-    await printerService.info(`Searching for plugin: ${searchLabel}\n`, Icon.INFORMATION);
+    await printerService.showSpinner(`Searching for plugin: ${searchLabel}`);
 
     let descriptor: VersionedPluginDescriptor | undefined;
     for await (const d of pluginService.search({ text: pluginId })) {
@@ -38,6 +38,7 @@ export class PluginAddSubCommand implements SubCommand {
         break;
       }
     }
+    await printerService.hideSpinner();
 
     if (descriptor && version) {
       // search only ever returns the latest version - substitute the explicitly requested
@@ -83,7 +84,7 @@ export class PluginAddSubCommand implements SubCommand {
       );
     }
 
-    await printerService.info(`Installing ${installLabel}...\n`, Icon.INFORMATION);
+    await printerService.showSpinner(`Installing ${installLabel}...`);
     await pluginService.install(descriptor);
 
     // Look up the actually-installed version rather than trusting `descriptor.version`: when no
@@ -96,6 +97,7 @@ export class PluginAddSubCommand implements SubCommand {
         break;
       }
     }
+    await printerService.hideSpinner();
 
     await printerService.print(
       `Plugin ${descriptor.pluginId}@${installedVersion} installed.\n`,

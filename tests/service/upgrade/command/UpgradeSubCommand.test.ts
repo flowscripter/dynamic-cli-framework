@@ -22,11 +22,23 @@ function getUpgradeService(
   } as unknown as DefaultUpgradeService;
 }
 
-function getContext(): { context: DefaultContext; messages: { info: string[]; error: string[] } } {
+function getContext(): {
+  context: DefaultContext;
+  messages: { print: string[]; info: string[]; error: string[]; spinner: string[] };
+} {
   const context = new DefaultContext(getCLIConfig());
-  const messages = { info: [] as string[], error: [] as string[] };
+  const messages = {
+    print: [] as string[],
+    info: [] as string[],
+    error: [] as string[],
+    spinner: [] as string[],
+  };
   context.addServiceInstance(PRINTER_SERVICE_ID, {
     print: (msg: string) => {
+      messages.print.push(msg);
+      return Promise.resolve();
+    },
+    info: (msg: string) => {
       messages.info.push(msg);
       return Promise.resolve();
     },
@@ -34,6 +46,11 @@ function getContext(): { context: DefaultContext; messages: { info: string[]; er
       messages.error.push(msg);
       return Promise.resolve();
     },
+    showSpinner: (msg: string) => {
+      messages.spinner.push(msg);
+      return Promise.resolve();
+    },
+    hideSpinner: () => Promise.resolve(),
   });
   return { context, messages };
 }
@@ -74,7 +91,8 @@ describe("UpgradeSubCommand", () => {
 
     await command.execute(context, {});
 
-    expect(messages.info[0]).toContain("is already up to date (1.0.0)");
+    expect(messages.spinner[0]).toContain("Looking for version newer than");
+    expect(messages.print[0]).toContain("is already up to date: 1.0.0");
   });
 
   test("prints upgraded message on success", async () => {
@@ -93,7 +111,7 @@ describe("UpgradeSubCommand", () => {
 
     await command.execute(context, {});
 
-    expect(messages.info[0]).toEqual(`${getCLIConfig().name} upgraded (1.0.0 -> 2.0.0)\n`);
+    expect(messages.print[0]).toEqual(`${getCLIConfig().name} upgraded (1.0.0 -> 2.0.0)\n`);
   });
 
   test("prints error when upgrade fails", async () => {

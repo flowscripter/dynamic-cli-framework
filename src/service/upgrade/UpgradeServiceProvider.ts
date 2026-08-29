@@ -56,7 +56,8 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     if (fetchService === undefined) {
       logger.debug(() => "FetchService not available, upgrade version checks will be unavailable");
     }
-    upgradeService.setDependencies(spawnService, fetchService);
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+    upgradeService.setDependencies(spawnService, fetchService, printerService);
 
     void upgradeService.getUpgradeCheckResult();
 
