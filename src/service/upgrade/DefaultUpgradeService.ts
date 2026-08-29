@@ -38,8 +38,6 @@ function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): stri
     : (result.error?.message ?? `exit code ${result.exitCode}`);
 }
 
-// JSON.stringify() on an Error drops message/stack (non-enumerable own properties), logging as
-// "error":{} and hiding the actual failure reason - surface it explicitly instead.
 export function describeUpgradeCheckResult(result: UpgradeCheckResult): string {
   return result.status === "failed"
     ? `Upgrade check result: failed - ${result.error.message}`

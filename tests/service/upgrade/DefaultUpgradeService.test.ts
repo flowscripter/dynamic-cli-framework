@@ -78,8 +78,6 @@ function getGithubReleaseFetchService(
 describe("DefaultUpgradeService", () => {
   test("describeUpgradeCheckResult surfaces the error message for a failed check", () => {
     const result: UpgradeCheckResult = { status: "failed", error: new Error("boom") };
-    // JSON.stringify(new Error(...)) drops message/stack (non-enumerable own properties) and
-    // would otherwise log "error":{} - this is exactly the case the helper exists to fix.
     expect(JSON.stringify(result)).toEqual('{"status":"failed","error":{}}');
     expect(describeUpgradeCheckResult(result)).toEqual("Upgrade check result: failed - boom");
   });
