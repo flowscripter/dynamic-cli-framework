@@ -38,6 +38,12 @@ function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): stri
     : (result.error?.message ?? `exit code ${result.exitCode}`);
 }
 
+export function describeUpgradeCheckResult(result: UpgradeCheckResult): string {
+  return result.status === "failed"
+    ? `Upgrade check result: failed - ${result.error.message}`
+    : `Upgrade check result: ${JSON.stringify(result)}`;
+}
+
 const OS_LABELS: Record<SupportedOs, string> = {
   [SupportedOs.LINUX]: "Linux",
   [SupportedOs.MACOS]: "MacOS",
@@ -74,7 +80,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
       // process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
-        logger.debug(() => `Upgrade check result: ${JSON.stringify(result)}`);
+        logger.debug(() => describeUpgradeCheckResult(result));
         if (result.status === "failed") {
           this.#upgradeCheckPromise = undefined;
         }
