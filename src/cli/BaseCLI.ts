@@ -294,7 +294,13 @@ export default class BaseCLI implements CLI {
     }
 
     if (this.#options.upgradeServiceEnabled) {
-      this.addServiceProvider(new UpgradeServiceProvider(6, this.#options.upgradeLocationsConfig));
+      // Must outrank BannerServiceProvider (and any other opportunistic caller of
+      // UpgradeService.getUpgradeCheckResult()) so UpgradeServiceProvider.initService() has
+      // already called setDependencies() by the time anything else queries the upgrade check -
+      // otherwise the opportunistic check always fails with "FetchService is not available" (see
+      // dynamic-cli-framework#172). 56 runs after Spawn(58)/Fetch(57) - whose dependencies it
+      // needs - but before the consumer-configured Banner/Plugin(50) priority band.
+      this.addServiceProvider(new UpgradeServiceProvider(56, this.#options.upgradeLocationsConfig));
     }
 
     if (this.#options.pluginServiceEnabled) {
