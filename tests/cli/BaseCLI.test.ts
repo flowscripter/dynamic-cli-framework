@@ -24,6 +24,7 @@ import TtyStyler from "../../src/terminal/TtyStyler.ts";
 import type KeyReader from "../../src/terminal/KeyReader.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultUpgradeService from "../../src/service/upgrade/DefaultUpgradeService.ts";
 
 const mockKeyReader: KeyReader = {
   enableRawMode() {},
@@ -451,5 +452,66 @@ describe("BaseCLI tests", () => {
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(serviceExists).toBeTrue();
+  });
+
+  test("UpgradeServiceProvider sets its dependencies before a lower-priority provider (e.g. a banner) can query it", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+
+    const order: string[] = [];
+    const originalSetDependencies = DefaultUpgradeService.prototype.setDependencies;
+    DefaultUpgradeService.prototype.setDependencies = function (
+      this: DefaultUpgradeService,
+      ...args: Parameters<typeof originalSetDependencies>
+    ) {
+      order.push("upgrade-dependencies-set");
+      return originalSetDependencies.apply(this, args);
+    };
+
+    try {
+      const baseCLI = new BaseCLI(
+        config,
+        dummyStdout.writableStream,
+        dummyStderr.writableStream,
+        false,
+        false,
+        new TtyTerminal(dummyStdout.writeStream),
+        new TtyTerminal(dummyStderr.writeStream),
+        new TtyStyler(3),
+        mockKeyReader,
+        {
+          upgradeServiceEnabled: true,
+          fetchServiceEnabled: true,
+          upgradeLocationsConfig: { supportedPlatforms: [] },
+        },
+      );
+
+      // Mimics a consumer-registered BannerServiceProvider, which opportunistically calls
+      // UpgradeService.getUpgradeCheckResult() from its own initService() - see
+      // dynamic-cli-framework#172, where this always failed with "FetchService is not
+      // available" because UpgradeServiceProvider's priority (6) ran after Banner's (50).
+      const bannerLikeProvider: ServiceProvider = {
+        serviceId: "test-banner-like-service",
+        servicePriority: 50,
+        getServiceInfo: (_cliConfig: CLIConfig): Promise<ServiceInfo> =>
+          Promise.resolve({ commands: [] }),
+        initService: (_context: Context): Promise<void> => {
+          order.push("banner-like-init");
+          return Promise.resolve();
+        },
+      };
+      baseCLI.addServiceProvider(bannerLikeProvider);
+
+      const command = getSubCommand("command", [], []);
+      baseCLI.addCommand(command);
+
+      const runResult = await baseCLI.run(["command"]);
+
+      expect(runResult.runState).toEqual(RunState.SUCCESS);
+      expect(order).toEqual(["upgrade-dependencies-set", "banner-like-init"]);
+    } finally {
+      DefaultUpgradeService.prototype.setDependencies = originalSetDependencies;
+    }
   });
 });
