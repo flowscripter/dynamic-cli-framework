@@ -66,7 +66,7 @@ describe("PluginRemoveSubCommand", () => {
     expect(messages.print).toEqual(["Plugin @scope/plugin removed.\n"]);
   });
 
-  test("hides the spinner before uninstall() spawns the package manager - see #188", async () => {
+  test("hides the spinner before uninstall() spawns the package manager", async () => {
     const { context, messages } = buildContext();
 
     const fakePluginService: PluginService = {

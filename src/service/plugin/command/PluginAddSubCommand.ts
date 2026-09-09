@@ -85,9 +85,8 @@ export class PluginAddSubCommand implements SubCommand {
     }
 
     await printerService.showSpinner(`Installing ${installLabel}...`);
-    // install() spawns the package manager via SpawnInterfaceAdapter, which wraps its output in
-    // its own quote/mark block on the same stream - hide the spinner first so its render loop
-    // doesn't race with (and garble) that output. See dynamic-cli-framework#188.
+    // install() spawns the package manager via SpawnInterfaceAdapter, which writes its own
+    // quote/mark block to the same stream, so the spinner must not be shown while it runs.
     await printerService.hideSpinner();
     await pluginService.install(descriptor);
 
