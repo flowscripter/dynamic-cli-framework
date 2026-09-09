@@ -294,7 +294,7 @@ export default class BaseCLI implements CLI {
     }
 
     if (this.#options.upgradeServiceEnabled) {
-      // 56 runs after Spawn(58)/Fetch(57) - whose dependencies it needs 
+      // 56 runs after Spawn(58)/Fetch(57) - whose dependencies it needs
       // but before the consumer-configured Banner/Plugin(50) priority band.
       this.addServiceProvider(new UpgradeServiceProvider(56, this.#options.upgradeLocationsConfig));
     }
