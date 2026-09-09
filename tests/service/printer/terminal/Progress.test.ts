@@ -123,6 +123,24 @@ describe("Progress tests", () => {
     await progress.hide(handle);
   });
 
+  test("bar renders with visible fill chars at a realistic terminal width", async () => {
+    const streamString = new StreamString();
+    // Comfortably wider than the actual visible suffix text (~85 chars for this scenario).
+    (streamString.writeStream as unknown as { columns: number }).columns = 100;
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const progress = new Progress(terminal, new TtyStyler(3));
+
+    const handle = progress.add("bytes", "Hashing file.mxf", 20_641_497_116, 0);
+    progress.update(handle, 13_817_151_488);
+    await sleep(150);
+    const output = streamString.getString();
+    const plain = Bun.stripANSI(output);
+    const barLine = plain.split("\n")[1] ?? "";
+
+    expect(barLine).toMatch(/\[[=-]+\]/);
+    await progress.hide(handle);
+  });
+
   test("ProgressStyle enum has expected values", () => {
     expect(ProgressStyle.STROKE).toBe(ProgressStyle.STROKE);
     expect(ProgressStyle.FILL).toBe(ProgressStyle.FILL);
