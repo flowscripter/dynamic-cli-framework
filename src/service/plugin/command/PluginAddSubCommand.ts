@@ -85,6 +85,10 @@ export class PluginAddSubCommand implements SubCommand {
     }
 
     await printerService.showSpinner(`Installing ${installLabel}...`);
+    // install() spawns the package manager via SpawnInterfaceAdapter, which wraps its output in
+    // its own quote/mark block on the same stream - hide the spinner first so its render loop
+    // doesn't race with (and garble) that output. See dynamic-cli-framework#188.
+    await printerService.hideSpinner();
     await pluginService.install(descriptor);
 
     // Look up the actually-installed version rather than trusting `descriptor.version`: when no
@@ -97,7 +101,6 @@ export class PluginAddSubCommand implements SubCommand {
         break;
       }
     }
-    await printerService.hideSpinner();
 
     await printerService.print(
       `Plugin ${descriptor.pluginId}@${installedVersion} installed.\n`,
