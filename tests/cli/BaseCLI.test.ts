@@ -487,10 +487,8 @@ describe("BaseCLI tests", () => {
         },
       );
 
-      // Mimics a consumer-registered BannerServiceProvider, which opportunistically calls
-      // UpgradeService.getUpgradeCheckResult() from its own initService() - see
-      // dynamic-cli-framework#172, where this always failed with "FetchService is not
-      // available" because UpgradeServiceProvider's priority (6) ran after Banner's (50).
+      // Simulates a consumer-registered BannerServiceProvider, which opportunistically calls
+      // UpgradeService.getUpgradeCheckResult() from its own initService().
       const bannerLikeProvider: ServiceProvider = {
         serviceId: "test-banner-like-service",
         servicePriority: 50,
