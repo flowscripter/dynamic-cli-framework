@@ -241,7 +241,7 @@ export default class Progress {
           bar.units.length +
           15 +
           1 +
-          taken.length;
+          Bun.stripANSI(taken).length;
       } else {
         const remaining =
           bar.rate === undefined || bar.rate === 0
@@ -270,7 +270,7 @@ export default class Progress {
           bar.units.length +
           19 +
           1 +
-          remaining.length;
+          Bun.stripANSI(remaining).length;
       }
       let available = consoleWidth - visibleWidth;
       if (available < 0) {
