@@ -1,11 +1,8 @@
 import type Styler from "../../../terminal/Styler.ts";
 import type Terminal from "../../../terminal/Terminal.ts";
 
-// Weight given to each new rate sample in the exponential moving average. At the previous
-// value (0.005) the smoothing time constant was ~1/0.005 * 100ms (render interval) = 20s, so a
-// noisy/slow first sample (e.g. a slow first chunk) would still dominate the ETA for the entire
-// duration of any operation shorter than that - see dynamic-cli-framework/flowscripter-io-cli#6
-// (a 20s hash operation reported a 29m45s "time remaining" throughout).
+// Weight given to each new rate sample in the exponential moving average - time constant is
+// roughly 1/RATE_SMOOTHING_FACTOR * 100ms (the render interval).
 const RATE_SMOOTHING_FACTOR = 0.3;
 
 export { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";

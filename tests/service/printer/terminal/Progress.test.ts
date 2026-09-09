@@ -89,7 +89,7 @@ describe("Progress tests", () => {
     await progress.hide(handle);
   });
 
-  test("rate estimate converges to the true rate within a few updates, not ~20s - see #6", async () => {
+  test("rate estimate converges to the true rate within a few updates", async () => {
     const streamString = new StreamString();
     (streamString.writeStream as unknown as { columns: number }).columns = 120;
     const terminal = new TtyTerminal(streamString.writeStream);
@@ -119,9 +119,6 @@ describe("Progress tests", () => {
     const afterRate = output.slice(output.indexOf("rate:"));
     const match = /\d+\.\d+/.exec(afterRate);
     expect(match).not.toBeNull();
-    // With the old 0.005 smoothing factor the noisy 1000 bytes/s first sample would still
-    // dominate after 50 updates (0.995^50 ~= 78% weight); the fixed rate should have converged
-    // close to the true 1,000,000 bytes/s.
     expect(Number(match![0])).toBeGreaterThan(500_000);
     await progress.hide(handle);
   });
