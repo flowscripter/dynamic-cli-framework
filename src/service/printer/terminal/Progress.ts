@@ -29,6 +29,7 @@ export default class Progress {
   readonly #styler: Styler;
   readonly #bars: Map<number, Bar> = new Map();
   #timer: Timer | undefined;
+  #renderInFlight: Promise<void> | undefined;
   #isDirty = false;
   #currentRenderedBarCount = 0;
   #lastRenderTime = 0;
@@ -67,12 +68,22 @@ export default class Progress {
 
     // start rendering timer
     if (this.#timer === undefined) {
-      this.#timer = setInterval(async () => {
-        await this.#renderBars();
-      }, 100);
+      this.#startTimer();
     }
 
     return this.#bars.size;
+  }
+
+  #startTimer(): void {
+    this.#timer = setInterval(() => {
+      const renderPromise = this.#renderBars();
+      this.#renderInFlight = renderPromise;
+      void renderPromise.finally(() => {
+        if (this.#renderInFlight === renderPromise) {
+          this.#renderInFlight = undefined;
+        }
+      });
+    }, 100);
   }
 
   #updateRate(bar: Bar, current: number): void {
@@ -150,6 +161,9 @@ export default class Progress {
     // stop rendering timer
     clearInterval(this.#timer);
     this.#timer = undefined;
+    if (this.#renderInFlight) {
+      await this.#renderInFlight;
+    }
 
     // clear the previously rendered bars
     await this.#terminal.clearUpLines(this.#currentRenderedBarCount * 2);
@@ -171,9 +185,7 @@ export default class Progress {
 
     // start rendering timer
     if (this.#timer === undefined) {
-      this.#timer = setInterval(async () => {
-        await this.#renderBars();
-      }, 100);
+      this.#startTimer();
     }
   }
 

@@ -84,7 +84,7 @@ describe("PluginAddSubCommand", () => {
     expect(messages.spinnerHidden).toEqual(2);
   });
 
-  test("hides the spinner before install() spawns the package manager", async () => {
+  test("keeps the spinner shown across install() and hides it afterward", async () => {
     const { context, messages } = buildContext();
 
     const fakePluginService: PluginService = {
@@ -104,8 +104,9 @@ describe("PluginAddSubCommand", () => {
     const command = new PluginAddSubCommand();
     await command.execute(context, { pluginId: descriptor.pluginId });
 
-    // First hideSpinner is after search; second must come immediately before install().
-    expect(messages.order).toEqual(["hideSpinner", "hideSpinner", "install"]);
+    // First hideSpinner is after search; install() runs while the "Installing..." spinner is
+    // still showing, and is only hidden afterward.
+    expect(messages.order).toEqual(["hideSpinner", "install", "hideSpinner"]);
   });
 
   test("strips the version from the specifier before searching, and passes it to install", async () => {

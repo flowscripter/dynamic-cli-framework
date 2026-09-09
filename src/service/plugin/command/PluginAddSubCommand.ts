@@ -30,15 +30,17 @@ export class PluginAddSubCommand implements SubCommand {
     const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
     const searchLabel = version ? `${pluginId}@${version}` : pluginId;
     await printerService.showSpinner(`Searching for plugin: ${searchLabel}`);
-
     let descriptor: VersionedPluginDescriptor | undefined;
-    for await (const d of pluginService.search({ text: pluginId })) {
-      if (getPluginId(d) === pluginId || d.pluginId === pluginId) {
-        descriptor = d;
-        break;
+    try {
+      for await (const d of pluginService.search({ text: pluginId })) {
+        if (getPluginId(d) === pluginId || d.pluginId === pluginId) {
+          descriptor = d;
+          break;
+        }
       }
+    } finally {
+      await printerService.hideSpinner();
     }
-    await printerService.hideSpinner();
 
     if (descriptor && version) {
       // search only ever returns the latest version - substitute the explicitly requested
@@ -85,10 +87,11 @@ export class PluginAddSubCommand implements SubCommand {
     }
 
     await printerService.showSpinner(`Installing ${installLabel}...`);
-    // install() spawns the package manager via SpawnInterfaceAdapter, which writes its own
-    // quote/mark block to the same stream, so the spinner must not be shown while it runs.
-    await printerService.hideSpinner();
-    await pluginService.install(descriptor);
+    try {
+      await pluginService.install(descriptor);
+    } finally {
+      await printerService.hideSpinner();
+    }
 
     // Look up the actually-installed version rather than trusting `descriptor.version`: when no
     // version was requested and the plugin wasn't found via search (direct-install fallback),

@@ -13,6 +13,7 @@ export default class Spinner {
   #message: string | undefined;
   #frameIndex = 0;
   #timer: Timer | undefined;
+  #renderInFlight: Promise<void> | undefined;
   #spinColor = 0x8a8a8a;
   #msgColor = 0x808080;
   #style: SpinnerStyle = SpinnerStyle.BOX;
@@ -49,6 +50,18 @@ export default class Spinner {
     this.#frameIndex = (this.#frameIndex + 1) % frames.length;
   }
 
+  #startTimer(): void {
+    this.#timer = setInterval(() => {
+      const renderPromise = this.#nextFrame();
+      this.#renderInFlight = renderPromise;
+      void renderPromise.finally(() => {
+        if (this.#renderInFlight === renderPromise) {
+          this.#renderInFlight = undefined;
+        }
+      });
+    }, 100);
+  }
+
   public async show(message?: string): Promise<void> {
     this.#message = message;
     if (this.#isShown) {
@@ -56,9 +69,7 @@ export default class Spinner {
     }
     this.#isShown = true;
     this.#frameIndex = 0;
-    this.#timer = setInterval(async () => {
-      await this.#nextFrame();
-    }, 100);
+    this.#startTimer();
     await this.#terminal.hideCursor();
   }
 
@@ -68,6 +79,10 @@ export default class Spinner {
     }
     this.#isShown = false;
     clearInterval(this.#timer);
+    this.#timer = undefined;
+    if (this.#renderInFlight) {
+      await this.#renderInFlight;
+    }
     await this.#terminal.clearLine();
     await this.#terminal.showCursor();
     this.#message = undefined;
@@ -79,6 +94,9 @@ export default class Spinner {
     }
     clearInterval(this.#timer);
     this.#timer = undefined;
+    if (this.#renderInFlight) {
+      await this.#renderInFlight;
+    }
     await this.#terminal.clearLine();
   }
 
@@ -86,9 +104,7 @@ export default class Spinner {
     if (!this.#isShown || this.#timer !== undefined) {
       return;
     }
-    this.#timer = setInterval(async () => {
-      await this.#nextFrame();
-    }, 100);
+    this.#startTimer();
   }
 
   set spinnerColor(color: number) {

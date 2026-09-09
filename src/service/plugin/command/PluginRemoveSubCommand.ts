@@ -26,10 +26,11 @@ export class PluginRemoveSubCommand implements SubCommand {
 
     const pluginId = argumentValues["pluginId"] as string;
     await printerService.showSpinner(`Removing plugin: ${pluginId}...`);
-    // uninstall() spawns the package manager via SpawnInterfaceAdapter, which writes its own
-    // quote/mark block to the same stream, so the spinner must not be shown while it runs.
-    await printerService.hideSpinner();
-    await pluginService.uninstall(pluginId);
+    try {
+      await pluginService.uninstall(pluginId);
+    } finally {
+      await printerService.hideSpinner();
+    }
     await printerService.print(`Plugin ${pluginId} removed.\n`, Icon.SUCCESS);
   }
 }

@@ -1,9 +1,18 @@
-import { describe, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import Spinner, { SpinnerStyle } from "../../../../src/service/printer/terminal/Spinner.ts";
 import { expectStringEquals, expectStringIncludes, sleep } from "../../../fixtures/util.ts";
 import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
+import type Terminal from "../../../../src/terminal/Terminal.ts";
+
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
 
 describe("Spinner tests", () => {
   test("Spinner works", async () => {
@@ -76,6 +85,48 @@ describe("Spinner tests", () => {
 
     const starOutput = streamString.getString();
     expectStringIncludes(starOutput, "★");
+  });
+
+  test("pause() waits for an in-flight render tick before clearing the line", async () => {
+    const calls: string[] = [];
+    const clearLineGate = deferred<void>();
+    let tickCount = 0;
+    const terminal: Terminal = {
+      clearLine: () => {
+        calls.push("clearLine");
+        // Only the very first tick's clearLine() is held back - everything else (including
+        // pause()'s own clearLine()) resolves immediately.
+        tickCount += 1;
+        return tickCount === 1 ? clearLineGate.promise : Promise.resolve();
+      },
+      clearUpLines: () => Promise.resolve(),
+      hideCursor: () => Promise.resolve(),
+      showCursor: () => Promise.resolve(),
+      write: () => {
+        calls.push("write");
+        return Promise.resolve();
+      },
+      columns: () => 80,
+      rows: () => 24,
+      isTty: () => true,
+    };
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    await spinner.show();
+    // Let the first tick fire and reach (and block on) its clearLine() call.
+    await sleep(120);
+    expect(calls).toEqual(["clearLine"]);
+
+    const pausePromise = spinner.pause();
+    // pause() must not resolve while the tick it's racing against is still mid-flight.
+    await sleep(50);
+    expect(calls).toEqual(["clearLine"]);
+
+    clearLineGate.resolve();
+    await pausePromise;
+
+    // The tick's write() must land before pause()'s own clearLine() - not after.
+    expect(calls).toEqual(["clearLine", "write", "clearLine"]);
   });
 
   test("Default spinner style is BOX", async () => {

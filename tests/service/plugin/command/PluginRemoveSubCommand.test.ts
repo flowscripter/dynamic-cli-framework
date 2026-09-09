@@ -66,7 +66,7 @@ describe("PluginRemoveSubCommand", () => {
     expect(messages.print).toEqual(["Plugin @scope/plugin removed.\n"]);
   });
 
-  test("hides the spinner before uninstall() spawns the package manager", async () => {
+  test("keeps the spinner shown across uninstall() and hides it afterward", async () => {
     const { context, messages } = buildContext();
 
     const fakePluginService: PluginService = {
@@ -84,6 +84,6 @@ describe("PluginRemoveSubCommand", () => {
     const command = new PluginRemoveSubCommand();
     await command.execute(context, { pluginId: descriptor.pluginId });
 
-    expect(messages.order).toEqual(["hideSpinner", "uninstall"]);
+    expect(messages.order).toEqual(["uninstall", "hideSpinner"]);
   });
 });
