@@ -1,7 +1,9 @@
 import type Styler from "../../../terminal/Styler.ts";
 import type Terminal from "../../../terminal/Terminal.ts";
 
-const RATE_SMOOTHING_FACTOR = 0.005;
+// Weight given to each new rate sample in the exponential moving average - time constant is
+// roughly 1/RATE_SMOOTHING_FACTOR * 100ms (the render interval).
+const RATE_SMOOTHING_FACTOR = 0.3;
 
 export { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
 import { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
