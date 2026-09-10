@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@flowscripter/dynamic-cli-framework-api": "^2.3.4",
-    "@flowscripter/dynamic-plugin-framework": "^2.2.5",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.6",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.11.4",
@@ -60,11 +60,11 @@
     "supports-terminal-graphics": "^0.1.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.1",
+    "@types/bun": "^1.4.2",
     "@types/node": "^26.4.1",
     "@types/semver": "^7.8.0",
-    "oxfmt": "0.66.0",
-    "oxlint": "1.81.0"
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"
