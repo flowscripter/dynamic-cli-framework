@@ -9,10 +9,15 @@ import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 
 function buildContext(): {
   context: DefaultContext;
-  messages: { print: string[]; spinner: string[]; spinnerHidden: number };
+  messages: { print: string[]; spinner: string[]; spinnerHidden: number; order: string[] };
 } {
   const context = new DefaultContext(getCLIConfig());
-  const messages = { print: [] as string[], spinner: [] as string[], spinnerHidden: 0 };
+  const messages = {
+    print: [] as string[],
+    spinner: [] as string[],
+    spinnerHidden: 0,
+    order: [] as string[],
+  };
   context.addServiceInstance(PRINTER_SERVICE_ID, {
     print: (msg: string) => {
       messages.print.push(msg);
@@ -24,6 +29,7 @@ function buildContext(): {
     },
     hideSpinner: () => {
       messages.spinnerHidden += 1;
+      messages.order.push("hideSpinner");
       return Promise.resolve();
     },
   });
@@ -58,5 +64,26 @@ describe("PluginRemoveSubCommand", () => {
     expect(messages.spinner).toEqual(["Removing plugin: @scope/plugin..."]);
     expect(messages.spinnerHidden).toEqual(1);
     expect(messages.print).toEqual(["Plugin @scope/plugin removed.\n"]);
+  });
+
+  test("keeps the spinner shown across uninstall() and hides it afterward", async () => {
+    const { context, messages } = buildContext();
+
+    const fakePluginService: PluginService = {
+      search: async function* () {},
+      checkAvailable: async () => true,
+      install: async () => {},
+      uninstall: async () => {
+        messages.order.push("uninstall");
+      },
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginRemoveSubCommand();
+    await command.execute(context, { pluginId: descriptor.pluginId });
+
+    expect(messages.order).toEqual(["uninstall", "hideSpinner"]);
   });
 });

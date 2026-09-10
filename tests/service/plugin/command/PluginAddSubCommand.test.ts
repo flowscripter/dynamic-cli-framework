@@ -12,7 +12,13 @@ import type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 
 function buildContext(): {
   context: DefaultContext;
-  messages: { print: string[]; info: string[]; spinner: string[]; spinnerHidden: number };
+  messages: {
+    print: string[];
+    info: string[];
+    spinner: string[];
+    spinnerHidden: number;
+    order: string[];
+  };
 } {
   const context = new DefaultContext(getCLIConfig());
   const messages = {
@@ -20,6 +26,7 @@ function buildContext(): {
     info: [] as string[],
     spinner: [] as string[],
     spinnerHidden: 0,
+    order: [] as string[],
   };
   context.addServiceInstance(PRINTER_SERVICE_ID, {
     print: (msg: string) => {
@@ -36,6 +43,7 @@ function buildContext(): {
     },
     hideSpinner: () => {
       messages.spinnerHidden += 1;
+      messages.order.push("hideSpinner");
       return Promise.resolve();
     },
   });
@@ -74,6 +82,31 @@ describe("PluginAddSubCommand", () => {
       "Installing @scope/plugin@1.0.0...",
     ]);
     expect(messages.spinnerHidden).toEqual(2);
+  });
+
+  test("keeps the spinner shown across install() and hides it afterward", async () => {
+    const { context, messages } = buildContext();
+
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      checkAvailable: async () => true,
+      install: async () => {
+        messages.order.push("install");
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: descriptor.pluginId });
+
+    // First hideSpinner is after search; install() runs while the "Installing..." spinner is
+    // still showing, and is only hidden afterward.
+    expect(messages.order).toEqual(["hideSpinner", "install", "hideSpinner"]);
   });
 
   test("strips the version from the specifier before searching, and passes it to install", async () => {

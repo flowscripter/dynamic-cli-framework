@@ -30,15 +30,17 @@ export class PluginAddSubCommand implements SubCommand {
     const { pluginId, version } = parsePluginSpecifier(argumentValues["pluginId"] as string);
     const searchLabel = version ? `${pluginId}@${version}` : pluginId;
     await printerService.showSpinner(`Searching for plugin: ${searchLabel}`);
-
     let descriptor: VersionedPluginDescriptor | undefined;
-    for await (const d of pluginService.search({ text: pluginId })) {
-      if (getPluginId(d) === pluginId || d.pluginId === pluginId) {
-        descriptor = d;
-        break;
+    try {
+      for await (const d of pluginService.search({ text: pluginId })) {
+        if (getPluginId(d) === pluginId || d.pluginId === pluginId) {
+          descriptor = d;
+          break;
+        }
       }
+    } finally {
+      await printerService.hideSpinner();
     }
-    await printerService.hideSpinner();
 
     if (descriptor && version) {
       // search only ever returns the latest version - substitute the explicitly requested
@@ -85,7 +87,11 @@ export class PluginAddSubCommand implements SubCommand {
     }
 
     await printerService.showSpinner(`Installing ${installLabel}...`);
-    await pluginService.install(descriptor);
+    try {
+      await pluginService.install(descriptor);
+    } finally {
+      await printerService.hideSpinner();
+    }
 
     // Look up the actually-installed version rather than trusting `descriptor.version`: when no
     // version was requested and the plugin wasn't found via search (direct-install fallback),
@@ -97,7 +103,6 @@ export class PluginAddSubCommand implements SubCommand {
         break;
       }
     }
-    await printerService.hideSpinner();
 
     await printerService.print(
       `Plugin ${descriptor.pluginId}@${installedVersion} installed.\n`,

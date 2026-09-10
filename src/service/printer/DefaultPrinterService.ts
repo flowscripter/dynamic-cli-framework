@@ -346,6 +346,10 @@ export default class DefaultPrinterService implements PrinterService {
     if (remaining > 0) {
       await new Promise((resolve) => setTimeout(resolve, remaining));
     }
+    // A spinner left running through the marked region resumes on its own row once the last
+    // marked write's pause/resume cycle completes - that row isn't part of #markedLineCount, so
+    // it must be cleared separately before erasing the counted rows.
+    await this.#spinner.hide();
     await this.#stderrTerminal.clearUpLines(this.#markedLineCount);
     this.#markedLineCount = undefined;
     this.#markEndedAt = undefined;

@@ -216,6 +216,54 @@ describe("SpawnInterfaceAdapter tests", () => {
     expect(preSpawnOutput).toEqual("banner line 1\nbanner line 2\n");
   });
 
+  test("integration: a spinner left running across a spawn produces exactly the spawned block's rows, no extra artifacts", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const printerService = new DefaultPrinterService(
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      true,
+      true,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+    );
+    printerService.colorEnabled = false;
+    const shutdownService: ShutdownService = {
+      addShutdownListener: () => {},
+      enterLongRunningMode: () => {},
+      leaveLongRunningMode: () => {},
+      isShutdownRequested: false,
+    };
+    const spawnService = new DefaultSpawnService();
+    spawnService.setDependencies(printerService, shutdownService);
+    const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
+
+    // Matches the plugin:add/plugin:remove pattern: show the spinner once, leave it showing
+    // across the spawn (which internally pauses/resumes it around each output line via
+    // startMark/startQuote), and only hide it once at the end.
+    await printerService.showSpinner("Installing...");
+
+    const lineCount = 5;
+    const result = await adapter.spawn(
+      [
+        process.execPath,
+        "-e",
+        `for (let i = 1; i <= ${lineCount}; i++) { console.log("line" + i); }`,
+      ],
+      { cwd: tmpdir() },
+    );
+    expect(result).toEqual({ ok: true, exitCode: 0 });
+
+    await printerService.hideSpinner();
+
+    // Same invariant as the plain integration test above: exactly `lineCount` erase operations
+    // from clearMarked().
+    const finalOutput = dummyStderr.getString();
+    const clearCount = finalOutput.split("\x1b[1A\x1b[2K").length - 1;
+    expect(clearCount).toEqual(lineCount);
+  });
+
   test("integration: with color enabled, clears exactly the spawned block's rows on success, leaving an earlier colored banner byte-for-byte intact (#150)", async () => {
     // Regression test for #150: colorText()/prefixLines() wrap an entire message - including a
     // trailing "\n" - with ANSI codes appended *after* that newline (e.g. "foo\n" becomes
