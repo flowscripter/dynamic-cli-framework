@@ -5,6 +5,10 @@ import type Terminal from "../../../terminal/Terminal.ts";
 // roughly 1/RATE_SMOOTHING_FACTOR * 100ms (the render interval).
 const RATE_SMOOTHING_FACTOR = 0.3;
 
+// A rate this close to zero (units/s) produces a meaningless (and, past a certain point,
+// non-finite) "time remaining" estimate - treat it the same as no rate at all.
+const MAX_REMAINING_MILLIS = 999 * 24 * 60 * 60 * 1000;
+
 export { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
 import { ProgressStyle } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -255,10 +259,16 @@ export default class Progress {
           1 +
           Bun.stripANSI(taken).length;
       } else {
-        const remaining =
+        const remainingMillis =
           bar.rate === undefined || bar.rate === 0
+            ? undefined
+            : ((bar.total - bar.current) / bar.rate) * 1000;
+        const remaining =
+          remainingMillis === undefined ||
+          !Number.isFinite(remainingMillis) ||
+          remainingMillis > MAX_REMAINING_MILLIS
             ? "-"
-            : this.#formatTime(((bar.total - bar.current) / bar.rate) * 1000);
+            : this.#formatTime(remainingMillis);
         const currentString = bar.current + "";
         const totalString = bar.total + "";
         suffix += `${this.#styler.colorText(currentString, this.#valColor)}${this.#styler.colorText(
