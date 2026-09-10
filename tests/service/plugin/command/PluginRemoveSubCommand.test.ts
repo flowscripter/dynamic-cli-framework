@@ -53,7 +53,9 @@ describe("PluginRemoveSubCommand", () => {
       checkAvailable: async () => true,
       install: async () => {},
       uninstall: async () => {},
-      listInstalled: async function* () {},
+      listInstalled: async function* () {
+        yield descriptor;
+      },
       checkForUpdates: async function* () {},
     };
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
@@ -76,7 +78,9 @@ describe("PluginRemoveSubCommand", () => {
       uninstall: async () => {
         messages.order.push("uninstall");
       },
-      listInstalled: async function* () {},
+      listInstalled: async function* () {
+        yield descriptor;
+      },
       checkForUpdates: async function* () {},
     };
     context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
@@ -85,5 +89,29 @@ describe("PluginRemoveSubCommand", () => {
     await command.execute(context, { pluginId: descriptor.pluginId });
 
     expect(messages.order).toEqual(["uninstall", "hideSpinner"]);
+  });
+
+  test("reports not installed and skips uninstall() when the plugin isn't installed", async () => {
+    const { context, messages } = buildContext();
+
+    let uninstallCalled = false;
+    const fakePluginService: PluginService = {
+      search: async function* () {},
+      checkAvailable: async () => true,
+      install: async () => {},
+      uninstall: async () => {
+        uninstallCalled = true;
+      },
+      listInstalled: async function* () {},
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginRemoveSubCommand();
+    await command.execute(context, { pluginId: descriptor.pluginId });
+
+    expect(uninstallCalled).toBeFalse();
+    expect(messages.spinner).toEqual([]);
+    expect(messages.print).toEqual(["Plugin @scope/plugin is not installed.\n"]);
   });
 });

@@ -73,6 +73,23 @@ export class PluginAddSubCommand implements SubCommand {
         ? `${descriptor.pluginId}@${descriptor.version}`
         : descriptor.pluginId;
 
+    // If the exact same plugin+version is already installed, there's nothing to do - avoids a
+    // needless reinstall and the registry round-trip below.
+    if (descriptor.version && descriptor.version !== "latest") {
+      for await (const installed of pluginService.listInstalled()) {
+        if (
+          installed.pluginId === descriptor.pluginId &&
+          installed.version === descriptor.version
+        ) {
+          await printerService.print(
+            `Plugin ${descriptor.pluginId}@${installed.version} is already installed.\n`,
+            Icon.INFORMATION,
+          );
+          return;
+        }
+      }
+    }
+
     // Confirm the package (and specific version/tag, if requested) actually exists on the
     // remote marketplace before invoking the package manager - so a non-existent plugin or
     // version is reported clearly instead of failing later (and less clearly) inside

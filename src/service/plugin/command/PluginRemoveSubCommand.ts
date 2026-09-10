@@ -25,6 +25,19 @@ export class PluginRemoveSubCommand implements SubCommand {
     const pluginService = context.getServiceById(PLUGIN_SERVICE_ID) as PluginService;
 
     const pluginId = argumentValues["pluginId"] as string;
+
+    let isInstalled = false;
+    for await (const installed of pluginService.listInstalled()) {
+      if (installed.pluginId === pluginId) {
+        isInstalled = true;
+        break;
+      }
+    }
+    if (!isInstalled) {
+      await printerService.print(`Plugin ${pluginId} is not installed.\n`, Icon.INFORMATION);
+      return;
+    }
+
     await printerService.showSpinner(`Removing plugin: ${pluginId}...`);
     try {
       await pluginService.uninstall(pluginId);
