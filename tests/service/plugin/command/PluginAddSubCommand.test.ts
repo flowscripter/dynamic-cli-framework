@@ -109,6 +109,39 @@ describe("PluginAddSubCommand", () => {
     expect(messages.order).toEqual(["hideSpinner", "install", "hideSpinner"]);
   });
 
+  test("reports already installed and skips install() when the exact version is already present", async () => {
+    const { context, messages } = buildContext();
+
+    let installCalled = false;
+    let checkAvailableCalled = false;
+    const installedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "3.0.0" };
+    const fakePluginService: PluginService = {
+      search: async function* (_query: Readonly<SearchQuery>) {
+        yield descriptor;
+      },
+      checkAvailable: async () => {
+        checkAvailableCalled = true;
+        return true;
+      },
+      install: async () => {
+        installCalled = true;
+      },
+      uninstall: async () => {},
+      listInstalled: async function* () {
+        yield installedDescriptor;
+      },
+      checkForUpdates: async function* () {},
+    };
+    context.addServiceInstance(PLUGIN_SERVICE_ID, fakePluginService);
+
+    const command = new PluginAddSubCommand();
+    await command.execute(context, { pluginId: `${descriptor.pluginId}@3.0.0` });
+
+    expect(installCalled).toBeFalse();
+    expect(checkAvailableCalled).toBeFalse();
+    expect(messages.print).toEqual(["Plugin @scope/plugin@3.0.0 is already installed.\n"]);
+  });
+
   test("strips the version from the specifier before searching, and passes it to install", async () => {
     const { context, messages } = buildContext();
 
@@ -288,6 +321,7 @@ describe("PluginAddSubCommand", () => {
     const { context, messages } = buildContext();
 
     const installedDescriptor: VersionedPluginDescriptor = { ...descriptor, version: "3.0.0" };
+    let listInstalledCallCount = 0;
     const fakePluginService: PluginService = {
       search: async function* (_query: Readonly<SearchQuery>) {
         yield descriptor;
@@ -295,8 +329,13 @@ describe("PluginAddSubCommand", () => {
       checkAvailable: async () => true,
       install: async () => {},
       uninstall: async () => {},
+      // Not yet installed for the pre-install "already installed" check; installed by the time
+      // the post-install lookup runs.
       listInstalled: async function* () {
-        yield installedDescriptor;
+        listInstalledCallCount += 1;
+        if (listInstalledCallCount > 1) {
+          yield installedDescriptor;
+        }
       },
       checkForUpdates: async function* () {},
     };
