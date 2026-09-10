@@ -141,6 +141,44 @@ describe("Progress tests", () => {
     await progress.hide(handle);
   });
 
+  test("time remaining shows '-' instead of an absurd/overflowing estimate once the rate decays near zero", async () => {
+    const streamString = new StreamString();
+    (streamString.writeStream as unknown as { columns: number }).columns = 120;
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const progress = new Progress(terminal, new TtyStyler(3));
+
+    const realDateNow = Date.now;
+    let fakeNow = 1_000_000;
+    Date.now = () => fakeNow;
+
+    let handle!: number;
+    try {
+      handle = progress.add("bytes", "downloading", 10_000_000_000, 0);
+      // Establish a fast initial rate.
+      fakeNow += 100;
+      progress.update(handle, 1_000_000);
+      // Then stall completely - repeated same-value updates decay the smoothed rate toward
+      // zero without ever hitting exactly 0, which used to produce a "time remaining" of
+      // several e+48 days (finite but nonsensical, rendered in exponential notation) or, once
+      // the division overflowed past Number.MAX_VALUE, a literal Infinity/NaN.
+      for (let i = 0; i < 40; i++) {
+        fakeNow += 100;
+        progress.update(handle, 1_000_000);
+      }
+    } finally {
+      Date.now = realDateNow;
+    }
+
+    await sleep(150);
+    const output = streamString.getString();
+    const plain = Bun.stripANSI(output.slice(output.indexOf("time remaining:")));
+    expect(plain).toContain("time remaining: -");
+    expect(plain).not.toContain("Infinity");
+    expect(plain).not.toContain("NaN");
+    expect(plain).not.toMatch(/e\+\d+d/);
+    await progress.hide(handle);
+  });
+
   test("ProgressStyle enum has expected values", () => {
     expect(ProgressStyle.STROKE).toBe(ProgressStyle.STROKE);
     expect(ProgressStyle.FILL).toBe(ProgressStyle.FILL);
