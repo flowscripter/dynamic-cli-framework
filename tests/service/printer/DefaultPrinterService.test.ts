@@ -260,7 +260,7 @@ describe("DefaultPrinterService tests", () => {
     printerService.colorEnabled = false;
 
     await printerService.showSpinner("hello world");
-    await sleep(150);
+    await sleep(250);
     await printerService.hideSpinner();
 
     expectBytesEquals(
