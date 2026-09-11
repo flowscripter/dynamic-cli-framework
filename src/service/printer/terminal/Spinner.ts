@@ -5,14 +5,18 @@ const BOX_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇
 
 const STAR_FRAMES = ["★", "✶", "✷", "✹", "✷", "✶", "★", "✦"];
 
+const SHOW_DELAY_MILLIS = 100;
+
 export { SpinnerStyle } from "@flowscripter/dynamic-cli-framework-api";
 import { SpinnerStyle } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class Spinner {
   #isShown = false;
+  #isRendering = false;
   #message: string | undefined;
   #frameIndex = 0;
   #timer: Timer | undefined;
+  #showDelayTimer: Timer | undefined;
   #renderInFlight: Promise<void> | undefined;
   #spinColor = 0x8a8a8a;
   #msgColor = 0x808080;
@@ -62,6 +66,19 @@ export default class Spinner {
     }, 100);
   }
 
+  async #beginRendering(): Promise<void> {
+    this.#isRendering = true;
+    this.#startTimer();
+    await this.#terminal.hideCursor();
+  }
+
+  #scheduleShow(): void {
+    this.#showDelayTimer = setTimeout(() => {
+      this.#showDelayTimer = undefined;
+      void this.#beginRendering();
+    }, SHOW_DELAY_MILLIS);
+  }
+
   public async show(message?: string): Promise<void> {
     this.#message = message;
     if (this.#isShown) {
@@ -69,8 +86,8 @@ export default class Spinner {
     }
     this.#isShown = true;
     this.#frameIndex = 0;
-    this.#startTimer();
-    await this.#terminal.hideCursor();
+    this.#scheduleShow();
+    return Promise.resolve();
   }
 
   public async hide(): Promise<void> {
@@ -78,6 +95,13 @@ export default class Spinner {
       return Promise.resolve();
     }
     this.#isShown = false;
+    this.#message = undefined;
+    if (this.#showDelayTimer) {
+      clearTimeout(this.#showDelayTimer);
+      this.#showDelayTimer = undefined;
+      return;
+    }
+    this.#isRendering = false;
     clearInterval(this.#timer);
     this.#timer = undefined;
     if (this.#renderInFlight) {
@@ -85,12 +109,16 @@ export default class Spinner {
     }
     await this.#terminal.clearLine();
     await this.#terminal.showCursor();
-    this.#message = undefined;
   }
 
   public async pause(): Promise<void> {
     if (!this.#isShown) {
       return Promise.resolve();
+    }
+    if (this.#showDelayTimer) {
+      clearTimeout(this.#showDelayTimer);
+      this.#showDelayTimer = undefined;
+      return;
     }
     clearInterval(this.#timer);
     this.#timer = undefined;
@@ -101,10 +129,14 @@ export default class Spinner {
   }
 
   public resume(): void {
-    if (!this.#isShown || this.#timer !== undefined) {
+    if (!this.#isShown || this.#timer !== undefined || this.#showDelayTimer !== undefined) {
       return;
     }
-    this.#startTimer();
+    if (this.#isRendering) {
+      this.#startTimer();
+    } else {
+      this.#scheduleShow();
+    }
   }
 
   set spinnerColor(color: number) {

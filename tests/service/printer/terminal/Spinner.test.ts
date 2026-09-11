@@ -15,13 +15,38 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 }
 
 describe("Spinner tests", () => {
-  test("Spinner works", async () => {
+  test("hiding before the show delay elapses renders nothing", async () => {
+    const streamString = new StreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    await spinner.show();
+    await sleep(50);
+    await spinner.hide();
+    await sleep(100);
+
+    expect(streamString.getString()).toBe("");
+  });
+
+  test("showing for longer than the show delay renders a frame", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
     const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
     await sleep(250);
+    await spinner.hide();
+
+    expect(streamString.getString()).not.toBe("");
+  });
+
+  test("Spinner works", async () => {
+    const streamString = new StreamString();
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const spinner = new Spinner(terminal, new TtyStyler(3));
+
+    await spinner.show();
+    await sleep(350);
     await spinner.hide();
 
     expectStringEquals(streamString.getString(), "⠋⠙");
@@ -67,7 +92,7 @@ describe("Spinner tests", () => {
 
     spinner.spinnerStyle = SpinnerStyle.STAR;
     await spinner.show();
-    await sleep(250);
+    await sleep(350);
     await spinner.hide();
 
     expectStringEquals(streamString.getString(), "★✶");
@@ -80,7 +105,7 @@ describe("Spinner tests", () => {
 
     spinner.spinnerStyle = SpinnerStyle.STAR;
     await spinner.show();
-    await sleep(150);
+    await sleep(250);
     await spinner.hide();
 
     const starOutput = streamString.getString();
@@ -113,8 +138,8 @@ describe("Spinner tests", () => {
     const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
-    // Let the first tick fire and reach (and block on) its clearLine() call.
-    await sleep(120);
+    // Let the show delay elapse, the first tick fire, and reach (and block on) its clearLine() call.
+    await sleep(220);
     expect(calls).toEqual(["clearLine"]);
 
     const pausePromise = spinner.pause();
@@ -135,7 +160,7 @@ describe("Spinner tests", () => {
     const spinner = new Spinner(terminal, new TtyStyler(3));
 
     await spinner.show();
-    await sleep(250);
+    await sleep(350);
     await spinner.hide();
 
     expectStringEquals(streamString.getString(), "⠋⠙");
