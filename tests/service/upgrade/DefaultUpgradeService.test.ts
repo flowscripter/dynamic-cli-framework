@@ -8,6 +8,7 @@ import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic
 import type {
   FetchOptions,
   FetchService,
+  KeyValueService,
   PrinterService,
   SpawnResult,
   SpawnService,
@@ -42,6 +43,22 @@ function getConfig(overrides: Partial<UpgradeLocationsConfig> = {}): UpgradeLoca
 function getSpawnService(handler: (command: ReadonlyArray<string>) => SpawnResult): SpawnService {
   return {
     spawn: (command) => Promise.resolve(handler(command)),
+  };
+}
+
+function getKeyValueService(): KeyValueService {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string) => Promise.resolve(store.get(key) as T),
+    set: (key, value) => {
+      store.set(key, value);
+      return Promise.resolve();
+    },
+    has: (key) => Promise.resolve(store.has(key)),
+    delete: (key) => {
+      store.delete(key);
+      return Promise.resolve();
+    },
   };
 }
 
@@ -219,6 +236,48 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+  });
+
+  test("detectInstallMethod detects HOMEBREW from the running executable's Cellar path, without spawning", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/opt/homebrew/Cellar/example-cli/1.0.0/bin/example-cli";
+    try {
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      // No SpawnService set - a fall-through to `brew list` would throw when detectInstallMethod
+      // tries to call spawn() on undefined.
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod caches a brew list result so a second call does not spawn again", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      let spawnCount = 0;
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      service.setDependencies(
+        getSpawnService(() => {
+          spawnCount += 1;
+          return { ok: true, exitCode: 0 };
+        }),
+        undefined,
+        undefined,
+        getKeyValueService(),
+      );
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(spawnCount).toEqual(1);
+    } finally {
+      process.execPath = originalExecPath;
+    }
   });
 
   test("checkForUpgrade reports unsupported for unsupported platform", async () => {

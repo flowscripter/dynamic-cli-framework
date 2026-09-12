@@ -57,7 +57,10 @@ export default class UpgradeServiceProvider implements ServiceProvider {
       logger.debug(() => "FetchService not available, upgrade version checks will be unavailable");
     }
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-    upgradeService.setDependencies(spawnService, fetchService, printerService);
+    const keyValueService = context.doesServiceExist(KEY_VALUE_SERVICE_ID)
+      ? (context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
+      : undefined;
+    upgradeService.setDependencies(spawnService, fetchService, printerService, keyValueService);
 
     void upgradeService.getUpgradeCheckResult();
 
@@ -65,12 +68,10 @@ export default class UpgradeServiceProvider implements ServiceProvider {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");
       return;
     }
-    if (!context.doesServiceExist(KEY_VALUE_SERVICE_ID)) {
+    if (!keyValueService) {
       logger.debug(() => "KeyValueService not available, skipping auto-upgrade");
       return;
     }
-
-    const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
     if (await keyValueService.has("upgrade-status")) {
       const status = await keyValueService.get("upgrade-status");
