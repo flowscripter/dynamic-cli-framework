@@ -1,10 +1,12 @@
 import process from "node:process";
+import { realpathSync } from "node:fs";
 import { mkdtemp, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type {
   CLIConfig,
   FetchService,
+  KeyValueService,
   PrinterService,
   SpawnResult,
   SpawnService,
@@ -55,6 +57,7 @@ export default class DefaultUpgradeService implements UpgradeService {
   #spawnService: SpawnService | undefined;
   #fetchService: FetchService | undefined;
   #printerService: PrinterService | undefined;
+  #keyValueService: KeyValueService | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
@@ -68,10 +71,12 @@ export default class DefaultUpgradeService implements UpgradeService {
     spawnService: SpawnService | undefined,
     fetchService: FetchService | undefined,
     printerService: PrinterService | undefined,
+    keyValueService?: KeyValueService,
   ): void {
     this.#spawnService = spawnService;
     this.#fetchService = fetchService;
     this.#printerService = printerService;
+    this.#keyValueService = keyValueService;
   }
 
   // Mirrors SpawnInterfaceAdapter's plugin:add/plugin:remove pattern: wrap a spawned command's
@@ -286,14 +291,47 @@ export default class DefaultUpgradeService implements UpgradeService {
     );
   }
 
+  // Homebrew relinks a formula's installed binary from its Cellar directory into a `bin/` symlink,
+  // so resolving the running executable's real path confirms a homebrew install without spawning
+  // `brew`, which has a slow cold start that routinely blows the opportunistic upgrade check's
+  // VERSION_CHECK_TIMEOUT_MS budget.
+  #isRunningFromHomebrewCellar(formula: string): boolean {
+    let realExecutable = process.execPath;
+    try {
+      realExecutable = realpathSync(process.execPath);
+    } catch {
+      // process.execPath may not resolve on disk (e.g. a fabricated path in tests) - fall back to
+      // the unresolved path rather than treating that as "not installed".
+    }
+    return realExecutable.includes(`/Cellar/${formula}/`);
+  }
+
   async #isHomebrewInstalled(): Promise<boolean> {
-    if (!this.#spawnService || !this.#config.homebrew) {
+    if (!this.#config.homebrew) {
       return false;
     }
-    const result = await this.#spawnService.spawn(
-      ["brew", "list", "--versions", this.#config.homebrew.formula],
-      { mode: "ignore", longRunning: false },
-    );
+    const { formula } = this.#config.homebrew;
+    if (this.#isRunningFromHomebrewCellar(formula)) {
+      return true;
+    }
+    // Cellar-path detection above only confirms a positive; it can't tell "not installed" from
+    // "not currently running from a homebrew-managed path". Fall back to a cached result from a
+    // previous `brew list` spawn (below) so that spawn only ever runs once per formula per
+    // keystore, rather than on every invocation.
+    const cacheKey = `homebrew-installed:${formula}`;
+    if (this.#keyValueService && (await this.#keyValueService.has(cacheKey))) {
+      return await this.#keyValueService.get<boolean>(cacheKey);
+    }
+    if (!this.#spawnService) {
+      return false;
+    }
+    const result = await this.#spawnService.spawn(["brew", "list", "--versions", formula], {
+      mode: "ignore",
+      longRunning: false,
+    });
+    if (this.#keyValueService) {
+      await this.#keyValueService.set(cacheKey, result.ok);
+    }
     return result.ok;
   }
 
