@@ -27,19 +27,27 @@ import getLogger from "../../util/logger.ts";
 const logger = getLogger("DefaultUpgradeService");
 
 // KeyValueService key caching the resolved InstallMethod (see detectInstallMethod()). Stored
-// indefinitely - a given install rarely changes method - value is one of InstallMethod's string
-// enum values, e.g. "homebrew".
+// value shape: { method: InstallMethod, checkedAt: number } where checkedAt is Date.now() at
+// detection time - refreshed on the same CACHE_TTL_MILLIS cycle as the latest-version cache below,
+// rather than trusted indefinitely, so a reinstall via a different method is eventually picked up
+// even outside the no-spawn signals (Cellar path, linux script prefix) that self-heal immediately.
 const INSTALL_METHOD_CACHE_KEY = "install-method";
 
 // KeyValueService key prefix caching a #getLatestVersion() lookup per install method, e.g.
 // "latest-version:homebrew". Stored value shape: { version: string, checkedAt: number } where
-// checkedAt is Date.now() at lookup time - see LATEST_VERSION_CACHE_TTL_MILLIS.
+// checkedAt is Date.now() at lookup time - see CACHE_TTL_MILLIS.
 const LATEST_VERSION_CACHE_KEY_PREFIX = "latest-version:";
 
-// How long a cached latest-version lookup is trusted before a fresh network/spawn lookup runs
-// again - long enough to remove the cost from routine invocations, short enough that a genuine
-// new release surfaces within about a day.
-const LATEST_VERSION_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000;
+// How long a cached install-method or latest-version lookup is trusted before a fresh
+// spawn/network lookup runs again - long enough to remove the cost from routine invocations,
+// short enough that a genuine reinstall or new release surfaces within about a day.
+const CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000;
+
+interface CachedInstallMethod {
+  method: InstallMethod;
+  checkedAt: number;
+  [key: string]: ValueNode;
+}
 
 interface CachedLatestVersion {
   version: string;
@@ -227,16 +235,44 @@ export default class DefaultUpgradeService implements UpgradeService {
     return detected;
   }
 
-  async #getCachedInstallMethod(): Promise<InstallMethod | undefined> {
-    if (!this.#keyValueService || !(await this.#keyValueService.has(INSTALL_METHOD_CACHE_KEY))) {
+  // The opportunistic startup check (see getUpgradeCheckResult()) runs detached from
+  // UpgradeServiceProvider.initService()'s own await chain, so it can still be running after that
+  // scoped KeyValueService access window has closed - a KeyValueService call landing after that
+  // point throws (or could land under a different service's scope entirely). Treat any such
+  // failure as "caching unavailable right now" rather than letting it fail the whole check.
+  async #safeKeyValueCall<T>(op: () => Promise<T>): Promise<T | undefined> {
+    try {
+      return await op();
+    } catch (error) {
+      logger.debug(() => `KeyValueService access failed, skipping cache: ${error}`);
       return undefined;
     }
-    return this.#keyValueService.get<InstallMethod>(INSTALL_METHOD_CACHE_KEY);
+  }
+
+  async #getCachedInstallMethod(): Promise<InstallMethod | undefined> {
+    if (!this.#keyValueService) {
+      return undefined;
+    }
+    const keyValueService = this.#keyValueService;
+    const has = await this.#safeKeyValueCall(() => keyValueService.has(INSTALL_METHOD_CACHE_KEY));
+    if (!has) {
+      return undefined;
+    }
+    const cached = await this.#safeKeyValueCall(() =>
+      keyValueService.get<CachedInstallMethod>(INSTALL_METHOD_CACHE_KEY),
+    );
+    if (!cached || Date.now() - cached.checkedAt >= CACHE_TTL_MILLIS) {
+      return undefined;
+    }
+    return cached.method;
   }
 
   async #cacheInstallMethod(method: InstallMethod): Promise<void> {
     if (this.#keyValueService) {
-      await this.#keyValueService.set(INSTALL_METHOD_CACHE_KEY, method);
+      const keyValueService = this.#keyValueService;
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(INSTALL_METHOD_CACHE_KEY, { method, checkedAt: Date.now() }),
+      );
     }
   }
 
@@ -393,16 +429,24 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   async #getLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
     const cacheKey = `${LATEST_VERSION_CACHE_KEY_PREFIX}${installMethod}`;
-    if (this.#keyValueService && (await this.#keyValueService.has(cacheKey))) {
-      const cached = await this.#keyValueService.get<CachedLatestVersion>(cacheKey);
-      if (Date.now() - cached.checkedAt < LATEST_VERSION_CACHE_TTL_MILLIS) {
-        return { ok: true, version: cached.version };
+    const keyValueService = this.#keyValueService;
+    if (keyValueService) {
+      const has = await this.#safeKeyValueCall(() => keyValueService.has(cacheKey));
+      if (has) {
+        const cached = await this.#safeKeyValueCall(() =>
+          keyValueService.get<CachedLatestVersion>(cacheKey),
+        );
+        if (cached && Date.now() - cached.checkedAt < CACHE_TTL_MILLIS) {
+          return { ok: true, version: cached.version };
+        }
       }
     }
 
     const result = await this.#lookupLatestVersion(installMethod);
-    if (result.ok && this.#keyValueService) {
-      await this.#keyValueService.set(cacheKey, { version: result.version, checkedAt: Date.now() });
+    if (result.ok && keyValueService) {
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(cacheKey, { version: result.version, checkedAt: Date.now() }),
+      );
     }
     return result;
   }
