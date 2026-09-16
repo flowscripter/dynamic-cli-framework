@@ -5,7 +5,7 @@
     "": {
       "name": "@flowscripter/dynamic-cli-framework",
       "dependencies": {
-        "@flowscripter/dynamic-cli-framework-api": "github:flowscripter/dynamic-cli-framework-api#feat-issue-6-progress-bar-format-api",
+        "@flowscripter/dynamic-cli-framework-api": "^3.0.0",
         "@flowscripter/dynamic-plugin-framework": "^2.2.8",
         "emphasize": "^7.0.0",
         "fastest-levenshtein": "^1.0.16",
@@ -28,11 +28,8 @@
       },
     },
   },
-  "trustedDependencies": [
-    "@flowscripter/dynamic-cli-framework-api",
-  ],
   "packages": {
-    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@github:flowscripter/dynamic-cli-framework-api#bc2cd70", { "peerDependencies": { "typescript": "^7.0.2" } }, "flowscripter-dynamic-cli-framework-api-bc2cd70", "sha512-ytHtjSnoIEydk6VwKq7KvNoGCvFZTmGD0Vcwld0V/qeA0+5Mcpo7JjJujTbwnVxzaBvNdnSvknIiP8Ns+OTe2w=="],
+    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@3.0.0", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-KFJaC9wLlZGYCw4c4doJ2IUukul55bPWHyRiGSHbrp/pEEHmPncdCmcovL3Hmd7Le+6iUm+YjvInrA0kwEBxgw=="],
 
     "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@2.2.9", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-CxmVatloVWLSv87ZTk9Ly8QGI4al4ONNgrR4C4AbdHSpQSB3NljGKKF9J9EKQK87wGcNEU9XbyxeYKLNkHLHvQ=="],
 
