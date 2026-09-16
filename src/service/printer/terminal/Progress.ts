@@ -271,9 +271,6 @@ export default class Progress {
           this.#labColor,
         )} ${rate}${this.#styler.colorText(", time remaining:", this.#labColor)} ${remaining}`;
       }
-      // Measure the actual rendered width (minus the bar itself, inserted between prefix and
-      // suffix below) rather than manually summing each segment's length - format()/formatRate()
-      // return arbitrary-length strings, so there's no fixed-length arithmetic to get right.
       const visibleWidth = Bun.stripANSI(prefix + suffix).length;
       let available = consoleWidth - visibleWidth;
       if (available < 0) {
