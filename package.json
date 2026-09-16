@@ -46,7 +46,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepare": "tsc -p tsconfig.build.json"
+    "prepare": "bun install --no-save && tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@flowscripter/dynamic-cli-framework-api": "github:flowscripter/dynamic-cli-framework-api#feat-issue-6-progress-bar-format-api",
