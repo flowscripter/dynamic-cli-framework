@@ -12,6 +12,7 @@ import type {
   SpawnService,
   UpgradeCheckResult,
   UpgradeResult,
+  ValueNode,
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
   InstallMethod,
@@ -24,6 +25,27 @@ import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultUpgradeService");
+
+// KeyValueService key caching the resolved InstallMethod (see detectInstallMethod()). Stored
+// indefinitely - a given install rarely changes method - value is one of InstallMethod's string
+// enum values, e.g. "homebrew".
+const INSTALL_METHOD_CACHE_KEY = "install-method";
+
+// KeyValueService key prefix caching a #getLatestVersion() lookup per install method, e.g.
+// "latest-version:homebrew". Stored value shape: { version: string, checkedAt: number } where
+// checkedAt is Date.now() at lookup time - see LATEST_VERSION_CACHE_TTL_MILLIS.
+const LATEST_VERSION_CACHE_KEY_PREFIX = "latest-version:";
+
+// How long a cached latest-version lookup is trusted before a fresh network/spawn lookup runs
+// again - long enough to remove the cost from routine invocations, short enough that a genuine
+// new release surfaces within about a day.
+const LATEST_VERSION_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000;
+
+interface CachedLatestVersion {
+  version: string;
+  checkedAt: number;
+  [key: string]: ValueNode;
+}
 
 // checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
 // so that opportunistic call is raced against this timeout so it never stalls CLI startup.
@@ -166,19 +188,56 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   public async detectInstallMethod(os: SupportedOs): Promise<InstallMethod | undefined> {
-    if (os === SupportedOs.MACOS && this.#config.homebrew && (await this.#isHomebrewInstalled())) {
+    // Cheap, no-spawn signals are checked first and always win over the cache below, so a fresh
+    // install is picked up immediately rather than waiting on a stale cached method.
+    if (
+      os === SupportedOs.MACOS &&
+      this.#config.homebrew &&
+      this.#isRunningFromHomebrewCellar(this.#config.homebrew.formula)
+    ) {
       return InstallMethod.HOMEBREW;
-    }
-    if (os === SupportedOs.WINDOWS && this.#config.winget && (await this.#isWingetInstalled())) {
-      return InstallMethod.WINGET;
     }
     if (os === SupportedOs.LINUX && this.#config.linuxScript && this.#isLinuxScriptInstall()) {
       return InstallMethod.LINUX_SCRIPT;
     }
-    if (this.#config.githubRelease) {
-      return InstallMethod.GITHUB_RELEASE;
+
+    // Everything else needs an external process spawn (`brew list`, `winget list`) to confirm -
+    // cache the resolved method so that spawn only ever happens once per keystore.
+    const cached = await this.#getCachedInstallMethod();
+    if (cached !== undefined) {
+      return cached;
     }
-    return undefined;
+
+    let detected: InstallMethod | undefined;
+    if (os === SupportedOs.MACOS && this.#config.homebrew && (await this.#isHomebrewInstalled())) {
+      detected = InstallMethod.HOMEBREW;
+    } else if (
+      os === SupportedOs.WINDOWS &&
+      this.#config.winget &&
+      (await this.#isWingetInstalled())
+    ) {
+      detected = InstallMethod.WINGET;
+    } else if (this.#config.githubRelease) {
+      detected = InstallMethod.GITHUB_RELEASE;
+    }
+
+    if (detected !== undefined) {
+      await this.#cacheInstallMethod(detected);
+    }
+    return detected;
+  }
+
+  async #getCachedInstallMethod(): Promise<InstallMethod | undefined> {
+    if (!this.#keyValueService || !(await this.#keyValueService.has(INSTALL_METHOD_CACHE_KEY))) {
+      return undefined;
+    }
+    return this.#keyValueService.get<InstallMethod>(INSTALL_METHOD_CACHE_KEY);
+  }
+
+  async #cacheInstallMethod(method: InstallMethod): Promise<void> {
+    if (this.#keyValueService) {
+      await this.#keyValueService.set(INSTALL_METHOD_CACHE_KEY, method);
+    }
   }
 
   public async checkForUpgrade(
@@ -307,31 +366,13 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   async #isHomebrewInstalled(): Promise<boolean> {
-    if (!this.#config.homebrew) {
+    if (!this.#spawnService || !this.#config.homebrew) {
       return false;
     }
-    const { formula } = this.#config.homebrew;
-    if (this.#isRunningFromHomebrewCellar(formula)) {
-      return true;
-    }
-    // Cellar-path detection above only confirms a positive; it can't tell "not installed" from
-    // "not currently running from a homebrew-managed path". Fall back to a cached result from a
-    // previous `brew list` spawn (below) so that spawn only ever runs once per formula per
-    // keystore, rather than on every invocation.
-    const cacheKey = `homebrew-installed:${formula}`;
-    if (this.#keyValueService && (await this.#keyValueService.has(cacheKey))) {
-      return await this.#keyValueService.get<boolean>(cacheKey);
-    }
-    if (!this.#spawnService) {
-      return false;
-    }
-    const result = await this.#spawnService.spawn(["brew", "list", "--versions", formula], {
-      mode: "ignore",
-      longRunning: false,
-    });
-    if (this.#keyValueService) {
-      await this.#keyValueService.set(cacheKey, result.ok);
-    }
+    const result = await this.#spawnService.spawn(
+      ["brew", "list", "--versions", this.#config.homebrew.formula],
+      { mode: "ignore", longRunning: false },
+    );
     return result.ok;
   }
 
@@ -351,6 +392,22 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   async #getLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
+    const cacheKey = `${LATEST_VERSION_CACHE_KEY_PREFIX}${installMethod}`;
+    if (this.#keyValueService && (await this.#keyValueService.has(cacheKey))) {
+      const cached = await this.#keyValueService.get<CachedLatestVersion>(cacheKey);
+      if (Date.now() - cached.checkedAt < LATEST_VERSION_CACHE_TTL_MILLIS) {
+        return { ok: true, version: cached.version };
+      }
+    }
+
+    const result = await this.#lookupLatestVersion(installMethod);
+    if (result.ok && this.#keyValueService) {
+      await this.#keyValueService.set(cacheKey, { version: result.version, checkedAt: Date.now() });
+    }
+    return result;
+  }
+
+  async #lookupLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
     switch (installMethod) {
       case InstallMethod.GITHUB_RELEASE:
       case InstallMethod.LINUX_SCRIPT:

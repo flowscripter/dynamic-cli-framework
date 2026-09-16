@@ -280,6 +280,96 @@ describe("DefaultUpgradeService", () => {
     }
   });
 
+  test("detectInstallMethod caches a winget list result so a second call does not spawn again", async () => {
+    let spawnCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      getSpawnService(() => {
+        spawnCount += 1;
+        return { ok: true, exitCode: 0 };
+      }),
+      undefined,
+      undefined,
+      getKeyValueService(),
+    );
+    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
+    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
+    expect(spawnCount).toEqual(1);
+  });
+
+  test("checkForUpgrade caches a latest-version lookup within the TTL, refreshing once it expires", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    service.setDependencies(
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect(fetchCount === 1 ? "1.1.0" : "1.2.0");
+      }),
+      undefined,
+      getKeyValueService(),
+    );
+
+    const first = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (first.status !== "checked") throw new Error(`expected "checked", got ${first.status}`);
+    expect(first.latestVersion).toEqual("1.1.0");
+
+    // Within the TTL - reuses the cached version, no second fetch.
+    const second = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (second.status !== "checked") throw new Error(`expected "checked", got ${second.status}`);
+    expect(second.latestVersion).toEqual("1.1.0");
+    expect(fetchCount).toEqual(1);
+  });
+
+  test("checkForUpgrade refreshes a latest-version lookup once its cache entry has expired", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    const keyValueService = getKeyValueService();
+    await keyValueService.set("latest-version:github-release", {
+      version: "1.0.9",
+      checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
+    });
+    service.setDependencies(
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect("2.0.0");
+      }),
+      undefined,
+      keyValueService,
+    );
+
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("2.0.0");
+    expect(fetchCount).toEqual(1);
+  });
+
   test("checkForUpgrade reports unsupported for unsupported platform", async () => {
     const service = new DefaultUpgradeService(
       getConfig({ supportedPlatforms: [] }),
