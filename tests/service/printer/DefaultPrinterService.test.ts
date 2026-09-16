@@ -286,7 +286,12 @@ describe("DefaultPrinterService tests", () => {
     );
     printerService.colorEnabled = false;
 
-    const handle = await printerService.showProgressBar("bits", "foo", 150, 35);
+    const handle = await printerService.showProgressBar({
+      message: "foo",
+      total: 150,
+      current: 35,
+      format: (value) => `${value}bits`,
+    });
     await sleep(50);
     printerService.updateProgressBar(handle, 50);
     await sleep(50);
@@ -309,9 +314,15 @@ describe("DefaultPrinterService tests", () => {
     );
     printerService.colorEnabled = false;
 
-    const handle1 = await printerService.showProgressBar("bits", "foo");
+    const handle1 = await printerService.showProgressBar({
+      message: "foo",
+      format: (value) => `${value}bits`,
+    });
     await sleep(50);
-    const handle2 = await printerService.showProgressBar("megaflops", "bar");
+    const handle2 = await printerService.showProgressBar({
+      message: "bar",
+      format: (value) => `${value}megaflops`,
+    });
     await sleep(50);
     printerService.updateProgressBar(handle1, 25, "foo1");
     await sleep(50);
@@ -812,7 +823,7 @@ describe("DefaultPrinterService tests", () => {
       new TtyStyler(3),
     );
 
-    const handle = await printerService.showProgressBar("bits", "foo", 100, 0);
+    const handle = await printerService.showProgressBar({ message: "foo", total: 100, current: 0 });
 
     expect(handle).toEqual(-1);
     expectStringEquals(dummyStderr.getString(), "");

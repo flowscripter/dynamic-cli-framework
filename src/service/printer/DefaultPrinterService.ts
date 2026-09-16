@@ -5,7 +5,7 @@ import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type Icon,
   Level,
-  type ProgressStyle,
+  type ProgressBarOptions,
   type SpinnerStyle,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type Terminal from "../../terminal/Terminal.ts";
@@ -385,13 +385,7 @@ export default class DefaultPrinterService implements PrinterService {
     await this.#spinner.hide();
   }
 
-  public async showProgressBar(
-    units: string,
-    message = "",
-    total = 100,
-    current = 0,
-    style?: ProgressStyle,
-  ): Promise<number> {
+  public async showProgressBar(options: ProgressBarOptions = {}): Promise<number> {
     if (!this.#stderrTerminal.isTty()) {
       return -1;
     }
@@ -399,11 +393,20 @@ export default class DefaultPrinterService implements PrinterService {
     if (this.#threshold > Level.INFO) {
       return -1;
     }
-    if (style != null) {
-      this.#progress.progressStyle = style;
+    if (options.style != null) {
+      this.#progress.progressStyle = options.style;
     }
 
-    return this.#progress.add(units, message, total, current);
+    const format = options.format ?? ((value: number) => String(value));
+    const formatRate = options.formatRate ?? ((rate: number) => `${format(rate)}/s`);
+
+    return this.#progress.add(
+      options.message ?? "",
+      options.total ?? 100,
+      options.current ?? 0,
+      format,
+      formatRate,
+    );
   }
 
   public async hideProgressBar(handle: number): Promise<void> {

@@ -5,13 +5,16 @@ import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import TtyStyler from "../../../../src/terminal/TtyStyler.ts";
 
+const format = (value: number): string => String(value);
+const formatRate = (rate: number): string => rate.toFixed(2);
+
 describe("Progress tests", () => {
   test("Progress works", async () => {
     const streamString = new StreamString();
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
-    const handle = progress.add("foo", "bar", 100, 0);
+    const handle = progress.add("bar", 100, 0, format, formatRate);
     await sleep(150);
     progress.update(handle, 50, "bar2");
     await sleep(150);
@@ -25,8 +28,8 @@ describe("Progress tests", () => {
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
-    const handle1 = progress.add("foo1", "bar2", 100, 0);
-    const handle2 = progress.add("foo2", "bar2", 200, 0);
+    const handle1 = progress.add("bar2", 100, 0, format, formatRate);
+    const handle2 = progress.add("bar2", 200, 0, format, formatRate);
     await sleep(150);
     progress.update(handle1, 50, "bar3");
     await sleep(150);
@@ -44,7 +47,7 @@ describe("Progress tests", () => {
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
-    const handle = progress.add("bytes", "downloading", 100, 50);
+    const handle = progress.add("downloading", 100, 50, format, formatRate);
     await sleep(150);
     const output = streamString.getString();
     expect(output).toContain("=");
@@ -61,7 +64,7 @@ describe("Progress tests", () => {
     const progress = new Progress(terminal, new TtyStyler(3));
 
     progress.progressStyle = ProgressStyle.FILL;
-    const handle = progress.add("bytes", "downloading", 100, 50);
+    const handle = progress.add("downloading", 100, 50, format, formatRate);
     await sleep(150);
     const output = streamString.getString();
     expect(output).toContain("▰");
@@ -76,7 +79,7 @@ describe("Progress tests", () => {
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
-    const handle = progress.add("bytes", "downloading", 100, 50);
+    const handle = progress.add("downloading", 100, 50, format, formatRate);
     await sleep(150);
     let output = streamString.getString();
     expect(output).toContain("=");
@@ -101,7 +104,7 @@ describe("Progress tests", () => {
 
     let handle!: number;
     try {
-      handle = progress.add("bytes", "hashing", 100_000_000, 0);
+      handle = progress.add("hashing", 100_000_000, 0, format, formatRate);
       // Noisy/slow first sample: only 1000 bytes in the first (simulated) second.
       fakeNow += 1000;
       progress.update(handle, 1000);
@@ -130,7 +133,7 @@ describe("Progress tests", () => {
     const terminal = new TtyTerminal(streamString.writeStream);
     const progress = new Progress(terminal, new TtyStyler(3));
 
-    const handle = progress.add("bytes", "Hashing file.mxf", 20_641_497_116, 0);
+    const handle = progress.add("Hashing file.mxf", 20_641_497_116, 0, format, formatRate);
     progress.update(handle, 13_817_151_488);
     await sleep(150);
     const output = streamString.getString();
@@ -153,7 +156,7 @@ describe("Progress tests", () => {
 
     let handle!: number;
     try {
-      handle = progress.add("bytes", "downloading", 10_000_000_000, 0);
+      handle = progress.add("downloading", 10_000_000_000, 0, format, formatRate);
       // Establish a fast initial rate.
       fakeNow += 100;
       progress.update(handle, 1_000_000);
