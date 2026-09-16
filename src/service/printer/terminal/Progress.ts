@@ -21,7 +21,8 @@ interface Bar {
   name: string;
   current: number;
   total: number;
-  units: string;
+  format: (value: number) => string;
+  formatRate: (rate: number) => string;
   lastMillis?: number;
   startMillis?: number;
   endMillis?: number;
@@ -48,7 +49,13 @@ export default class Progress {
     this.#styler = styler;
   }
 
-  public add(units: string, message: string, total: number, current: number): number {
+  public add(
+    message: string,
+    total: number,
+    current: number,
+    format: (value: number) => string,
+    formatRate: (rate: number) => string,
+  ): number {
     if (total < 0) {
       total = 100;
     }
@@ -63,7 +70,8 @@ export default class Progress {
       name: message,
       current,
       total,
-      units,
+      format,
+      formatRate,
       startMillis: Date.now(),
     });
 
@@ -226,38 +234,22 @@ export default class Progress {
         this.#labColor,
       )}`;
       const prefix = `${this.#styler.colorText("[", this.#labColor)}`;
-      let visibleWidth = 1;
       const percentString = ((bar.current / bar.total) * 100).toFixed(2);
       const percent =
         this.#styler.colorText(percentString, this.#valColor) +
         this.#styler.colorText("%,", this.#labColor);
-      visibleWidth += percentString.length + 1;
 
-      const rateText = bar.rate === undefined ? "-" : bar.rate.toFixed(2) + "";
+      const rateText = bar.rate === undefined ? "-" : bar.formatRate(bar.rate);
       const rate = `${this.#styler.colorText(rateText, this.#valColor)}`;
 
       let suffix = `${this.#styler.colorText("]", this.#labColor)} ${percent} `;
-      visibleWidth += 3;
       if (bar.current === bar.total) {
         const taken = this.#formatTime(bar.endMillis! - bar.startMillis!);
-        const totalString = bar.total + "";
-        suffix += `${this.#styler.colorText(totalString, this.#valColor)}${this.#styler.colorText(
-          bar.units + ", rate:",
+        const totalText = bar.format(bar.total);
+        suffix += `${this.#styler.colorText(totalText, this.#valColor)}${this.#styler.colorText(
+          ", rate:",
           this.#labColor,
-        )} ${rate}${this.#styler.colorText(
-          bar.units + "/s, time taken:",
-          this.#labColor,
-        )} ${taken}`;
-        visibleWidth +=
-          totalString.length +
-          bar.units.length +
-          7 +
-          1 +
-          rateText.length +
-          bar.units.length +
-          15 +
-          1 +
-          Bun.stripANSI(taken).length;
+        )} ${rate}${this.#styler.colorText(", time taken:", this.#labColor)} ${taken}`;
       } else {
         const remainingMillis =
           bar.rate === undefined || bar.rate === 0
@@ -269,31 +261,20 @@ export default class Progress {
           remainingMillis > MAX_REMAINING_MILLIS
             ? "-"
             : this.#formatTime(remainingMillis);
-        const currentString = bar.current + "";
-        const totalString = bar.total + "";
-        suffix += `${this.#styler.colorText(currentString, this.#valColor)}${this.#styler.colorText(
+        const currentText = bar.format(bar.current);
+        const totalText = bar.format(bar.total);
+        suffix += `${this.#styler.colorText(currentText, this.#valColor)}${this.#styler.colorText(
           "/",
           this.#labColor,
-        )}${this.#styler.colorText(totalString, this.#valColor)}${this.#styler.colorText(
-          bar.units + ", rate:",
+        )}${this.#styler.colorText(totalText, this.#valColor)}${this.#styler.colorText(
+          ", rate:",
           this.#labColor,
-        )} ${rate}${this.#styler.colorText(
-          bar.units + "/s, time remaining:",
-          this.#labColor,
-        )} ${remaining}`;
-        visibleWidth +=
-          currentString.length +
-          1 +
-          totalString.length +
-          bar.units.length +
-          7 +
-          1 +
-          rateText.length +
-          bar.units.length +
-          19 +
-          1 +
-          Bun.stripANSI(remaining).length;
+        )} ${rate}${this.#styler.colorText(", time remaining:", this.#labColor)} ${remaining}`;
       }
+      // Measure the actual rendered width (minus the bar itself, inserted between prefix and
+      // suffix below) rather than manually summing each segment's length - format()/formatRate()
+      // return arbitrary-length strings, so there's no fixed-length arithmetic to get right.
+      const visibleWidth = Bun.stripANSI(prefix + suffix).length;
       let available = consoleWidth - visibleWidth;
       if (available < 0) {
         available = 0;

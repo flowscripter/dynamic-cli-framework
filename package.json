@@ -48,7 +48,7 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "^2.3.6",
+    "@flowscripter/dynamic-cli-framework-api": "github:flowscripter/dynamic-cli-framework-api#feat-issue-6-progress-bar-format-api",
     "@flowscripter/dynamic-plugin-framework": "^2.2.8",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
@@ -69,6 +69,9 @@
   "peerDependencies": {
     "typescript": "^7.0.2"
   },
+  "trustedDependencies": [
+    "@flowscripter/dynamic-cli-framework-api"
+  ],
   "typedocOptions": {
     "readme": "none",
     "exclude": [
