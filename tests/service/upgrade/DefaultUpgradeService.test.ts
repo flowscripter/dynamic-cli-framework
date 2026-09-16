@@ -280,6 +280,65 @@ describe("DefaultUpgradeService", () => {
     }
   });
 
+  test("detectInstallMethod re-detects once a cached install-method entry has expired", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      let spawnCount = 0;
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      const keyValueService = getKeyValueService();
+      await keyValueService.set("install-method", {
+        method: InstallMethod.HOMEBREW,
+        checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
+      });
+      service.setDependencies(
+        getSpawnService(() => {
+          spawnCount += 1;
+          return { ok: true, exitCode: 0 };
+        }),
+        undefined,
+        undefined,
+        keyValueService,
+      );
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(spawnCount).toEqual(1);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod falls back to detection instead of failing when the KeyValueService throws", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      const brokenKeyValueService: KeyValueService = {
+        get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      };
+      service.setDependencies(
+        getSpawnService(() => ({ ok: true, exitCode: 0 })),
+        undefined,
+        undefined,
+        brokenKeyValueService,
+      );
+      // Simulates a KeyValueService whose scope has already been cleared by the time this
+      // detached opportunistic check runs (see UpgradeServiceProvider) - every call throws, but
+      // detectInstallMethod() must still resolve rather than propagate.
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
   test("detectInstallMethod caches a winget list result so a second call does not spawn again", async () => {
     let spawnCount = 0;
     const service = new DefaultUpgradeService(
@@ -367,6 +426,40 @@ describe("DefaultUpgradeService", () => {
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("2.0.0");
+    expect(fetchCount).toEqual(1);
+  });
+
+  test("checkForUpgrade falls back to a fresh lookup instead of failing when the KeyValueService throws", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    const brokenKeyValueService: KeyValueService = {
+      get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+    };
+    service.setDependencies(
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect("9.9.9");
+      }),
+      undefined,
+      brokenKeyValueService,
+    );
+
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("9.9.9");
     expect(fetchCount).toEqual(1);
   });
 
