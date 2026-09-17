@@ -55,7 +55,9 @@ import CompletionServiceProvider from "../service/completion/CompletionServicePr
 import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterServiceProvider.ts";
 import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
 import FetchServiceProvider from "../service/fetch/FetchServiceProvider.ts";
-import UpgradeServiceProvider from "../service/upgrade/UpgradeServiceProvider.ts";
+import UpgradeServiceProvider, {
+  createUpgradeCheckStartupTask,
+} from "../service/upgrade/UpgradeServiceProvider.ts";
 import PluginServiceProvider from "../service/plugin/PluginServiceProvider.ts";
 const logger = getLogger("BaseCLI");
 
@@ -311,10 +313,12 @@ export default class BaseCLI implements CLI {
       );
     }
 
+    let upgradeServiceProvider: UpgradeServiceProvider | undefined;
     if (this.#options.upgradeServiceEnabled) {
       // 56 runs after Spawn(58)/Fetch(57) - whose dependencies it needs
       // but before the consumer-configured Banner/Plugin(50) priority band.
-      this.addServiceProvider(new UpgradeServiceProvider(56, this.#options.upgradeLocationsConfig));
+      upgradeServiceProvider = new UpgradeServiceProvider(56, this.#options.upgradeLocationsConfig);
+      this.addServiceProvider(upgradeServiceProvider);
     }
 
     if (this.#options.pluginServiceEnabled) {
@@ -348,6 +352,12 @@ export default class BaseCLI implements CLI {
       serviceInfo.commands.forEach((command) => {
         this.#commandRegistry.addCommand(command, serviceProvider.serviceId);
       });
+    }
+
+    if (upgradeServiceProvider?.upgradeService) {
+      this.addStartupTask(
+        createUpgradeCheckStartupTask(upgradeServiceProvider.upgradeService, 56),
+      );
     }
 
     // directly-registered StartupTasks (e.g. the banner task) aren't backed by a ServiceProvider,

@@ -16,8 +16,29 @@ import DefaultUpgradeService from "./DefaultUpgradeService.ts";
 import { UpgradeSubCommand } from "./command/UpgradeSubCommand.ts";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
 import getLogger from "../../util/logger.ts";
+import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("UpgradeServiceProvider");
+
+/**
+ * Build the background {@link StartupTask} which opportunistically refreshes the upgrade-check
+ * cache (see {@link DefaultUpgradeService.refreshUpgradeCheckCache}) that the banner task reads
+ * from. Registered separately from {@link UpgradeServiceProvider} itself (which still runs as a
+ * regular blocking init task) so it can run in `"background"` mode.
+ */
+export function createUpgradeCheckStartupTask(
+  upgradeService: DefaultUpgradeService,
+  priority: number,
+): StartupTask {
+  return {
+    id: `${UPGRADE_SERVICE_ID}-check`,
+    priority,
+    mode: "background",
+    run: async () => {
+      await upgradeService.refreshUpgradeCheckCache();
+    },
+  };
+}
 
 export default class UpgradeServiceProvider implements ServiceProvider {
   readonly serviceId: string = UPGRADE_SERVICE_ID;
@@ -29,6 +50,10 @@ export default class UpgradeServiceProvider implements ServiceProvider {
   public constructor(servicePriority: number, config: UpgradeLocationsConfig) {
     this.servicePriority = servicePriority;
     this.#config = config;
+  }
+
+  public get upgradeService(): DefaultUpgradeService | undefined {
+    return this.#upgradeService;
   }
 
   public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
@@ -61,8 +86,6 @@ export default class UpgradeServiceProvider implements ServiceProvider {
       ? (context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
       : undefined;
     upgradeService.setDependencies(spawnService, fetchService, printerService, keyValueService);
-
-    void upgradeService.getUpgradeCheckResult();
 
     if (!context.doesServiceExist(PROMPTER_SERVICE_ID)) {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");

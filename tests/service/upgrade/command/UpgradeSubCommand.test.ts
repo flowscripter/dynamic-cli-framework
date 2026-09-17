@@ -18,6 +18,7 @@ function getUpgradeService(
   return {
     checkForUpgrade: () => Promise.resolve(checkResult),
     getUpgradeCheckResult: () => Promise.resolve(checkResult),
+    refreshUpgradeCheckCache: () => Promise.resolve(checkResult),
     upgrade: () => Promise.resolve(upgradeResult!),
   } as unknown as DefaultUpgradeService;
 }

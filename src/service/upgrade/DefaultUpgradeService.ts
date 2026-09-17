@@ -8,6 +8,7 @@ import type {
   FetchService,
   KeyValueService,
   PrinterService,
+  SettableValueNode,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
@@ -55,11 +56,12 @@ interface CachedLatestVersion {
   [key: string]: ValueNode;
 }
 
-// checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
-// so that opportunistic call is raced against this timeout so it never stalls CLI startup.
-// A deliberate caller (waitForResult=true, e.g. the `upgrade` command) awaits checkForUpgrade()
-// directly with no timeout, so its underlying network/spawn calls are never artificially cut off.
-export const VERSION_CHECK_TIMEOUT_MS = 250;
+// KeyValueService key holding the last checkForUpgrade() result, refreshed opportunistically by
+// UpgradeServiceProvider's background StartupTask and by the `upgrade` command - shared by both so
+// there's one cache, not two. The banner task only ever reads this key (kv.has()/kv.get()) - it
+// never calls checkForUpgrade()/getUpgradeCheckResult() live, since checking live would stall
+// startup on the network/spawn calls checkForUpgrade() makes.
+export const UPGRADE_CHECK_CACHE_KEY = "upgrade-check-result";
 
 type VersionLookupResult =
   | { readonly ok: true; readonly version: string }
@@ -143,15 +145,17 @@ export default class DefaultUpgradeService implements UpgradeService {
     return result;
   }
 
-  public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
+  // waitForResult is retained on the signature for UpgradeService interface compatibility, but is
+  // no longer honoured: there is no more opportunistic, non-blocking startup caller racing this
+  // against a timeout (that path is now the dedicated background StartupTask registered by
+  // UpgradeServiceProvider, which awaits checkForUpgrade() to completion by design), so every
+  // caller now runs this to completion and "pending" is unreachable.
+  public getUpgradeCheckResult(): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
       logger.debug(() => "Starting upgrade check");
       // Only cache a non-"failed" result. A "failed" result can come from a transient issue
-      // (e.g. a network blip, or the opportunistic startup check racing past
-      // VERSION_CHECK_TIMEOUT_MS before checkForUpgrade() itself resolves) - caching that would
-      // permanently deny a later, deliberate caller (e.g. the `upgrade` command explicitly
-      // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
-      // process's lifetime.
+      // (e.g. a network blip) - caching that would permanently deny a later caller any chance of
+      // a fresh attempt for the rest of this process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
         logger.debug(() => describeUpgradeCheckResult(result));
         if (result.status === "failed") {
@@ -160,15 +164,24 @@ export default class DefaultUpgradeService implements UpgradeService {
         return result;
       });
     }
-    if (waitForResult) {
-      return this.#upgradeCheckPromise;
+    return this.#upgradeCheckPromise;
+  }
+
+  /**
+   * Run (or reuse an in-flight/cached) {@link getUpgradeCheckResult}, then persist a "checked" or
+   * "unsupported" result to {@link UPGRADE_CHECK_CACHE_KEY} so the banner task's cheap KV read can
+   * pick it up on a later invocation. Shared by UpgradeServiceProvider's background StartupTask and
+   * `UpgradeSubCommand`, so both read/write the same cache instead of maintaining separate ones.
+   */
+  public async refreshUpgradeCheckCache(): Promise<UpgradeCheckResult> {
+    const result = await this.getUpgradeCheckResult();
+    if (this.#keyValueService && (result.status === "checked" || result.status === "unsupported")) {
+      const keyValueService = this.#keyValueService;
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(UPGRADE_CHECK_CACHE_KEY, result as unknown as SettableValueNode),
+      );
     }
-    return Promise.race([
-      this.#upgradeCheckPromise,
-      new Promise<UpgradeCheckResult>((resolve) =>
-        setTimeout(() => resolve({ status: "pending" }), VERSION_CHECK_TIMEOUT_MS),
-      ),
-    ]);
+    return result;
   }
 
   public detectOs(): SupportedOs | undefined {
@@ -330,7 +343,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       osOverride !== undefined || archOverride !== undefined || installMethodOverride !== undefined;
     const checkResult = hasOverride
       ? await this.checkForUpgrade(osOverride, archOverride, installMethodOverride)
-      : await this.getUpgradeCheckResult(true);
+      : await this.getUpgradeCheckResult();
     if (checkResult.status === "unsupported") {
       return {
         ok: false,

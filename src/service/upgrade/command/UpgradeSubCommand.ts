@@ -54,7 +54,7 @@ export class UpgradeSubCommand implements SubCommand {
 
     const checkResult =
       os === undefined && installMethod === undefined
-        ? await this.#upgradeService.getUpgradeCheckResult(true)
+        ? await this.#upgradeService.refreshUpgradeCheckCache()
         : await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
 
     await printerService.hideSpinner();

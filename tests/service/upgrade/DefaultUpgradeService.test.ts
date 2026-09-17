@@ -17,7 +17,6 @@ import type {
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   describeUpgradeCheckResult,
-  VERSION_CHECK_TIMEOUT_MS,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
@@ -770,29 +769,12 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
 
-    const first = service.getUpgradeCheckResult(true);
-    const second = service.getUpgradeCheckResult(true);
+    const first = service.getUpgradeCheckResult();
+    const second = service.getUpgradeCheckResult();
     expect(first).toBe(second);
     await first;
     await second;
     expect(checkCount).toEqual(1);
-  });
-
-  test("getUpgradeCheckResult resolves pending if the cached check exceeds VERSION_CHECK_TIMEOUT_MS", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    service.setDependencies(
-      undefined,
-      getFetchService(() => new Promise(() => {})),
-      undefined,
-    );
-
-    const result = await service.getUpgradeCheckResult();
-    expect(result).toEqual({ status: "pending" });
   });
 
   test("a transient failure on an opportunistic check does not poison a later deliberate wait", async () => {
@@ -823,14 +805,14 @@ describe("DefaultUpgradeService", () => {
 
     // a later, deliberate blocking call (e.g. the `upgrade` command) must get a fresh attempt
     // rather than reusing the earlier failed promise forever.
-    const deliberate = await service.getUpgradeCheckResult(true);
+    const deliberate = await service.getUpgradeCheckResult();
     if (deliberate.status !== "checked")
       throw new Error(`expected "checked", got ${deliberate.status}`);
     expect(deliberate.latestVersion).toEqual("9.9.9");
     expect(callCount).toEqual(2);
   });
 
-  test("getUpgradeCheckResult(true) waits for the full result with no timeout", async () => {
+  test("getUpgradeCheckResult waits for the full result with no timeout", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
@@ -841,17 +823,12 @@ describe("DefaultUpgradeService", () => {
       undefined,
       getFetchService(
         () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () => resolve(githubReleaseRedirect("9.9.9")),
-              VERSION_CHECK_TIMEOUT_MS + 50,
-            ),
-          ),
+          new Promise((resolve) => setTimeout(() => resolve(githubReleaseRedirect("9.9.9")), 50)),
       ),
       undefined,
     );
 
-    const result = await service.getUpgradeCheckResult(true);
+    const result = await service.getUpgradeCheckResult();
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("9.9.9");
   });
