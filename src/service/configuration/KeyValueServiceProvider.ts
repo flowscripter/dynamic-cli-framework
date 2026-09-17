@@ -11,6 +11,7 @@ import DefaultKeyValueService from "./DefaultKeyValueService.ts";
 import DefaultSecretService from "./DefaultSecretService.ts";
 import type ConfigurationServiceProvider from "./ConfigurationServiceProvider.ts";
 import type { KeyValueServiceScopeType } from "./ConfigurationServiceProvider.ts";
+import type DefaultContext from "../../runtime/DefaultContext.ts";
 
 /**
  * Registered under {@link KEY_VALUE_SERVICE_ID} in the plain, undecorated {@link Context} purely
@@ -200,6 +201,13 @@ export default class KeyValueServiceProvider implements ServiceProvider {
    *
    * Returns `context` itself, unchanged, if neither `keyValueServiceEnabled` nor
    * `secretServiceEnabled` is set.
+   *
+   * Also forwards `addServiceInstance`, even though it is not part of the {@link Context}
+   * interface: `runner.ts` applies this same scoping to every `ServiceProvider`'s `initService()`
+   * call (scope "service"), and `PluginServiceProvider.initService()` relies on casting its
+   * received `context` to `DefaultContext` to register services discovered from plugins at
+   * runtime - a capability every `ServiceProvider` already had before this scoping was
+   * introduced, since `initService()` always received the real `DefaultContext` directly.
    */
   public getContextForScope(
     context: Context,
@@ -215,7 +223,9 @@ export default class KeyValueServiceProvider implements ServiceProvider {
       getServiceById: (id: string): unknown =>
         id === KEY_VALUE_SERVICE_ID ? scopedKeyValueService : context.getServiceById(id),
       doesServiceExist: (id: string): boolean => context.doesServiceExist(id),
-    };
+      addServiceInstance: (id: string, serviceInstance: unknown): void =>
+        (context as DefaultContext).addServiceInstance(id, serviceInstance),
+    } as Context;
   }
 
   /**
