@@ -85,14 +85,12 @@ async function attemptPromptForMissingArguments(
  *
  * @param parseResult the {@link ParseResult} to execute.
  * @param context the {@link Context} to use.
- * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
  * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param isDefaultCommand whether the command is the default command for the CLI.
  */
 async function executeParsedCommand(
   parseResult: ParseResult,
   context: Context,
-  configurationServiceProvider: ConfigurationServiceProvider | undefined,
   keyValueServiceProvider: KeyValueServiceProvider | undefined,
   isDefaultCommand = false,
 ): Promise<RunResult> {
@@ -261,12 +259,7 @@ async function findAndExecuteGlobalModifierCommands(
   );
   for (const parseResult of globalModifierCommandParseResults) {
     // execute and fast fail on error
-    const runResult = await executeParsedCommand(
-      parseResult,
-      context,
-      configurationServiceProvider,
-      keyValueServiceProvider,
-    );
+    const runResult = await executeParsedCommand(parseResult, context, keyValueServiceProvider);
     if (runResult.runState !== RunState.SUCCESS) {
       return runResult;
     }
@@ -406,7 +399,7 @@ async function findAndExecuteNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(parseResult, context, configurationServiceProvider, keyValueServiceProvider);
+  return executeParsedCommand(parseResult, context, keyValueServiceProvider);
 }
 
 /**
@@ -536,13 +529,7 @@ async function findAndExecuteDefaultNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(
-    parseResult,
-    context,
-    configurationServiceProvider,
-    keyValueServiceProvider,
-    true,
-  );
+  return executeParsedCommand(parseResult, context, keyValueServiceProvider, true);
 }
 
 /**
@@ -551,14 +538,15 @@ async function findAndExecuteDefaultNonModifierCommand(
  *
  * An overview of the logic (assuming the optional ConfigurationServiceProvider is provided):
  *
- * 1. For each ServiceProvider in servicePriority order:
- *    - Scan arguments for GlobalModifierCommand clauses provided by the ServiceProvider
+ * 1. For each StartupTask in priority order (whether backed by a ServiceProvider's
+ *    initService() or registered directly, e.g. the banner task):
+ *    - Scan arguments for GlobalModifierCommand clauses provided by the task
  *    - For each discovered clause:
  *      - Set any argument defaults from ConfigurationServiceProvider
  *      - Parse the arguments for the GlobalModifierCommand
  *      - Return on error
  *      - Add to list of GlobalModifierCommands to execute
- *    - Scan ConfigurationServiceProvider for GlobalModifierCommand clauses provided by the ServiceProvider not already found in arguments
+ *    - Scan ConfigurationServiceProvider for GlobalModifierCommand clauses provided by the task not already found in arguments
  *    - For each configured clause:
  *      - Parse the arguments for the GlobalModifierCommand
  *      - Return on error
@@ -567,14 +555,18 @@ async function findAndExecuteDefaultNonModifierCommand(
  *    - For each GlobalModifierCommand clause:
  *      - Execute the GlobalModifierCommand
  *      - Return on error
- *    - Init the ServiceProvider's service.
- * 2. Scan arguments for any GlobalModifierCommand clauses not provided by ServiceProviders
+ *    - Give the task a Context whose KeyValueService is bound permanently to its own scope
+ *      (keyed by task.id), via KeyValueServiceProvider if provided.
+ *    - Run the task: awaited before continuing if its mode is "blocking" (the default, and how
+ *      every ServiceProvider's initService() behaves); fired without awaiting if "background"
+ *      (errors logged, not propagated).
+ * 2. Scan arguments for any GlobalModifierCommand clauses not provided by a StartupTask
  *    - For each discovered clause:
  *      - Set any argument defaults from ConfigurationServiceProvider
  *      - Parse the arguments for the GlobalModifierCommand
  *      - Return on error
  *      - Add to list of GlobalModifierCommands to execute
- * 3. Scan ConfigurationServiceProvider for GlobalModifierCommand clauses not provided by the ServiceProvider and not already found in arguments
+ * 3. Scan ConfigurationServiceProvider for GlobalModifierCommand clauses not provided by a StartupTask and not already found in arguments
  *    - For each discovered clause:
  *    - Parse the arguments for the GlobalModifierCommand
  *    - Return on error
