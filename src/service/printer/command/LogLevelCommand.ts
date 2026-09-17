@@ -2,11 +2,12 @@ import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-
 import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type PrinterServiceProvider from "../PrinterServiceProvider.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { Level } from "@flowscripter/dynamic-cli-framework-api";
 
 /**
- * Command allowing the setting of the log level for {@link PrinterServiceProvider}.
+ * Command allowing the setting of the log level for the {@link PrinterService}.
  */
 export default class LogLevelCommand implements GlobalModifierCommand {
   readonly name = "log-level";
@@ -21,28 +22,26 @@ export default class LogLevelCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  readonly #printerServiceProvider: PrinterServiceProvider;
-
-  public constructor(printerServiceProvider: PrinterServiceProvider, executePriority: number) {
-    this.#printerServiceProvider = printerServiceProvider;
+  public constructor(executePriority: number) {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
+  public execute(context: Context, argumentValue: SingleValueType): Promise<void> {
+    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const logLevel = argumentValue as string;
 
     switch (logLevel.toUpperCase()) {
       case "DEBUG":
-        this.#printerServiceProvider.printerService!.setLevel(Level.DEBUG);
+        printerService.setLevel(Level.DEBUG);
         break;
       case "INFO":
-        this.#printerServiceProvider.printerService!.setLevel(Level.INFO);
+        printerService.setLevel(Level.INFO);
         break;
       case "WARN":
-        this.#printerServiceProvider.printerService!.setLevel(Level.WARN);
+        printerService.setLevel(Level.WARN);
         break;
       case "ERROR":
-        this.#printerServiceProvider.printerService!.setLevel(Level.ERROR);
+        printerService.setLevel(Level.ERROR);
         break;
     }
 

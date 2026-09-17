@@ -61,7 +61,7 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     this.#upgradeService = new DefaultUpgradeService(this.#config, cliConfig);
     return Promise.resolve({
       service: this.#upgradeService,
-      commands: [new UpgradeSubCommand(this.#upgradeService)],
+      commands: [new UpgradeSubCommand()],
     });
   }
 

@@ -5,6 +5,7 @@ import {
   PRINTER_SERVICE_ID,
   SupportedArch,
   SupportedOs,
+  UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import { UpgradeSubCommand } from "../../../../src/service/upgrade/command/UpgradeSubCommand.ts";
@@ -23,11 +24,12 @@ function getUpgradeService(
   } as unknown as DefaultUpgradeService;
 }
 
-function getContext(): {
+function getContext(upgradeService: DefaultUpgradeService): {
   context: DefaultContext;
   messages: { print: string[]; info: string[]; error: string[]; spinner: string[] };
 } {
   const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(UPGRADE_SERVICE_ID, upgradeService);
   const messages = {
     print: [] as string[],
     info: [] as string[],
@@ -58,8 +60,8 @@ function getContext(): {
 
 describe("UpgradeSubCommand", () => {
   test("prints error when no upgrade location configured", async () => {
-    const command = new UpgradeSubCommand(getUpgradeService({ status: "unsupported" }));
-    const { context, messages } = getContext();
+    const command = new UpgradeSubCommand();
+    const { context, messages } = getContext(getUpgradeService({ status: "unsupported" }));
 
     await command.execute(context, {});
 
@@ -67,10 +69,10 @@ describe("UpgradeSubCommand", () => {
   });
 
   test("prints error when the check failed", async () => {
-    const command = new UpgradeSubCommand(
+    const command = new UpgradeSubCommand();
+    const { context, messages } = getContext(
       getUpgradeService({ status: "failed", error: new Error("network error") }),
     );
-    const { context, messages } = getContext();
 
     await command.execute(context, {});
 
@@ -87,8 +89,8 @@ describe("UpgradeSubCommand", () => {
       arch: SupportedArch.X64,
       installMethod: InstallMethod.GITHUB_RELEASE,
     };
-    const command = new UpgradeSubCommand(getUpgradeService(checkResult));
-    const { context, messages } = getContext();
+    const command = new UpgradeSubCommand();
+    const { context, messages } = getContext(getUpgradeService(checkResult));
 
     await command.execute(context, {});
 
@@ -107,8 +109,8 @@ describe("UpgradeSubCommand", () => {
       installMethod: InstallMethod.GITHUB_RELEASE,
     };
     const upgradeResult: UpgradeResult = { ok: true, oldVersion: "1.0.0", newVersion: "2.0.0" };
-    const command = new UpgradeSubCommand(getUpgradeService(checkResult, upgradeResult));
-    const { context, messages } = getContext();
+    const command = new UpgradeSubCommand();
+    const { context, messages } = getContext(getUpgradeService(checkResult, upgradeResult));
 
     await command.execute(context, {});
 
@@ -130,8 +132,8 @@ describe("UpgradeSubCommand", () => {
       oldVersion: "1.0.0",
       error: new Error("boom"),
     };
-    const command = new UpgradeSubCommand(getUpgradeService(checkResult, upgradeResult));
-    const { context, messages } = getContext();
+    const command = new UpgradeSubCommand();
+    const { context, messages } = getContext(getUpgradeService(checkResult, upgradeResult));
 
     await command.execute(context, {});
 

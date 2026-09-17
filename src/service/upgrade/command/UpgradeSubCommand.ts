@@ -8,6 +8,7 @@ import {
   PRINTER_SERVICE_ID,
   SupportedArch,
   SupportedOs,
+  UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import type DefaultUpgradeService from "../DefaultUpgradeService.ts";
@@ -35,14 +36,9 @@ export class UpgradeSubCommand implements SubCommand {
     },
   ];
 
-  readonly #upgradeService: DefaultUpgradeService;
-
-  public constructor(upgradeService: DefaultUpgradeService) {
-    this.#upgradeService = upgradeService;
-  }
-
   public async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+    const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as DefaultUpgradeService;
     const cliName = context.cliConfig.name;
     const currentVersion = context.cliConfig.version;
 
@@ -54,8 +50,8 @@ export class UpgradeSubCommand implements SubCommand {
 
     const checkResult =
       os === undefined && installMethod === undefined
-        ? await this.#upgradeService.refreshUpgradeCheckCache()
-        : await this.#upgradeService.checkForUpgrade(os, arch, installMethod);
+        ? await upgradeService.refreshUpgradeCheckCache()
+        : await upgradeService.checkForUpgrade(os, arch, installMethod);
 
     await printerService.hideSpinner();
     if (checkResult.status === "unsupported") {
@@ -88,7 +84,7 @@ export class UpgradeSubCommand implements SubCommand {
       return;
     }
 
-    const upgradeResult = await this.#upgradeService.upgrade(os, arch, installMethod);
+    const upgradeResult = await upgradeService.upgrade(os, arch, installMethod);
     if (!upgradeResult.ok) {
       await printerService.error(
         `Failed to upgrade ${cliName}: ${upgradeResult.error?.message ?? "unknown error"}\n`,

@@ -36,6 +36,42 @@ import {
 
 const logger = getLogger("ConfigurationServiceProvider");
 
+export const CONFIG_LOCATION_SERVICE_ID =
+  "@flowscripter/dynamic-cli-framework/config-location-service";
+
+/**
+ * Minimal, read/write view of {@link ConfigurationServiceProvider.configLocation} and
+ * {@link ConfigurationServiceProvider.getConfigString}, registered under
+ * {@link CONFIG_LOCATION_SERVICE_ID} so commands/tasks needing only this can look it up via
+ * {@link Context.getServiceById} instead of holding a {@link ConfigurationServiceProvider}
+ * reference.
+ */
+export interface ConfigLocationService {
+  readonly configLocation: string | undefined;
+  setConfigLocation(location: string): void;
+  getConfigString(): string;
+}
+
+class ConfigLocationServiceImpl implements ConfigLocationService {
+  readonly #provider: ConfigurationServiceProvider;
+
+  public constructor(provider: ConfigurationServiceProvider) {
+    this.#provider = provider;
+  }
+
+  public get configLocation(): string | undefined {
+    return this.#provider.configLocation;
+  }
+
+  public setConfigLocation(location: string): void {
+    this.#provider.setConfigLocation(location);
+  }
+
+  public getConfigString(): string {
+    return this.#provider.getConfigString();
+  }
+}
+
 /**
  * Provides:
  *
@@ -213,6 +249,13 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   #currentServiceIdKeyValueScope: string | undefined;
 
   /**
+   * A {@link ConfigLocationService} view of this provider, registered in the {@link Context} under
+   * {@link CONFIG_LOCATION_SERVICE_ID}. Its `configLocation` getter always reflects this provider's
+   * current value.
+   */
+  public readonly configLocationService: ConfigLocationService;
+
+  /**
    * Create an instance of the service provider with the specified details.
    *
    * @param servicePriority the priority of the service.
@@ -239,14 +282,16 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.configEnabled = configEnabled;
     this.keyValueServiceEnabled = keyValueServiceEnabled;
     this.secretServiceEnabled = secretServiceEnabled;
+
+    this.configLocationService = new ConfigLocationServiceImpl(this);
   }
 
   public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
     const commands: Array<Command> = [];
 
     if (this.configEnabled) {
-      commands.push(new ConfigCommand(this, this.servicePriority));
-      commands.push(new DumpConfigCommand(this));
+      commands.push(new ConfigCommand(this.servicePriority));
+      commands.push(new DumpConfigCommand());
     }
     if (this.secretServiceEnabled) {
       this.#defaultSecretService = new DefaultSecretService(cliConfig.name);

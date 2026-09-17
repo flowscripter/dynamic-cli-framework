@@ -31,7 +31,9 @@ import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider
 import StartupServiceProvider from "../service/startup/StartupServiceProvider.ts";
 import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "../service/shutdown/ShutdownState.ts";
-import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
+import ConfigurationServiceProvider, {
+  CONFIG_LOCATION_SERVICE_ID,
+} from "../service/configuration/ConfigurationServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
@@ -341,6 +343,10 @@ export default class BaseCLI implements CLI {
       this.#options.secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
+    this.#context.addServiceInstance(
+      CONFIG_LOCATION_SERVICE_ID,
+      configurationServiceProvider.configLocationService,
+    );
 
     for (const serviceProvider of this.#serviceProviderRegistry.getServiceProviders()) {
       const serviceInfo = await serviceProvider.getServiceInfo(this.#cliConfig);

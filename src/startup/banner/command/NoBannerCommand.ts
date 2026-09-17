@@ -2,7 +2,14 @@ import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-
 import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
-import type BannerServiceProvider from "../BannerServiceProvider.ts";
+
+/**
+ * Task-local, mutable state shared between {@link NoBannerCommand} and the banner
+ * {@link StartupTask}'s `run()`, in place of a held `BannerServiceProvider` reference.
+ */
+export interface BannerState {
+  printBanner: boolean;
+}
 
 /**
  * Command to disable banner output for the CLI application.
@@ -18,15 +25,15 @@ export default class NoBannerCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  readonly #bannerServiceProvider: BannerServiceProvider;
+  readonly #state: BannerState;
 
-  public constructor(bannerServiceProvider: BannerServiceProvider, executePriority: number) {
-    this.#bannerServiceProvider = bannerServiceProvider;
+  public constructor(state: BannerState, executePriority: number) {
+    this.#state = state;
     this.executePriority = executePriority;
   }
 
   public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
-    this.#bannerServiceProvider.printBanner = !(argumentValue as boolean);
+    this.#state.printBanner = !(argumentValue as boolean);
 
     return Promise.resolve();
   }

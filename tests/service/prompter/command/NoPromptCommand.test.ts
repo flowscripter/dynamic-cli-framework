@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import NoPromptCommand from "../../../../src/service/prompter/command/NoPromptCommand.ts";
-import PrompterServiceProvider from "../../../../src/service/prompter/PrompterServiceProvider.ts";
-import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
+import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
+import { PROMPTER_SERVICE_ID, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
-import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 function getMockPrompterService(): PrompterService {
   return {
@@ -13,11 +13,15 @@ function getMockPrompterService(): PrompterService {
   };
 }
 
+function getContext(prompterService: PrompterService): DefaultContext {
+  const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(PROMPTER_SERVICE_ID, prompterService);
+  return context;
+}
+
 describe("NoPromptCommand tests", () => {
   test("NoPromptCommand has correct properties", () => {
-    const prompterService = getMockPrompterService();
-    const provider = new PrompterServiceProvider(100, prompterService);
-    const command = new NoPromptCommand(provider, 100);
+    const command = new NoPromptCommand(100);
 
     expect(command.name).toEqual("no-prompt");
     expect(command.description).toEqual("Disable interactive prompting");
@@ -26,9 +30,7 @@ describe("NoPromptCommand tests", () => {
   });
 
   test("NoPromptCommand has correct argument", () => {
-    const prompterService = getMockPrompterService();
-    const provider = new PrompterServiceProvider(100, prompterService);
-    const command = new NoPromptCommand(provider, 100);
+    const command = new NoPromptCommand(100);
 
     expect(command.argument.type).toEqual(ValueTypeName.BOOLEAN);
     expect(command.argument.defaultValue).toEqual(false);
@@ -37,22 +39,22 @@ describe("NoPromptCommand tests", () => {
 
   test("NoPromptCommand execute with true disables prompting", async () => {
     const prompterService = getMockPrompterService();
-    const provider = new PrompterServiceProvider(100, prompterService);
-    const command = new NoPromptCommand(provider, 100);
+    const context = getContext(prompterService);
+    const command = new NoPromptCommand(100);
 
-    await command.execute({} as Context, true);
+    await command.execute(context, true);
 
-    expect(provider.prompterService.promptEnabled).toBeFalse();
+    expect(prompterService.promptEnabled).toBeFalse();
   });
 
   test("NoPromptCommand execute with false enables prompting", async () => {
     const prompterService = getMockPrompterService();
     prompterService.promptEnabled = false;
-    const provider = new PrompterServiceProvider(100, prompterService);
-    const command = new NoPromptCommand(provider, 100);
+    const context = getContext(prompterService);
+    const command = new NoPromptCommand(100);
 
-    await command.execute({} as Context, false);
+    await command.execute(context, false);
 
-    expect(provider.prompterService.promptEnabled).toBeTrue();
+    expect(prompterService.promptEnabled).toBeTrue();
   });
 });

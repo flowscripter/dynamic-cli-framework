@@ -52,7 +52,7 @@ export type {
   ChiselBannerGenerateOptions,
 } from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
 
-export { default as BannerServiceProvider } from "./src/service/banner/BannerServiceProvider.ts";
+export { default as createBannerStartupTask } from "./src/startup/banner/bannerStartupTask.ts";
 
 export { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
@@ -62,7 +62,11 @@ export { default as DefaultKeyValueService } from "./src/service/configuration/D
 export { default as DefaultSecretService } from "./src/service/configuration/DefaultSecretService.ts";
 export type { SecretsApi } from "./src/service/configuration/DefaultSecretService.ts";
 export { default as ConfigCommand } from "./src/service/configuration/command/ConfigCommand.ts";
-export { default as ConfigurationServiceProvider } from "./src/service/configuration/ConfigurationServiceProvider.ts";
+export {
+  default as ConfigurationServiceProvider,
+  CONFIG_LOCATION_SERVICE_ID,
+  type ConfigLocationService,
+} from "./src/service/configuration/ConfigurationServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
@@ -212,3 +216,4 @@ export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
 export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";
+export type { ServiceProviderOrStartupTask } from "./src/cli/ServiceProviderOrStartupTask.ts";

@@ -2,10 +2,14 @@ import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type ConfigurationServiceProvider from "../ConfigurationServiceProvider.ts";
+import {
+  CONFIG_LOCATION_SERVICE_ID,
+  type ConfigLocationService,
+} from "../ConfigurationServiceProvider.ts";
 
 /**
- * Command allowing the specification of the configuration file location used by the {@link ConfigurationServiceProvider}.
+ * Command allowing the specification of the configuration file location used by
+ * {@link ConfigurationServiceProvider}.
  */
 export default class ConfigCommand implements GlobalModifierCommand {
   readonly name = "config";
@@ -17,20 +21,17 @@ export default class ConfigCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  readonly #configurationServiceProvider: ConfigurationServiceProvider;
-
-  public constructor(
-    configurationServiceProvider: ConfigurationServiceProvider,
-    executePriority: number,
-  ) {
-    this.#configurationServiceProvider = configurationServiceProvider;
+  public constructor(executePriority: number) {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
+  public execute(context: Context, argumentValue: SingleValueType): Promise<void> {
     const configLocation = argumentValue as string;
 
-    this.#configurationServiceProvider.setConfigLocation(configLocation);
+    const configLocationService = context.getServiceById(
+      CONFIG_LOCATION_SERVICE_ID,
+    ) as ConfigLocationService;
+    configLocationService.setConfigLocation(configLocation);
 
     return Promise.resolve();
   }
