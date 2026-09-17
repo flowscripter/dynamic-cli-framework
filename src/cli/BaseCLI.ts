@@ -31,9 +31,8 @@ import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider
 import StartupServiceProvider from "../service/startup/StartupServiceProvider.ts";
 import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "../service/shutdown/ShutdownState.ts";
-import ConfigurationServiceProvider, {
-  CONFIG_LOCATION_SERVICE_ID,
-} from "../service/configuration/ConfigurationServiceProvider.ts";
+import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
+import KeyValueServiceProvider from "../service/configuration/KeyValueServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
@@ -339,14 +338,18 @@ export default class BaseCLI implements CLI {
       90,
       this.#options.envVarsSupportEnabled,
       this.#options.configFileSupportEnabled,
-      this.#options.keyValueServiceEnabled,
       this.#options.secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
-    this.#context.addServiceInstance(
-      CONFIG_LOCATION_SERVICE_ID,
-      configurationServiceProvider.configLocationService,
+    // priority 89 sits just below ConfigurationServiceProvider's 90 - its config-file read
+    // happens in its own initService(), before KeyValueServiceProvider's initService() runs.
+    const keyValueServiceProvider = new KeyValueServiceProvider(
+      89,
+      configurationServiceProvider,
+      this.#options.keyValueServiceEnabled,
+      this.#options.secretServiceEnabled,
     );
+    this.addServiceProvider(keyValueServiceProvider);
 
     for (const serviceProvider of this.#serviceProviderRegistry.getServiceProviders()) {
       const serviceInfo = await serviceProvider.getServiceInfo(this.#cliConfig);
@@ -422,6 +425,7 @@ export default class BaseCLI implements CLI {
         this.#commandRegistry,
         this.#serviceProviderRegistry,
         configurationServiceProvider,
+        keyValueServiceProvider,
         this.#context,
         defaultCommand,
         this.#startupServiceProvider.startupService,

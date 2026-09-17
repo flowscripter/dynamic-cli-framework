@@ -21,6 +21,7 @@ import { scanForGlobalModifierCommandClauses, scanForNonModifierCommandClause } 
 import type { ServiceProviderRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { parseGlobalCommandClause, type ParseResult, parseSubCommandClause } from "./parser.ts";
 import type ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
+import type KeyValueServiceProvider from "../service/configuration/KeyValueServiceProvider.ts";
 import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
@@ -85,19 +86,21 @@ async function attemptPromptForMissingArguments(
  * @param parseResult the {@link ParseResult} to execute.
  * @param context the {@link Context} to use.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param isDefaultCommand whether the command is the default command for the CLI.
  */
 async function executeParsedCommand(
   parseResult: ParseResult,
   context: Context,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  keyValueServiceProvider: KeyValueServiceProvider | undefined,
   isDefaultCommand = false,
 ): Promise<RunResult> {
   try {
     if (parseResult.groupCommand !== undefined) {
       logger.debug("Executing group command with name: %s", parseResult!.groupCommand!.name);
-      const groupContext = configurationServiceProvider
-        ? configurationServiceProvider.getContextForScope(
+      const groupContext = keyValueServiceProvider
+        ? keyValueServiceProvider.getContextForScope(
             context,
             "command",
             parseResult!.groupCommand!.name,
@@ -112,12 +115,8 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
-    const commandContext = configurationServiceProvider
-      ? configurationServiceProvider.getContextForScope(
-          context,
-          "command",
-          parseResult.command.name,
-        )
+    const commandContext = keyValueServiceProvider
+      ? keyValueServiceProvider.getContextForScope(context, "command", parseResult.command.name)
       : context;
     if (isSubCommand(parseResult.command)) {
       await parseResult.command.execute(
@@ -155,6 +154,7 @@ async function executeParsedCommand(
  * @param globalModifierCommandsByName a map of non-modifier {@link Command} instances by name to parse for.
  * @param globalModifierCommandsByShortAlias a map of {@link GlobalModifierCommand} instances by short alias to use when scanning.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteGlobalModifierCommands(
@@ -163,6 +163,7 @@ async function findAndExecuteGlobalModifierCommands(
   globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand>,
   globalModifierCommandsByShortAlias: ReadonlyMap<string, GlobalModifierCommand>,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  keyValueServiceProvider: KeyValueServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   // build a list of GlobalModifierCommands to execute
@@ -264,6 +265,7 @@ async function findAndExecuteGlobalModifierCommands(
       parseResult,
       context,
       configurationServiceProvider,
+      keyValueServiceProvider,
     );
     if (runResult.runState !== RunState.SUCCESS) {
       return runResult;
@@ -280,6 +282,7 @@ async function findAndExecuteGlobalModifierCommands(
  * @param globalCommandsByShortAlias the map of {@link GlobalCommand} instances by short alias to use when scanning.
  * @param groupAndMemberCommandsByJoinedName optional map of {@link GroupCommand} and member {@link SubCommand} instances to use when scanning.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteNonModifierCommand(
@@ -291,6 +294,7 @@ async function findAndExecuteNonModifierCommand(
     | ReadonlyMap<string, { groupCommand: GroupCommand; command: SubCommand }>
     | undefined,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  keyValueServiceProvider: KeyValueServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   let parseResult: ParseResult | undefined;
@@ -402,7 +406,7 @@ async function findAndExecuteNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(parseResult, context, configurationServiceProvider);
+  return executeParsedCommand(parseResult, context, configurationServiceProvider, keyValueServiceProvider);
 }
 
 /**
@@ -412,6 +416,7 @@ async function findAndExecuteNonModifierCommand(
  * @param unusedArgs an array to which any unused argument sequences will be added.
  * @param defaultNonModifierCommand the default non-modifier {@link Command} to use.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use to get default argument values.
+ * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param context the {@link Context} to use.
  */
 async function findAndExecuteDefaultNonModifierCommand(
@@ -419,6 +424,7 @@ async function findAndExecuteDefaultNonModifierCommand(
   unusedArgs: Array<ReadonlyArray<string>>,
   defaultNonModifierCommand: Command,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  keyValueServiceProvider: KeyValueServiceProvider | undefined,
   context: Context,
 ): Promise<RunResult | undefined> {
   const defaultArgumentValues = configurationServiceProvider
@@ -530,7 +536,13 @@ async function findAndExecuteDefaultNonModifierCommand(
     await printUnusedArgsWarning(context, unusedArgs.flat());
   }
 
-  return executeParsedCommand(parseResult, context, configurationServiceProvider, true);
+  return executeParsedCommand(
+    parseResult,
+    context,
+    configurationServiceProvider,
+    keyValueServiceProvider,
+    true,
+  );
 }
 
 /**
@@ -597,6 +609,7 @@ async function findAndExecuteDefaultNonModifierCommand(
  * @param commandRegistry the {@link CommandRegistry} to use when scanning and parsing.
  * @param serviceProviderRegistry the {@link ServiceProviderRegistry} to use when scanning and parsing.
  * @param configurationServiceProvider optional {@link ConfigurationServiceProvider} to use for accessing argument defaults.
+ * @param keyValueServiceProvider optional {@link KeyValueServiceProvider} to use to get a scope-decorated {@link Context}.
  * @param context the {@link Context} in which to execute specified {@link Command} instances.
  * @param defaultCommand optional {@link SubCommand} or {@link GlobalCommand} implementation to attempt to parse arguments for and execute if
  * no non-modifier {@link Command} name is identified in the provided arguments.
@@ -606,6 +619,7 @@ export async function run(
   commandRegistry: CommandRegistry,
   serviceProviderRegistry: ServiceProviderRegistry,
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
+  keyValueServiceProvider: KeyValueServiceProvider | undefined,
   context: Context,
   defaultCommand?: Command,
   startupService?: DefaultStartupService,
@@ -652,6 +666,7 @@ export async function run(
         globalModifierCommandsByName,
         globalModifierCommandsByShortAlias,
         configurationServiceProvider,
+        keyValueServiceProvider,
         context,
       );
 
@@ -668,11 +683,9 @@ export async function run(
     logger.debug("Running startup task with ID: %s", task.id);
 
     // each task gets a Context whose KeyValueService is bound permanently to its own scope (keyed
-    // by task.id) - unlike the old set/clear-around-the-call mechanism, this scope stays valid for
-    // as long as the task holds onto this Context, including for a "background" task that keeps
-    // running (and reading/writing its KeyValueService) after this loop moves on.
-    const taskContext = configurationServiceProvider
-      ? configurationServiceProvider.getContextForScope(context, "service", task.id)
+    // by task.id)
+    const taskContext = keyValueServiceProvider
+      ? keyValueServiceProvider.getContextForScope(context, "service", task.id)
       : context;
 
     if ((task.mode ?? "blocking") === "blocking") {
@@ -699,6 +712,7 @@ export async function run(
       globalModifierCommandsByName,
       globalModifierCommandsByShortAlias,
       configurationServiceProvider,
+      keyValueServiceProvider,
       context,
     );
 
@@ -726,6 +740,7 @@ export async function run(
     globalCommandsByShortAlias,
     groupAndMemberCommandByJoinedName,
     configurationServiceProvider,
+    keyValueServiceProvider,
     context,
   );
 
@@ -746,6 +761,7 @@ export async function run(
       unusedArgs,
       defaultCommand,
       configurationServiceProvider,
+      keyValueServiceProvider,
       context,
     );
 

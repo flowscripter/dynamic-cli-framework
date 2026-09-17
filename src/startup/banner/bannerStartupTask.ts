@@ -7,14 +7,12 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
   ASCII_BANNER_GENERATOR_SERVICE_ID,
+  CONFIGURATION_SERVICE_ID,
   KEY_VALUE_SERVICE_ID,
   PRINTER_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
-import {
-  CONFIG_LOCATION_SERVICE_ID,
-  type ConfigLocationService,
-} from "../../service/configuration/ConfigurationServiceProvider.ts";
+import type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
 import { UPGRADE_CHECK_CACHE_KEY } from "../../service/upgrade/DefaultUpgradeService.ts";
 import NoBannerCommand, { type BannerState } from "./command/NoBannerCommand.ts";
 
@@ -83,11 +81,11 @@ export default function createBannerStartupTask(
         }
         await printerService.info(`  ${printerService.secondary(versionLine)}\n`);
       }
-      if (context.doesServiceExist(CONFIG_LOCATION_SERVICE_ID)) {
-        const configLocationService = context.getServiceById(
-          CONFIG_LOCATION_SERVICE_ID,
-        ) as ConfigLocationService;
-        const configLocation = configLocationService.configLocation;
+      if (context.doesServiceExist(CONFIGURATION_SERVICE_ID)) {
+        const configurationService = context.getServiceById(
+          CONFIGURATION_SERVICE_ID,
+        ) as ConfigurationService;
+        const configLocation = configurationService.configLocation;
         if (configLocation && configLocation.length > 0) {
           await printerService.info(`  ${printerService.secondary("config: " + configLocation)}\n`);
         }

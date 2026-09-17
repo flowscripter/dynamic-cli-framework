@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import ConfigCommand from "../../../../src/service/configuration/command/ConfigCommand.ts";
-import ConfigurationServiceProvider, {
-  CONFIG_LOCATION_SERVICE_ID,
-} from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
+import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
+import { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("ConfigCommand tests", () => {
   test("has correct name and description", () => {
@@ -20,7 +19,8 @@ describe("ConfigCommand tests", () => {
     const configProvider = new ConfigurationServiceProvider(90, false, true);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
-    context.addServiceInstance(CONFIG_LOCATION_SERVICE_ID, configProvider.configLocationService);
+    const { service: configurationService } = await configProvider.getServiceInfo(cliConfig);
+    context.addServiceInstance(CONFIGURATION_SERVICE_ID, configurationService!);
 
     const command = new ConfigCommand(90);
 

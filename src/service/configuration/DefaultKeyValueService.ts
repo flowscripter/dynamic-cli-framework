@@ -9,7 +9,7 @@ import resolveSecrets from "./resolveSecrets.ts";
 
 /**
  * Bound permanently to a single scope's data at construction - never re-pointed afterward. Create
- * a separate instance per scope (see {@link ConfigurationServiceProvider.getScopedKeyValueService}),
+ * a separate instance per scope (see {@link KeyValueServiceProvider.getScopedKeyValueService}),
  * rather than sharing one instance across scopes.
  */
 export default class DefaultKeyValueService implements KeyValueService {

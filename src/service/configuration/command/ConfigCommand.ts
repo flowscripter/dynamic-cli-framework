@@ -3,9 +3,9 @@ import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-
 import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import {
-  CONFIG_LOCATION_SERVICE_ID,
-  type ConfigLocationService,
-} from "../ConfigurationServiceProvider.ts";
+  CONFIGURATION_SERVICE_ID,
+  type ConfigurationService,
+} from "@flowscripter/dynamic-cli-framework-api";
 
 /**
  * Command allowing the specification of the configuration file location used by
@@ -28,10 +28,10 @@ export default class ConfigCommand implements GlobalModifierCommand {
   public execute(context: Context, argumentValue: SingleValueType): Promise<void> {
     const configLocation = argumentValue as string;
 
-    const configLocationService = context.getServiceById(
-      CONFIG_LOCATION_SERVICE_ID,
-    ) as ConfigLocationService;
-    configLocationService.setConfigLocation(configLocation);
+    const configurationService = context.getServiceById(
+      CONFIGURATION_SERVICE_ID,
+    ) as ConfigurationService;
+    configurationService.setConfigLocation(configLocation);
 
     return Promise.resolve();
   }

@@ -54,6 +54,8 @@ export type {
 
 export { default as createBannerStartupTask } from "./src/startup/banner/bannerStartupTask.ts";
 
+export { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
 export { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
 export type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
@@ -64,9 +66,9 @@ export type { SecretsApi } from "./src/service/configuration/DefaultSecretServic
 export { default as ConfigCommand } from "./src/service/configuration/command/ConfigCommand.ts";
 export {
   default as ConfigurationServiceProvider,
-  CONFIG_LOCATION_SERVICE_ID,
-  type ConfigLocationService,
+  type KeyValueServiceScopeType,
 } from "./src/service/configuration/ConfigurationServiceProvider.ts";
+export { default as KeyValueServiceProvider } from "./src/service/configuration/KeyValueServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";

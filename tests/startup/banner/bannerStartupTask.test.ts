@@ -10,7 +10,7 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
-import { CONFIG_LOCATION_SERVICE_ID } from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
+import { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
 import smallFont from "../../service/asciiBannerGenerator/small.flf.json" with { type: "json" };
@@ -65,10 +65,9 @@ describe("bannerStartupTask tests", () => {
 
     const configurationServiceProvider = getConfigurationServiceProvider(100, new Map());
     configurationServiceProvider.configLocation = "config.yaml";
-    context.addServiceInstance(
-      CONFIG_LOCATION_SERVICE_ID,
-      configurationServiceProvider.configLocationService,
-    );
+    const { service: configurationService } =
+      await configurationServiceProvider.getServiceInfo(getCLIConfig("mpeg-sdl-tool"));
+    context.addServiceInstance(CONFIGURATION_SERVICE_ID, configurationService!);
 
     const task = createBannerStartupTask(100, "small");
     await task.run(context);

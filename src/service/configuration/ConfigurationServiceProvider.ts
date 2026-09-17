@@ -10,18 +10,15 @@ import type {
   ValueNode,
   PopulatedValues,
   PopulatedValueType,
-  KeyValueService,
-  ShutdownService,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import DumpConfigCommand from "./command/DumpConfigCommand.ts";
 import {
-  KEY_VALUE_SERVICE_ID,
+  CONFIGURATION_SERVICE_ID,
   SECRET_SENTINEL_PREFIX,
-  SHUTDOWN_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultKeyValueService from "./DefaultKeyValueService.ts";
+import type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultSecretService from "./DefaultSecretService.ts";
 import resolveSecrets from "./resolveSecrets.ts";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
@@ -39,23 +36,9 @@ import {
 
 const logger = getLogger("ConfigurationServiceProvider");
 
-export const CONFIG_LOCATION_SERVICE_ID =
-  "@flowscripter/dynamic-cli-framework/config-location-service";
+export type KeyValueServiceScopeType = "command" | "service";
 
-/**
- * Minimal, read/write view of {@link ConfigurationServiceProvider.configLocation} and
- * {@link ConfigurationServiceProvider.getConfigString}, registered under
- * {@link CONFIG_LOCATION_SERVICE_ID} so commands/tasks needing only this can look it up via
- * {@link Context.getServiceById} instead of holding a {@link ConfigurationServiceProvider}
- * reference.
- */
-export interface ConfigLocationService {
-  readonly configLocation: string | undefined;
-  setConfigLocation(location: string): void;
-  getConfigString(): string;
-}
-
-class ConfigLocationServiceImpl implements ConfigLocationService {
+class ConfigurationServiceImpl implements ConfigurationService {
   readonly #provider: ConfigurationServiceProvider;
 
   public constructor(provider: ConfigurationServiceProvider) {
@@ -75,41 +58,15 @@ class ConfigLocationServiceImpl implements ConfigLocationService {
   }
 }
 
-export type KeyValueServiceScopeType = "command" | "service";
-
 /**
- * Registered under {@link KEY_VALUE_SERVICE_ID} in the plain, undecorated {@link Context} purely
- * so {@link Context.doesServiceExist} reports correctly - every real access goes through a
- * per-scope instance from {@link ConfigurationServiceProvider.getScopedKeyValueService}, applied
- * via a per-call decorated {@link Context} (see `runner.ts`). Reaching any of these methods
- * directly means that decoration was somehow bypassed.
- */
-class UnreachableKeyValueService implements KeyValueService {
-  get<T extends ValueNode>(): Promise<T> {
-    return Promise.reject(new Error(UnreachableKeyValueService.#message));
-  }
-
-  has(): Promise<boolean> {
-    return Promise.reject(new Error(UnreachableKeyValueService.#message));
-  }
-
-  set(): Promise<void> {
-    return Promise.reject(new Error(UnreachableKeyValueService.#message));
-  }
-
-  delete(): Promise<void> {
-    return Promise.reject(new Error(UnreachableKeyValueService.#message));
-  }
-
-  static readonly #message =
-    "KeyValueService accessed without a resolved scope - this should be unreachable";
-}
-
-/**
- * Provides:
+ * Provides configuration of default command arguments using a configuration file and/or
+ * environment variables.
  *
- * * Configuration of default command arguments using a configuration file and/or environment variables.
- * * A generic key-value store for commands and services ({@link KeyValueService}).
+ * The same configuration file also backs the raw, per-scope key-value data consumed by
+ * {@link KeyValueServiceProvider} (which holds a direct reference to this provider - see
+ * {@link getKeyValueData} and {@link flushIfDirty} - rather than looking this provider up via
+ * {@link Context}, since only {@link configLocation}/{@link setConfigLocation}/
+ * {@link getConfigString} are safe to expose generally).
  *
  * **Default Command Arguments**
  *
@@ -154,7 +111,8 @@ class UnreachableKeyValueService implements KeyValueService {
  * NOTE: You may store default arguments for secrets by manually configuring secrets in your OS
  * credential store and referencing them in the config file using the sentinel format
  * `__SECRET__:<bun_secret_name>`. These values will be resolved from the OS secret store
- * before being returned as default argument values. See "Generic Key-Value Service" below.
+ * before being returned as default argument values. See {@link KeyValueServiceProvider} for the
+ * generic key-value store which uses the same secret sentinel mechanism.
  *
  * *Environment Variables*
  *
@@ -192,68 +150,13 @@ class UnreachableKeyValueService implements KeyValueService {
  * * executable: `MyCLI`, command: `command1`, nested sub-argument with both levels being arrays and referring to the 2nd element of each: `arg1[1].arg2[1]`, arg2 configuration key: `BAR` => environment variable: `MYCLI_COMMAND1_ARG1_1_BAR_2`
  *
  * NOTE: Any default values from the above configuration sources will be overridden by any arguments provided on the command line.
- *
- * **Generic Key-Value Service**
- *
- * The same configuration file above is used to provide storage for the provided {@link KeyValueService}. The values
- * are stored under a top level `key-values` property. These are expected to not be modified by the user of the CLI.
- *
- * The second and third level of properties is used to scope the key-values to specific command names
- * (via {@link Command.name} values) and specific service IDs (via {@link ServiceProvider.serviceId} values).
- * Keys are strings, but values are arbitrary JSON (see {@link ValueNode}) - not limited to strings -
- * and may be deep objects or arrays.
- *
- * Any node within a value passed to {@link KeyValueService.set} can be wrapped in {@link Secret} -
- * at any depth - to have that node, and only that node, stored as an OS-native secret. When a node
- * is wrapped in {@link Secret}, its value (of any shape) is JSON-serialized and stored as a single
- * OS-native secret via Bun.secrets, with a sentinel value of the format `__SECRET__:<bun_secret_name>`
- * substituted in its place in the structure that gets stored in the config file. Everything else in
- * the value is stored as plain (unencrypted) config data. The sentinel prefix `__SECRET__:` is
- * reserved and must not be used for regular key-value data.
- *
- * Independently of how a value was written, {@link KeyValueService.get} recursively resolves any
- * string leaf - at any depth within the retrieved value - which starts with the sentinel prefix,
- * via the OS secret store. This means a secret reference may also be hand-embedded (nested
- * arbitrarily deep) directly within a plain, non-secret value in the config file.
- *
- * Secret support requires `secretServiceEnabled=true` in the constructor (which also requires
- * `configEnabled=true`).
- *
- * As an example:
- * ```
- * {
- *    "defaults": {
- *        ...
- *    },
- *    "key-values": {
- *        "commands": {
- *            "command1": {
- *               "foo1": "bar1",
- *               "foo2": "__SECRET__:command_command1_foo2",
- *               "foo3": {
- *                   "nested": ["a", "__SECRET__:command_command1_foo3_nested"]
- *               }
- *            },
- *            "command2": {
- *                "foo1": "bar3"
- *            }
- *        },
- *        "services": {
- *            "service-id-1": {
- *                "foo1": "bar"
- *            }
- *        }
- *    }
- * }
- * ```
  */
 export default class ConfigurationServiceProvider implements ServiceProvider {
-  readonly serviceId: string = KEY_VALUE_SERVICE_ID;
+  readonly serviceId: string = CONFIGURATION_SERVICE_ID;
   readonly servicePriority: number;
 
   public readonly envVarsEnabled: boolean;
   public readonly configEnabled: boolean;
-  public readonly keyValueServiceEnabled: boolean;
   public readonly secretServiceEnabled: boolean;
 
   // the location of the currently managed configuration data
@@ -264,18 +167,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   // SubCommandArgument values.
   public defaultsData: Map<string, Values | SingleValueType> = new Map();
 
-  // the underlying per-scope key-value data, read from/written to the configuration file.
+  // the underlying per-scope key-value data, read from/written to the configuration file. Exposed
+  // (raw, not wrapped in a KeyValueService) only via getKeyValueData(), for KeyValueServiceProvider's
+  // exclusive use.
   #commandKeyValueData = new Map<string, Map<string, ValueNode>>();
   #serviceKeyValueData = new Map<string, Map<string, ValueNode>>();
-
-  // per-scope KeyValueService instances, created on first request and cached thereafter - each is
-  // bound permanently to one scope's Map (and one scope-prefixed DefaultSecretService), never
-  // re-pointed. See getScopedKeyValueService().
-  readonly #commandScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
-  readonly #serviceScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
-
-  // used to construct scoped DefaultSecretService instances on demand.
-  #cliConfigName: string | undefined;
 
   // secret service used only to resolve secret sentinels embedded in default command argument
   // values (getDefaultArgumentValues()) - unrelated to per-command/per-service KV scoping, so it
@@ -284,11 +180,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   #defaultsSecretService: DefaultSecretService | undefined;
 
   /**
-   * A {@link ConfigLocationService} view of this provider, registered in the {@link Context} under
-   * {@link CONFIG_LOCATION_SERVICE_ID}. Its `configLocation` getter always reflects this provider's
+   * A {@link ConfigurationService} view of this provider, registered in the {@link Context} under
+   * {@link CONFIGURATION_SERVICE_ID}. Its `configLocation` getter always reflects this provider's
    * current value.
    */
-  public readonly configLocationService: ConfigLocationService;
+  readonly #configurationService: ConfigurationService;
 
   /**
    * Create an instance of the service provider with the specified details.
@@ -296,29 +192,24 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @param servicePriority the priority of the service.
    * @param envVarsEnabled optionally support checking env variables for default argument values.
    * @param configEnabled optionally enable configuration file support for default argument values.
-   * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configEnabled` must be true in this case
-   * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets: `configEnabled` must be true in this case
+   * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets for resolving
+   * secrets embedded in default argument values: `configEnabled` must be true in this case
    */
   public constructor(
     servicePriority: number,
     envVarsEnabled = false,
     configEnabled = false,
-    keyValueServiceEnabled = false,
     secretServiceEnabled = false,
   ) {
-    if (!configEnabled && keyValueServiceEnabled) {
-      throw new Error("configEnabled must be true if keyValueServiceEnabled is true");
-    }
     if (!configEnabled && secretServiceEnabled) {
       throw new Error("configEnabled must be true if secretServiceEnabled is true");
     }
     this.servicePriority = servicePriority;
     this.envVarsEnabled = envVarsEnabled;
     this.configEnabled = configEnabled;
-    this.keyValueServiceEnabled = keyValueServiceEnabled;
     this.secretServiceEnabled = secretServiceEnabled;
 
-    this.configLocationService = new ConfigLocationServiceImpl(this);
+    this.#configurationService = new ConfigurationServiceImpl(this);
   }
 
   public getServiceInfo(cliConfig: CLIConfig): Promise<ServiceInfo> {
@@ -328,16 +219,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       commands.push(new ConfigCommand(this.servicePriority));
       commands.push(new DumpConfigCommand());
     }
-    this.#cliConfigName = cliConfig.name;
     if (this.secretServiceEnabled) {
       this.#defaultsSecretService = new DefaultSecretService(cliConfig.name, "defaults");
     }
     return Promise.resolve({
-      // this is a placeholder - see UnreachableKeyValueService - unless neither is enabled
-      service:
-        this.keyValueServiceEnabled || this.secretServiceEnabled
-          ? new UnreachableKeyValueService()
-          : undefined,
+      service: this.#configurationService,
       // this may be empty if configEnabled is false
       commands,
     });
@@ -413,84 +299,33 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   }
 
   /**
-   * Return the {@link KeyValueService} bound to the given scope, creating (and caching) it on
-   * first request. The returned instance is permanently bound to that scope's data and secret
-   * prefix - it is never re-pointed, so it may be held and used for as long as its owning
-   * command/service/task is alive without racing any other scope's window.
+   * Get-or-create the underlying, raw {@link ValueNode} `Map` for the given scope - for
+   * {@link KeyValueServiceProvider}'s exclusive use, via its direct reference to this provider.
    *
    * @param scopeType whether `scopeKey` is a command name or a service/task ID.
    * @param scopeKey the command name or service/task ID to scope the key-value data to.
-   *
-   * @throws {Error} if neither `keyValueServiceEnabled` nor `secretServiceEnabled` is set.
    */
-  public getScopedKeyValueService(
+  public getKeyValueData(
     scopeType: KeyValueServiceScopeType,
     scopeKey: string,
-  ): KeyValueService {
-    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
-    }
-
-    const scopedServices =
-      scopeType === "command"
-        ? this.#commandScopedKeyValueServices
-        : this.#serviceScopedKeyValueServices;
-    const cached = scopedServices.get(scopeKey);
-    if (cached) {
-      return cached;
-    }
-
+  ): Map<string, ValueNode> {
     const keyValueData =
       scopeType === "command" ? this.#commandKeyValueData : this.#serviceKeyValueData;
     if (!keyValueData.has(scopeKey)) {
       keyValueData.set(scopeKey, new Map());
     }
-
-    const secretService = this.secretServiceEnabled
-      ? new DefaultSecretService(this.#cliConfigName!, `${scopeType}_${scopeKey}`)
-      : undefined;
-    const scopedService = new DefaultKeyValueService(keyValueData.get(scopeKey)!, secretService);
-    scopedServices.set(scopeKey, scopedService);
-    return scopedService;
+    return keyValueData.get(scopeKey)!;
   }
 
   /**
-   * Return a {@link Context} which delegates every lookup to `context` unchanged, except
-   * `getServiceById(KEY_VALUE_SERVICE_ID)`, which resolves to the scope-bound instance from
-   * {@link getScopedKeyValueService} for the given scope. Used by `runner.ts` to give each
-   * command/service/task a KeyValueService isolated to its own scope, invisibly at the call site.
+   * Write the configuration file, if `isDirty` is true - for {@link KeyValueServiceProvider}'s
+   * exclusive use, via its direct reference to this provider, called from its shutdown-time
+   * flush task.
    *
-   * Returns `context` itself, unchanged, if neither `keyValueServiceEnabled` nor
-   * `secretServiceEnabled` is set.
+   * @param isDirty whether any scoped KeyValueService has unwritten changes.
    */
-  public getContextForScope(
-    context: Context,
-    scopeType: KeyValueServiceScopeType,
-    scopeKey: string,
-  ): Context {
-    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      return context;
-    }
-    const scopedKeyValueService = this.getScopedKeyValueService(scopeType, scopeKey);
-    return {
-      cliConfig: context.cliConfig,
-      getServiceById: (id: string): unknown =>
-        id === KEY_VALUE_SERVICE_ID ? scopedKeyValueService : context.getServiceById(id),
-      doesServiceExist: (id: string): boolean => context.doesServiceExist(id),
-    };
-  }
-
-  /**
-   * Flush every scoped KeyValueService's data to the configuration file, if any of them report
-   * themselves dirty. Registered as a low-priority ShutdownTask (see {@link initService}) so it
-   * runs once, after other shutdown cleanup, regardless of how long any scope was written to.
-   */
-  async #flushDirtyScopes(): Promise<void> {
-    const anyDirty = [
-      ...this.#commandScopedKeyValueServices.values(),
-      ...this.#serviceScopedKeyValueServices.values(),
-    ].some((service) => service.isDirty());
-    if (!anyDirty) {
+  public async flushIfDirty(isDirty: boolean): Promise<void> {
+    if (!isDirty) {
       return;
     }
     if (this.configLocation === undefined) {
@@ -500,17 +335,6 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   }
 
   public async initService(context: Context): Promise<void> {
-    if (this.keyValueServiceEnabled || this.secretServiceEnabled) {
-      const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
-      shutdownService.registerTask({
-        id: `${KEY_VALUE_SERVICE_ID}-flush`,
-        // low priority - shutdown tasks run in descending priority order, so this runs after
-        // other shutdown cleanup (which defaults to priority 0).
-        priority: -100,
-        run: () => this.#flushDirtyScopes(),
-      });
-    }
-
     if (!this.configEnabled) {
       return;
     }
