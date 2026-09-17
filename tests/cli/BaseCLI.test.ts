@@ -168,19 +168,21 @@ describe("BaseCLI tests", () => {
     }
 
     class DefaultService1 implements ServiceInterface {
+      // permanently bound to service1's own scope, set once during initService() - must never be
+      // affected by whichever other scope happens to be "current" elsewhere.
       copyOfKeyValueService: KeyValueService | undefined;
 
       async serviceMethod(context: Context): Promise<void> {
-        expect(await this.copyOfKeyValueService!.has("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.get("name")).toEqual("modifierCommand");
-        await this.copyOfKeyValueService!.set("name", "defaultService1+modifierCommand");
+        // service1's own scope: untouched by modifierCommand's writes to its own ("modifier")
+        // scope, even though serviceMethod() is invoked from inside modifierCommand.execute().
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual("service1-init-value");
 
-        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
-
-        expect(await keyValueService.has("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.get("name")).toEqual(
-          "defaultService1+modifierCommand",
-        );
+        // the context passed through from modifierCommand.execute() is still scoped to the
+        // "modifier" command, not to service1 - it must see modifierCommand's own write.
+        const commandScopedKeyValueService = context.getServiceById(
+          KEY_VALUE_SERVICE_ID,
+        ) as KeyValueService;
+        expect(await commandScopedKeyValueService.get("name")).toEqual("modifierCommand-value");
 
         service1MethodInvoked = true;
       }
@@ -190,14 +192,12 @@ describe("BaseCLI tests", () => {
       copyOfKeyValueService: KeyValueService | undefined;
 
       async serviceMethod(context: Context): Promise<void> {
-        expect(await this.copyOfKeyValueService!.has("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.get("name")).toEqual("subCommand");
-        await this.copyOfKeyValueService!.set("name", "defaultService2+subCommand");
+        expect(await this.copyOfKeyValueService!.get("name")).toEqual("service2-init-value");
 
-        const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
-
-        expect(await keyValueService.has("name")).toBeTrue();
-        expect(await this.copyOfKeyValueService!.get("name")).toEqual("defaultService2+subCommand");
+        const commandScopedKeyValueService = context.getServiceById(
+          KEY_VALUE_SERVICE_ID,
+        ) as KeyValueService;
+        expect(await commandScopedKeyValueService.get("name")).toEqual("subCommand-value");
 
         service2MethodInvoked = true;
       }
@@ -221,7 +221,7 @@ describe("BaseCLI tests", () => {
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.has("name")).toBeFalse();
-        await keyValueService.set("name", "defaultService2");
+        await keyValueService.set("name", "service1-init-value");
 
         this.defaultService1!.copyOfKeyValueService = keyValueService;
 
@@ -247,7 +247,7 @@ describe("BaseCLI tests", () => {
         const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
         expect(await keyValueService.has("name")).toBeFalse();
-        await keyValueService.set("name", "defaultService2");
+        await keyValueService.set("name", "service2-init-value");
 
         this.defaultService2!.copyOfKeyValueService = keyValueService;
 
@@ -269,11 +269,14 @@ describe("BaseCLI tests", () => {
       const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
       expect(await keyValueService.has("name")).toBeFalse();
-      await keyValueService.set("name", "modifierCommand");
+      await keyValueService.set("name", "modifierCommand-value");
 
       const service1 = context.getServiceById(SERVICE_1) as ServiceInterface;
 
       await service1.serviceMethod(context);
+
+      // service1's serviceMethod() must not have leaked into this command's own scope.
+      expect(await keyValueService.get("name")).toEqual("modifierCommand-value");
 
       modifierHasRun = true;
     };
@@ -281,11 +284,13 @@ describe("BaseCLI tests", () => {
       const keyValueService = context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
 
       expect(await keyValueService.has("name")).toBeFalse();
-      await keyValueService.set("name", "subCommand");
+      await keyValueService.set("name", "subCommand-value");
 
       const service2 = context.getServiceById(SERVICE_2) as ServiceInterface;
 
       await service2.serviceMethod(context);
+
+      expect(await keyValueService.get("name")).toEqual("subCommand-value");
 
       subHasRun = true;
     };
@@ -305,8 +310,12 @@ describe("BaseCLI tests", () => {
     expect(subHasRun).toBeTrue();
     expect(service2MethodInvoked).toBeTrue();
 
-    // cleanup
-    await fs.rm(path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`));
+    // cleanup - the config flush now happens on a ShutdownTask (see ConfigurationServiceProvider),
+    // and this test file's static ShutdownServiceProvider guard means shutdown only truly runs
+    // once across this whole file's tests, so the file may not exist here; tolerate that.
+    await fs.rm(path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`), {
+      force: true,
+    });
   });
 
   test("BaseCLI without keyReader and promptingEnabled false works", async () => {

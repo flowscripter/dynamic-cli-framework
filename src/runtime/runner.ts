@@ -96,19 +96,14 @@ async function executeParsedCommand(
   try {
     if (parseResult.groupCommand !== undefined) {
       logger.debug("Executing group command with name: %s", parseResult!.groupCommand!.name);
-      if (
-        configurationServiceProvider?.keyValueServiceEnabled ||
-        configurationServiceProvider?.secretServiceEnabled
-      ) {
-        configurationServiceProvider.setCommandKeyValueScope(parseResult!.groupCommand!.name);
-      }
-      await parseResult.groupCommand.execute(context);
-      if (
-        configurationServiceProvider?.keyValueServiceEnabled ||
-        configurationServiceProvider?.secretServiceEnabled
-      ) {
-        await configurationServiceProvider.clearKeyValueScope();
-      }
+      const groupContext = configurationServiceProvider
+        ? configurationServiceProvider.getContextForScope(
+            context,
+            "command",
+            parseResult!.groupCommand!.name,
+          )
+        : context;
+      await parseResult.groupCommand.execute(groupContext);
     }
 
     logger.debug(
@@ -117,25 +112,23 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
-    if (
-      configurationServiceProvider?.keyValueServiceEnabled ||
-      configurationServiceProvider?.secretServiceEnabled
-    ) {
-      configurationServiceProvider.setCommandKeyValueScope(parseResult.command.name);
-    }
+    const commandContext = configurationServiceProvider
+      ? configurationServiceProvider.getContextForScope(
+          context,
+          "command",
+          parseResult.command.name,
+        )
+      : context;
     if (isSubCommand(parseResult.command)) {
-      await parseResult.command.execute(context, parseResult.populatedArgumentValues as Values);
+      await parseResult.command.execute(
+        commandContext,
+        parseResult.populatedArgumentValues as Values,
+      );
     } else {
       await (parseResult.command as GlobalCommand).execute(
-        context,
+        commandContext,
         parseResult.populatedArgumentValues as SingleValueType,
       );
-    }
-    if (
-      configurationServiceProvider?.keyValueServiceEnabled ||
-      configurationServiceProvider?.secretServiceEnabled
-    ) {
-      await configurationServiceProvider.clearKeyValueScope();
     }
   } catch (err) {
     if ((err as Error).message === "Interrupted") {
@@ -674,33 +667,18 @@ export async function run(
 
     logger.debug("Running startup task with ID: %s", task.id);
 
-    if (
-      configurationServiceProvider?.keyValueServiceEnabled ||
-      configurationServiceProvider?.secretServiceEnabled
-    ) {
-      configurationServiceProvider.setServiceKeyValueScope(task.id);
-    }
+    // each task gets a Context whose KeyValueService is bound permanently to its own scope (keyed
+    // by task.id) - unlike the old set/clear-around-the-call mechanism, this scope stays valid for
+    // as long as the task holds onto this Context, including for a "background" task that keeps
+    // running (and reading/writing its KeyValueService) after this loop moves on.
+    const taskContext = configurationServiceProvider
+      ? configurationServiceProvider.getContextForScope(context, "service", task.id)
+      : context;
 
     if ((task.mode ?? "blocking") === "blocking") {
-      await task.run(context);
-      if (
-        configurationServiceProvider?.keyValueServiceEnabled ||
-        configurationServiceProvider?.secretServiceEnabled
-      ) {
-        await configurationServiceProvider.clearKeyValueScope();
-      }
+      await task.run(taskContext);
     } else {
-      // background: don't hold the scope open synchronously around unawaited work - clear it
-      // immediately so the next task can acquire its own scope. Any KeyValueService access this
-      // task performs after this point is not scope-isolated until Step 5 - see #safeKeyValueCall
-      // wrapper usage in DefaultUpgradeService for how a consumer defends against this.
-      if (
-        configurationServiceProvider?.keyValueServiceEnabled ||
-        configurationServiceProvider?.secretServiceEnabled
-      ) {
-        await configurationServiceProvider.clearKeyValueScope();
-      }
-      void task.run(context).catch((error: unknown) => {
+      void task.run(taskContext).catch((error: unknown) => {
         logger.debug(() => `Background startup task '${task.id}' failed: ${error}`);
       });
     }

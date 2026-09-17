@@ -6,9 +6,22 @@ import { describe, expect, test } from "bun:test";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
-import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
-import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  KEY_VALUE_SERVICE_ID,
+  SHUTDOWN_SERVICE_ID,
+  ValueTypeName,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { KeyValueService, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+
+function getFakeShutdownService(): ShutdownService {
+  return {
+    registerTask: () => {},
+    enterLongRunningMode: () => {},
+    leaveLongRunningMode: () => {},
+    isShutdownRequested: false,
+  };
+}
 
 function getConfig() {
   return {
@@ -150,10 +163,11 @@ describe("ConfigurationServiceProvider tests", () => {
     }
   });
 
-  test("setCommandKeyValueScope works", async () => {
+  test("getScopedKeyValueService isolates command scopes", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
+    context.addServiceInstance(SHUTDOWN_SERVICE_ID, getFakeShutdownService());
 
     const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
     const configLocation = path.join(configFolder, "config.json");
@@ -163,30 +177,32 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
-
+    await configurationServiceProvider.getServiceInfo(cliConfig);
     await configurationServiceProvider.initService(context);
 
-    const keyValueService = serviceInfo.service! as KeyValueService;
+    const command2KeyValueService = configurationServiceProvider.getScopedKeyValueService(
+      "command",
+      "command2",
+    );
+    const command1KeyValueService = configurationServiceProvider.getScopedKeyValueService(
+      "command",
+      "command1",
+    );
 
-    configurationServiceProvider.setCommandKeyValueScope("command2");
+    expect(await command2KeyValueService.has("foo2")).toBeFalse();
+    expect(await command1KeyValueService.get("foo2")).toEqual("bar2");
 
-    expect(await keyValueService.has("foo2")).toBeFalse();
-
-    await configurationServiceProvider.clearKeyValueScope();
-    configurationServiceProvider.setCommandKeyValueScope("command1");
-
-    expect(await keyValueService.get("foo2")).toEqual("bar2");
-
-    await configurationServiceProvider.clearKeyValueScope();
-
-    expect(keyValueService.has("foo2")).rejects.toThrow();
+    // requesting the same scope again returns the same, cached instance
+    expect(configurationServiceProvider.getScopedKeyValueService("command", "command1")).toBe(
+      command1KeyValueService,
+    );
   });
 
-  test("setServiceKeyValueScope works", async () => {
+  test("getScopedKeyValueService isolates service scopes", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
+    context.addServiceInstance(SHUTDOWN_SERVICE_ID, getFakeShutdownService());
 
     const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
     const configLocation = path.join(configFolder, "config.json");
@@ -196,24 +212,71 @@ describe("ConfigurationServiceProvider tests", () => {
 
     await fs.writeFile(configLocation, JSON.stringify(config));
 
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
-
+    await configurationServiceProvider.getServiceInfo(cliConfig);
     await configurationServiceProvider.initService(context);
 
-    const keyValueService = serviceInfo.service! as KeyValueService;
+    const service2KeyValueService = configurationServiceProvider.getScopedKeyValueService(
+      "service",
+      "service-id-2",
+    );
+    const service1KeyValueService = configurationServiceProvider.getScopedKeyValueService(
+      "service",
+      "service-id-1",
+    );
 
-    configurationServiceProvider.setServiceKeyValueScope("service-id-2");
+    expect(await service2KeyValueService.has("foo1")).toBeFalse();
+    expect(await service1KeyValueService.get("foo1")).toEqual("bar");
+  });
 
-    expect(await keyValueService.has("foo1")).toBeFalse();
+  test("getContextForScope isolates a KeyValueService write from a concurrently-open second scope", async () => {
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
+    const cliConfig = getCLIConfig();
+    const context = new DefaultContext(cliConfig);
+    context.addServiceInstance(SHUTDOWN_SERVICE_ID, getFakeShutdownService());
 
-    await configurationServiceProvider.clearKeyValueScope();
-    configurationServiceProvider.setServiceKeyValueScope("service-id-1");
+    const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
+    const configLocation = path.join(configFolder, "config.json");
+    configurationServiceProvider.setConfigLocation(configLocation);
+    await fs.writeFile(configLocation, "{}");
 
-    expect(await keyValueService.get("foo1")).toEqual("bar");
+    await configurationServiceProvider.getServiceInfo(cliConfig);
+    await configurationServiceProvider.initService(context);
 
-    await configurationServiceProvider.clearKeyValueScope();
+    // simulates a task whose async work outlives its own "window" (see issue #172): scopeA's
+    // write is deliberately delayed via a manually-resolved promise, into a point in time after
+    // scopeB's context has already been created and used.
+    let resolveDelayedWrite: () => void = () => {};
+    const delayedWrite = new Promise<void>((resolve) => {
+      resolveDelayedWrite = resolve;
+    });
 
-    expect(keyValueService.has("foo1")).rejects.toThrow();
+    const scopedContextA = configurationServiceProvider.getContextForScope(
+      context,
+      "service",
+      "scope-a",
+    );
+    const scopedContextB = configurationServiceProvider.getContextForScope(
+      context,
+      "service",
+      "scope-b",
+    );
+
+    const kvA = scopedContextA.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
+    const kvB = scopedContextB.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
+
+    const deferredWrite = delayedWrite.then(() => kvA.set("shared-key", "scope-a-value"));
+
+    // scopeB writes and reads its own data while scopeA's write is still pending
+    await kvB.set("shared-key", "scope-b-value");
+    expect(await kvB.get("shared-key")).toEqual("scope-b-value");
+
+    // now let scopeA's delayed write proceed
+    resolveDelayedWrite();
+    await deferredWrite;
+
+    // scopeA's delayed write must never have landed in scopeB's data, regardless of timing
+    expect(await kvB.get("shared-key")).toEqual("scope-b-value");
+    expect(await kvA.get("shared-key")).toEqual("scope-a-value");
   });
 
   test("secretServiceEnabled requires configEnabled", () => {

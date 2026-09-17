@@ -25,7 +25,7 @@ export function getContext(streamString: WritableStreamString): Context {
 
   defaultPrinterService.colorEnabled = false;
   defaultContext.addServiceInstance(PRINTER_SERVICE_ID, defaultPrinterService);
-  defaultContext.addServiceInstance(KEY_VALUE_SERVICE_ID, new DefaultKeyValueService());
+  defaultContext.addServiceInstance(KEY_VALUE_SERVICE_ID, new DefaultKeyValueService(new Map()));
   defaultContext.addServiceInstance(TABLE_GENERATOR_SERVICE_ID, new DefaultTableGeneratorService());
 
   return defaultContext;

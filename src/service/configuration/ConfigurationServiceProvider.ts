@@ -10,6 +10,8 @@ import type {
   ValueNode,
   PopulatedValues,
   PopulatedValueType,
+  KeyValueService,
+  ShutdownService,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
@@ -17,6 +19,7 @@ import DumpConfigCommand from "./command/DumpConfigCommand.ts";
 import {
   KEY_VALUE_SERVICE_ID,
   SECRET_SENTINEL_PREFIX,
+  SHUTDOWN_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
 import DefaultSecretService from "./DefaultSecretService.ts";
@@ -70,6 +73,36 @@ class ConfigLocationServiceImpl implements ConfigLocationService {
   public getConfigString(): string {
     return this.#provider.getConfigString();
   }
+}
+
+export type KeyValueServiceScopeType = "command" | "service";
+
+/**
+ * Registered under {@link KEY_VALUE_SERVICE_ID} in the plain, undecorated {@link Context} purely
+ * so {@link Context.doesServiceExist} reports correctly - every real access goes through a
+ * per-scope instance from {@link ConfigurationServiceProvider.getScopedKeyValueService}, applied
+ * via a per-call decorated {@link Context} (see `runner.ts`). Reaching any of these methods
+ * directly means that decoration was somehow bypassed.
+ */
+class UnreachableKeyValueService implements KeyValueService {
+  get<T extends ValueNode>(): Promise<T> {
+    return Promise.reject(new Error(UnreachableKeyValueService.#message));
+  }
+
+  has(): Promise<boolean> {
+    return Promise.reject(new Error(UnreachableKeyValueService.#message));
+  }
+
+  set(): Promise<void> {
+    return Promise.reject(new Error(UnreachableKeyValueService.#message));
+  }
+
+  delete(): Promise<void> {
+    return Promise.reject(new Error(UnreachableKeyValueService.#message));
+  }
+
+  static readonly #message =
+    "KeyValueService accessed without a resolved scope - this should be unreachable";
 }
 
 /**
@@ -231,22 +264,24 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   // SubCommandArgument values.
   public defaultsData: Map<string, Values | SingleValueType> = new Map();
 
-  // the configuration data to be used by the CLI runner implementation
-  // when updating command scoped access to key-value data via the key-value service.
+  // the underlying per-scope key-value data, read from/written to the configuration file.
   #commandKeyValueData = new Map<string, Map<string, ValueNode>>();
-
-  // the configuration data to be used by the CLI runner implementation
-  // when updating service scoped access to key-value data via the key-value service.
   #serviceKeyValueData = new Map<string, Map<string, ValueNode>>();
 
-  // the optional service providing scope limited key-value data to commands and other services
-  #defaultKeyValueService: DefaultKeyValueService | undefined;
+  // per-scope KeyValueService instances, created on first request and cached thereafter - each is
+  // bound permanently to one scope's Map (and one scope-prefixed DefaultSecretService), never
+  // re-pointed. See getScopedKeyValueService().
+  readonly #commandScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
+  readonly #serviceScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
 
-  // the optional service providing OS-native secret storage
-  #defaultSecretService: DefaultSecretService | undefined;
+  // used to construct scoped DefaultSecretService instances on demand.
+  #cliConfigName: string | undefined;
 
-  #currentCommandNameKeyValueScope: string | undefined;
-  #currentServiceIdKeyValueScope: string | undefined;
+  // secret service used only to resolve secret sentinels embedded in default command argument
+  // values (getDefaultArgumentValues()) - unrelated to per-command/per-service KV scoping, so it
+  // uses its own fixed, dedicated scope prefix ("defaults"). Its scope is otherwise irrelevant,
+  // since only getSecret() (which doesn't consult scope) is ever called on it.
+  #defaultsSecretService: DefaultSecretService | undefined;
 
   /**
    * A {@link ConfigLocationService} view of this provider, registered in the {@link Context} under
@@ -293,15 +328,16 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       commands.push(new ConfigCommand(this.servicePriority));
       commands.push(new DumpConfigCommand());
     }
+    this.#cliConfigName = cliConfig.name;
     if (this.secretServiceEnabled) {
-      this.#defaultSecretService = new DefaultSecretService(cliConfig.name);
-    }
-    if (this.keyValueServiceEnabled || this.secretServiceEnabled) {
-      this.#defaultKeyValueService = new DefaultKeyValueService(this.#defaultSecretService);
+      this.#defaultsSecretService = new DefaultSecretService(cliConfig.name, "defaults");
     }
     return Promise.resolve({
-      // this may be undefined if keyValueServiceEnabled and secretServiceEnabled are false
-      service: this.#defaultKeyValueService,
+      // this is a placeholder - see UnreachableKeyValueService - unless neither is enabled
+      service:
+        this.keyValueServiceEnabled || this.secretServiceEnabled
+          ? new UnreachableKeyValueService()
+          : undefined,
       // this may be empty if configEnabled is false
       commands,
     });
@@ -358,11 +394,11 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       }
     }
 
-    if (result !== undefined && this.#defaultSecretService) {
+    if (result !== undefined && this.#defaultsSecretService) {
       result = await resolveSecrets<PopulatedValues | PopulatedValueType>(
         result,
         async (bunSecretName) => {
-          const secretValue = await this.#defaultSecretService!.getSecret(bunSecretName);
+          const secretValue = await this.#defaultsSecretService!.getSecret(bunSecretName);
           if (secretValue === null) {
             throw new Error(
               `Secret not found in OS secret store for sentinel: '${SECRET_SENTINEL_PREFIX}${bunSecretName}'`,
@@ -377,107 +413,104 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   }
 
   /**
-   * Indicate that the contained {@link DefaultKeyValueService} should be set to have a scope of the provided
-   * command name.
+   * Return the {@link KeyValueService} bound to the given scope, creating (and caching) it on
+   * first request. The returned instance is permanently bound to that scope's data and secret
+   * prefix - it is never re-pointed, so it may be held and used for as long as its owning
+   * command/service/task is alive without racing any other scope's window.
    *
-   * @param commandName the name of the command to scope the key-value data to.
+   * @param scopeType whether `scopeKey` is a command name or a service/task ID.
+   * @param scopeKey the command name or service/task ID to scope the key-value data to.
    *
-   * @throws {Error} if an existing scope is set.
+   * @throws {Error} if neither `keyValueServiceEnabled` nor `secretServiceEnabled` is set.
    */
-  public setCommandKeyValueScope(commandName: string): void {
+  public getScopedKeyValueService(
+    scopeType: KeyValueServiceScopeType,
+    scopeKey: string,
+  ): KeyValueService {
     if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
       throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
     }
-    if (this.#currentCommandNameKeyValueScope) {
-      throw new Error(
-        `Attempt to set CommandNameKeyValueScope to ${commandName} when it is currently set to ${this.#currentCommandNameKeyValueScope}`,
-      );
-    }
-    if (this.#currentServiceIdKeyValueScope) {
-      throw new Error(
-        `Attempt to set CommandNameKeyValueScope to ${commandName} when ServiceIdKeyValueScope is currently set to ${this.#currentCommandNameKeyValueScope}`,
-      );
-    }
-    this.#currentCommandNameKeyValueScope = commandName;
 
-    logger.debug("currentCommandNameKeyValueScope: %s", commandName);
+    const scopedServices =
+      scopeType === "command"
+        ? this.#commandScopedKeyValueServices
+        : this.#serviceScopedKeyValueServices;
+    const cached = scopedServices.get(scopeKey);
+    if (cached) {
+      return cached;
+    }
 
-    if (this.#defaultKeyValueService) {
-      if (!this.#commandKeyValueData.has(commandName)) {
-        this.#commandKeyValueData.set(commandName, new Map());
-      }
-      this.#defaultKeyValueService.setKeyValueData(this.#commandKeyValueData.get(commandName)!);
+    const keyValueData =
+      scopeType === "command" ? this.#commandKeyValueData : this.#serviceKeyValueData;
+    if (!keyValueData.has(scopeKey)) {
+      keyValueData.set(scopeKey, new Map());
     }
-    if (this.#defaultSecretService) {
-      this.#defaultSecretService.setScope("command_" + commandName);
-    }
+
+    const secretService = this.secretServiceEnabled
+      ? new DefaultSecretService(this.#cliConfigName!, `${scopeType}_${scopeKey}`)
+      : undefined;
+    const scopedService = new DefaultKeyValueService(keyValueData.get(scopeKey)!, secretService);
+    scopedServices.set(scopeKey, scopedService);
+    return scopedService;
   }
 
   /**
-   * Indicate that the contained {@link DefaultKeyValueService} should be set to have a scope of the provided
-   * service ID.
+   * Return a {@link Context} which delegates every lookup to `context` unchanged, except
+   * `getServiceById(KEY_VALUE_SERVICE_ID)`, which resolves to the scope-bound instance from
+   * {@link getScopedKeyValueService} for the given scope. Used by `runner.ts` to give each
+   * command/service/task a KeyValueService isolated to its own scope, invisibly at the call site.
    *
-   * @param serviceId the ID of the service to scope the key-value data to.
-   *
-   * @throws {Error} if an existing scope is set.
+   * Returns `context` itself, unchanged, if neither `keyValueServiceEnabled` nor
+   * `secretServiceEnabled` is set.
    */
-  public setServiceKeyValueScope(serviceId: string): void {
+  public getContextForScope(
+    context: Context,
+    scopeType: KeyValueServiceScopeType,
+    scopeKey: string,
+  ): Context {
     if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
+      return context;
     }
-    if (this.#currentServiceIdKeyValueScope) {
-      throw new Error(
-        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when it is currently set to ${this.#currentServiceIdKeyValueScope}`,
-      );
-    }
-    if (this.#currentCommandNameKeyValueScope) {
-      throw new Error(
-        `Attempt to set ServiceIdKeyValueScope to ${serviceId} when CommandNameKeyValueScope is currently set to ${this.#currentServiceIdKeyValueScope}`,
-      );
-    }
-    this.#currentServiceIdKeyValueScope = serviceId;
-
-    logger.debug("currentServiceIdKeyValueScope: %s", serviceId);
-
-    if (this.#defaultKeyValueService) {
-      if (!this.#serviceKeyValueData.has(serviceId)) {
-        this.#serviceKeyValueData.set(serviceId, new Map());
-      }
-      this.#defaultKeyValueService.setKeyValueData(this.#serviceKeyValueData.get(serviceId)!);
-    }
-    if (this.#defaultSecretService) {
-      this.#defaultSecretService.setScope("service_" + serviceId);
-    }
+    const scopedKeyValueService = this.getScopedKeyValueService(scopeType, scopeKey);
+    return {
+      cliConfig: context.cliConfig,
+      getServiceById: (id: string): unknown =>
+        id === KEY_VALUE_SERVICE_ID ? scopedKeyValueService : context.getServiceById(id),
+      doesServiceExist: (id: string): boolean => context.doesServiceExist(id),
+    };
   }
 
   /**
-   * Indicate that the contained {@link DefaultKeyValueService} should have any current scope cleared.
-   *
-   * If a scope is currently set and changes have been made to the key-value data, they will be written
-   * to the current configuration location.
+   * Flush every scoped KeyValueService's data to the configuration file, if any of them report
+   * themselves dirty. Registered as a low-priority ShutdownTask (see {@link initService}) so it
+   * runs once, after other shutdown cleanup, regardless of how long any scope was written to.
    */
-  public async clearKeyValueScope(): Promise<void> {
-    if (!this.keyValueServiceEnabled && !this.secretServiceEnabled) {
-      throw new Error(`Attempt to use KeyValueService/SecretService which is not enabled`);
+  async #flushDirtyScopes(): Promise<void> {
+    const anyDirty = [
+      ...this.#commandScopedKeyValueServices.values(),
+      ...this.#serviceScopedKeyValueServices.values(),
+    ].some((service) => service.isDirty());
+    if (!anyDirty) {
+      return;
     }
-    if (this.#defaultKeyValueService && this.#defaultKeyValueService.isDirty()) {
-      if (this.configLocation === undefined) {
-        throw new Error("Attempt to write updated config with no configLocation set");
-      }
-      await this.#writeConfig(this.configLocation);
+    if (this.configLocation === undefined) {
+      throw new Error("Attempt to write updated config with no configLocation set");
     }
-    this.#currentCommandNameKeyValueScope = undefined;
-    this.#currentServiceIdKeyValueScope = undefined;
-
-    if (this.#defaultKeyValueService) {
-      this.#defaultKeyValueService.clearKeyValueData();
-    }
-    if (this.#defaultSecretService) {
-      this.#defaultSecretService.clearScope();
-    }
+    await this.#writeConfig(this.configLocation);
   }
 
   public async initService(context: Context): Promise<void> {
+    if (this.keyValueServiceEnabled || this.secretServiceEnabled) {
+      const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
+      shutdownService.registerTask({
+        id: `${KEY_VALUE_SERVICE_ID}-flush`,
+        // low priority - shutdown tasks run in descending priority order, so this runs after
+        // other shutdown cleanup (which defaults to priority 0).
+        priority: -100,
+        run: () => this.#flushDirtyScopes(),
+      });
+    }
+
     if (!this.configEnabled) {
       return;
     }

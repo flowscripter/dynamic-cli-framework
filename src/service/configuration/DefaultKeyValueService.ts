@@ -7,26 +7,19 @@ import { Secret, SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framew
 import type DefaultSecretService from "./DefaultSecretService.ts";
 import resolveSecrets from "./resolveSecrets.ts";
 
+/**
+ * Bound permanently to a single scope's data at construction - never re-pointed afterward. Create
+ * a separate instance per scope (see {@link ConfigurationServiceProvider.getScopedKeyValueService}),
+ * rather than sharing one instance across scopes.
+ */
 export default class DefaultKeyValueService implements KeyValueService {
-  #keyValueData: Map<string, ValueNode> | undefined;
+  readonly #keyValueData: Map<string, ValueNode>;
   #dirty = false;
   readonly #secretService: DefaultSecretService | undefined;
 
-  constructor(secretService?: DefaultSecretService) {
-    this.#secretService = secretService;
-  }
-
-  public setKeyValueData(keyValueData: Map<string, ValueNode>) {
-    if (this.#keyValueData) {
-      throw new Error("Attempt to overwrite key-value data, it should be cleared first");
-    }
+  constructor(keyValueData: Map<string, ValueNode>, secretService?: DefaultSecretService) {
     this.#keyValueData = keyValueData;
-    this.#dirty = false;
-  }
-
-  public clearKeyValueData() {
-    this.#keyValueData = undefined;
-    this.#dirty = false;
+    this.#secretService = secretService;
   }
 
   public isDirty(): boolean {
@@ -34,9 +27,6 @@ export default class DefaultKeyValueService implements KeyValueService {
   }
 
   public async get<T extends ValueNode = ValueNode>(key: string): Promise<T> {
-    if (this.#keyValueData === undefined) {
-      throw new Error("Attempt to access undefined key-value data");
-    }
     const value = this.#keyValueData.get(key);
     if (value === undefined) {
       throw new Error("Attempt to access unknown key");
@@ -61,16 +51,10 @@ export default class DefaultKeyValueService implements KeyValueService {
   }
 
   public has(key: string): Promise<boolean> {
-    if (this.#keyValueData === undefined) {
-      return Promise.reject(new Error("Attempt to access undefined key-value data"));
-    }
     return Promise.resolve(this.#keyValueData.has(key));
   }
 
   public async set(key: string, value: SettableValueNode): Promise<void> {
-    if (this.#keyValueData === undefined) {
-      throw new Error("Attempt to access undefined key-value data");
-    }
     this.#keyValueData.set(key, await this.#storeSecrets(key, value, []));
     this.#dirty = true;
   }
@@ -112,9 +96,6 @@ export default class DefaultKeyValueService implements KeyValueService {
   }
 
   public async delete(key: string): Promise<void> {
-    if (this.#keyValueData === undefined) {
-      throw new Error("Attempt to access undefined key-value data");
-    }
     const value = this.#keyValueData.get(key);
     if (value !== undefined) {
       await this.#deleteSecrets(value);
