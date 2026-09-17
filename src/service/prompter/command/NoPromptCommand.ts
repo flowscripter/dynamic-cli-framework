@@ -2,7 +2,8 @@ import type { GlobalModifierCommand } from "@flowscripter/dynamic-cli-framework-
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type PrompterServiceProvider from "../PrompterServiceProvider.ts";
+import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import { PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 export default class NoPromptCommand implements GlobalModifierCommand {
   readonly name = "no-prompt";
@@ -15,15 +16,13 @@ export default class NoPromptCommand implements GlobalModifierCommand {
   };
   readonly executePriority: number;
 
-  readonly #prompterServiceProvider: PrompterServiceProvider;
-
-  public constructor(prompterServiceProvider: PrompterServiceProvider, executePriority: number) {
-    this.#prompterServiceProvider = prompterServiceProvider;
+  public constructor(executePriority: number) {
     this.executePriority = executePriority;
   }
 
-  public execute(_context: Context, argumentValue: SingleValueType): Promise<void> {
-    this.#prompterServiceProvider.prompterService.promptEnabled = !(argumentValue as boolean);
+  public execute(context: Context, argumentValue: SingleValueType): Promise<void> {
+    const prompterService = context.getServiceById(PROMPTER_SERVICE_ID) as PrompterService;
+    prompterService.promptEnabled = !(argumentValue as boolean);
 
     return Promise.resolve();
   }

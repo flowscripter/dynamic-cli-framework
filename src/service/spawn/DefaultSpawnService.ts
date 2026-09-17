@@ -1,11 +1,13 @@
 import process from "node:process";
 import type {
+  Context,
   PrinterService,
   ShutdownService,
   SpawnOptions,
   SpawnResult,
   SpawnService,
 } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultSpawnService");
@@ -33,12 +35,10 @@ export function resolveForPlatform(command: ReadonlyArray<string>): string[] {
 }
 
 export default class DefaultSpawnService implements SpawnService {
-  #printerService: PrinterService | undefined;
-  #shutdownService: ShutdownService | undefined;
+  #context: Context | undefined;
 
-  public setDependencies(printerService: PrinterService, shutdownService: ShutdownService): void {
-    this.#printerService = printerService;
-    this.#shutdownService = shutdownService;
+  public setContext(context: Context): void {
+    this.#context = context;
   }
 
   async #terminate(
@@ -90,11 +90,11 @@ export default class DefaultSpawnService implements SpawnService {
     command: ReadonlyArray<string>,
     options: SpawnOptions = {},
   ): Promise<SpawnResult> {
-    if (this.#printerService === undefined || this.#shutdownService === undefined) {
-      throw new Error("DefaultSpawnService.spawn() called before setDependencies()");
+    if (this.#context === undefined) {
+      throw new Error("DefaultSpawnService.spawn() called before setContext()");
     }
-    const printerService = this.#printerService;
-    const shutdownService = this.#shutdownService;
+    const printerService = this.#context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+    const shutdownService = this.#context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
     const mode = options.mode ?? "inherit";
     const longRunning = options.longRunning ?? true;
 
@@ -122,11 +122,15 @@ export default class DefaultSpawnService implements SpawnService {
       shutdownService.enterLongRunningMode();
     }
 
-    shutdownService.addShutdownListener(async () => {
-      if (settled) {
-        return;
-      }
-      await this.#terminate(proc, command);
+    shutdownService.registerTask({
+      id: `spawn:${command.join(" ")}`,
+      priority: 0,
+      run: async () => {
+        if (settled) {
+          return;
+        }
+        await this.#terminate(proc, command);
+      },
     });
 
     // These are intentionally not awaited here - they only complete once the child's stdout/

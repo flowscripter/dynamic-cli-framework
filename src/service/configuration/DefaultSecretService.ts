@@ -13,15 +13,16 @@ export interface SecretsApi {
 export default class DefaultSecretService implements SecretService {
   readonly #serviceName: string;
   readonly #secrets: SecretsApi;
-  #scope: string | undefined;
+  readonly #scope: string;
 
-  constructor(serviceName: string, secretsApi?: SecretsApi) {
+  constructor(serviceName: string, scope: string, secretsApi?: SecretsApi) {
     this.#serviceName = DefaultSecretService.#sanitize(serviceName);
     if (this.#serviceName.length > MAX_NAME_LENGTH) {
       throw new Error(
         `Service name exceeds ${MAX_NAME_LENGTH} characters after sanitization: '${this.#serviceName}'`,
       );
     }
+    this.#scope = DefaultSecretService.#sanitize(scope);
     this.#secrets = secretsApi ?? bunSecrets;
   }
 
@@ -29,18 +30,7 @@ export default class DefaultSecretService implements SecretService {
     return value.replace(/[^a-zA-Z0-9_]/g, "_");
   }
 
-  public setScope(scope: string): void {
-    this.#scope = DefaultSecretService.#sanitize(scope);
-  }
-
-  public clearScope(): void {
-    this.#scope = undefined;
-  }
-
   public async setSecret(key: string, value: string): Promise<string> {
-    if (this.#scope === undefined) {
-      throw new Error("Attempt to set secret without a scope being set");
-    }
     const name = this.#scope + "_" + DefaultSecretService.#sanitize(key);
     if (name.length > MAX_NAME_LENGTH) {
       throw new Error(`Secret name exceeds ${MAX_NAME_LENGTH} characters: '${name}'`);

@@ -33,20 +33,6 @@ Provides:
   built-in "chisel" FIGlet font and support for ANSI color remapping via
   `ChiselBannerColors`.
 
-## `BannerServiceProvider`
-
-On initialisation this uses the `PrinterService` to output the CLI name in ASCII
-banner text together with the CLI description, version and optional sub-message
-(from `CLIConfig.subMessage`). If an `UpgradeService` is registered and reports
-a newer version available, an additional
-`(<latest version> available, run '<cli name> upgrade')` line is shown below
-the version.
-
-Provides:
-
-- `NoBannerCommand` allowing banner printing to be disabled via the argument
-  `--no-banner` or the env var `NO_BANNER`.
-
 ## `CompletionServiceProvider`
 
 Provides:
@@ -74,13 +60,35 @@ NOTE: This service is opt-in. Enable via `completionEnabled` flag on `BaseCLI`,
 
 Provides:
 
-- `KeyValueService` allowing the storage and retrieval of key value pairs scoped
-  to the current `Command` or service being executed. The values are persisted
-  to the CLI configuration file.
+- `ConfigurationService` (registered under `CONFIGURATION_SERVICE_ID`), a
+  deliberately narrow, `Context`-lookupable view exposing only
+  `configLocation`/`setConfigLocation()` - there is no way to read the whole
+  config file via a `Context` lookup, since that would expose it too broadly.
 - `ConfigCommand` allowing the default location of the configuration file to be
   overridden via the argument `--config` or the env var `CONFIG_LOCATION`.
 - `DumpConfigCommand` a global command which dumps the full CLI configuration to
-  stdout via `--dump-config`.
+  stdout via `--dump-config`. It is wired directly to a `getConfigString: () =>
+string` constructor callback rather than a service lookup, for the same
+  reason `ConfigurationService` stays narrow.
+
+Also owns the configuration file's read (on startup) and write (on shutdown),
+which back `KeyValueServiceProvider`'s per-scope key-value data.
+`KeyValueServiceProvider` is given a direct constructor reference to this
+provider for that purpose - never a `Context` lookup, since general lookup
+access to raw config read/write is considered too sensitive to expose that
+broadly.
+
+## `KeyValueServiceProvider`
+
+Provides:
+
+- `KeyValueService` allowing the storage and retrieval of key value pairs
+  scoped to the current `Command` or service/task being executed. The values
+  are persisted to the same CLI configuration file managed by
+  `ConfigurationServiceProvider`.
+- `SecretService` scoping (when `secretServiceEnabled` is set) for OS-native
+  secret storage via Bun.secrets, used to resolve `Secret`-wrapped values
+  stored via `KeyValueService`.
 
 ## `DataDumpGeneratorServiceProvider`
 

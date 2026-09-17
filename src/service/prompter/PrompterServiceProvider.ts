@@ -18,7 +18,7 @@ export default class PrompterServiceProvider implements ServiceProvider {
   public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
     return Promise.resolve({
       service: this.prompterService,
-      commands: [new NoPromptCommand(this, this.servicePriority)],
+      commands: [new NoPromptCommand(this.servicePriority)],
     });
   }
 

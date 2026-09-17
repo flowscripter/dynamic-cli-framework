@@ -35,7 +35,7 @@ describe("FetchServiceProvider tests", () => {
 
     const context = new DefaultContext(getCLIConfig());
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,

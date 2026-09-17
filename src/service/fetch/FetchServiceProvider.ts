@@ -3,9 +3,8 @@ import type {
   Context,
   ServiceInfo,
   ServiceProvider,
-  ShutdownService,
 } from "@flowscripter/dynamic-cli-framework-api";
-import { FETCH_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { FETCH_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultFetchService from "./DefaultFetchService.ts";
 
 export default class FetchServiceProvider implements ServiceProvider {
@@ -26,8 +25,7 @@ export default class FetchServiceProvider implements ServiceProvider {
   }
 
   public initService(context: Context): Promise<void> {
-    const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
-    this.#fetchService!.setDependencies(shutdownService);
+    this.#fetchService!.setContext(context);
     return Promise.resolve();
   }
 }

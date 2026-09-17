@@ -45,6 +45,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -76,6 +77,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -90,6 +92,7 @@ describe("runner tests", () => {
       ["-c", "bar", "subCommand"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -117,6 +120,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -129,6 +133,7 @@ describe("runner tests", () => {
       ["-c", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -159,6 +164,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -170,6 +176,7 @@ describe("runner tests", () => {
       ["group:command"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -208,6 +215,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -241,6 +249,7 @@ describe("runner tests", () => {
       ["--modifier=bar", "-g", "bar"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -287,6 +296,7 @@ describe("runner tests", () => {
       ["--modifier1=bar", "-g", "bar", "--modifier2=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -342,6 +352,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -375,6 +386,7 @@ describe("runner tests", () => {
       ["--modifier=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
       globalCommand,
@@ -411,6 +423,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
       globalCommand,
     );
@@ -441,6 +454,7 @@ describe("runner tests", () => {
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
       subCommand,
     );
@@ -467,6 +481,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -488,6 +503,7 @@ describe("runner tests", () => {
       ["--global=bar"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
     );
@@ -519,6 +535,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
     );
 
@@ -549,6 +566,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
     );
 
@@ -573,6 +591,7 @@ describe("runner tests", () => {
       ["group", "wrongcommand"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -600,6 +619,7 @@ describe("runner tests", () => {
       [],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
     );
@@ -630,6 +650,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
     );
 
@@ -655,6 +676,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
     );
 
@@ -679,6 +701,7 @@ describe("runner tests", () => {
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
       globalCommand,
     );
@@ -700,6 +723,7 @@ describe("runner tests", () => {
       [],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
       globalCommand,
@@ -729,6 +753,7 @@ describe("runner tests", () => {
       ["--foo=f", "--goo=g"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
       command,
@@ -770,6 +795,7 @@ describe("runner tests", () => {
           ],
         ]),
       ),
+      undefined,
       getContext(streamString),
       command,
     );
@@ -811,6 +837,7 @@ describe("runner tests", () => {
           ],
         ]),
       ),
+      undefined,
       getContext(streamString),
       command,
     );
@@ -840,6 +867,7 @@ describe("runner tests", () => {
       ["--bip=b", "--goo=g"],
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
       command,
@@ -871,6 +899,7 @@ describe("runner tests", () => {
       new DefaultCommandRegistry([]),
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
       command,
     );
@@ -899,6 +928,7 @@ describe("runner tests", () => {
       ["command1", "--foo", "bar", "command2"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
     );
@@ -943,6 +973,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -966,6 +997,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(streamString),
     );
 
@@ -986,6 +1018,7 @@ describe("runner tests", () => {
       ["command", "--foo", "bar", "blah"],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(streamString),
     );
@@ -1064,6 +1097,7 @@ describe("runner tests", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -1157,6 +1191,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -1180,6 +1215,7 @@ describe("runner tests", () => {
       commandRegistry,
       getServiceProviderRegistry(),
       undefined,
+      undefined,
       getContext(new WritableStreamString()),
     );
 
@@ -1202,6 +1238,7 @@ describe("runner tests", () => {
       ],
       commandRegistry,
       getServiceProviderRegistry(),
+      undefined,
       undefined,
       getContext(new WritableStreamString()),
     );
@@ -1223,6 +1260,7 @@ describe("runner tests", () => {
         [],
         new DefaultCommandRegistry([]),
         getServiceProviderRegistry(),
+        undefined,
         undefined,
         getContext(streamString),
         groupCommand as unknown as GlobalModifierCommand,
@@ -1275,6 +1313,7 @@ describe("runner tests", () => {
           ],
         ]),
       ),
+      undefined,
       getContext(new WritableStreamString()),
     );
     expect(runResult.runState).toEqual(RunState.SUCCESS);

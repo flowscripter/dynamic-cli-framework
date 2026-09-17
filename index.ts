@@ -52,8 +52,10 @@ export type {
   ChiselBannerGenerateOptions,
 } from "./src/service/chiselAsciiBannerGenerator/ChiselFontAsciiBannerGeneratorService.ts";
 
-export { default as BannerServiceProvider } from "./src/service/banner/BannerServiceProvider.ts";
+export { default as createBannerStartupTask } from "./src/startup/banner/bannerStartupTask.ts";
 
+export { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
 export { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export { SECRET_SENTINEL_PREFIX } from "@flowscripter/dynamic-cli-framework-api";
 export type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
@@ -62,7 +64,11 @@ export { default as DefaultKeyValueService } from "./src/service/configuration/D
 export { default as DefaultSecretService } from "./src/service/configuration/DefaultSecretService.ts";
 export type { SecretsApi } from "./src/service/configuration/DefaultSecretService.ts";
 export { default as ConfigCommand } from "./src/service/configuration/command/ConfigCommand.ts";
-export { default as ConfigurationServiceProvider } from "./src/service/configuration/ConfigurationServiceProvider.ts";
+export {
+  default as ConfigurationServiceProvider,
+  type KeyValueServiceScopeType,
+} from "./src/service/configuration/ConfigurationServiceProvider.ts";
+export { default as KeyValueServiceProvider } from "./src/service/configuration/KeyValueServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
@@ -71,9 +77,19 @@ export { default as DefaultPrinterService } from "./src/service/printer/DefaultP
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
 export { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-export type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+export type { ShutdownService, ShutdownTask } from "@flowscripter/dynamic-cli-framework-api";
 export { default as DefaultShutdownService } from "./src/service/shutdown/DefaultShutdownService.ts";
 export { default as ShutdownServiceProvider } from "./src/service/shutdown/ShutdownServiceProvider.ts";
+
+export { STARTUP_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type {
+  StartupService,
+  StartupTask,
+  StartupTaskContext,
+  StartupTaskMode,
+} from "@flowscripter/dynamic-cli-framework-api";
+export { default as DefaultStartupService } from "./src/service/startup/DefaultStartupService.ts";
+export { default as StartupServiceProvider } from "./src/service/startup/StartupServiceProvider.ts";
 
 export { FETCH_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { FetchOptions, FetchService } from "@flowscripter/dynamic-cli-framework-api";

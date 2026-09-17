@@ -1,18 +1,27 @@
 import process from "node:process";
+import { realpathSync } from "node:fs";
 import { mkdtemp, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type {
   CLIConfig,
+  Context,
   FetchService,
+  KeyValueService,
   PrinterService,
+  SettableValueNode,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
   UpgradeResult,
+  ValueNode,
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
+  FETCH_SERVICE_ID,
   InstallMethod,
+  KEY_VALUE_SERVICE_ID,
+  PRINTER_SERVICE_ID,
+  SPAWN_SERVICE_ID,
   SupportedArch,
   SupportedOs,
   type UpgradeService,
@@ -23,11 +32,41 @@ import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultUpgradeService");
 
-// checkForUpgrade() runs opportunistically on every CLI invocation (via BannerServiceProvider),
-// so that opportunistic call is raced against this timeout so it never stalls CLI startup.
-// A deliberate caller (waitForResult=true, e.g. the `upgrade` command) awaits checkForUpgrade()
-// directly with no timeout, so its underlying network/spawn calls are never artificially cut off.
-export const VERSION_CHECK_TIMEOUT_MS = 250;
+// KeyValueService key caching the resolved InstallMethod (see detectInstallMethod()). Stored
+// value shape: { method: InstallMethod, checkedAt: number } where checkedAt is Date.now() at
+// detection time - refreshed on the same CACHE_TTL_MILLIS cycle as the latest-version cache below,
+// rather than trusted indefinitely, so a reinstall via a different method is eventually picked up
+// even outside the no-spawn signals (Cellar path, linux script prefix) that self-heal immediately.
+const INSTALL_METHOD_CACHE_KEY = "install-method";
+
+// KeyValueService key prefix caching a #getLatestVersion() lookup per install method, e.g.
+// "latest-version:homebrew". Stored value shape: { version: string, checkedAt: number } where
+// checkedAt is Date.now() at lookup time - see CACHE_TTL_MILLIS.
+const LATEST_VERSION_CACHE_KEY_PREFIX = "latest-version:";
+
+// How long a cached install-method or latest-version lookup is trusted before a fresh
+// spawn/network lookup runs again - long enough to remove the cost from routine invocations,
+// short enough that a genuine reinstall or new release surfaces within about a day.
+const CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000;
+
+interface CachedInstallMethod {
+  method: InstallMethod;
+  checkedAt: number;
+  [key: string]: ValueNode;
+}
+
+interface CachedLatestVersion {
+  version: string;
+  checkedAt: number;
+  [key: string]: ValueNode;
+}
+
+// KeyValueService key holding the last checkForUpgrade() result, refreshed opportunistically by
+// UpgradeServiceProvider's background StartupTask and by the `upgrade` command - shared by both so
+// there's one cache, not two. The banner task only ever reads this key (kv.has()/kv.get()) - it
+// never calls checkForUpgrade()/getUpgradeCheckResult() live, since checking live would stall
+// startup on the network/spawn calls checkForUpgrade() makes.
+export const UPGRADE_CHECK_CACHE_KEY = "upgrade-check-result";
 
 type VersionLookupResult =
   | { readonly ok: true; readonly version: string }
@@ -52,9 +91,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 };
 
 export default class DefaultUpgradeService implements UpgradeService {
-  #spawnService: SpawnService | undefined;
-  #fetchService: FetchService | undefined;
-  #printerService: PrinterService | undefined;
+  #context: Context | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
@@ -64,14 +101,32 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#cliConfig = cliConfig;
   }
 
-  public setDependencies(
-    spawnService: SpawnService | undefined,
-    fetchService: FetchService | undefined,
-    printerService: PrinterService | undefined,
-  ): void {
-    this.#spawnService = spawnService;
-    this.#fetchService = fetchService;
-    this.#printerService = printerService;
+  public setContext(context: Context): void {
+    this.#context = context;
+  }
+
+  get #spawnService(): SpawnService | undefined {
+    return this.#context?.doesServiceExist(SPAWN_SERVICE_ID)
+      ? (this.#context.getServiceById(SPAWN_SERVICE_ID) as SpawnService)
+      : undefined;
+  }
+
+  get #fetchService(): FetchService | undefined {
+    return this.#context?.doesServiceExist(FETCH_SERVICE_ID)
+      ? (this.#context.getServiceById(FETCH_SERVICE_ID) as FetchService)
+      : undefined;
+  }
+
+  get #printerService(): PrinterService | undefined {
+    return this.#context?.doesServiceExist(PRINTER_SERVICE_ID)
+      ? (this.#context.getServiceById(PRINTER_SERVICE_ID) as PrinterService)
+      : undefined;
+  }
+
+  get #keyValueService(): KeyValueService | undefined {
+    return this.#context?.doesServiceExist(KEY_VALUE_SERVICE_ID)
+      ? (this.#context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
+      : undefined;
   }
 
   // Mirrors SpawnInterfaceAdapter's plugin:add/plugin:remove pattern: wrap a spawned command's
@@ -108,15 +163,12 @@ export default class DefaultUpgradeService implements UpgradeService {
     return result;
   }
 
-  public getUpgradeCheckResult(waitForResult = false): Promise<UpgradeCheckResult> {
+  public getUpgradeCheckResult(): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
       logger.debug(() => "Starting upgrade check");
       // Only cache a non-"failed" result. A "failed" result can come from a transient issue
-      // (e.g. a network blip, or the opportunistic startup check racing past
-      // VERSION_CHECK_TIMEOUT_MS before checkForUpgrade() itself resolves) - caching that would
-      // permanently deny a later, deliberate caller (e.g. the `upgrade` command explicitly
-      // waiting via waitForResult=true) any chance of a fresh attempt for the rest of this
-      // process's lifetime.
+      // (e.g. a network blip) - caching that would permanently deny a later caller any chance of
+      // a fresh attempt for the rest of this process's lifetime.
       this.#upgradeCheckPromise = this.checkForUpgrade().then((result) => {
         logger.debug(() => describeUpgradeCheckResult(result));
         if (result.status === "failed") {
@@ -125,15 +177,23 @@ export default class DefaultUpgradeService implements UpgradeService {
         return result;
       });
     }
-    if (waitForResult) {
-      return this.#upgradeCheckPromise;
+    return this.#upgradeCheckPromise;
+  }
+
+  /**
+   * Run (or reuse an in-flight/cached) {@link getUpgradeCheckResult}, then persist a "checked" or
+   * "unsupported" result to {@link UPGRADE_CHECK_CACHE_KEY} so the banner task's cheap KV read can
+   * pick it up on a later invocation.
+   */
+  public async refreshUpgradeCheckCache(): Promise<UpgradeCheckResult> {
+    const result = await this.getUpgradeCheckResult();
+    if (this.#keyValueService && (result.status === "checked" || result.status === "unsupported")) {
+      const keyValueService = this.#keyValueService;
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(UPGRADE_CHECK_CACHE_KEY, result as unknown as SettableValueNode),
+      );
     }
-    return Promise.race([
-      this.#upgradeCheckPromise,
-      new Promise<UpgradeCheckResult>((resolve) =>
-        setTimeout(() => resolve({ status: "pending" }), VERSION_CHECK_TIMEOUT_MS),
-      ),
-    ]);
+    return result;
   }
 
   public detectOs(): SupportedOs | undefined {
@@ -161,19 +221,84 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   public async detectInstallMethod(os: SupportedOs): Promise<InstallMethod | undefined> {
-    if (os === SupportedOs.MACOS && this.#config.homebrew && (await this.#isHomebrewInstalled())) {
+    // Cheap, no-spawn signals are checked first and always win over the cache below, so a fresh
+    // install is picked up immediately rather than waiting on a stale cached method.
+    if (
+      os === SupportedOs.MACOS &&
+      this.#config.homebrew &&
+      this.#isRunningFromHomebrewCellar(this.#config.homebrew.formula)
+    ) {
       return InstallMethod.HOMEBREW;
-    }
-    if (os === SupportedOs.WINDOWS && this.#config.winget && (await this.#isWingetInstalled())) {
-      return InstallMethod.WINGET;
     }
     if (os === SupportedOs.LINUX && this.#config.linuxScript && this.#isLinuxScriptInstall()) {
       return InstallMethod.LINUX_SCRIPT;
     }
-    if (this.#config.githubRelease) {
-      return InstallMethod.GITHUB_RELEASE;
+
+    // Everything else needs an external process spawn (`brew list`, `winget list`) to confirm -
+    // cache the resolved method so that spawn only ever happens once per keystore.
+    const cached = await this.#getCachedInstallMethod();
+    if (cached !== undefined) {
+      return cached;
     }
-    return undefined;
+
+    let detected: InstallMethod | undefined;
+    if (os === SupportedOs.MACOS && this.#config.homebrew && (await this.#isHomebrewInstalled())) {
+      detected = InstallMethod.HOMEBREW;
+    } else if (
+      os === SupportedOs.WINDOWS &&
+      this.#config.winget &&
+      (await this.#isWingetInstalled())
+    ) {
+      detected = InstallMethod.WINGET;
+    } else if (this.#config.githubRelease) {
+      detected = InstallMethod.GITHUB_RELEASE;
+    }
+
+    if (detected !== undefined) {
+      await this.#cacheInstallMethod(detected);
+    }
+    return detected;
+  }
+
+  // The opportunistic startup check (see getUpgradeCheckResult()) runs detached from
+  // UpgradeServiceProvider.initService()'s own await chain, so it can still be running after that
+  // scoped KeyValueService access window has closed - a KeyValueService call landing after that
+  // point throws (or could land under a different service's scope entirely). Treat any such
+  // failure as "caching unavailable right now" rather than letting it fail the whole check.
+  async #safeKeyValueCall<T>(op: () => Promise<T>): Promise<T | undefined> {
+    try {
+      return await op();
+    } catch (error) {
+      logger.debug(() => `KeyValueService access failed, skipping cache: ${error}`);
+      return undefined;
+    }
+  }
+
+  async #getCachedInstallMethod(): Promise<InstallMethod | undefined> {
+    if (!this.#keyValueService) {
+      return undefined;
+    }
+    const keyValueService = this.#keyValueService;
+    const has = await this.#safeKeyValueCall(() => keyValueService.has(INSTALL_METHOD_CACHE_KEY));
+    if (!has) {
+      return undefined;
+    }
+    const cached = await this.#safeKeyValueCall(() =>
+      keyValueService.get<CachedInstallMethod>(INSTALL_METHOD_CACHE_KEY),
+    );
+    if (!cached || Date.now() - cached.checkedAt >= CACHE_TTL_MILLIS) {
+      return undefined;
+    }
+    return cached.method;
+  }
+
+  async #cacheInstallMethod(method: InstallMethod): Promise<void> {
+    if (this.#keyValueService) {
+      const keyValueService = this.#keyValueService;
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(INSTALL_METHOD_CACHE_KEY, { method, checkedAt: Date.now() }),
+      );
+    }
   }
 
   public async checkForUpgrade(
@@ -230,7 +355,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       osOverride !== undefined || archOverride !== undefined || installMethodOverride !== undefined;
     const checkResult = hasOverride
       ? await this.checkForUpgrade(osOverride, archOverride, installMethodOverride)
-      : await this.getUpgradeCheckResult(true);
+      : await this.getUpgradeCheckResult();
     if (checkResult.status === "unsupported") {
       return {
         ok: false,
@@ -240,10 +365,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     if (checkResult.status === "failed") {
       return { ok: false, oldVersion, error: checkResult.error };
-    }
-    if (checkResult.status === "pending") {
-      // Unreachable: checkForUpgrade() and getUpgradeCheckResult(true) always run to completion.
-      return { ok: false, oldVersion, error: new Error("Upgrade check did not complete") };
     }
     if (!this.#spawnService) {
       return { ok: false, oldVersion, error: new Error("SpawnService is not available") };
@@ -286,6 +407,21 @@ export default class DefaultUpgradeService implements UpgradeService {
     );
   }
 
+  // Homebrew relinks a formula's installed binary from its Cellar directory into a `bin/` symlink,
+  // so resolving the running executable's real path confirms a homebrew install without spawning
+  // `brew`, which has a slow cold start - avoiding it keeps the background upgrade-check
+  // StartupTask (see UpgradeServiceProvider) fast even though it now runs to completion.
+  #isRunningFromHomebrewCellar(formula: string): boolean {
+    let realExecutable = process.execPath;
+    try {
+      realExecutable = realpathSync(process.execPath);
+    } catch {
+      // process.execPath may not resolve on disk (e.g. a fabricated path in tests) - fall back to
+      // the unresolved path rather than treating that as "not installed".
+    }
+    return realExecutable.includes(`/Cellar/${formula}/`);
+  }
+
   async #isHomebrewInstalled(): Promise<boolean> {
     if (!this.#spawnService || !this.#config.homebrew) {
       return false;
@@ -313,6 +449,30 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   async #getLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
+    const cacheKey = `${LATEST_VERSION_CACHE_KEY_PREFIX}${installMethod}`;
+    const keyValueService = this.#keyValueService;
+    if (keyValueService) {
+      const has = await this.#safeKeyValueCall(() => keyValueService.has(cacheKey));
+      if (has) {
+        const cached = await this.#safeKeyValueCall(() =>
+          keyValueService.get<CachedLatestVersion>(cacheKey),
+        );
+        if (cached && Date.now() - cached.checkedAt < CACHE_TTL_MILLIS) {
+          return { ok: true, version: cached.version };
+        }
+      }
+    }
+
+    const result = await this.#lookupLatestVersion(installMethod);
+    if (result.ok && keyValueService) {
+      await this.#safeKeyValueCall(() =>
+        keyValueService.set(cacheKey, { version: result.version, checkedAt: Date.now() }),
+      );
+    }
+    return result;
+  }
+
+  async #lookupLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
     switch (installMethod) {
       case InstallMethod.GITHUB_RELEASE:
       case InstallMethod.LINUX_SCRIPT:

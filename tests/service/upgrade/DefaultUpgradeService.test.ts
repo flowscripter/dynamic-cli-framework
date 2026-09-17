@@ -4,10 +4,19 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  FETCH_SERVICE_ID,
+  InstallMethod,
+  KEY_VALUE_SERVICE_ID,
+  PRINTER_SERVICE_ID,
+  SPAWN_SERVICE_ID,
+  SupportedArch,
+  SupportedOs,
+} from "@flowscripter/dynamic-cli-framework-api";
 import type {
   FetchOptions,
   FetchService,
+  KeyValueService,
   PrinterService,
   SpawnResult,
   SpawnService,
@@ -16,14 +25,37 @@ import type {
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   describeUpgradeCheckResult,
-  VERSION_CHECK_TIMEOUT_MS,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 
 // The shared fixture uses a non-semver "foobar" version; version comparison tests need a real one.
 function getCLIConfig(name?: string): CLIConfig {
   return { ...getFixtureCLIConfig(name), version: "1.0.0" };
+}
+
+function setUpgradeServiceDependencies(
+  service: DefaultUpgradeService,
+  spawnService: SpawnService | undefined,
+  fetchService: FetchService | undefined,
+  printerService: PrinterService | undefined,
+  keyValueService?: KeyValueService,
+): void {
+  const context = new DefaultContext(getCLIConfig());
+  if (spawnService) {
+    context.addServiceInstance(SPAWN_SERVICE_ID, spawnService);
+  }
+  if (fetchService) {
+    context.addServiceInstance(FETCH_SERVICE_ID, fetchService);
+  }
+  if (printerService) {
+    context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
+  }
+  if (keyValueService) {
+    context.addServiceInstance(KEY_VALUE_SERVICE_ID, keyValueService);
+  }
+  service.setContext(context);
 }
 
 function getConfig(overrides: Partial<UpgradeLocationsConfig> = {}): UpgradeLocationsConfig {
@@ -42,6 +74,22 @@ function getConfig(overrides: Partial<UpgradeLocationsConfig> = {}): UpgradeLoca
 function getSpawnService(handler: (command: ReadonlyArray<string>) => SpawnResult): SpawnService {
   return {
     spawn: (command) => Promise.resolve(handler(command)),
+  };
+}
+
+function getKeyValueService(): KeyValueService {
+  const store = new Map<string, unknown>();
+  return {
+    get: <T>(key: string) => Promise.resolve(store.get(key) as T),
+    set: (key, value) => {
+      store.set(key, value);
+      return Promise.resolve();
+    },
+    has: (key) => Promise.resolve(store.has(key)),
+    delete: (key) => {
+      store.delete(key);
+      return Promise.resolve();
+    },
   };
 }
 
@@ -213,12 +261,245 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       getSpawnService(() => ({ ok: true, exitCode: 0 })),
       undefined,
       undefined,
     );
     expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+  });
+
+  test("detectInstallMethod detects HOMEBREW from the running executable's Cellar path, without spawning", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/opt/homebrew/Cellar/example-cli/1.0.0/bin/example-cli";
+    try {
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      // No SpawnService set - a fall-through to `brew list` would throw when detectInstallMethod
+      // tries to call spawn() on undefined.
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod caches a brew list result so a second call does not spawn again", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      let spawnCount = 0;
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => {
+          spawnCount += 1;
+          return { ok: true, exitCode: 0 };
+        }),
+        undefined,
+        undefined,
+        getKeyValueService(),
+      );
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(spawnCount).toEqual(1);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod re-detects once a cached install-method entry has expired", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      let spawnCount = 0;
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      const keyValueService = getKeyValueService();
+      await keyValueService.set("install-method", {
+        method: InstallMethod.HOMEBREW,
+        checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
+      });
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => {
+          spawnCount += 1;
+          return { ok: true, exitCode: 0 };
+        }),
+        undefined,
+        undefined,
+        keyValueService,
+      );
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(spawnCount).toEqual(1);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod falls back to detection instead of failing when the KeyValueService throws", async () => {
+    const originalExecPath = process.execPath;
+    process.execPath = "/usr/local/bin/example-cli";
+    try {
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+      const brokenKeyValueService: KeyValueService = {
+        get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      };
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => ({ ok: true, exitCode: 0 })),
+        undefined,
+        undefined,
+        brokenKeyValueService,
+      );
+      // Simulates a KeyValueService whose scope has already been cleared by the time this
+      // detached opportunistic check runs (see UpgradeServiceProvider) - every call throws, but
+      // detectInstallMethod() must still resolve rather than propagate.
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+    } finally {
+      process.execPath = originalExecPath;
+    }
+  });
+
+  test("detectInstallMethod caches a winget list result so a second call does not spawn again", async () => {
+    let spawnCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
+      getCLIConfig(),
+    );
+    setUpgradeServiceDependencies(
+      service,
+      getSpawnService(() => {
+        spawnCount += 1;
+        return { ok: true, exitCode: 0 };
+      }),
+      undefined,
+      undefined,
+      getKeyValueService(),
+    );
+    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
+    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
+    expect(spawnCount).toEqual(1);
+  });
+
+  test("checkForUpgrade caches a latest-version lookup within the TTL, refreshing once it expires", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    setUpgradeServiceDependencies(
+      service,
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect(fetchCount === 1 ? "1.1.0" : "1.2.0");
+      }),
+      undefined,
+      getKeyValueService(),
+    );
+
+    const first = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (first.status !== "checked") throw new Error(`expected "checked", got ${first.status}`);
+    expect(first.latestVersion).toEqual("1.1.0");
+
+    // Within the TTL - reuses the cached version, no second fetch.
+    const second = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (second.status !== "checked") throw new Error(`expected "checked", got ${second.status}`);
+    expect(second.latestVersion).toEqual("1.1.0");
+    expect(fetchCount).toEqual(1);
+  });
+
+  test("checkForUpgrade refreshes a latest-version lookup once its cache entry has expired", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    const keyValueService = getKeyValueService();
+    await keyValueService.set("latest-version:github-release", {
+      version: "1.0.9",
+      checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
+    });
+    setUpgradeServiceDependencies(
+      service,
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect("2.0.0");
+      }),
+      undefined,
+      keyValueService,
+    );
+
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("2.0.0");
+    expect(fetchCount).toEqual(1);
+  });
+
+  test("checkForUpgrade falls back to a fresh lookup instead of failing when the KeyValueService throws", async () => {
+    let fetchCount = 0;
+    const service = new DefaultUpgradeService(
+      getConfig({
+        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+      }),
+      getCLIConfig(),
+    );
+    const brokenKeyValueService: KeyValueService = {
+      get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+    };
+    setUpgradeServiceDependencies(
+      service,
+      undefined,
+      getFetchService(() => {
+        fetchCount += 1;
+        return githubReleaseRedirect("9.9.9");
+      }),
+      undefined,
+      brokenKeyValueService,
+    );
+
+    const result = await service.checkForUpgrade(
+      SupportedOs.LINUX,
+      SupportedArch.X64,
+      InstallMethod.GITHUB_RELEASE,
+    );
+    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
+    expect(result.latestVersion).toEqual("9.9.9");
+    expect(fetchCount).toEqual(1);
   });
 
   test("checkForUpgrade reports unsupported for unsupported platform", async () => {
@@ -243,7 +524,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
@@ -266,7 +548,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => githubReleaseRedirect("0.0.0")),
       undefined,
@@ -288,7 +571,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService((_input, options) => {
         receivedOptions = options;
@@ -311,7 +595,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => Promise.reject(new Error("network error"))),
       undefined,
@@ -333,7 +618,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => new Response(null, { status: 404 })),
       undefined,
@@ -353,7 +639,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService((url) => {
         expect(url).toEqual(
@@ -386,7 +673,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
@@ -406,7 +694,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       getSpawnService((command) => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
@@ -430,7 +719,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       getSpawnService(() => ({ ok: false, exitCode: 1 })),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
@@ -455,7 +745,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       spawnService,
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       printerService,
@@ -494,7 +785,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       spawnService,
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       printerService,
@@ -519,7 +811,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => {
         checkCount++;
@@ -528,29 +821,12 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
 
-    const first = service.getUpgradeCheckResult(true);
-    const second = service.getUpgradeCheckResult(true);
+    const first = service.getUpgradeCheckResult();
+    const second = service.getUpgradeCheckResult();
     expect(first).toBe(second);
     await first;
     await second;
     expect(checkCount).toEqual(1);
-  });
-
-  test("getUpgradeCheckResult resolves pending if the cached check exceeds VERSION_CHECK_TIMEOUT_MS", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    service.setDependencies(
-      undefined,
-      getFetchService(() => new Promise(() => {})),
-      undefined,
-    );
-
-    const result = await service.getUpgradeCheckResult();
-    expect(result).toEqual({ status: "pending" });
   });
 
   test("a transient failure on an opportunistic check does not poison a later deliberate wait", async () => {
@@ -561,7 +837,8 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(() => {
         callCount++;
@@ -581,35 +858,31 @@ describe("DefaultUpgradeService", () => {
 
     // a later, deliberate blocking call (e.g. the `upgrade` command) must get a fresh attempt
     // rather than reusing the earlier failed promise forever.
-    const deliberate = await service.getUpgradeCheckResult(true);
+    const deliberate = await service.getUpgradeCheckResult();
     if (deliberate.status !== "checked")
       throw new Error(`expected "checked", got ${deliberate.status}`);
     expect(deliberate.latestVersion).toEqual("9.9.9");
     expect(callCount).toEqual(2);
   });
 
-  test("getUpgradeCheckResult(true) waits for the full result with no timeout", async () => {
+  test("getUpgradeCheckResult waits for the full result with no timeout", async () => {
     const service = new DefaultUpgradeService(
       getConfig({
         githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       undefined,
       getFetchService(
         () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () => resolve(githubReleaseRedirect("9.9.9")),
-              VERSION_CHECK_TIMEOUT_MS + 50,
-            ),
-          ),
+          new Promise((resolve) => setTimeout(() => resolve(githubReleaseRedirect("9.9.9")), 50)),
       ),
       undefined,
     );
 
-    const result = await service.getUpgradeCheckResult(true);
+    const result = await service.getUpgradeCheckResult();
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("9.9.9");
   });
@@ -620,7 +893,8 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(
+      service,
       getSpawnService((command) => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
@@ -678,7 +952,8 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(
+        service,
         getSpawnService((command) => {
           spawnedCommands.push(command);
           if (command[0] === "unzip") {
@@ -728,7 +1003,8 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(
+        service,
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -764,7 +1040,8 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(
+        service,
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -799,7 +1076,8 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(
+        service,
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -838,7 +1116,8 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(
+        service,
         getSpawnService((command) => {
           spawnedCommands.push(command);
           if (command[0] === "cmd" && command[2] === "del") {

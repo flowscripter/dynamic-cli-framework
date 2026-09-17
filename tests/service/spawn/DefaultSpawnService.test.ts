@@ -4,6 +4,19 @@ import DefaultSpawnService, {
   resolveForPlatform,
 } from "../../../src/service/spawn/DefaultSpawnService.ts";
 import type { PrinterService, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
+import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
+
+function getContext(
+  printerService: PrinterService,
+  shutdownService: ShutdownService,
+): DefaultContext {
+  const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+  return context;
+}
 
 interface FakePrinterServiceState {
   hideSpinnerCalls: number;
@@ -47,8 +60,8 @@ function getFakeShutdownService(): {
     listeners: [],
   };
   const shutdownService: ShutdownService = {
-    addShutdownListener: (callback) => {
-      state.listeners.push(callback);
+    registerTask: (task) => {
+      state.listeners.push(task.run);
     },
     enterLongRunningMode: () => {
       state.enterLongRunningModeCalls++;
@@ -62,11 +75,11 @@ function getFakeShutdownService(): {
 }
 
 describe("DefaultSpawnService tests", () => {
-  test("spawn() throws if called before setDependencies()", () => {
+  test("spawn() throws if called before setContext()", () => {
     const service = new DefaultSpawnService();
 
     expect(service.spawn(["echo", "hello"])).rejects.toThrow(
-      "DefaultSpawnService.spawn() called before setDependencies()",
+      "DefaultSpawnService.spawn() called before setContext()",
     );
   });
 
@@ -74,7 +87,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["echo", "hello"]);
 
@@ -85,7 +98,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["sh", "-c", "exit 3"]);
 
@@ -96,7 +109,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["definitely-not-a-real-binary-xyz"]);
 
@@ -108,7 +121,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const lines: Array<{ line: string; stream: "stdout" | "stderr" }> = [];
     const result = await service.spawn(["sh", "-c", "echo out1; echo err1 >&2"], {
@@ -125,7 +138,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService, state } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     await service.spawn(["echo", "hello"]);
 
@@ -137,7 +150,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     await service.spawn(["echo", "hello"]);
 
@@ -149,7 +162,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     await service.spawn(["echo", "hello"], { longRunning: false });
 
@@ -160,7 +173,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     await service.spawn(["echo", "hello"]);
 
@@ -171,7 +184,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["echo", "hello"], { timeoutMs: 5000 });
 
@@ -182,7 +195,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["sh", "-c", "sleep 30"], {
       mode: "wrapped",
@@ -197,7 +210,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const lines: Array<{ line: string; stream: "stdout" | "stderr" }> = [];
     const lineCount = 200;
@@ -218,7 +231,7 @@ describe("DefaultSpawnService tests", () => {
     const service = new DefaultSpawnService();
     const { printerService, state } = getFakePrinterService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(printerService, shutdownService);
+    service.setContext(getContext(printerService, shutdownService));
 
     const result = await service.spawn(["sh", "-c", "echo out1; echo err1 >&2"], {
       mode: "ignore",

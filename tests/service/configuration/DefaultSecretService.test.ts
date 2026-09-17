@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import DefaultSecretService from "../../../src/service/configuration/DefaultSecretService.ts";
 
 function createMockSecretsApi() {
@@ -15,17 +15,12 @@ describe("DefaultSecretService tests", () => {
 
   beforeEach(() => {
     mockApi = createMockSecretsApi();
-    service = new DefaultSecretService("my-test-cli", mockApi);
+    service = new DefaultSecretService("my-test-cli", "command_test", mockApi);
   });
 
-  afterEach(() => {
-    service.clearScope();
-  });
-
-  test("Constructor sanitizes service name", async () => {
+  test("Constructor sanitizes service name and scope", async () => {
     const api = createMockSecretsApi();
-    const s = new DefaultSecretService("my-cool-cli!", api);
-    s.setScope("command_test");
+    const s = new DefaultSecretService("my-cool-cli!", "command_test", api);
     await s.setSecret("key", "value");
     expect(api.set).toHaveBeenCalledWith({
       service: "my_cool_cli_",
@@ -36,16 +31,14 @@ describe("DefaultSecretService tests", () => {
 
   test("Constructor throws if sanitized service name exceeds 255 chars", () => {
     const api = createMockSecretsApi();
-    expect(() => new DefaultSecretService("a".repeat(256), api)).toThrow("exceeds 255 characters");
-  });
-
-  test("setSecret throws without scope", async () => {
-    await expect(service.setSecret("key", "value")).rejects.toThrow("without a scope");
+    expect(() => new DefaultSecretService("a".repeat(256), "command_test", api)).toThrow(
+      "exceeds 255 characters",
+    );
   });
 
   test("setSecret constructs correct name and returns it", async () => {
-    service.setScope("command_mycommand");
-    const name = await service.setSecret("token", "secret123");
+    const commandService = new DefaultSecretService("my-test-cli", "command_mycommand", mockApi);
+    const name = await commandService.setSecret("token", "secret123");
     expect(name).toEqual("command_mycommand_token");
     expect(mockApi.set).toHaveBeenCalledWith({
       service: "my_test_cli",
@@ -55,8 +48,8 @@ describe("DefaultSecretService tests", () => {
   });
 
   test("setSecret sanitizes scope and key", async () => {
-    service.setScope("command_my-cmd");
-    const name = await service.setSecret("my-key!", "value");
+    const commandService = new DefaultSecretService("my-test-cli", "command_my-cmd", mockApi);
+    const name = await commandService.setSecret("my-key!", "value");
     expect(name).toEqual("command_my_cmd_my_key_");
     expect(mockApi.set).toHaveBeenCalledWith({
       service: "my_test_cli",
@@ -66,14 +59,12 @@ describe("DefaultSecretService tests", () => {
   });
 
   test("setSecret throws if name exceeds 255 chars", async () => {
-    service.setScope("command_test");
     await expect(service.setSecret("a".repeat(250), "value")).rejects.toThrow(
       "exceeds 255 characters",
     );
   });
 
   test("setSecret throws if value exceeds 2047 bytes", async () => {
-    service.setScope("command_test");
     await expect(service.setSecret("key", "a".repeat(2048))).rejects.toThrow("exceeds 2047 bytes");
   });
 
@@ -121,20 +112,14 @@ describe("DefaultSecretService tests", () => {
     expect(result).toBeFalse();
   });
 
-  test("clearScope resets scope", async () => {
-    service.setScope("command_test");
-    service.clearScope();
-    await expect(service.setSecret("key", "value")).rejects.toThrow("without a scope");
-  });
+  test("two instances with different scopes never share a secret name", async () => {
+    const commandService = new DefaultSecretService("my-test-cli", "command_cmd1", mockApi);
+    const serviceService = new DefaultSecretService("my-test-cli", "service_svc1", mockApi);
 
-  test("setScope updates scope for subsequent calls", async () => {
-    service.setScope("command_cmd1");
-    let name = await service.setSecret("key", "value1");
-    expect(name).toEqual("command_cmd1_key");
+    const name1 = await commandService.setSecret("key", "value1");
+    expect(name1).toEqual("command_cmd1_key");
 
-    service.clearScope();
-    service.setScope("service_svc1");
-    name = await service.setSecret("key", "value2");
-    expect(name).toEqual("service_svc1_key");
+    const name2 = await serviceService.setSecret("key", "value2");
+    expect(name2).toEqual("service_svc1_key");
   });
 });

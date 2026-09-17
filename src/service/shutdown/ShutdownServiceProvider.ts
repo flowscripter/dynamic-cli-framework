@@ -57,8 +57,8 @@ export default class ShutdownServiceProvider implements ServiceProvider {
       process.removeListener("beforeExit", ShutdownServiceProvider.shutdown);
       process.removeListener("SIGINT", ShutdownServiceProvider.onInterrupt);
       process.removeListener("SIGTERM", ShutdownServiceProvider.onTerminate);
-      for await (const callback of DefaultShutdownService.callbacks) {
-        await callback();
+      for (const task of DefaultShutdownService.taskList.sorted()) {
+        await task.run();
       }
     } catch (error) {
       logger.error("shutdown error: %s", (error as Error).message);

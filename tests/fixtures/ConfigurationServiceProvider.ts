@@ -4,7 +4,7 @@ import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 
 class DummyConfigurationServiceProvider extends ConfigurationServiceProvider {
   constructor(servicePriority: number, defaultsData: Map<string, Values | SingleValueType>) {
-    super(servicePriority, false, true);
+    super(servicePriority, false, true, false);
 
     this.defaultsData = defaultsData;
   }

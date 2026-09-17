@@ -7,7 +7,6 @@ import ConfigurationServiceProvider from "../../../src/service/configuration/Con
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
-import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 
 function getConfig() {
@@ -150,74 +149,8 @@ describe("ConfigurationServiceProvider tests", () => {
     }
   });
 
-  test("setCommandKeyValueScope works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
-    const cliConfig = getCLIConfig();
-    const context = new DefaultContext(cliConfig);
-
-    const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
-    const configLocation = path.join(configFolder, "config.json");
-    configurationServiceProvider.setConfigLocation(configLocation);
-
-    const config = getConfig();
-
-    await fs.writeFile(configLocation, JSON.stringify(config));
-
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
-
-    await configurationServiceProvider.initService(context);
-
-    const keyValueService = serviceInfo.service! as KeyValueService;
-
-    configurationServiceProvider.setCommandKeyValueScope("command2");
-
-    expect(await keyValueService.has("foo2")).toBeFalse();
-
-    await configurationServiceProvider.clearKeyValueScope();
-    configurationServiceProvider.setCommandKeyValueScope("command1");
-
-    expect(await keyValueService.get("foo2")).toEqual("bar2");
-
-    await configurationServiceProvider.clearKeyValueScope();
-
-    expect(keyValueService.has("foo2")).rejects.toThrow();
-  });
-
-  test("setServiceKeyValueScope works", async () => {
-    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true, true);
-    const cliConfig = getCLIConfig();
-    const context = new DefaultContext(cliConfig);
-
-    const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
-    const configLocation = path.join(configFolder, "config.json");
-    configurationServiceProvider.setConfigLocation(configLocation);
-
-    const config = getConfig();
-
-    await fs.writeFile(configLocation, JSON.stringify(config));
-
-    const serviceInfo = await configurationServiceProvider.getServiceInfo(cliConfig);
-
-    await configurationServiceProvider.initService(context);
-
-    const keyValueService = serviceInfo.service! as KeyValueService;
-
-    configurationServiceProvider.setServiceKeyValueScope("service-id-2");
-
-    expect(await keyValueService.has("foo1")).toBeFalse();
-
-    await configurationServiceProvider.clearKeyValueScope();
-    configurationServiceProvider.setServiceKeyValueScope("service-id-1");
-
-    expect(await keyValueService.get("foo1")).toEqual("bar");
-
-    await configurationServiceProvider.clearKeyValueScope();
-
-    expect(keyValueService.has("foo1")).rejects.toThrow();
-  });
-
   test("secretServiceEnabled requires configEnabled", () => {
-    expect(() => new ConfigurationServiceProvider(100, false, false, false, true)).toThrow(
+    expect(() => new ConfigurationServiceProvider(100, false, false, true)).toThrow(
       "configEnabled must be true",
     );
   });

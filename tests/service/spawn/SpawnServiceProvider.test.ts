@@ -39,7 +39,7 @@ describe("SpawnServiceProvider tests", () => {
       hideAllProgressBars: () => Promise.resolve(),
     });
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,

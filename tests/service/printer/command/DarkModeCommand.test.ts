@@ -4,7 +4,7 @@ import DarkModeCommand from "../../../../src/service/printer/command/DarkModeCom
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 import PrinterServiceProvider from "../../../../src/service/printer/PrinterServiceProvider.ts";
 import ShutdownServiceProvider from "../../../../src/service/shutdown/ShutdownServiceProvider.ts";
-import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import TtyTerminal from "../../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../../fixtures/StreamString.ts";
 import DefaultPrinterService from "../../../../src/service/printer/DefaultPrinterService.ts";
@@ -29,10 +29,11 @@ describe("DarkModeCommand tests", () => {
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
     const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+    context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);
 
-    const command = new DarkModeCommand(printerServiceProvider, 100);
+    const command = new DarkModeCommand(100);
 
     expect(printerServiceProvider.printerService!.darkMode).toEqual(false);
 
@@ -61,10 +62,11 @@ describe("DarkModeCommand tests", () => {
     const shutdownServiceProvider = new ShutdownServiceProvider(1);
     const shutdownService = (await shutdownServiceProvider.getServiceInfo(cliConfig)).service!;
     context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+    context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
 
     await printerServiceProvider.getServiceInfo(cliConfig);
 
-    const command = new DarkModeCommand(printerServiceProvider, 100);
+    const command = new DarkModeCommand(100);
 
     await command.execute(context, false);
 
