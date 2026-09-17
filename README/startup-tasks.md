@@ -19,6 +19,7 @@ ASCII banner output is not a `ServiceProvider` - it is a `StartupTask` built by
 `createBannerStartupTask(priority, fontName?)`. A consumer opts in by passing
 the result of this function in the `startupTasks` array parameter of
 `launchSingleCommandCLI`/`launchMultiCommandCLI` (or via `BaseCLI.addStartupTask`)
+
 - there is no default/automatic banner registration.
 
 On running, it uses the `PrinterService` to output the CLI name in ASCII

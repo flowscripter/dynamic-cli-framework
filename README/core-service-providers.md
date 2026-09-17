@@ -68,7 +68,7 @@ Provides:
   overridden via the argument `--config` or the env var `CONFIG_LOCATION`.
 - `DumpConfigCommand` a global command which dumps the full CLI configuration to
   stdout via `--dump-config`. It is wired directly to a `getConfigString: () =>
-  string` constructor callback rather than a service lookup, for the same
+string` constructor callback rather than a service lookup, for the same
   reason `ConfigurationService` stays narrow.
 
 Also owns the configuration file's read (on startup) and write (on shutdown),
