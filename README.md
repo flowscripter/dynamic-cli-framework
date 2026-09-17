@@ -38,6 +38,7 @@
 - Core (but optional) services for color output (foreground and background),
   syntax highlighting, pretty printing, table and tree structure rendering,
   configuration management, and user input prompting.
+- Support for blocking and non-blocking startup tasks.
 - Graceful signal handling (SIGINT/SIGTERM) with shutdown hooks, cooperative
   cancellation for long-running commands, and triple-interrupt force exit.
 - Graceful degradation when piped or run non-interactively: color,
@@ -70,6 +71,7 @@ The following example projects are available:
 - [Core Service Providers](./README/core-service-providers.md)
 - [Core Commands](./README/core-commands.md)
 - [Plugins](./README/plugins.md)
+- [Startup Tasks](./README/startup-tasks.md)
 - [Development](./README/development.md)
 - [API Documentation](https://flowscripter.github.io/dynamic-cli-framework/index.html)
 

@@ -194,9 +194,15 @@ By default the `BaseCLI` adds the following `ServiceProvider` implementations
 (these are documented in further detail below):
 
 - `ShutdownServiceProvider` allowing CLI shutdown hooks to be registered.
+- `StartupServiceProvider` allowing `StartupTask`s to be registered (e.g. via
+  `BaseCLI.addStartupTask` or the `startupTasks` parameter of the launcher
+  functions), run in priority order alongside every registered
+  `ServiceProvider`'s `initService()` call.
 - `ConfigurationServiceProvider` allowing argument value defaults to be loaded
-  from a configuration file or environment variables. This also provides a
-  key-value store service.
+  from a configuration file or environment variables.
+- `KeyValueServiceProvider` providing a key-value store service, scoped to the
+  current `Command` or service/task being executed, backed by the same
+  configuration file managed by `ConfigurationServiceProvider`.
 - `PrinterServiceProvider` allowing CLI output to stdout and stderr writable
   streams.
 
@@ -296,11 +302,19 @@ scenario, any arguments provided will also be parsed as possible arguments for
 the default command.
 
 The logic for the `runner` is somewhat complex as it allows for the prioritised
-execution of `GlobalModifierCommand` instances and the prioritised
-initialisation of `ServiceProvider` instances. One reason for this is to allow
-the `ConfigurationServiceProvider` to be initialised first and for the resulting
-configuration to be available to other `ServiceProvider` instances which are yet
-to be initialised.
+execution of `GlobalModifierCommand` instances and the prioritised running of
+`StartupTask`s. Every registered `ServiceProvider`'s `initService()` call is
+itself wrapped as a `StartupTask` and merged, in priority order, with any
+directly-registered `StartupTask`s (e.g. the banner task built by
+`createBannerStartupTask`) into a single sequence. One reason for the
+prioritisation is to allow the `ConfigurationServiceProvider` to be
+initialised first and for the resulting configuration to be available to
+other `ServiceProvider`s/`StartupTask`s which are yet to run.
+
+Each task's `mode` (defaulting to `"blocking"`, which is how every
+`ServiceProvider`'s `initService()` behaves) determines whether the `runner`
+awaits it before moving to the next lower-priority task, or fires it without
+awaiting (`"background"`, with errors logged rather than propagated).
 
 The following activity diagram illustrates the `runner` logic:
 
@@ -308,9 +322,9 @@ The following activity diagram illustrates the `runner` logic:
 flowchart TD
     A([start])
 
-    subgraph 1 [for each ServiceProvider in servicePriority order:]
+    subgraph 1 ["for each StartupTask in priority order (ServiceProvider.initService or a directly-registered task, e.g. banner):"]
 
-        B([scan args for provided\nGlobalModifierCommand clauses])
+        B([scan args for task's\nGlobalModifierCommand clauses])
 
         subgraph 2 [for each discovered clause:]
             C([set default\narg values])
@@ -318,7 +332,7 @@ flowchart TD
             E([add to list of\nGlobalModifierCommands\nclauses to execute])
         end
 
-        F([scan default arg values for provided\nGlobalModifierCommand clauses])
+        F([scan default arg values for task's\nGlobalModifierCommand clauses])
 
         subgraph 3 [for each discovered clause:]
             G([parse args])
@@ -331,10 +345,10 @@ flowchart TD
             J([execute GlobalModifierCommand])
         end
 
-        K([init service provided by ServiceProvider])
+        K([run task: await if mode is\nblocking, else fire without\nawaiting if background])
     end
 
-    L([scan args for non-ServiceProvider\nGlobalModifierCommand clauses])
+    L([scan args for non-StartupTask\nGlobalModifierCommand clauses])
 
     subgraph 5 [for each discovered clause:]
         M([set default\narg values])
