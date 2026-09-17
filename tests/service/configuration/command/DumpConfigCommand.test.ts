@@ -3,13 +3,12 @@ import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import DumpConfigCommand from "../../../../src/service/configuration/command/DumpConfigCommand.ts";
 import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
-import { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("DumpConfigCommand tests", () => {
   test("has correct name and description", () => {
-    const command = new DumpConfigCommand();
+    const command = new DumpConfigCommand(() => "{}");
 
     expect(command.name).toEqual("dump-config");
     expect(command.description).toEqual("Dump configuration values");
@@ -40,10 +39,9 @@ describe("DumpConfigCommand tests", () => {
 
     context.addServiceInstance(PRINTER_SERVICE_ID, mockPrinterService);
     context.addServiceInstance(SYNTAX_HIGHLIGHTER_SERVICE_ID, mockSyntaxHighlighter);
-    const { service: configurationService } = await configProvider.getServiceInfo(cliConfig);
-    context.addServiceInstance(CONFIGURATION_SERVICE_ID, configurationService!);
+    await configProvider.getServiceInfo(cliConfig);
 
-    const command = new DumpConfigCommand();
+    const command = new DumpConfigCommand(() => configProvider.getConfigString());
     await command.execute(context);
 
     expect(highlightedLang).toEqual("json");
