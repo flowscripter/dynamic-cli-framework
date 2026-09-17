@@ -218,4 +218,3 @@ export { default as TtyKeyReader } from "./src/terminal/TtyKeyReader.ts";
 
 // Convenience functions
 export { launchMultiCommandCLI, launchSingleCommandCLI } from "./src/launcher.ts";
-export type { ServiceProviderOrStartupTask } from "./src/cli/ServiceProviderOrStartupTask.ts";

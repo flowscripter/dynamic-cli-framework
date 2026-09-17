@@ -5,19 +5,20 @@ import type {
   SubCommand,
   Command,
   RunResult,
+  ServiceProvider,
+  StartupTask,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type BaseCLIFeatureOptions from "./cli/BaseCLIFeatureOptions.ts";
 import DefaultRuntimeCLI from "./cli/DefaultRuntimeCLI.ts";
-import type { ServiceProviderOrStartupTask } from "./cli/ServiceProviderOrStartupTask.ts";
-import { isStartupTask } from "./cli/ServiceProviderOrStartupTask.ts";
 
 export async function launchSingleCommandCLI(
   command: SubCommand,
   description?: string,
   name?: string,
   version?: string,
-  serviceProviders?: ReadonlyArray<ServiceProviderOrStartupTask>,
+  serviceProviders?: ReadonlyArray<ServiceProvider>,
   options?: BaseCLIFeatureOptions,
+  startupTasks?: ReadonlyArray<StartupTask>,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -38,13 +39,8 @@ export async function launchSingleCommandCLI(
 
   cli.addCommand(command);
 
-  serviceProviders?.forEach((serviceProviderOrStartupTask) => {
-    if (isStartupTask(serviceProviderOrStartupTask)) {
-      cli.addStartupTask(serviceProviderOrStartupTask);
-    } else {
-      cli.addServiceProvider(serviceProviderOrStartupTask);
-    }
-  });
+  serviceProviders?.forEach((serviceProvider) => cli.addServiceProvider(serviceProvider));
+  startupTasks?.forEach((startupTask) => cli.addStartupTask(startupTask));
 
   return await cli.run();
 }
@@ -54,8 +50,9 @@ export async function launchMultiCommandCLI(
   description?: string,
   name?: string,
   version?: string,
-  serviceProviders?: ReadonlyArray<ServiceProviderOrStartupTask>,
+  serviceProviders?: ReadonlyArray<ServiceProvider>,
   options?: BaseCLIFeatureOptions,
+  startupTasks?: ReadonlyArray<StartupTask>,
 ): Promise<RunResult> {
   if (!name) {
     name = path.basename(process.execPath);
@@ -76,13 +73,8 @@ export async function launchMultiCommandCLI(
 
   commands.forEach((command) => cli.addCommand(command));
 
-  serviceProviders?.forEach((serviceProviderOrStartupTask) => {
-    if (isStartupTask(serviceProviderOrStartupTask)) {
-      cli.addStartupTask(serviceProviderOrStartupTask);
-    } else {
-      cli.addServiceProvider(serviceProviderOrStartupTask);
-    }
-  });
+  serviceProviders?.forEach((serviceProvider) => cli.addServiceProvider(serviceProvider));
+  startupTasks?.forEach((startupTask) => cli.addStartupTask(startupTask));
 
   return await cli.run();
 }
