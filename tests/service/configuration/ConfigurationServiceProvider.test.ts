@@ -242,7 +242,7 @@ describe("ConfigurationServiceProvider tests", () => {
     await configurationServiceProvider.getServiceInfo(cliConfig);
     await configurationServiceProvider.initService(context);
 
-    // simulates a task whose async work outlives its own "window" (see issue #172): scopeA's
+    // simulates a task whose async work outlives the start of another task.
     // write is deliberately delayed via a manually-resolved promise, into a point in time after
     // scopeB's context has already been created and used.
     let resolveDelayedWrite: () => void = () => {};

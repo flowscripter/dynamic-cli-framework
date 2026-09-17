@@ -361,9 +361,7 @@ export default class BaseCLI implements CLI {
     }
 
     if (upgradeServiceProvider?.upgradeService) {
-      this.addStartupTask(
-        createUpgradeCheckStartupTask(upgradeServiceProvider.upgradeService, 56),
-      );
+      this.addStartupTask(createUpgradeCheckStartupTask(upgradeServiceProvider.upgradeService, 56));
     }
 
     // directly-registered StartupTasks (e.g. the banner task) aren't backed by a ServiceProvider,

@@ -105,13 +105,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#context = context;
   }
 
-  // Unlike DefaultFetchService/DefaultSpawnService (each a single entry-point method with hard
-  // runtime dependencies), DefaultUpgradeService's spawn/fetch/printer/keyValue dependencies are
-  // all individually optional - checkForUpgrade()/detectInstallMethod() etc. have always tolerated
-  // any of them being unavailable (e.g. no SpawnService registered), including before setContext()
-  // has ever been called. So these getters resolve to undefined rather than throwing when
-  // #context is unset, exactly as they resolved to undefined when unset via setDependencies().
-
   get #spawnService(): SpawnService | undefined {
     return this.#context?.doesServiceExist(SPAWN_SERVICE_ID)
       ? (this.#context.getServiceById(SPAWN_SERVICE_ID) as SpawnService)
@@ -170,11 +163,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     return result;
   }
 
-  // waitForResult is retained on the signature for UpgradeService interface compatibility, but is
-  // no longer honoured: there is no more opportunistic, non-blocking startup caller racing this
-  // against a timeout (that path is now the dedicated background StartupTask registered by
-  // UpgradeServiceProvider, which awaits checkForUpgrade() to completion by design), so every
-  // caller now runs this to completion and "pending" is unreachable.
   public getUpgradeCheckResult(): Promise<UpgradeCheckResult> {
     if (!this.#upgradeCheckPromise) {
       logger.debug(() => "Starting upgrade check");
@@ -195,8 +183,7 @@ export default class DefaultUpgradeService implements UpgradeService {
   /**
    * Run (or reuse an in-flight/cached) {@link getUpgradeCheckResult}, then persist a "checked" or
    * "unsupported" result to {@link UPGRADE_CHECK_CACHE_KEY} so the banner task's cheap KV read can
-   * pick it up on a later invocation. Shared by UpgradeServiceProvider's background StartupTask and
-   * `UpgradeSubCommand`, so both read/write the same cache instead of maintaining separate ones.
+   * pick it up on a later invocation.
    */
   public async refreshUpgradeCheckCache(): Promise<UpgradeCheckResult> {
     const result = await this.getUpgradeCheckResult();
@@ -379,10 +366,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     if (checkResult.status === "failed") {
       return { ok: false, oldVersion, error: checkResult.error };
     }
-    if (checkResult.status === "pending") {
-      // Unreachable: checkForUpgrade() and getUpgradeCheckResult(true) always run to completion.
-      return { ok: false, oldVersion, error: new Error("Upgrade check did not complete") };
-    }
     if (!this.#spawnService) {
       return { ok: false, oldVersion, error: new Error("SpawnService is not available") };
     }
@@ -426,8 +409,8 @@ export default class DefaultUpgradeService implements UpgradeService {
 
   // Homebrew relinks a formula's installed binary from its Cellar directory into a `bin/` symlink,
   // so resolving the running executable's real path confirms a homebrew install without spawning
-  // `brew`, which has a slow cold start that routinely blows the opportunistic upgrade check's
-  // VERSION_CHECK_TIMEOUT_MS budget.
+  // `brew`, which has a slow cold start - avoiding it keeps the background upgrade-check
+  // StartupTask (see UpgradeServiceProvider) fast even though it now runs to completion.
   #isRunningFromHomebrewCellar(formula: string): boolean {
     let realExecutable = process.execPath;
     try {

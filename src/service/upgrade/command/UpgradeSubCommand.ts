@@ -70,12 +70,6 @@ export class UpgradeSubCommand implements SubCommand {
       return;
     }
 
-    if (checkResult.status === "pending") {
-      // Unreachable: getUpgradeCheckResult(true) and checkForUpgrade() always run to completion.
-      await printerService.error(`Failed to check for updates.\n`, Icon.FAILURE);
-      return;
-    }
-
     if (!checkResult.updateAvailable) {
       await printerService.print(
         `${cliName} is already up to date: ${checkResult.currentVersion}\n`,

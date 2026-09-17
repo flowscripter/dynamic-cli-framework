@@ -310,9 +310,9 @@ describe("BaseCLI tests", () => {
     expect(subHasRun).toBeTrue();
     expect(service2MethodInvoked).toBeTrue();
 
-    // cleanup - the config flush now happens on a ShutdownTask (see ConfigurationServiceProvider),
+    // cleanup - the config flush happens on a ShutdownTask
     // and this test file's static ShutdownServiceProvider guard means shutdown only truly runs
-    // once across this whole file's tests, so the file may not exist here; tolerate that.
+    // once across this whole file's tests so tolerate it if the file doesn't exist.
     await fs.rm(path.join(process.env.HOME!, `.${appName.replace(/\W/g, "")}.json`), {
       force: true,
     });
