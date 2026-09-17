@@ -149,11 +149,7 @@ describe("KeyValueServiceProvider tests", () => {
   test("getContextForScope forwards addServiceInstance to the underlying context", async () => {
     const { keyValueServiceProvider, context } = await getInitialisedProviders({});
 
-    const scopedContext = keyValueServiceProvider.getContextForScope(
-      context,
-      "service",
-      "scope-a",
-    );
+    const scopedContext = keyValueServiceProvider.getContextForScope(context, "service", "scope-a");
 
     (scopedContext as DefaultContext).addServiceInstance(
       "some-service-id",
