@@ -81,11 +81,10 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     if (fetchService === undefined) {
       logger.debug(() => "FetchService not available, upgrade version checks will be unavailable");
     }
-    const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
     const keyValueService = context.doesServiceExist(KEY_VALUE_SERVICE_ID)
       ? (context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
       : undefined;
-    upgradeService.setDependencies(spawnService, fetchService, printerService, keyValueService);
+    upgradeService.setContext(context);
 
     if (!context.doesServiceExist(PROMPTER_SERVICE_ID)) {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");

@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import DefaultFetchService from "../../../src/service/fetch/DefaultFetchService.ts";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
+import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
+
+function getContext(shutdownService: ShutdownService): DefaultContext {
+  const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+  return context;
+}
 
 interface FakeShutdownServiceState {
   enterLongRunningModeCalls: number;
@@ -57,18 +66,18 @@ describe("DefaultFetchService tests", () => {
     server.stop(true);
   });
 
-  test("fetch() throws if called before setDependencies()", () => {
+  test("fetch() throws if called before setContext()", () => {
     const service = new DefaultFetchService();
 
     expect(service.fetch(baseUrl)).rejects.toThrow(
-      "DefaultFetchService.fetch() called before setDependencies()",
+      "DefaultFetchService.fetch() called before setContext()",
     );
   });
 
   test("fetch() resolves the Response for a successful request", async () => {
     const service = new DefaultFetchService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     const response = await service.fetch(baseUrl);
 
@@ -79,7 +88,7 @@ describe("DefaultFetchService tests", () => {
   test("fetch() passes through RequestInit fields such as method", async () => {
     const service = new DefaultFetchService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     const response = await service.fetch(`${baseUrl}/echo-method`, { method: "POST" });
 
@@ -89,7 +98,7 @@ describe("DefaultFetchService tests", () => {
   test("fetch() rejects with a TimeoutError DOMException when timeoutMs elapses", async () => {
     const service = new DefaultFetchService();
     const { shutdownService } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     await expect(service.fetch(`${baseUrl}/slow`, { timeoutMs: 50 })).rejects.toMatchObject({
       name: "TimeoutError",
@@ -99,7 +108,7 @@ describe("DefaultFetchService tests", () => {
   test("fetch() does not enter long-running mode by default", async () => {
     const service = new DefaultFetchService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     await service.fetch(baseUrl);
 
@@ -110,7 +119,7 @@ describe("DefaultFetchService tests", () => {
   test("fetch() enters and leaves long-running mode and registers a shutdown listener when longRunning is true", async () => {
     const service = new DefaultFetchService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     await service.fetch(baseUrl, { longRunning: true });
 
@@ -122,7 +131,7 @@ describe("DefaultFetchService tests", () => {
   test("shutdown listener aborts an in-flight longRunning fetch with an AbortError", async () => {
     const service = new DefaultFetchService();
     const { shutdownService, state } = getFakeShutdownService();
-    service.setDependencies(shutdownService);
+    service.setContext(getContext(shutdownService));
 
     const pending = service.fetch(`${baseUrl}/slow`, { longRunning: true });
     // Wait for the fetch to register its shutdown listener before invoking it.

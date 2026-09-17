@@ -460,13 +460,13 @@ describe("BaseCLI tests", () => {
     const dummyStderr = new StreamString();
 
     const order: string[] = [];
-    const originalSetDependencies = DefaultUpgradeService.prototype.setDependencies;
-    DefaultUpgradeService.prototype.setDependencies = function (
+    const originalSetContext = DefaultUpgradeService.prototype.setContext;
+    DefaultUpgradeService.prototype.setContext = function (
       this: DefaultUpgradeService,
-      ...args: Parameters<typeof originalSetDependencies>
+      ...args: Parameters<typeof originalSetContext>
     ) {
       order.push("upgrade-dependencies-set");
-      return originalSetDependencies.apply(this, args);
+      return originalSetContext.apply(this, args);
     };
 
     try {
@@ -509,7 +509,7 @@ describe("BaseCLI tests", () => {
       expect(runResult.runState).toEqual(RunState.SUCCESS);
       expect(order).toEqual(["upgrade-dependencies-set", "banner-like-init"]);
     } finally {
-      DefaultUpgradeService.prototype.setDependencies = originalSetDependencies;
+      DefaultUpgradeService.prototype.setContext = originalSetContext;
     }
   });
 });

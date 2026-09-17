@@ -1,24 +1,26 @@
 import type {
+  Context,
   FetchOptions,
   FetchService,
   ShutdownService,
 } from "@flowscripter/dynamic-cli-framework-api";
+import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultFetchService");
 
 export default class DefaultFetchService implements FetchService {
-  #shutdownService: ShutdownService | undefined;
+  #context: Context | undefined;
 
-  public setDependencies(shutdownService: ShutdownService): void {
-    this.#shutdownService = shutdownService;
+  public setContext(context: Context): void {
+    this.#context = context;
   }
 
   public async fetch(input: string | URL, options: FetchOptions = {}): Promise<Response> {
-    if (this.#shutdownService === undefined) {
-      throw new Error("DefaultFetchService.fetch() called before setDependencies()");
+    if (this.#context === undefined) {
+      throw new Error("DefaultFetchService.fetch() called before setContext()");
     }
-    const shutdownService = this.#shutdownService;
+    const shutdownService = this.#context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
     const { timeoutMs, longRunning = false, signal: callerSignal, ...requestInit } = options;
 
     const controller = new AbortController();

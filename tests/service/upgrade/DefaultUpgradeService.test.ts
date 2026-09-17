@@ -4,7 +4,15 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  FETCH_SERVICE_ID,
+  InstallMethod,
+  KEY_VALUE_SERVICE_ID,
+  PRINTER_SERVICE_ID,
+  SPAWN_SERVICE_ID,
+  SupportedArch,
+  SupportedOs,
+} from "@flowscripter/dynamic-cli-framework-api";
 import type {
   FetchOptions,
   FetchService,
@@ -20,10 +28,37 @@ import DefaultUpgradeService, {
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 
 // The shared fixture uses a non-semver "foobar" version; version comparison tests need a real one.
 function getCLIConfig(name?: string): CLIConfig {
   return { ...getFixtureCLIConfig(name), version: "1.0.0" };
+}
+
+// Replaces the old setDependencies(spawnService, fetchService, printerService, keyValueService)
+// call shape with the new setContext(context) shape, without needing to touch every call site's
+// (varying) positional arguments.
+function setUpgradeServiceDependencies(
+  service: DefaultUpgradeService,
+  spawnService: SpawnService | undefined,
+  fetchService: FetchService | undefined,
+  printerService: PrinterService | undefined,
+  keyValueService?: KeyValueService,
+): void {
+  const context = new DefaultContext(getCLIConfig());
+  if (spawnService) {
+    context.addServiceInstance(SPAWN_SERVICE_ID, spawnService);
+  }
+  if (fetchService) {
+    context.addServiceInstance(FETCH_SERVICE_ID, fetchService);
+  }
+  if (printerService) {
+    context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
+  }
+  if (keyValueService) {
+    context.addServiceInstance(KEY_VALUE_SERVICE_ID, keyValueService);
+  }
+  service.setContext(context);
 }
 
 function getConfig(overrides: Partial<UpgradeLocationsConfig> = {}): UpgradeLocationsConfig {
@@ -229,7 +264,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       getSpawnService(() => ({ ok: true, exitCode: 0 })),
       undefined,
       undefined,
@@ -262,7 +297,7 @@ describe("DefaultUpgradeService", () => {
         getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
         getCLIConfig(),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService(() => {
           spawnCount += 1;
           return { ok: true, exitCode: 0 };
@@ -293,7 +328,7 @@ describe("DefaultUpgradeService", () => {
         method: InstallMethod.HOMEBREW,
         checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
       });
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService(() => {
           spawnCount += 1;
           return { ok: true, exitCode: 0 };
@@ -323,7 +358,7 @@ describe("DefaultUpgradeService", () => {
         has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
         delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
       };
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService(() => ({ ok: true, exitCode: 0 })),
         undefined,
         undefined,
@@ -344,7 +379,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       getSpawnService(() => {
         spawnCount += 1;
         return { ok: true, exitCode: 0 };
@@ -366,7 +401,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => {
         fetchCount += 1;
@@ -408,7 +443,7 @@ describe("DefaultUpgradeService", () => {
       version: "1.0.9",
       checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
     });
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => {
         fetchCount += 1;
@@ -442,7 +477,7 @@ describe("DefaultUpgradeService", () => {
       has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
       delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
     };
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => {
         fetchCount += 1;
@@ -484,7 +519,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
@@ -507,7 +542,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => githubReleaseRedirect("0.0.0")),
       undefined,
@@ -529,7 +564,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService((_input, options) => {
         receivedOptions = options;
@@ -552,7 +587,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => Promise.reject(new Error("network error"))),
       undefined,
@@ -574,7 +609,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => new Response(null, { status: 404 })),
       undefined,
@@ -594,7 +629,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService((url) => {
         expect(url).toEqual(
@@ -627,7 +662,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
@@ -647,7 +682,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       getSpawnService((command) => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
@@ -671,7 +706,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       getSpawnService(() => ({ ok: false, exitCode: 1 })),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
@@ -696,7 +731,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       spawnService,
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       printerService,
@@ -735,7 +770,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       spawnService,
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       printerService,
@@ -760,7 +795,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => {
         checkCount++;
@@ -785,7 +820,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(() => {
         callCount++;
@@ -819,7 +854,7 @@ describe("DefaultUpgradeService", () => {
       }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       undefined,
       getFetchService(
         () =>
@@ -839,7 +874,7 @@ describe("DefaultUpgradeService", () => {
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
       getCLIConfig(),
     );
-    service.setDependencies(
+    setUpgradeServiceDependencies(service, 
       getSpawnService((command) => {
         spawnedCommands.push(command);
         return { ok: true, exitCode: 0 };
@@ -897,7 +932,7 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService((command) => {
           spawnedCommands.push(command);
           if (command[0] === "unzip") {
@@ -947,7 +982,7 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -983,7 +1018,7 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -1018,7 +1053,7 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService((command) => {
           if (command[0] === "unzip") {
             const tmpDir = command[4] as string;
@@ -1057,7 +1092,7 @@ describe("DefaultUpgradeService", () => {
         }),
         getCLIConfig("example-cli"),
       );
-      service.setDependencies(
+      setUpgradeServiceDependencies(service, 
         getSpawnService((command) => {
           spawnedCommands.push(command);
           if (command[0] === "cmd" && command[2] === "del") {

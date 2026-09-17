@@ -12,6 +12,19 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { tmpdir } from "node:os";
 import StreamString from "../../fixtures/StreamString.ts";
+import { PRINTER_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
+import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
+
+function getContext(
+  printerService: PrinterService,
+  shutdownService: ShutdownService,
+): DefaultContext {
+  const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(PRINTER_SERVICE_ID, printerService);
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+  return context;
+}
 
 interface FakePrinterServiceState {
   calls: string[];
@@ -185,7 +198,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
-    spawnService.setDependencies(printerService, shutdownService);
+    spawnService.setContext(getContext(printerService, shutdownService));
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
     // Simulate a banner printed before the spawn runs - this must survive the clear.
@@ -236,7 +249,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
-    spawnService.setDependencies(printerService, shutdownService);
+    spawnService.setContext(getContext(printerService, shutdownService));
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
     // Matches the plugin:add/plugin:remove pattern: show the spinner once, leave it showing
@@ -291,7 +304,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
-    spawnService.setDependencies(printerService, shutdownService);
+    spawnService.setContext(getContext(printerService, shutdownService));
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
     // Simulate a real (colored) startup banner printed before the spawn runs, including a
@@ -352,7 +365,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
-    spawnService.setDependencies(printerService, shutdownService);
+    spawnService.setContext(getContext(printerService, shutdownService));
     const adapter = new SpawnInterfaceAdapter(spawnService, printerService);
 
     const result = await adapter.spawn(

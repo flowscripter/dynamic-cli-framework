@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type {
   CLIConfig,
+  Context,
   FetchService,
   KeyValueService,
   PrinterService,
@@ -16,7 +17,11 @@ import type {
   ValueNode,
 } from "@flowscripter/dynamic-cli-framework-api";
 import {
+  FETCH_SERVICE_ID,
   InstallMethod,
+  KEY_VALUE_SERVICE_ID,
+  PRINTER_SERVICE_ID,
+  SPAWN_SERVICE_ID,
   SupportedArch,
   SupportedOs,
   type UpgradeService,
@@ -86,10 +91,7 @@ const OS_LABELS: Record<SupportedOs, string> = {
 };
 
 export default class DefaultUpgradeService implements UpgradeService {
-  #spawnService: SpawnService | undefined;
-  #fetchService: FetchService | undefined;
-  #printerService: PrinterService | undefined;
-  #keyValueService: KeyValueService | undefined;
+  #context: Context | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
@@ -99,16 +101,39 @@ export default class DefaultUpgradeService implements UpgradeService {
     this.#cliConfig = cliConfig;
   }
 
-  public setDependencies(
-    spawnService: SpawnService | undefined,
-    fetchService: FetchService | undefined,
-    printerService: PrinterService | undefined,
-    keyValueService?: KeyValueService,
-  ): void {
-    this.#spawnService = spawnService;
-    this.#fetchService = fetchService;
-    this.#printerService = printerService;
-    this.#keyValueService = keyValueService;
+  public setContext(context: Context): void {
+    this.#context = context;
+  }
+
+  // Unlike DefaultFetchService/DefaultSpawnService (each a single entry-point method with hard
+  // runtime dependencies), DefaultUpgradeService's spawn/fetch/printer/keyValue dependencies are
+  // all individually optional - checkForUpgrade()/detectInstallMethod() etc. have always tolerated
+  // any of them being unavailable (e.g. no SpawnService registered), including before setContext()
+  // has ever been called. So these getters resolve to undefined rather than throwing when
+  // #context is unset, exactly as they resolved to undefined when unset via setDependencies().
+
+  get #spawnService(): SpawnService | undefined {
+    return this.#context?.doesServiceExist(SPAWN_SERVICE_ID)
+      ? (this.#context.getServiceById(SPAWN_SERVICE_ID) as SpawnService)
+      : undefined;
+  }
+
+  get #fetchService(): FetchService | undefined {
+    return this.#context?.doesServiceExist(FETCH_SERVICE_ID)
+      ? (this.#context.getServiceById(FETCH_SERVICE_ID) as FetchService)
+      : undefined;
+  }
+
+  get #printerService(): PrinterService | undefined {
+    return this.#context?.doesServiceExist(PRINTER_SERVICE_ID)
+      ? (this.#context.getServiceById(PRINTER_SERVICE_ID) as PrinterService)
+      : undefined;
+  }
+
+  get #keyValueService(): KeyValueService | undefined {
+    return this.#context?.doesServiceExist(KEY_VALUE_SERVICE_ID)
+      ? (this.#context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
+      : undefined;
   }
 
   // Mirrors SpawnInterfaceAdapter's plugin:add/plugin:remove pattern: wrap a spawned command's
