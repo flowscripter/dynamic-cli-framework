@@ -1,11 +1,12 @@
-import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import type { ShutdownService, ShutdownTask } from "@flowscripter/dynamic-cli-framework-api";
+import PriorityTaskList from "../../runtime/lifecycle/PriorityTaskList.ts";
 import { shutdownState } from "./ShutdownState.ts";
 
 export default class DefaultShutdownService implements ShutdownService {
-  static readonly callbacks: Array<() => Promise<void>> = [];
+  static readonly taskList = new PriorityTaskList<ShutdownTask>();
 
-  addShutdownListener(callback: () => Promise<void>): void {
-    DefaultShutdownService.callbacks.push(callback);
+  registerTask(task: ShutdownTask): void {
+    DefaultShutdownService.taskList.add(task);
   }
 
   enterLongRunningMode(): void {

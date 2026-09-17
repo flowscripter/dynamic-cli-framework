@@ -179,7 +179,7 @@ describe("SpawnInterfaceAdapter tests", () => {
     );
     printerService.colorEnabled = false;
     const shutdownService: ShutdownService = {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,
@@ -230,7 +230,7 @@ describe("SpawnInterfaceAdapter tests", () => {
     );
     printerService.colorEnabled = false;
     const shutdownService: ShutdownService = {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,
@@ -285,7 +285,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       new TtyStyler(3),
     );
     const shutdownService: ShutdownService = {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,
@@ -346,7 +346,7 @@ describe("SpawnInterfaceAdapter tests", () => {
     );
     printerService.colorEnabled = false;
     const shutdownService: ShutdownService = {
-      addShutdownListener: () => {},
+      registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
       isShutdownRequested: false,

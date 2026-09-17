@@ -28,8 +28,34 @@ import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import type { ArgumentPrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import { ARGUMENT_PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
+import type { ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultStartupService from "../service/startup/DefaultStartupService.ts";
+import { sortByPriority } from "./lifecycle/PriorityTaskList.ts";
 
 const logger = getLogger("runner");
+
+/**
+ * Wrap a {@link ServiceProvider}'s `initService()` call as a {@link StartupTask} so it can be
+ * merged with directly-registered {@link StartupTask}s (e.g. the banner task) into a single
+ * priority-ordered sequence.
+ */
+function toProviderStartupTask(
+  serviceProvider: ServiceProvider,
+  commandRegistry: CommandRegistry,
+): StartupTask {
+  return {
+    id: serviceProvider.serviceId,
+    priority: serviceProvider.servicePriority,
+    mode: "blocking",
+    modifierCommands: Array.from(
+      commandRegistry
+        .getGlobalModifierCommandsByNameProvidedByService(serviceProvider.serviceId)
+        .values(),
+    ),
+    run: (context: Context) => serviceProvider.initService(context),
+  };
+}
 
 async function attemptPromptForMissingArguments(
   parseResult: ParseResult,
@@ -589,6 +615,7 @@ export async function run(
   configurationServiceProvider: ConfigurationServiceProvider | undefined,
   context: Context,
   defaultCommand?: Command,
+  startupService?: DefaultStartupService,
 ): Promise<RunResult> {
   if (defaultCommand && !isSubCommand(defaultCommand) && !isGlobalCommand(defaultCommand)) {
     throw new Error(
@@ -601,17 +628,29 @@ export async function run(
   let availableArgs: ReadonlyArray<ReadonlyArray<string>> = [args];
   let unusedArgs: Array<ReadonlyArray<string>> = [];
 
-  // for each ServiceProvider (they are returned in servicePriority order)
-  for (const serviceProvider of serviceProviderRegistry.getServiceProviders()) {
-    // using the GlobalModifierCommands instances provided by the ServiceProvider...
-    const globalModifierCommandsByName =
-      commandRegistry.getGlobalModifierCommandsByNameProvidedByService(serviceProvider.serviceId);
-    const globalModifierCommandsByShortAlias =
-      commandRegistry.getGlobalModifierCommandsByShortAliasProvidedByService(
-        serviceProvider.serviceId,
-      );
+  // merge every ServiceProvider's initService() into a StartupTask, then combine with any
+  // directly-registered StartupTasks (e.g. the banner task) into one priority-ordered sequence
+  const startupTasks = sortByPriority<StartupTask>([
+    ...serviceProviderRegistry
+      .getServiceProviders()
+      .map((serviceProvider) => toProviderStartupTask(serviceProvider, commandRegistry)),
+    ...(startupService ? startupService.getTasks() : []),
+  ]);
 
-    // if there are GlobalModifierCommands provided by the ServiceProvider...
+  for (const task of startupTasks) {
+    // using the GlobalModifierCommands instances provided by the task...
+    const globalModifierCommandsByName = new Map(
+      (task.modifierCommands ?? []).map((command) => [command.name, command]),
+    );
+    const globalModifierCommandsByShortAlias = new Map(
+      (task.modifierCommands ?? [])
+        .filter((command): command is GlobalModifierCommand & { shortAlias: string } =>
+          Boolean(command.shortAlias),
+        )
+        .map((command) => [command.shortAlias, command]),
+    );
+
+    // if there are GlobalModifierCommands provided by the task...
     if (globalModifierCommandsByName.size > 0) {
       // ...scan arguments, parse any resulting clauses and execute any resulting parsed GlobalModifierCommands
       const runResult = await findAndExecuteGlobalModifierCommands(
@@ -633,23 +672,37 @@ export async function run(
       unusedArgs = [];
     }
 
-    // init the service provider's service
-
-    logger.debug("Initialising service with ID: %s", serviceProvider.serviceId);
+    logger.debug("Running startup task with ID: %s", task.id);
 
     if (
       configurationServiceProvider?.keyValueServiceEnabled ||
       configurationServiceProvider?.secretServiceEnabled
     ) {
-      configurationServiceProvider.setServiceKeyValueScope(serviceProvider.serviceId);
+      configurationServiceProvider.setServiceKeyValueScope(task.id);
     }
 
-    await serviceProvider.initService(context);
-    if (
-      configurationServiceProvider?.keyValueServiceEnabled ||
-      configurationServiceProvider?.secretServiceEnabled
-    ) {
-      await configurationServiceProvider.clearKeyValueScope();
+    if ((task.mode ?? "blocking") === "blocking") {
+      await task.run(context);
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
+        await configurationServiceProvider.clearKeyValueScope();
+      }
+    } else {
+      // background: don't hold the scope open synchronously around unawaited work - clear it
+      // immediately so the next task can acquire its own scope. Any KeyValueService access this
+      // task performs after this point is not scope-isolated until Step 5 - see #safeKeyValueCall
+      // wrapper usage in DefaultUpgradeService for how a consumer defends against this.
+      if (
+        configurationServiceProvider?.keyValueServiceEnabled ||
+        configurationServiceProvider?.secretServiceEnabled
+      ) {
+        await configurationServiceProvider.clearKeyValueScope();
+      }
+      void task.run(context).catch((error: unknown) => {
+        logger.debug(() => `Background startup task '${task.id}' failed: ${error}`);
+      });
     }
   }
 

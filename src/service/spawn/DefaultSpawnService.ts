@@ -122,11 +122,15 @@ export default class DefaultSpawnService implements SpawnService {
       shutdownService.enterLongRunningMode();
     }
 
-    shutdownService.addShutdownListener(async () => {
-      if (settled) {
-        return;
-      }
-      await this.#terminate(proc, command);
+    shutdownService.registerTask({
+      id: `spawn:${command.join(" ")}`,
+      priority: 0,
+      run: async () => {
+        if (settled) {
+          return;
+        }
+        await this.#terminate(proc, command);
+      },
     });
 
     // These are intentionally not awaited here - they only complete once the child's stdout/

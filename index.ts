@@ -71,9 +71,19 @@ export { default as DefaultPrinterService } from "./src/service/printer/DefaultP
 export { default as PrinterServiceProvider } from "./src/service/printer/PrinterServiceProvider.ts";
 
 export { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-export type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+export type { ShutdownService, ShutdownTask } from "@flowscripter/dynamic-cli-framework-api";
 export { default as DefaultShutdownService } from "./src/service/shutdown/DefaultShutdownService.ts";
 export { default as ShutdownServiceProvider } from "./src/service/shutdown/ShutdownServiceProvider.ts";
+
+export { STARTUP_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+export type {
+  StartupService,
+  StartupTask,
+  StartupTaskContext,
+  StartupTaskMode,
+} from "@flowscripter/dynamic-cli-framework-api";
+export { default as DefaultStartupService } from "./src/service/startup/DefaultStartupService.ts";
+export { default as StartupServiceProvider } from "./src/service/startup/StartupServiceProvider.ts";
 
 export { FETCH_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 export type { FetchOptions, FetchService } from "@flowscripter/dynamic-cli-framework-api";

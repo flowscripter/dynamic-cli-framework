@@ -28,6 +28,8 @@ import {
 } from "../runtime/command/CommandTypeGuards.ts";
 import CommandValidator from "../runtime/command/CommandValidator.ts";
 import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider.ts";
+import StartupServiceProvider from "../service/startup/StartupServiceProvider.ts";
+import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "../service/shutdown/ShutdownState.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
@@ -103,6 +105,7 @@ export default class BaseCLI implements CLI {
   readonly #context: DefaultContext;
   readonly #printerService: PrinterService;
   readonly #stdoutTerminal: Terminal;
+  readonly #startupServiceProvider: StartupServiceProvider;
 
   constructor(
     cliConfig: CLIConfig,
@@ -168,6 +171,10 @@ export default class BaseCLI implements CLI {
     // create a context
     this.#context = new DefaultContext(this.#cliConfig);
 
+    // priority 95 sits between shutdown (100) and configuration (90) - it has no ordering
+    // dependency on anything since its own initService() is a no-op.
+    this.#startupServiceProvider = new StartupServiceProvider(95);
+
     this.#stdoutTerminal = stdoutTerminal;
     this.#printerService = new DefaultPrinterService(
       stdoutWritableStream,
@@ -201,6 +208,16 @@ export default class BaseCLI implements CLI {
    *
    * @param command the {@link Command} to add.
    */
+  /**
+   * Register a {@link StartupTask} to run once during CLI startup, in priority order alongside
+   * every registered {@link ServiceProvider}'s `initService()` call.
+   *
+   * @param task the {@link StartupTask} to register.
+   */
+  public addStartupTask(task: StartupTask) {
+    this.#startupServiceProvider.startupService.registerTask(task);
+  }
+
   public addCommand(command: Command) {
     if (!isGlobalModifierCommand(command)) {
       // store the command locally to help determine if this CLI will be a single or multi-command CLI
@@ -229,6 +246,7 @@ export default class BaseCLI implements CLI {
 
     // create and add core services
     this.addServiceProvider(new ShutdownServiceProvider(100));
+    this.addServiceProvider(this.#startupServiceProvider);
     this.addServiceProvider(new PrinterServiceProvider(80, this.#printerService));
     this.addServiceProvider(new TableGeneratorServiceProvider(70));
 
@@ -332,6 +350,15 @@ export default class BaseCLI implements CLI {
       });
     }
 
+    // directly-registered StartupTasks (e.g. the banner task) aren't backed by a ServiceProvider,
+    // so their modifierCommands need to be added to the command registry here instead, keyed by
+    // the task's own ID.
+    for (const task of this.#startupServiceProvider.startupService.getTasks()) {
+      (task.modifierCommands ?? []).forEach((command) => {
+        this.#commandRegistry.addCommand(command, task.id);
+      });
+    }
+
     logger.debug(() => `Running with args: ${args.join(" ")}`);
 
     let helpSubCommand: SubCommand | undefined;
@@ -383,6 +410,7 @@ export default class BaseCLI implements CLI {
         configurationServiceProvider,
         this.#context,
         defaultCommand,
+        this.#startupServiceProvider.startupService,
       );
       // then handle the result...
       if (runResult.runState === RunState.NO_COMMAND) {

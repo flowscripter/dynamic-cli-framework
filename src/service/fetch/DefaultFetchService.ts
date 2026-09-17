@@ -34,12 +34,16 @@ export default class DefaultFetchService implements FetchService {
     let settled = false;
     if (longRunning) {
       shutdownService.enterLongRunningMode();
-      shutdownService.addShutdownListener(async () => {
-        if (settled) {
-          return;
-        }
-        logger.debug(() => `Aborting fetch of '${input.toString()}' due to shutdown`);
-        controller.abort();
+      shutdownService.registerTask({
+        id: `fetch:${input.toString()}`,
+        priority: 0,
+        run: async () => {
+          if (settled) {
+            return;
+          }
+          logger.debug(() => `Aborting fetch of '${input.toString()}' due to shutdown`);
+          controller.abort();
+        },
       });
     }
 

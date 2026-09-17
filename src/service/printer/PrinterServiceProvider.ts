@@ -43,9 +43,13 @@ export default class PrinterServiceProvider implements ServiceProvider {
 
   initService(context: Context): Promise<void> {
     const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
-    shutdownService.addShutdownListener(async () => {
-      await this.printerService.hideSpinner();
-      await this.printerService.hideAllProgressBars();
+    shutdownService.registerTask({
+      id: PRINTER_SERVICE_ID,
+      priority: 0,
+      run: async () => {
+        await this.printerService.hideSpinner();
+        await this.printerService.hideAllProgressBars();
+      },
     });
 
     return Promise.resolve();

@@ -47,8 +47,8 @@ function getFakeShutdownService(): {
     listeners: [],
   };
   const shutdownService: ShutdownService = {
-    addShutdownListener: (callback) => {
-      state.listeners.push(callback);
+    registerTask: (task) => {
+      state.listeners.push(task.run);
     },
     enterLongRunningMode: () => {
       state.enterLongRunningModeCalls++;
