@@ -146,6 +146,23 @@ describe("KeyValueServiceProvider tests", () => {
     expect(await kvA.get("shared-key")).toEqual("scope-a-value");
   });
 
+  test("getContextForScope forwards addServiceInstance to the underlying context", async () => {
+    const { keyValueServiceProvider, context } = await getInitialisedProviders({});
+
+    const scopedContext = keyValueServiceProvider.getContextForScope(
+      context,
+      "service",
+      "scope-a",
+    );
+
+    (scopedContext as DefaultContext).addServiceInstance(
+      "some-service-id",
+      "some-service-instance",
+    );
+
+    expect(context.getServiceById("some-service-id")).toEqual("some-service-instance");
+  });
+
   test("keyValueServiceEnabled requires configEnabled", () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, false);
     expect(
