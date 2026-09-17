@@ -117,8 +117,16 @@ describe("KeyValueServiceProvider tests", () => {
       resolveDelayedWrite = resolve;
     });
 
-    const scopedContextA = keyValueServiceProvider.getContextForScope(context, "service", "scope-a");
-    const scopedContextB = keyValueServiceProvider.getContextForScope(context, "service", "scope-b");
+    const scopedContextA = keyValueServiceProvider.getContextForScope(
+      context,
+      "service",
+      "scope-a",
+    );
+    const scopedContextB = keyValueServiceProvider.getContextForScope(
+      context,
+      "service",
+      "scope-b",
+    );
 
     const kvA = scopedContextA.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;
     const kvB = scopedContextB.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService;

@@ -1,7 +1,11 @@
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
-import type { KeyValueService, ShutdownService, ValueNode } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  KeyValueService,
+  ShutdownService,
+  ValueNode,
+} from "@flowscripter/dynamic-cli-framework-api";
 import { KEY_VALUE_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
 import DefaultSecretService from "./DefaultSecretService.ts";

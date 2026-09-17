@@ -65,8 +65,9 @@ describe("bannerStartupTask tests", () => {
 
     const configurationServiceProvider = getConfigurationServiceProvider(100, new Map());
     configurationServiceProvider.configLocation = "config.yaml";
-    const { service: configurationService } =
-      await configurationServiceProvider.getServiceInfo(getCLIConfig("mpeg-sdl-tool"));
+    const { service: configurationService } = await configurationServiceProvider.getServiceInfo(
+      getCLIConfig("mpeg-sdl-tool"),
+    );
     context.addServiceInstance(CONFIGURATION_SERVICE_ID, configurationService!);
 
     const task = createBannerStartupTask(100, "small");
