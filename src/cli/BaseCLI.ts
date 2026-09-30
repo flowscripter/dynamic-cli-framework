@@ -84,6 +84,9 @@ const logger = getLogger("BaseCLI");
  * * {@link UpgradeServiceProvider}
  * * {@link PluginServiceProvider}
  *
+ * Enabling the plugin service also registers {@link SpawnServiceProvider}, as plugin installation
+ * spawns the package manager via the spawn service.
+ *
  * `keyReader` is optional. If omitted, or if the stderr {@link Terminal} is not a TTY, prompting is
  * unavailable: {@link PrompterServiceProvider} (and {@link ArgumentPrompterServiceProvider}, if
  * enabled) are simply not registered. If `promptingEnabled` is `true` in that situation, {@link run}
@@ -299,7 +302,9 @@ export default class BaseCLI implements CLI {
       }
     }
 
-    if (this.#options.spawnServiceEnabled) {
+    // The plugin service routes package manager output through SpawnService so that it is
+    // quoted, marked and cleared on success; enabling plugins therefore also enables spawning.
+    if (this.#options.spawnServiceEnabled || this.#options.pluginServiceEnabled) {
       this.addServiceProvider(new SpawnServiceProvider(58));
     }
 
