@@ -11,6 +11,7 @@ import {
   parseSubCommandClause,
 } from "../../src/runtime/parser.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
+import { getInvalidArgumentString } from "../../src/runtime/values/argumentValueValidation.ts";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type ValueType,
@@ -733,5 +734,74 @@ describe("parser tests", () => {
       unusedArgs: [],
       invalidArguments: [],
     });
+  });
+
+  test("Nested custom validator failures are reported with the property path", () => {
+    const field = {
+      name: "field",
+      type: ValueTypeName.STRING,
+      validate: (value: ValueType | PopulatedValues | Array<PopulatedValues>) =>
+        value === "x" ? "x is not allowed" : undefined,
+    };
+    const subCommand: SubCommand = {
+      name: "subCommand",
+      options: [
+        {
+          name: "opt",
+          type: ComplexValueTypeName.COMPLEX,
+          isOptional: true,
+          properties: [
+            {
+              name: "sub",
+              type: ComplexValueTypeName.COMPLEX,
+              properties: [field],
+            },
+          ],
+        },
+        {
+          name: "arr",
+          type: ComplexValueTypeName.COMPLEX,
+          isArray: true,
+          isOptional: true,
+          properties: [field],
+        },
+      ],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    };
+
+    let parseResult = parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: ["--opt.sub.field=x"],
+    });
+    expect(parseResult.invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "opt.sub.field",
+        value: "x",
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "x is not allowed",
+      },
+    ]);
+    expect(getInvalidArgumentString(parseResult.invalidArguments[0]!, false)).toEqual(
+      "opt.sub.field='x' (custom validation: x is not allowed)",
+    );
+
+    parseResult = parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: ["--arr[0].field=y", "--arr[1].field=x"],
+    });
+    expect(parseResult.invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "arr[1].field",
+        value: "x",
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "x is not allowed",
+      },
+    ]);
+    expect(getInvalidArgumentString(parseResult.invalidArguments[0]!, false)).toEqual(
+      "arr[1].field='x' (custom validation: x is not allowed)",
+    );
   });
 });

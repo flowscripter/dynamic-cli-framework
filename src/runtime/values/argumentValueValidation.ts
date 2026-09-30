@@ -34,6 +34,42 @@ interface ObjectValueValidationResult extends ValidationResult {
 }
 
 /**
+ * Returns a copy of the provided {@link InvalidArgument} with the provided prefix prepended to its name.
+ */
+function withPrefix(invalidArgument: InvalidArgument, prefix: string): InvalidArgument {
+  return { ...invalidArgument, name: `${prefix}${invalidArgument.name ?? ""}` };
+}
+
+/**
+ * Invokes the custom validate function (if any) of the provided {@link Argument} and returns an
+ * {@link InvalidArgument} if the custom validation failed.
+ *
+ * @param argument the {@link Argument} providing the custom validate function.
+ * @param name the name to use for the {@link InvalidArgument}.
+ * @param value the validated and type-converted value.
+ */
+function doCustomValidation(
+  argument: Argument | ComplexOption,
+  name: string,
+  value: SingleValueType | Values | Array<SingleValueType | Values>,
+): InvalidArgument | undefined {
+  if (argument.validate === undefined) {
+    return undefined;
+  }
+  const message = argument.validate(value as ValueType | Values | Array<Values>);
+  if (message === undefined) {
+    return undefined;
+  }
+  return {
+    argument,
+    name,
+    value: value as PopulatedValueType | PopulatedValues,
+    reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+    message,
+  };
+}
+
+/**
  * Validates the provided primitive value against the provided {@link Argument}.
  *
  * @param argument the {@link Argument} to validate against.
@@ -217,30 +253,10 @@ function validateArrayValue(
     }
     if (validationResult.invalidArgument) {
       // fast fail
-      if (validationResult.invalidArgument.value !== undefined) {
-        return {
-          validValue: convertedArrayValue,
-          invalidArgument: {
-            argument: validationResult.invalidArgument.argument,
-            name: `[${i}]${
-              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-            }`,
-            value: validationResult.invalidArgument.value,
-            reason: validationResult.invalidArgument.reason,
-          },
-        };
-      } else {
-        return {
-          validValue: convertedArrayValue,
-          invalidArgument: {
-            argument: validationResult.invalidArgument.argument,
-            name: `[${i}]${
-              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-            }`,
-            reason: validationResult.invalidArgument.reason,
-          },
-        };
-      }
+      return {
+        validValue: convertedArrayValue,
+        invalidArgument: withPrefix(validationResult.invalidArgument, `[${i}]`),
+      };
     }
   }
   return {
@@ -256,9 +272,15 @@ function validateObjectValue(
 
   for (let i = 0; i < argument.properties.length; i++) {
     const propertyArg = argument.properties[i]!;
-    const propertyValue = objectValue[propertyArg.name];
+    let propertyValue = objectValue[propertyArg.name];
 
+    if (propertyValue === undefined && propertyArg.defaultValue !== undefined) {
+      propertyValue = propertyArg.defaultValue as PopulatedValueType | PopulatedValues;
+    }
     if (propertyValue === undefined) {
+      if (propertyArg.isOptional) {
+        continue;
+      }
       return {
         validValue: convertedObjectValue,
         invalidArgument: {
@@ -329,30 +351,22 @@ function validateObjectValue(
     }
     // fast fail
     if (validationResult.invalidArgument !== undefined) {
-      if (validationResult.invalidArgument.value !== undefined) {
-        return {
-          validValue: convertedObjectValue,
-          invalidArgument: {
-            argument: validationResult.invalidArgument.argument,
-            name: `.${propertyArg.name}${
-              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-            }`,
-            value: validationResult.invalidArgument.value,
-            reason: validationResult.invalidArgument.reason,
-          },
-        };
-      } else {
-        return {
-          validValue: convertedObjectValue,
-          invalidArgument: {
-            argument: validationResult.invalidArgument.argument,
-            name: `.${propertyArg.name}${
-              validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-            }`,
-            reason: validationResult.invalidArgument.reason,
-          },
-        };
-      }
+      return {
+        validValue: convertedObjectValue,
+        invalidArgument: withPrefix(validationResult.invalidArgument, `.${propertyArg.name}`),
+      };
+    }
+    // custom validation runs only once the property (and any nested properties) passed validation
+    const customInvalidArgument = doCustomValidation(
+      propertyArg,
+      `.${propertyArg.name}`,
+      validationResult.validValue!,
+    );
+    if (customInvalidArgument !== undefined) {
+      return {
+        validValue: convertedObjectValue,
+        invalidArgument: customInvalidArgument,
+      };
     }
   }
   return {
@@ -407,44 +421,17 @@ function doSubCommandArgumentValidation(
     }
 
     if (validationResult.invalidArgument !== undefined) {
-      if (validationResult.invalidArgument.value !== undefined) {
-        validationResult.invalidArgument = {
-          argument: validationResult.invalidArgument.argument,
-          name: `${argument.name}${
-            validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-          }`,
-          value: validationResult.invalidArgument.value,
-          reason: validationResult.invalidArgument.reason,
-        };
-      } else {
-        validationResult.invalidArgument = {
-          argument: validationResult.invalidArgument.argument,
-          name: `${argument.name}${
-            validationResult.invalidArgument.name ? validationResult.invalidArgument.name : ""
-          }`,
-          reason: validationResult.invalidArgument.reason,
-        };
-      }
-    }
-
-    if (validationResult.invalidArgument) {
-      invalidArguments.push(validationResult.invalidArgument);
+      invalidArguments.push(withPrefix(validationResult.invalidArgument, argument.name));
       return undefined;
     }
-    if (argument.validate && validationResult.validValue !== undefined) {
-      const customError = argument.validate(
-        validationResult.validValue as ValueType | Values | Array<Values>,
-      );
-      if (customError !== undefined) {
-        invalidArguments.push({
-          argument,
-          name: argument.name,
-          value: validationResult.validValue as PopulatedValueType,
-          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-          message: customError,
-        });
-        return undefined;
-      }
+    const customInvalidArgument = doCustomValidation(
+      argument,
+      argument.name,
+      validationResult.validValue!,
+    );
+    if (customInvalidArgument !== undefined) {
+      invalidArguments.push(customInvalidArgument);
+      return undefined;
     }
     return validationResult.validValue as PopulatedValueType | PopulatedValues | undefined;
   }
@@ -540,18 +527,14 @@ export function validateGlobalCommandArgumentValue(
       return undefined;
     }
 
-    if (globalCommandArgument.validate && validationResult.validValue !== undefined) {
-      const customError = globalCommandArgument.validate(validationResult.validValue as ValueType);
-      if (customError !== undefined) {
-        invalidArguments.push({
-          argument: globalCommandArgument,
-          name: globalCommand.name,
-          value: validationResult.validValue,
-          reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-          message: customError,
-        });
-        return undefined;
-      }
+    const customInvalidArgument = doCustomValidation(
+      globalCommandArgument,
+      globalCommand.name,
+      validationResult.validValue!,
+    );
+    if (customInvalidArgument !== undefined) {
+      invalidArguments.push(customInvalidArgument);
+      return undefined;
     }
     return validationResult.validValue as PopulatedSingleValueType;
   }
@@ -577,7 +560,10 @@ export function getInvalidArgumentString(
   }
   let valueString = "";
   if (invalidArgument.value !== undefined) {
-    valueString = `'${invalidArgument.value}'`;
+    valueString =
+      typeof invalidArgument.value === "object"
+        ? `'${JSON.stringify(invalidArgument.value)}'`
+        : `'${invalidArgument.value}'`;
   }
   let argString = "";
   if (nameString !== "") {
