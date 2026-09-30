@@ -126,6 +126,46 @@ describe("Progress tests", () => {
     await progress.hide(handle);
   });
 
+  test("rate reflects throughput when updates arrive many times per millisecond in coarse steps", async () => {
+    const streamString = new StreamString();
+    (streamString.writeStream as unknown as { columns: number }).columns = 120;
+    const terminal = new TtyTerminal(streamString.writeStream);
+    const progress = new Progress(terminal, new TtyStyler(3));
+
+    const realDateNow = Date.now;
+    let fakeNow = 1_000_000;
+    Date.now = () => fakeNow;
+
+    // Values are GB rounded to 2 decimal places, as a byte-scaled caller reports them.
+    const GB = 1024 ** 3;
+    const chunk = 64 * 1024;
+    const chunksPerMilli = 16; // ~1GB/s
+    let handle!: number;
+    try {
+      handle = progress.add("hashing", 19.22, 0, format, formatRate);
+      let bytes = 0;
+      for (let milli = 0; milli < 3000; milli++) {
+        fakeNow += 1;
+        for (let i = 0; i < chunksPerMilli; i++) {
+          bytes += chunk;
+          progress.update(handle, Math.round((bytes / GB) * 100) / 100);
+        }
+      }
+    } finally {
+      Date.now = realDateNow;
+    }
+
+    await sleep(150);
+    const output = Bun.stripANSI(streamString.getString());
+    const afterRate = output.slice(output.lastIndexOf("rate:"));
+    const match = /\d+\.\d+/.exec(afterRate);
+    expect(match).not.toBeNull();
+    expect(Number(match![0])).toBeGreaterThan(0.8);
+    expect(Number(match![0])).toBeLessThan(1.2);
+    expect(afterRate).not.toContain("time remaining: -");
+    await progress.hide(handle);
+  });
+
   test("bar renders with visible fill chars at a realistic terminal width", async () => {
     const streamString = new StreamString();
     // Comfortably wider than the actual visible suffix text (~85 chars for this scenario).
