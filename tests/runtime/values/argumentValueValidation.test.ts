@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  getInvalidArgumentString,
   validateGlobalCommandArgumentValue,
   validateOptionValue,
   validatePositionalValue,
@@ -1087,6 +1088,361 @@ describe("argumentValueValidation tests", () => {
         name: "globalCommand",
         value: "goo",
         reason: InvalidArgumentReason.ILLEGAL_VALUE,
+      },
+    ]);
+  });
+
+  test("Nested primitive property with custom validator that passes and fails", () => {
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [
+        {
+          name: "field",
+          type: ValueTypeName.INTEGER,
+          validate: (value) => ((value as number) % 2 === 0 ? undefined : "must be even"),
+        },
+      ],
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, { field: "2" }, invalidArguments)).toEqual({ field: 2 });
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(validateOptionValue(option, { field: "3" }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: option.properties[0],
+        name: "opt.field",
+        value: 3,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "must be even",
+      },
+    ]);
+  });
+
+  test("Two level nested property with custom validator fails", () => {
+    const field: Option = {
+      name: "field",
+      type: ValueTypeName.STRING,
+      validate: (value) => (value === "bad" ? "no bad values" : undefined),
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [
+        {
+          name: "sub",
+          type: ComplexValueTypeName.COMPLEX,
+          properties: [field],
+        },
+      ],
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, { sub: { field: "bad" } }, invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "opt.sub.field",
+        value: "bad",
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "no bad values",
+      },
+    ]);
+  });
+
+  test("Array of complex values with custom validator failing in an element", () => {
+    const field: Option = {
+      name: "field",
+      type: ValueTypeName.NUMBER,
+      validate: (value) => ((value as number) > 10 ? "too big" : undefined),
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      isArray: true,
+      properties: [field],
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(
+        option,
+        [{ field: "1" }, { field: "2" }, { field: "11" }],
+        invalidArguments,
+      ),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "opt[2].field",
+        value: 11,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "too big",
+      },
+    ]);
+  });
+
+  test("Nested array property custom validator receives whole array", () => {
+    const received: Array<unknown> = [];
+    const field: Option = {
+      name: "field",
+      type: ValueTypeName.INTEGER,
+      isArray: true,
+      validate: (value) => {
+        received.push(value);
+        const arr = value as Array<number>;
+        return new Set(arr).size !== arr.length ? "values must be unique" : undefined;
+      },
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [field],
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, { field: ["1", "2"] }, invalidArguments)).toEqual({
+      field: [1, 2],
+    });
+    expect(invalidArguments).toEqual([]);
+    expect(received).toEqual([[1, 2]]);
+
+    invalidArguments = [];
+    expect(validateOptionValue(option, { field: ["1", "1"] }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "opt.field",
+        value: [1, 1],
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "values must be unique",
+      },
+    ]);
+  });
+
+  test("Nested custom validators run bottom-up in declaration order", () => {
+    const calls: Array<string> = [];
+    const sub: ComplexOption = {
+      name: "sub",
+      type: ComplexValueTypeName.COMPLEX,
+      isArray: true,
+      properties: [
+        {
+          name: "a",
+          type: ValueTypeName.INTEGER,
+          validate: (value) => {
+            calls.push(`a:${value}`);
+            return (value as number) < 0 ? "negative" : undefined;
+          },
+        },
+        {
+          name: "b",
+          type: ValueTypeName.BOOLEAN,
+          validate: (value) => {
+            calls.push(`b:${value}`);
+            return undefined;
+          },
+        },
+      ],
+      validate: (value) => {
+        calls.push(`sub:${JSON.stringify(value)}`);
+        return undefined;
+      },
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [sub],
+      validate: (value) => {
+        calls.push(`opt:${JSON.stringify(value)}`);
+        return undefined;
+      },
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(
+        option,
+        {
+          sub: [
+            { a: "1", b: "true" },
+            { a: "2", b: "false" },
+          ],
+        },
+        invalidArguments,
+      ),
+    ).toEqual({
+      sub: [
+        { a: 1, b: true },
+        { a: 2, b: false },
+      ],
+    });
+    expect(invalidArguments).toEqual([]);
+    expect(calls).toEqual([
+      "a:1",
+      "b:true",
+      "a:2",
+      "b:false",
+      'sub:[{"a":1,"b":true},{"a":2,"b":false}]',
+      'opt:{"sub":[{"a":1,"b":true},{"a":2,"b":false}]}',
+    ]);
+
+    // a child failure stops validation before any parent validator is called
+    calls.length = 0;
+    invalidArguments = [];
+    expect(
+      validateOptionValue(option, { sub: [{ a: "-1", b: "true" }] }, invalidArguments),
+    ).toBeUndefined();
+    expect(calls).toEqual(["a:-1"]);
+    expect(invalidArguments).toEqual([
+      {
+        argument: sub.properties[0],
+        name: "opt.sub[0].a",
+        value: -1,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "negative",
+      },
+    ]);
+  });
+
+  test("Complex property custom validator failure", () => {
+    const sub: ComplexOption = {
+      name: "sub",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [
+        { name: "min", type: ValueTypeName.NUMBER },
+        { name: "max", type: ValueTypeName.NUMBER },
+      ],
+      validate: (value) => {
+        const range = value as { min: number; max: number };
+        return range.min > range.max ? "min must not exceed max" : undefined;
+      },
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [sub],
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(
+      validateOptionValue(option, { sub: { min: "5", max: "1" } }, invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: sub,
+        name: "opt.sub",
+        value: { min: 5, max: 1 },
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "min must not exceed max",
+      },
+    ]);
+    expect(getInvalidArgumentString(invalidArguments[0]!, false)).toEqual(
+      `opt.sub='{"min":5,"max":1}' (custom validation: min must not exceed max)`,
+    );
+  });
+
+  test("Nested custom validator not called when built-in validation fails", () => {
+    const field: Option = {
+      name: "field",
+      type: ValueTypeName.NUMBER,
+      validate: () => {
+        throw new Error("should not be called");
+      },
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [field],
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, { field: "notanumber" }, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: field,
+        name: "opt.field",
+        value: "notanumber",
+        reason: InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+      },
+    ]);
+  });
+
+  test("Nested optional property absent and nested default value applied", () => {
+    const optionalField: Option = {
+      name: "optionalField",
+      type: ValueTypeName.STRING,
+      isOptional: true,
+      validate: () => {
+        throw new Error("should not be called");
+      },
+    };
+    const defaultField: Option = {
+      name: "defaultField",
+      type: ValueTypeName.INTEGER,
+      defaultValue: 3,
+      validate: (value) => ((value as number) > 5 ? "too big" : undefined),
+    };
+    const requiredField: Option = {
+      name: "requiredField",
+      type: ValueTypeName.STRING,
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [optionalField, defaultField, requiredField],
+    };
+    let invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, { requiredField: "x" }, invalidArguments)).toEqual({
+      defaultField: 3,
+      requiredField: "x",
+    });
+    expect(invalidArguments).toEqual([]);
+
+    invalidArguments = [];
+    expect(
+      validateOptionValue(option, { defaultField: "6", requiredField: "x" }, invalidArguments),
+    ).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: defaultField,
+        name: "opt.defaultField",
+        value: 6,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "too big",
+      },
+    ]);
+
+    invalidArguments = [];
+    expect(validateOptionValue(option, {}, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: requiredField,
+        name: "opt.requiredField",
+        reason: InvalidArgumentReason.MISSING_VALUE,
+      },
+    ]);
+  });
+
+  test("Nested default value is validated", () => {
+    const defaultField: Option = {
+      name: "defaultField",
+      type: ValueTypeName.INTEGER,
+      defaultValue: 10,
+      validate: (value) => ((value as number) > 5 ? "too big" : undefined),
+    };
+    const option: ComplexOption = {
+      name: "opt",
+      type: ComplexValueTypeName.COMPLEX,
+      properties: [defaultField],
+    };
+    const invalidArguments: Array<InvalidArgument> = [];
+    expect(validateOptionValue(option, {}, invalidArguments)).toBeUndefined();
+    expect(invalidArguments).toEqual([
+      {
+        argument: defaultField,
+        name: "opt.defaultField",
+        value: 10,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message: "too big",
       },
     ]);
   });

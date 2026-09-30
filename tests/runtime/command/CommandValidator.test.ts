@@ -492,6 +492,37 @@ describe("CommandValidator tests", () => {
     new CommandValidator(getCLIConfig()).validate(command);
   });
 
+  test("SubCommand validation fails due to complex default value failing a nested validator", () => {
+    const command = getSubCommand(
+      "command",
+      [
+        {
+          name: "opt",
+          type: ComplexValueTypeName.COMPLEX,
+          defaultValue: { sub: { field: "bad" } },
+          properties: [
+            {
+              name: "sub",
+              type: ComplexValueTypeName.COMPLEX,
+              properties: [
+                {
+                  name: "field",
+                  type: ValueTypeName.STRING,
+                  validate: (value) => (value === "bad" ? "no bad values" : undefined),
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      [],
+    );
+
+    expect(() => new CommandValidator(getCLIConfig()).validate(command)).toThrow(
+      "Illegal default value for option: 'opt' => 'bad' (custom validation: no bad values)",
+    );
+  });
+
   test(
     "GlobalCommand validation fails due to the default value" +
       " not matching any values specified in argument valid values",
