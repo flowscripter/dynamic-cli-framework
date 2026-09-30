@@ -63,9 +63,10 @@ interface CachedLatestVersion {
 
 // KeyValueService key holding the last checkForUpgrade() result, refreshed opportunistically by
 // UpgradeServiceProvider's background StartupTask and by the `upgrade` command - shared by both so
-// there's one cache, not two. The banner task only ever reads this key (kv.has()/kv.get()) - it
-// never calls checkForUpgrade()/getUpgradeCheckResult() live, since checking live would stall
-// startup on the network/spawn calls checkForUpgrade() makes.
+// there's one cache, not two. The key lives in this service's own KeyValueService scope, so other
+// consumers (e.g. the banner task) read it via getCachedUpgradeCheckResult() rather than their own
+// scoped KeyValueService. The banner never calls checkForUpgrade()/getUpgradeCheckResult() live,
+// since checking live would stall startup on the network/spawn calls checkForUpgrade() makes.
 export const UPGRADE_CHECK_CACHE_KEY = "upgrade-check-result";
 
 type VersionLookupResult =
@@ -194,6 +195,23 @@ export default class DefaultUpgradeService implements UpgradeService {
       );
     }
     return result;
+  }
+
+  /**
+   * Return the result last persisted by {@link refreshUpgradeCheckCache}, without running a check.
+   * Returns `undefined` if nothing has been persisted yet or no KeyValueService is available.
+   */
+  public async getCachedUpgradeCheckResult(): Promise<UpgradeCheckResult | undefined> {
+    const keyValueService = this.#keyValueService;
+    if (!keyValueService) {
+      return undefined;
+    }
+    const has = await this.#safeKeyValueCall(() => keyValueService.has(UPGRADE_CHECK_CACHE_KEY));
+    if (!has) {
+      return undefined;
+    }
+    const cached = await this.#safeKeyValueCall(() => keyValueService.get(UPGRADE_CHECK_CACHE_KEY));
+    return cached as unknown as UpgradeCheckResult | undefined;
   }
 
   public detectOs(): SupportedOs | undefined {
