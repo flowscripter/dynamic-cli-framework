@@ -2,8 +2,13 @@ import type Styler from "../../../terminal/Styler.ts";
 import type Terminal from "../../../terminal/Terminal.ts";
 
 // Weight given to each new rate sample in the exponential moving average - time constant is
-// roughly 1/RATE_SMOOTHING_FACTOR * 100ms (the render interval).
+// roughly 1/RATE_SMOOTHING_FACTOR * RATE_SAMPLE_INTERVAL_MILLIS.
 const RATE_SMOOTHING_FACTOR = 0.3;
+
+// Minimum time between rate samples. Updates arriving more often than this only advance the
+// current value; the next sample then measures the total progress made across the whole window,
+// so rapid, fine-grained or coarsely stepped updates still yield an accurate rate.
+const RATE_SAMPLE_INTERVAL_MILLIS = 100;
 
 // A rate this close to zero (units/s) produces a meaningless (and, past a certain point,
 // non-finite) "time remaining" estimate - treat it the same as no rate at all.
@@ -23,8 +28,9 @@ interface Bar {
   total: number;
   format: (value: number) => string;
   formatRate: (rate: number) => string;
-  lastMillis?: number;
-  startMillis?: number;
+  sampleMillis: number;
+  sampleCurrent: number;
+  startMillis: number;
   endMillis?: number;
   rate?: number;
 }
@@ -66,13 +72,16 @@ export default class Progress {
       current = total;
     }
 
+    const now = Date.now();
     this.#bars.set(this.#bars.size + 1, {
       name: message,
       current,
       total,
       format,
       formatRate,
-      startMillis: Date.now(),
+      sampleMillis: now,
+      sampleCurrent: current,
+      startMillis: now,
     });
 
     // force render on next timeout
@@ -100,16 +109,17 @@ export default class Progress {
 
   #updateRate(bar: Bar, current: number): void {
     const now = Date.now();
-    if (bar.lastMillis === undefined) {
-      bar.rate = ((current - bar.current) * 1000) / (now - bar.startMillis!);
-    } else {
-      let currentRate = ((current - bar.current) * 1000) / (now - bar.lastMillis!);
-      if (!isFinite(currentRate)) {
-        currentRate = 0;
-      }
-      bar.rate = currentRate * RATE_SMOOTHING_FACTOR + bar.rate! * (1 - RATE_SMOOTHING_FACTOR);
+    const elapsed = now - bar.sampleMillis;
+    if (elapsed < RATE_SAMPLE_INTERVAL_MILLIS) {
+      return;
     }
-    bar.lastMillis = now;
+    const sampleRate = ((current - bar.sampleCurrent) * 1000) / elapsed;
+    bar.rate =
+      bar.rate === undefined
+        ? sampleRate
+        : sampleRate * RATE_SMOOTHING_FACTOR + bar.rate * (1 - RATE_SMOOTHING_FACTOR);
+    bar.sampleMillis = now;
+    bar.sampleCurrent = current;
   }
 
   public update(handle: number, current: number, message?: string): void {
@@ -244,7 +254,7 @@ export default class Progress {
 
       let suffix = `${this.#styler.colorText("]", this.#labColor)} ${percent} `;
       if (bar.current === bar.total) {
-        const taken = this.#formatTime(bar.endMillis! - bar.startMillis!);
+        const taken = this.#formatTime(bar.endMillis! - bar.startMillis);
         const totalText = bar.format(bar.total);
         suffix += `${this.#styler.colorText(totalText, this.#valColor)}${this.#styler.colorText(
           ", rate:",
