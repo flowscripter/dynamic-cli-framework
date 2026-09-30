@@ -1,8 +1,11 @@
+import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import createBannerStartupTask from "../../../src/startup/banner/bannerStartupTask.ts";
 import DefaultPrinterService from "../../../src/service/printer/DefaultPrinterService.ts";
-import { KEY_VALUE_SERVICE_ID, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { ASCII_BANNER_GENERATOR_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultAsciiBannerGeneratorService from "../../../src/service/asciiBannerGenerator/DefaultAsciiBannerGeneratorService.ts";
@@ -10,7 +13,16 @@ import TtyTerminal from "../../../src/terminal/TtyTerminal.ts";
 import StreamString from "../../fixtures/StreamString.ts";
 import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
-import { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  CONFIGURATION_SERVICE_ID,
+  SHUTDOWN_SERVICE_ID,
+  UPGRADE_SERVICE_ID,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
+import KeyValueServiceProvider from "../../../src/service/configuration/KeyValueServiceProvider.ts";
+import UpgradeServiceProvider from "../../../src/service/upgrade/UpgradeServiceProvider.ts";
+import { BANNER_STARTUP_TASK_ID } from "../../../src/startup/banner/bannerStartupTask.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
 import smallFont from "../../service/asciiBannerGenerator/small.flf.json" with { type: "json" };
@@ -29,6 +41,87 @@ function getPrinterAndStreams() {
   );
   printer.colorEnabled = false;
   return { dummyStdout, dummyStderr, printer };
+}
+
+function getUpgradeServiceKeyValues(currentVersion: string) {
+  return {
+    "upgrade-status": "declined",
+    "latest-version:homebrew": { version: "3.0.2", checkedAt: 1790779930775 },
+    "upgrade-check-result": {
+      status: "checked",
+      currentVersion,
+      latestVersion: "3.0.2",
+      updateAvailable: true,
+      os: "macos",
+      arch: "arm64",
+      installMethod: "homebrew",
+    },
+  };
+}
+
+// Wires the real configuration, key-value and upgrade providers against a config file on disk,
+// with each task run under its own scoped Context the same way runner.ts does.
+async function runBannerWithPersistedUpgradeState(cliConfig: CLIConfig, cachedVersion: string) {
+  const { dummyStderr, printer } = getPrinterAndStreams();
+  const context = new DefaultContext(cliConfig);
+  context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+  context.addServiceInstance(
+    ASCII_BANNER_GENERATOR_SERVICE_ID,
+    new DefaultAsciiBannerGeneratorService(),
+  );
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, {
+    registerTask: () => {},
+    enterLongRunningMode: () => {},
+    leaveLongRunningMode: () => {},
+    isShutdownRequested: false,
+  });
+
+  const configurationServiceProvider = new ConfigurationServiceProvider(90, false, true);
+  const keyValueServiceProvider = new KeyValueServiceProvider(
+    89,
+    configurationServiceProvider,
+    true,
+  );
+  const upgradeServiceProvider = new UpgradeServiceProvider(56, { supportedPlatforms: [] });
+
+  const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
+  const configLocation = path.join(configFolder, "config.json");
+  configurationServiceProvider.setConfigLocation(configLocation);
+  await fs.writeFile(
+    configLocation,
+    JSON.stringify({
+      "key-values": {
+        services: { [UPGRADE_SERVICE_ID]: getUpgradeServiceKeyValues(cachedVersion) },
+      },
+    }),
+  );
+
+  for (const provider of [
+    configurationServiceProvider,
+    keyValueServiceProvider,
+    upgradeServiceProvider,
+  ]) {
+    const { service } = await provider.getServiceInfo(cliConfig);
+    if (service) {
+      context.addServiceInstance(provider.serviceId, service);
+    }
+  }
+  for (const provider of [
+    configurationServiceProvider,
+    keyValueServiceProvider,
+    upgradeServiceProvider,
+  ]) {
+    await provider.initService(
+      keyValueServiceProvider.getContextForScope(context, "service", provider.serviceId),
+    );
+  }
+
+  await createBannerStartupTask(50).run(
+    keyValueServiceProvider.getContextForScope(context, "service", BANNER_STARTUP_TASK_ID),
+  );
+
+  await fs.rm(configFolder, { recursive: true, force: true });
+  return dummyStderr.getString();
 }
 
 describe("bannerStartupTask tests", () => {
@@ -77,30 +170,23 @@ describe("bannerStartupTask tests", () => {
     expect(dummyStdout.getString()).toMatchSnapshot();
   });
 
-  test("run() shows upgrade availability when the KV cache has a checked/updateAvailable result", async () => {
-    const { dummyStderr, printer } = getPrinterAndStreams();
-    const asciiBannerGenerator = new DefaultAsciiBannerGeneratorService();
-    const context = new DefaultContext(getCLIConfig());
-
-    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
-    context.addServiceInstance(ASCII_BANNER_GENERATOR_SERVICE_ID, asciiBannerGenerator);
-    context.addServiceInstance(KEY_VALUE_SERVICE_ID, {
-      has: () => Promise.resolve(true),
-      get: () =>
-        Promise.resolve({
-          status: "checked",
-          currentVersion: "foobar",
-          latestVersion: "9.9.9",
-          updateAvailable: true,
-        }),
-    });
-
-    const task = createBannerStartupTask(100);
-    await task.run(context);
-
-    expect(dummyStderr.getString()).toContain(
-      "version: foobar (9.9.9 available, run 'foo upgrade')",
+  test("run() shows upgrade availability persisted in the upgrade service's own key-value scope", async () => {
+    const output = await runBannerWithPersistedUpgradeState(
+      { name: "example-cli", version: "3.0.1" },
+      "3.0.1",
     );
+
+    expect(output).toContain("version: 3.0.1 (3.0.2 available, run 'example-cli upgrade')");
+  });
+
+  test("run() ignores a persisted upgrade check made by a different version", async () => {
+    const output = await runBannerWithPersistedUpgradeState(
+      { name: "example-cli", version: "3.0.2" },
+      "3.0.1",
+    );
+
+    expect(output).toContain("version: 3.0.2\n");
+    expect(output).not.toContain("available");
   });
 
   test("run() does nothing when the no-banner command has disabled it", async () => {
