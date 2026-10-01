@@ -428,7 +428,7 @@ export default class DefaultUpgradeService implements UpgradeService {
   // Homebrew relinks a formula's installed binary from its Cellar directory into a `bin/` symlink,
   // so resolving the running executable's real path confirms a homebrew install without spawning
   // `brew`, which has a slow cold start - avoiding it keeps the background upgrade-check
-  // StartupTask (see UpgradeServiceProvider) fast even though it now runs to completion.
+  // StartupTask (see UpgradeServiceProvider) fast even though it runs to completion.
   #isRunningFromHomebrewCellar(formula: string): boolean {
     let realExecutable = process.execPath;
     try {

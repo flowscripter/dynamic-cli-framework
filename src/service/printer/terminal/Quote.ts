@@ -63,7 +63,7 @@ export default class Quote {
     // *after* that newline (e.g. "foo\n" -> "<color>foo\n<reset>"). Naively checking
     // endsWith("\n") on such styled text is always false, and splitting on "\n" then treats the
     // trailing reset sequence as a spurious extra line, which gets its own quote prefix -
-    // rendering as if two quote levels were active for a single actual line (see #150). Every
+    // rendering as if two quote levels were active for a single actual line. Every
     // line gets re-colored below regardless, so strip all existing ANSI upfront rather than
     // trying to preserve and restore it.
     const body = Bun.stripANSI(message);
