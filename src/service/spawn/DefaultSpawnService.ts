@@ -9,6 +9,7 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
+import { CLEANUP_SHUTDOWN_TASK_PRIORITY } from "../../runtime/lifecycle/priorities.ts";
 
 const logger = getLogger("DefaultSpawnService");
 
@@ -124,7 +125,7 @@ export default class DefaultSpawnService implements SpawnService {
 
     shutdownService.registerTask({
       id: `spawn:${command.join(" ")}`,
-      priority: 0,
+      priority: CLEANUP_SHUTDOWN_TASK_PRIORITY,
       run: async () => {
         if (settled) {
           return;

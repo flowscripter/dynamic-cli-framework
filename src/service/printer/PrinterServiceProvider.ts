@@ -9,6 +9,7 @@ import NoHyperlinksCommand from "./command/NoHyperlinksCommand.ts";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
 import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { CLEANUP_SHUTDOWN_TASK_PRIORITY } from "../../runtime/lifecycle/priorities.ts";
 
 /**
  * Provides a {@link PrinterService}.
@@ -45,7 +46,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
     const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
     shutdownService.registerTask({
       id: PRINTER_SERVICE_ID,
-      priority: 0,
+      priority: CLEANUP_SHUTDOWN_TASK_PRIORITY,
       run: async () => {
         await this.printerService.hideSpinner();
         await this.printerService.hideAllProgressBars();

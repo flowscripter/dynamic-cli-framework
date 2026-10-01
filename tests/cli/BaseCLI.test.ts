@@ -10,7 +10,8 @@ import {
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
-import BaseCLI, { AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "../../src/cli/BaseCLI.ts";
+import BaseCLI from "../../src/cli/BaseCLI.ts";
+import { AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "../../src/runtime/lifecycle/priorities.ts";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";

@@ -61,14 +61,25 @@ import UpgradeServiceProvider, {
   createUpgradeCheckStartupTask,
 } from "../service/upgrade/UpgradeServiceProvider.ts";
 import PluginServiceProvider from "../service/plugin/PluginServiceProvider.ts";
+import {
+  ARGUMENT_PROMPTER_SERVICE_PRIORITY,
+  AUTO_UPGRADE_STARTUP_TASK_PRIORITY,
+  COMPLETION_SERVICE_PRIORITY,
+  CONFIGURATION_SERVICE_PRIORITY,
+  FETCH_SERVICE_PRIORITY,
+  IMAGE_PRINTER_SERVICE_PRIORITY,
+  KEY_VALUE_SERVICE_PRIORITY,
+  PLUGIN_SERVICE_PRIORITY,
+  PRINTER_SERVICE_PRIORITY,
+  PROMPTER_SERVICE_PRIORITY,
+  SHUTDOWN_SERVICE_PRIORITY,
+  SPAWN_SERVICE_PRIORITY,
+  STARTUP_SERVICE_PRIORITY,
+  TABLE_GENERATOR_SERVICE_PRIORITY,
+  UPGRADE_CHECK_STARTUP_TASK_PRIORITY,
+  UPGRADE_SERVICE_PRIORITY,
+} from "../runtime/lifecycle/priorities.ts";
 const logger = getLogger("BaseCLI");
-
-/**
- * Priority of the startup task which prompts to enable automatic upgrades and performs them. It
- * runs below consumer startup tasks such as the banner (typically 45 or more) and above the
- * completion prompt (5).
- */
-export const AUTO_UPGRADE_STARTUP_TASK_PRIORITY = 10;
 
 /**
  * Base implementation of a {@link CLI}.
@@ -185,9 +196,7 @@ export default class BaseCLI implements CLI {
     // create a context
     this.#context = new DefaultContext(this.#cliConfig);
 
-    // priority 95 sits between shutdown (100) and configuration (90) - it has no ordering
-    // dependency on anything since its own initService() is a no-op.
-    this.#startupServiceProvider = new StartupServiceProvider(95);
+    this.#startupServiceProvider = new StartupServiceProvider(STARTUP_SERVICE_PRIORITY);
 
     this.#stdoutTerminal = stdoutTerminal;
     this.#printerService = new DefaultPrinterService(
@@ -259,10 +268,12 @@ export default class BaseCLI implements CLI {
     }
 
     // create and add core services
-    this.addServiceProvider(new ShutdownServiceProvider(100));
+    this.addServiceProvider(new ShutdownServiceProvider(SHUTDOWN_SERVICE_PRIORITY));
     this.addServiceProvider(this.#startupServiceProvider);
-    this.addServiceProvider(new PrinterServiceProvider(80, this.#printerService));
-    this.addServiceProvider(new TableGeneratorServiceProvider(70));
+    this.addServiceProvider(
+      new PrinterServiceProvider(PRINTER_SERVICE_PRIORITY, this.#printerService),
+    );
+    this.addServiceProvider(new TableGeneratorServiceProvider(TABLE_GENERATOR_SERVICE_PRIORITY));
 
     const canPrompt = this.#keyReader !== undefined && this.#stderrTerminal.isTty();
 
@@ -279,7 +290,9 @@ export default class BaseCLI implements CLI {
         this.#printerService,
       );
       prompterService.promptEnabled = this.#options.promptingEnabled;
-      this.addServiceProvider(new PrompterServiceProvider(75, prompterService));
+      this.addServiceProvider(
+        new PrompterServiceProvider(PROMPTER_SERVICE_PRIORITY, prompterService),
+      );
     } else {
       logger.debug(
         () =>
@@ -292,7 +305,12 @@ export default class BaseCLI implements CLI {
     if (this.#options.argumentPrompterServiceEnabled) {
       if (prompterService !== undefined) {
         const argumentPrompterService = new DefaultArgumentPrompterService(prompterService);
-        this.addServiceProvider(new ArgumentPrompterServiceProvider(65, argumentPrompterService));
+        this.addServiceProvider(
+          new ArgumentPrompterServiceProvider(
+            ARGUMENT_PROMPTER_SERVICE_PRIORITY,
+            argumentPrompterService,
+          ),
+        );
       } else {
         logger.debug(
           "Skipping ArgumentPrompterServiceProvider: argumentPrompterServiceEnabled is true but prompting is unavailable",
@@ -302,7 +320,9 @@ export default class BaseCLI implements CLI {
 
     if (this.#options.imagePrinterServiceEnabled) {
       if (this.#stdoutTerminal.isTty()) {
-        this.addServiceProvider(new ImagePrinterServiceProvider(55, this.#stdoutTerminal));
+        this.addServiceProvider(
+          new ImagePrinterServiceProvider(IMAGE_PRINTER_SERVICE_PRIORITY, this.#stdoutTerminal),
+        );
       } else {
         logger.debug(
           "Skipping ImagePrinterServiceProvider: imagePrinterServiceEnabled is true but stdout is not a TTY",
@@ -313,32 +333,37 @@ export default class BaseCLI implements CLI {
     // The plugin service routes package manager output through SpawnService so that it is
     // quoted, marked and cleared on success; enabling plugins therefore also enables spawning.
     if (this.#options.spawnServiceEnabled || this.#options.pluginServiceEnabled) {
-      this.addServiceProvider(new SpawnServiceProvider(58));
+      this.addServiceProvider(new SpawnServiceProvider(SPAWN_SERVICE_PRIORITY));
     }
 
     if (this.#options.fetchServiceEnabled) {
-      this.addServiceProvider(new FetchServiceProvider(57));
+      this.addServiceProvider(new FetchServiceProvider(FETCH_SERVICE_PRIORITY));
     }
 
     if (this.#options.completionServiceEnabled) {
       const completionService = new DefaultCompletionService();
       this.addServiceProvider(
-        new CompletionServiceProvider(5, completionService, this.#commandRegistry),
+        new CompletionServiceProvider(
+          COMPLETION_SERVICE_PRIORITY,
+          completionService,
+          this.#commandRegistry,
+        ),
       );
     }
 
     let upgradeServiceProvider: UpgradeServiceProvider | undefined;
     if (this.#options.upgradeServiceEnabled) {
-      // 56 runs after Spawn(58)/Fetch(57) - whose dependencies it needs
-      // but before the consumer-configured Banner/Plugin(50) priority band.
-      upgradeServiceProvider = new UpgradeServiceProvider(56, this.#options.upgradeLocationsConfig);
+      upgradeServiceProvider = new UpgradeServiceProvider(
+        UPGRADE_SERVICE_PRIORITY,
+        this.#options.upgradeLocationsConfig,
+      );
       this.addServiceProvider(upgradeServiceProvider);
     }
 
     if (this.#options.pluginServiceEnabled) {
       this.addServiceProvider(
         new PluginServiceProvider(
-          50,
+          PLUGIN_SERVICE_PRIORITY,
           this.#options.pluginServiceRemoteConfig,
           this.#options.pluginServiceLocalConfig,
           this.#commandRegistry,
@@ -348,16 +373,14 @@ export default class BaseCLI implements CLI {
     }
 
     const configurationServiceProvider = new ConfigurationServiceProvider(
-      90,
+      CONFIGURATION_SERVICE_PRIORITY,
       this.#options.envVarsSupportEnabled,
       this.#options.configFileSupportEnabled,
       this.#options.secretServiceEnabled,
     );
     this.addServiceProvider(configurationServiceProvider);
-    // priority 89 sits just below ConfigurationServiceProvider's 90 - its config-file read
-    // happens in its own initService(), before KeyValueServiceProvider's initService() runs.
     const keyValueServiceProvider = new KeyValueServiceProvider(
-      89,
+      KEY_VALUE_SERVICE_PRIORITY,
       configurationServiceProvider,
       this.#options.keyValueServiceEnabled,
       this.#options.secretServiceEnabled,
@@ -377,7 +400,12 @@ export default class BaseCLI implements CLI {
     }
 
     if (upgradeServiceProvider?.upgradeService) {
-      this.addStartupTask(createUpgradeCheckStartupTask(upgradeServiceProvider.upgradeService, 56));
+      this.addStartupTask(
+        createUpgradeCheckStartupTask(
+          upgradeServiceProvider.upgradeService,
+          UPGRADE_CHECK_STARTUP_TASK_PRIORITY,
+        ),
+      );
       this.addStartupTask(
         createAutoUpgradeStartupTask(upgradeServiceProvider, AUTO_UPGRADE_STARTUP_TASK_PRIORITY),
       );
