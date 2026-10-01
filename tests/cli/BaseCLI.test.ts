@@ -532,7 +532,7 @@ describe("BaseCLI tests", () => {
         },
       );
 
-      // Simulates a consumer-registered BannerServiceProvider, which opportunistically calls
+      // A consumer-registered provider at the banner's priority, which opportunistically calls
       // UpgradeService.getUpgradeCheckResult() from its own initService().
       const bannerLikeProvider: ServiceProvider = {
         serviceId: "test-banner-like-service",
