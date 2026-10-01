@@ -134,6 +134,36 @@ describe("DefaultSpawnService tests", () => {
     expect(lines).toContainEqual({ line: "err1", stream: "stderr" });
   });
 
+  test("spawn() passes env, merged over process.env, to the child and returns its exit code", async () => {
+    const service = new DefaultSpawnService();
+    const { printerService } = getFakePrinterService();
+    const { shutdownService } = getFakeShutdownService();
+    service.setContext(getContext(printerService, shutdownService));
+
+    const lines: Array<string> = [];
+    process.env.SPAWN_TEST_INHERITED = "inherited";
+    let result;
+    try {
+      result = await service.spawn(
+        [
+          process.execPath,
+          "-e",
+          "console.log(process.env.SPAWN_TEST_VALUE, process.env.SPAWN_TEST_INHERITED); process.exit(7);",
+        ],
+        {
+          mode: "wrapped",
+          env: { SPAWN_TEST_VALUE: "from-options" },
+          onOutput: (line) => lines.push(line.trim()),
+        },
+      );
+    } finally {
+      delete process.env.SPAWN_TEST_INHERITED;
+    }
+
+    expect(result).toEqual({ ok: false, exitCode: 7 });
+    expect(lines).toEqual(["from-options inherited"]);
+  });
+
   test("spawn() pauses spinner and progress bars in inherit mode", async () => {
     const service = new DefaultSpawnService();
     const { printerService, state } = getFakePrinterService();

@@ -16,7 +16,7 @@ import DefaultUpgradeService from "./DefaultUpgradeService.ts";
 import { UpgradeSubCommand } from "./command/UpgradeSubCommand.ts";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
 import getLogger from "../../util/logger.ts";
-import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
+import type { StartupTask, StartupTaskOutcome } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("UpgradeServiceProvider");
 
@@ -42,7 +42,7 @@ export function createUpgradeCheckStartupTask(
 
 /**
  * Build the blocking {@link StartupTask} which offers to enable automatic upgrades and, when they
- * are enabled, checks for and installs a newer version (see
+ * are enabled, checks for and installs a newer version, optionally restarting into it (see
  * {@link UpgradeServiceProvider.runAutoUpgrade}). It is registered separately from the provider's
  * own init task so it can run at a lower priority, after consumer startup tasks such as the banner.
  */
@@ -65,10 +65,31 @@ export default class UpgradeServiceProvider implements ServiceProvider {
   #upgradeService: DefaultUpgradeService | undefined;
   #cliConfig: CLIConfig | undefined;
   #keyValueService: KeyValueService | undefined;
+  readonly #restartAfterAutoUpgrade: boolean;
+  #restartArgs: ReadonlyArray<string> = [];
 
-  public constructor(servicePriority: number, config: UpgradeLocationsConfig) {
+  /**
+   * @param servicePriority the priority of the service.
+   * @param config the upgrade locations.
+   * @param restartAfterAutoUpgrade whether to run the upgraded executable, with the arguments from
+   * {@link setRestartArgs}, after a successful automatic upgrade and end the run with its result.
+   */
+  public constructor(
+    servicePriority: number,
+    config: UpgradeLocationsConfig,
+    restartAfterAutoUpgrade = false,
+  ) {
     this.servicePriority = servicePriority;
     this.#config = config;
+    this.#restartAfterAutoUpgrade = restartAfterAutoUpgrade;
+  }
+
+  /**
+   * Set the CLI arguments to run the upgraded executable with when restarting after an automatic
+   * upgrade. These are kept internal to the framework and never exposed to startup tasks.
+   */
+  public setRestartArgs(args: ReadonlyArray<string>): void {
+    this.#restartArgs = args;
   }
 
   public get upgradeService(): DefaultUpgradeService | undefined {
@@ -113,12 +134,24 @@ export default class UpgradeServiceProvider implements ServiceProvider {
    * service's scope) and, when they are enabled, check for and install a newer version. Must be
    * called after {@link initService}.
    *
+   * After a successful upgrade, when restarting is enabled, the upgraded executable is run with the
+   * arguments from {@link setRestartArgs} and its result is returned as an `exitRequest`. Does
+   * nothing in a process which was itself started by such a restart.
+   *
    * @param context the startup task's context, used to look up the Prompter and Printer services.
    */
-  public async runAutoUpgrade(context: Context): Promise<void> {
+  public async runAutoUpgrade(context: Context): Promise<void | StartupTaskOutcome> {
     const upgradeService = this.#upgradeService!;
     const cliConfig = this.#cliConfig!;
     const keyValueService = this.#keyValueService;
+
+    if (upgradeService.restartedFromVersion !== undefined) {
+      logger.debug(
+        () =>
+          `Restarted from version ${upgradeService.restartedFromVersion}, skipping auto-upgrade`,
+      );
+      return;
+    }
 
     if (!context.doesServiceExist(PROMPTER_SERVICE_ID)) {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");
@@ -136,8 +169,7 @@ export default class UpgradeServiceProvider implements ServiceProvider {
         return;
       }
       if (status === "enabled") {
-        await this.#checkAndUpgrade(context, upgradeService, cliConfig);
-        return;
+        return this.#checkAndUpgrade(context, upgradeService, cliConfig, keyValueService);
       }
     }
 
@@ -183,14 +215,15 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     }
 
     await keyValueService.set("upgrade-status", "enabled");
-    await this.#checkAndUpgrade(context, upgradeService, cliConfig);
+    return this.#checkAndUpgrade(context, upgradeService, cliConfig, keyValueService);
   }
 
   async #checkAndUpgrade(
     context: Context,
     upgradeService: DefaultUpgradeService,
     cliConfig: CLIConfig,
-  ): Promise<void> {
+    keyValueService: KeyValueService,
+  ): Promise<void | StartupTaskOutcome> {
     try {
       const checkResult = await upgradeService.getUpgradeCheckResult();
       if (checkResult.status === "failed") {
@@ -201,21 +234,43 @@ export default class UpgradeServiceProvider implements ServiceProvider {
         return;
       }
       const upgradeResult = await upgradeService.upgrade();
-      if (!context.doesServiceExist(PRINTER_SERVICE_ID)) {
-        return;
-      }
-      const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-      if (upgradeResult.ok) {
-        await printerService.info(
-          `${cliConfig.name} upgraded (${upgradeResult.oldVersion} -> ${upgradeResult.newVersion})\n`,
-          Icon.SUCCESS,
-        );
-      } else {
-        await printerService.error(
+      const printerService = context.doesServiceExist(PRINTER_SERVICE_ID)
+        ? (context.getServiceById(PRINTER_SERVICE_ID) as PrinterService)
+        : undefined;
+      if (!upgradeResult.ok) {
+        await printerService?.error(
           `Auto-upgrade failed: ${upgradeResult.error?.message ?? "unknown error"}\n`,
           Icon.FAILURE,
         );
+        return;
       }
+      await printerService?.info(
+        `${cliConfig.name} upgraded (${upgradeResult.oldVersion} -> ${upgradeResult.newVersion})\n`,
+        Icon.SUCCESS,
+      );
+      if (!this.#restartAfterAutoUpgrade) {
+        return;
+      }
+
+      const executable = upgradeService.resolveUpgradedExecutable(checkResult.installMethod);
+      if (executable === undefined) {
+        await printerService?.info(
+          `Restart ${cliConfig.name} to use ${upgradeResult.newVersion}\n`,
+          Icon.INFORMATION,
+        );
+        return;
+      }
+
+      // written now so the restarted process sees the stored upgrade-status
+      await keyValueService.flush();
+      const runState = await upgradeService.restart(executable, this.#restartArgs);
+      if (runState !== undefined) {
+        return { exitRequest: { runState } };
+      }
+      await printerService?.warn(
+        `${cliConfig.name} upgraded to ${upgradeResult.newVersion}; restart it to use the new version\n`,
+        Icon.ALERT,
+      );
     } catch (error) {
       logger.debug(() => `Auto-upgrade check failed: ${error}`);
     }

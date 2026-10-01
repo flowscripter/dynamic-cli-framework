@@ -154,6 +154,7 @@ describe("PluginServiceProvider", () => {
       },
       get: () => Promise.resolve(""),
       set: () => Promise.resolve(),
+      flush: () => Promise.resolve(),
     } as unknown as KeyValueService;
     context.addServiceInstance(KEY_VALUE_SERVICE_ID, keyValueService);
 

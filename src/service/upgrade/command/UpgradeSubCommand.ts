@@ -11,7 +11,7 @@ import {
   UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
-import type DefaultUpgradeService from "../DefaultUpgradeService.ts";
+import type { UpgradeService } from "@flowscripter/dynamic-cli-framework-api";
 
 export class UpgradeSubCommand implements SubCommand {
   readonly name = "upgrade";
@@ -38,7 +38,7 @@ export class UpgradeSubCommand implements SubCommand {
 
   public async execute(context: Context, argumentValues: Values): Promise<void> {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-    const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as DefaultUpgradeService;
+    const upgradeService = context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService;
     const cliName = context.cliConfig.name;
     const currentVersion = context.cliConfig.version;
 

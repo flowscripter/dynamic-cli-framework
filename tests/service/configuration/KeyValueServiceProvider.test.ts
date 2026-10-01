@@ -7,11 +7,17 @@ import KeyValueServiceProvider from "../../../src/service/configuration/KeyValue
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import { KEY_VALUE_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-import type { KeyValueService, ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  KeyValueService,
+  ShutdownService,
+  ShutdownTask,
+} from "@flowscripter/dynamic-cli-framework-api";
 
-function getFakeShutdownService(): ShutdownService {
+function getFakeShutdownService(shutdownTasks: Array<ShutdownTask> = []): ShutdownService {
   return {
-    registerTask: () => {},
+    registerTask: (task) => {
+      shutdownTasks.push(task);
+    },
     enterLongRunningMode: () => {},
     leaveLongRunningMode: () => {},
     isShutdownRequested: false,
@@ -52,7 +58,8 @@ async function getInitialisedProviders(config: unknown) {
   );
   const cliConfig = getCLIConfig();
   const context = new DefaultContext(cliConfig);
-  context.addServiceInstance(SHUTDOWN_SERVICE_ID, getFakeShutdownService());
+  const shutdownTasks: Array<ShutdownTask> = [];
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, getFakeShutdownService(shutdownTasks));
 
   const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
   const configLocation = path.join(configFolder, "config.json");
@@ -65,7 +72,7 @@ async function getInitialisedProviders(config: unknown) {
   await configurationServiceProvider.initService(context);
   await keyValueServiceProvider.initService(context);
 
-  return { keyValueServiceProvider, context };
+  return { keyValueServiceProvider, context, configLocation, shutdownTasks };
 }
 
 describe("KeyValueServiceProvider tests", () => {
@@ -144,6 +151,56 @@ describe("KeyValueServiceProvider tests", () => {
     // scopeA's delayed write must never have landed in scopeB's data, regardless of timing
     expect(await kvB.get("shared-key")).toEqual("scope-b-value");
     expect(await kvA.get("shared-key")).toEqual("scope-a-value");
+  });
+
+  test("flush() writes pending changes to the config file and marks them clean", async () => {
+    const { keyValueServiceProvider, configLocation, shutdownTasks } =
+      await getInitialisedProviders(getConfig());
+    const keyValueService = keyValueServiceProvider.getScopedKeyValueService(
+      "service",
+      "service-id-1",
+    );
+    const otherKeyValueService = keyValueServiceProvider.getScopedKeyValueService(
+      "command",
+      "command1",
+    );
+
+    await keyValueService.set("foo1", "flushed");
+    await otherKeyValueService.set("foo1", "also-flushed");
+    await keyValueService.flush();
+
+    const written = JSON.parse(await fs.readFile(configLocation, "utf8"));
+    expect(written["key-values"].services["service-id-1"].foo1).toEqual("flushed");
+    expect(written["key-values"].commands.command1.foo1).toEqual("also-flushed");
+
+    // another process then writes the config file: the shutdown flush must not overwrite it
+    const externallyWritten = JSON.stringify({ "key-values": { services: {} }, external: true });
+    await fs.writeFile(configLocation, externallyWritten);
+    expect(shutdownTasks.length).toEqual(1);
+    await shutdownTasks[0]!.run();
+
+    expect(await fs.readFile(configLocation, "utf8")).toEqual(externallyWritten);
+  });
+
+  test("the shutdown flush writes pending changes and marks them clean", async () => {
+    const { keyValueServiceProvider, configLocation, shutdownTasks } =
+      await getInitialisedProviders(getConfig());
+    const keyValueService = keyValueServiceProvider.getScopedKeyValueService(
+      "service",
+      "service-id-1",
+    );
+
+    await keyValueService.set("foo1", "at-shutdown");
+    await shutdownTasks[0]!.run();
+
+    const written = JSON.parse(await fs.readFile(configLocation, "utf8"));
+    expect(written["key-values"].services["service-id-1"].foo1).toEqual("at-shutdown");
+
+    const externallyWritten = JSON.stringify({ external: true });
+    await fs.writeFile(configLocation, externallyWritten);
+    await shutdownTasks[0]!.run();
+
+    expect(await fs.readFile(configLocation, "utf8")).toEqual(externallyWritten);
   });
 
   test("keyValueServiceEnabled requires configEnabled", () => {

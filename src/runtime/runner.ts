@@ -37,6 +37,12 @@ import { sortByPriority } from "./lifecycle/PriorityTaskList.ts";
 const logger = getLogger("runner");
 
 /**
+ * The {@link RunResult} returned by {@link run}, with `exitRequested` set when a startup task ended
+ * the run early by returning an `exitRequest`.
+ */
+export type RunnerResult = RunResult & { readonly exitRequested?: true };
+
+/**
  * Wrap a {@link ServiceProvider}'s `initService()` call as a {@link StartupTask} so it can be
  * merged with directly-registered {@link StartupTask}s (e.g. the banner task) into a single
  * priority-ordered sequence.
@@ -560,6 +566,8 @@ async function findAndExecuteDefaultNonModifierCommand(
  *    - Run the task: awaited before continuing if its mode is "blocking" (the default, and how
  *      every ServiceProvider's initService() behaves); fired without awaiting if "background"
  *      (errors logged, not propagated).
+ *    - Return immediately if a "blocking" task returned an exitRequest, using its runState and
+ *      skipping the remaining tasks and the command.
  * 2. Scan arguments for any GlobalModifierCommand clauses not provided by a StartupTask
  *    - For each discovered clause:
  *      - Set any argument defaults from ConfigurationServiceProvider
@@ -615,7 +623,7 @@ export async function run(
   context: Context,
   defaultCommand?: Command,
   startupService?: DefaultStartupService,
-): Promise<RunResult> {
+): Promise<RunnerResult> {
   if (defaultCommand && !isSubCommand(defaultCommand) && !isGlobalCommand(defaultCommand)) {
     throw new Error(
       "If a default command is provided, if must be a global command or sub-command!",
@@ -681,7 +689,14 @@ export async function run(
       : context;
 
     if ((task.mode ?? "blocking") === "blocking") {
-      await task.run(taskContext);
+      const outcome = await task.run(taskContext);
+      if (outcome?.exitRequest) {
+        logger.debug(
+          () =>
+            `Startup task '${task.id}' requested exit with run state ${outcome.exitRequest.runState}`,
+        );
+        return { runState: outcome.exitRequest.runState, exitRequested: true };
+      }
     } else {
       void task.run(taskContext).catch((error: unknown) => {
         logger.debug(() => `Background startup task '${task.id}' failed: ${error}`);

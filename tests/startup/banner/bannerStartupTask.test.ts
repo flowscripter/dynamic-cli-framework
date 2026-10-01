@@ -19,7 +19,12 @@ import {
   SHUTDOWN_SERVICE_ID,
   UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
-import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  CLIConfig,
+  UpgradeCheckResult,
+  UpgradeService,
+} from "@flowscripter/dynamic-cli-framework-api";
+import { InstallMethod, SupportedArch, SupportedOs } from "@flowscripter/dynamic-cli-framework-api";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import KeyValueServiceProvider from "../../../src/service/configuration/KeyValueServiceProvider.ts";
 import UpgradeServiceProvider, {
@@ -59,6 +64,25 @@ function getUpgradeServiceKeyValues(currentVersion: string) {
       arch: "arm64",
       installMethod: "homebrew",
     },
+  };
+}
+
+// A plain UpgradeService implementation, so the banner can only reach it through the interface.
+function getUpgradeService(
+  cachedResult: UpgradeCheckResult | undefined,
+  restartedFromVersion?: string,
+): UpgradeService {
+  const unsupported: UpgradeCheckResult = { status: "unsupported" };
+  return {
+    detectOs: () => undefined,
+    detectArch: () => undefined,
+    detectInstallMethod: () => Promise.resolve(undefined),
+    checkForUpgrade: () => Promise.resolve(unsupported),
+    upgrade: () => Promise.resolve({ ok: false, oldVersion: "1.0.0" }),
+    getUpgradeCheckResult: () => Promise.resolve(unsupported),
+    getCachedUpgradeCheckResult: () => Promise.resolve(cachedResult),
+    refreshUpgradeCheckCache: () => Promise.resolve(unsupported),
+    restartedFromVersion,
   };
 }
 
@@ -205,6 +229,49 @@ describe("bannerStartupTask tests", () => {
 
     expect(output).toContain("version: 3.0.2\n");
     expect(output).not.toContain("available");
+  });
+
+  test("run() reads the cached upgrade check result through the UpgradeService interface", async () => {
+    const { dummyStderr, printer } = getPrinterAndStreams();
+    const context = new DefaultContext({ name: "example-cli", version: "3.0.1" });
+    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+    context.addServiceInstance(
+      ASCII_BANNER_GENERATOR_SERVICE_ID,
+      new DefaultAsciiBannerGeneratorService(),
+    );
+    context.addServiceInstance(
+      UPGRADE_SERVICE_ID,
+      getUpgradeService({
+        status: "checked",
+        currentVersion: "3.0.1",
+        latestVersion: "3.0.2",
+        updateAvailable: true,
+        os: SupportedOs.MACOS,
+        arch: SupportedArch.ARM64,
+        installMethod: InstallMethod.HOMEBREW,
+      }),
+    );
+
+    await createBannerStartupTask(50).run(context);
+
+    expect(dummyStderr.getString()).toContain(
+      "version: 3.0.1 (3.0.2 available, run 'example-cli upgrade')",
+    );
+  });
+
+  test("run() prints nothing in a process restarted after an automatic upgrade", async () => {
+    const { dummyStderr, printer } = getPrinterAndStreams();
+    const context = new DefaultContext({ name: "example-cli", version: "3.0.2" });
+    context.addServiceInstance(PRINTER_SERVICE_ID, printer);
+    context.addServiceInstance(
+      ASCII_BANNER_GENERATOR_SERVICE_ID,
+      new DefaultAsciiBannerGeneratorService(),
+    );
+    context.addServiceInstance(UPGRADE_SERVICE_ID, getUpgradeService(undefined, "3.0.1"));
+
+    await createBannerStartupTask(50).run(context);
+
+    expect(dummyStderr.getString()).toEqual("");
   });
 
   test("run() does nothing when the no-banner command has disabled it", async () => {

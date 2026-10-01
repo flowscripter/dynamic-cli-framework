@@ -38,6 +38,10 @@ class UnreachableKeyValueService implements KeyValueService {
     return Promise.reject(new Error(UnreachableKeyValueService.#message));
   }
 
+  flush(): Promise<void> {
+    return Promise.reject(new Error(UnreachableKeyValueService.#message));
+  }
+
   static readonly #message =
     "KeyValueService accessed without a resolved scope - this should be unreachable";
 }
@@ -189,7 +193,9 @@ export default class KeyValueServiceProvider implements ServiceProvider {
     const secretService = this.secretServiceEnabled
       ? new DefaultSecretService(this.#cliConfigName!, `${scopeType}_${scopeKey}`)
       : undefined;
-    const scopedService = new DefaultKeyValueService(keyValueData, secretService);
+    const scopedService = new DefaultKeyValueService(keyValueData, secretService, () =>
+      this.#flushDirtyScopes(),
+    );
     scopedServices.set(scopeKey, scopedService);
     return scopedService;
   }
@@ -230,15 +236,21 @@ export default class KeyValueServiceProvider implements ServiceProvider {
 
   /**
    * Flush every scoped KeyValueService's data to the configuration file, if any of them report
-   * themselves dirty. Registered as a low-priority ShutdownTask (see {@link initService}) so it
-   * runs once, after other shutdown cleanup, regardless of how long any scope was written to.
+   * themselves dirty, then mark them all clean. Registered as a low-priority ShutdownTask (see
+   * {@link initService}) so it runs once, after other shutdown cleanup, regardless of how long any
+   * scope was written to. Also backs {@link KeyValueService.flush} for every scope.
    */
   async #flushDirtyScopes(): Promise<void> {
-    const anyDirty = [
+    const scopedServices = [
       ...this.#commandScopedKeyValueServices.values(),
       ...this.#serviceScopedKeyValueServices.values(),
-    ].some((service) => service.isDirty());
-    await this.#configurationServiceProvider.flushIfDirty(anyDirty);
+    ];
+    await this.#configurationServiceProvider.flushIfDirty(
+      scopedServices.some((service) => service.isDirty()),
+    );
+    for (const service of scopedServices) {
+      service.markClean();
+    }
   }
 
   public async initService(context: Context): Promise<void> {

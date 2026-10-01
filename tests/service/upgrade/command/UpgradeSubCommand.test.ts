@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { UpgradeCheckResult, UpgradeResult } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  UpgradeCheckResult,
+  UpgradeResult,
+  UpgradeService,
+} from "@flowscripter/dynamic-cli-framework-api";
 import {
   InstallMethod,
   PRINTER_SERVICE_ID,
@@ -9,22 +13,26 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import { UpgradeSubCommand } from "../../../../src/service/upgrade/command/UpgradeSubCommand.ts";
-import type DefaultUpgradeService from "../../../../src/service/upgrade/DefaultUpgradeService.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
 
 function getUpgradeService(
   checkResult: UpgradeCheckResult,
   upgradeResult?: UpgradeResult,
-): DefaultUpgradeService {
+): UpgradeService {
   return {
+    detectOs: () => undefined,
+    detectArch: () => undefined,
+    detectInstallMethod: () => Promise.resolve(undefined),
     checkForUpgrade: () => Promise.resolve(checkResult),
     getUpgradeCheckResult: () => Promise.resolve(checkResult),
+    getCachedUpgradeCheckResult: () => Promise.resolve(undefined),
     refreshUpgradeCheckCache: () => Promise.resolve(checkResult),
     upgrade: () => Promise.resolve(upgradeResult!),
-  } as unknown as DefaultUpgradeService;
+    restartedFromVersion: undefined,
+  };
 }
 
-function getContext(upgradeService: DefaultUpgradeService): {
+function getContext(upgradeService: UpgradeService): {
   context: DefaultContext;
   messages: { print: string[]; info: string[]; error: string[]; spinner: string[] };
 } {

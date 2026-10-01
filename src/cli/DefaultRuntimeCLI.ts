@@ -72,7 +72,7 @@ export default class DefaultRuntimeCLI extends BaseCLI {
       stderrTerminal,
       new TtyStyler(colorLevel, supportsHyperlinks(process.stderr)),
       keyReader,
-      { promptingEnabled, ...options },
+      { promptingEnabled, restartAfterAutoUpgrade: true, ...options },
     );
   }
 

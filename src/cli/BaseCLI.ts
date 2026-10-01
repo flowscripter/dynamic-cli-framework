@@ -171,6 +171,7 @@ export default class BaseCLI implements CLI {
       fetchServiceEnabled: false,
       upgradeServiceEnabled: false,
       upgradeLocationsConfig: { supportedPlatforms: [] },
+      restartAfterAutoUpgrade: false,
       pluginServiceEnabled: false,
       pluginServiceRemoteConfig: { name: "", registryUrl: "", packageJsonNamespace: "" },
       pluginServiceLocalConfig: { nodeModulesPath: "", packageJsonNamespace: "" },
@@ -356,7 +357,9 @@ export default class BaseCLI implements CLI {
       upgradeServiceProvider = new UpgradeServiceProvider(
         UPGRADE_SERVICE_PRIORITY,
         this.#options.upgradeLocationsConfig,
+        this.#options.restartAfterAutoUpgrade,
       );
+      upgradeServiceProvider.setRestartArgs(args);
       this.addServiceProvider(upgradeServiceProvider);
     }
 
@@ -474,6 +477,10 @@ export default class BaseCLI implements CLI {
         defaultCommand,
         this.#startupServiceProvider.startupService,
       );
+      // a startup task ended the run, having already handled its outcome itself
+      if (runResult.exitRequested) {
+        return { runState: runResult.runState };
+      }
       // then handle the result...
       if (runResult.runState === RunState.NO_COMMAND) {
         // print usage

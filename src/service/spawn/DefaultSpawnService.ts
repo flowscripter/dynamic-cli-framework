@@ -108,6 +108,7 @@ export default class DefaultSpawnService implements SpawnService {
     try {
       proc = Bun.spawn(resolveForPlatform(command), {
         cwd: options.cwd,
+        env: options.env === undefined ? undefined : { ...process.env, ...options.env },
         stdin: mode === "inherit" ? "inherit" : "ignore",
         stdout: mode === "wrapped" ? "pipe" : mode === "ignore" ? "ignore" : "inherit",
         stderr: mode === "wrapped" ? "pipe" : mode === "ignore" ? "ignore" : "inherit",
