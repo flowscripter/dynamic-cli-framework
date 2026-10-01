@@ -429,6 +429,10 @@ describe("UpgradeServiceProvider", () => {
             : { ok: true, oldVersion: "1.0.0", newVersion: "1.0.1" },
         );
       };
+      upgradeService.refreshUpgradeCheckCache = () => {
+        events.push("refresh-check-cache");
+        return upgradeService.getUpgradeCheckResult();
+      };
       upgradeService.resolveUpgradedExecutable = (method) => {
         events.push(`resolve:${method}`);
         return method === InstallMethod.WINGET
@@ -472,7 +476,7 @@ describe("UpgradeServiceProvider", () => {
       return { outcome, events, printed };
     }
 
-    test("flushes key-value data, then restarts with the CLI args and requests exit with the child's run state", async () => {
+    test("persists the upgrade check cache and flushes key-value data, then restarts with the CLI args and requests exit with the child's run state", async () => {
       const { outcome, events, printed } = await runScenario({
         restartRunState: RunState.NO_COMMAND,
       });
@@ -480,6 +484,7 @@ describe("UpgradeServiceProvider", () => {
       expect(events).toEqual([
         "upgrade",
         `resolve:${InstallMethod.GITHUB_RELEASE}`,
+        "refresh-check-cache",
         "flush",
         "restart:/usr/local/bin/testcli sub --opt value",
       ]);

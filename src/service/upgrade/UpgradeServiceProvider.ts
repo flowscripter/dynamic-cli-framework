@@ -261,6 +261,9 @@ export default class UpgradeServiceProvider implements ServiceProvider {
         return;
       }
 
+      // the cache write from the background upgrade check lands before the flush, so the shutdown
+      // flush has nothing left to write over the restarted process's configuration
+      await upgradeService.refreshUpgradeCheckCache();
       // written now so the restarted process sees the stored upgrade-status
       await keyValueService.flush();
       const runState = await upgradeService.restart(executable, this.#restartArgs);
