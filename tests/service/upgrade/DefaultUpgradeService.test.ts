@@ -929,7 +929,7 @@ describe("DefaultUpgradeService", () => {
       originalExecPath = process.execPath;
       // #upgradeViaGithubRelease reads process.execPath directly (it must always operate on the
       // real running executable in production); override it for the duration of the test so the
-      // fix's fs operations run against a disposable fixture file instead of the real test
+      // upgrade's fs operations run against a disposable fixture file instead of the real test
       // runner binary.
       Object.defineProperty(process, "execPath", { value: currentExecutable, configurable: true });
     });

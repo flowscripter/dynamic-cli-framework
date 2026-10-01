@@ -39,7 +39,7 @@ export default class DefaultPrinterService implements PrinterService {
     // <reset>". Checking endsWith("\n") on the styled text is then always false, so the
     // subtraction below never fires and every such line is over-counted by one - which, summed
     // across every write in a marked region, causes clearMarked() to erase far more physical
-    // rows than were actually written (see #150).
+    // rows than were actually written.
     const stripped = Bun.stripANSI(message);
     return stripped.split("\n").length - (stripped.endsWith("\n") ? 1 : 0);
   }
