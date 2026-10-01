@@ -13,15 +13,13 @@ import NoBannerCommand, { type BannerState } from "./command/NoBannerCommand.ts"
 export const BANNER_STARTUP_TASK_ID = "@flowscripter/dynamic-cli-framework/banner-startup-task";
 
 /**
- * Build the ascii banner {@link StartupTask}, replacing the old `BannerServiceProvider`.
+ * Build the ascii banner {@link StartupTask}.
  *
  * A consumer opts in by passing the result of this function in the `serviceProviders` array
  * argument of {@link launchMultiCommandCLI}/{@link launchSingleCommandCLI} (or via
- * `BaseCLI.addStartupTask`), the same way `new BannerServiceProvider(priority)` used to be passed
- * in that array - there's no default/automatic banner registration.
+ * `BaseCLI.addStartupTask`) - there's no default/automatic banner registration.
  *
- * @param priority the priority of the task (higher runs earlier - the same semantics
- * `BannerServiceProvider.servicePriority` had). It must be above
+ * @param priority the priority of the task (higher runs earlier). It must be above
  * `AUTO_UPGRADE_STARTUP_TASK_PRIORITY` (10) for the banner to print before the automatic upgrade
  * prompt and upgrade.
  * @param fontName an optional [FIGlet](http://www.figlet.org) font name to use for the banner,
