@@ -15,13 +15,16 @@ import TtyStyler from "../../../src/terminal/TtyStyler.ts";
 import { getConfigurationServiceProvider } from "../../fixtures/ConfigurationServiceProvider.ts";
 import {
   CONFIGURATION_SERVICE_ID,
+  PROMPTER_SERVICE_ID,
   SHUTDOWN_SERVICE_ID,
   UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import KeyValueServiceProvider from "../../../src/service/configuration/KeyValueServiceProvider.ts";
-import UpgradeServiceProvider from "../../../src/service/upgrade/UpgradeServiceProvider.ts";
+import UpgradeServiceProvider, {
+  createAutoUpgradeStartupTask,
+} from "../../../src/service/upgrade/UpgradeServiceProvider.ts";
 import { BANNER_STARTUP_TASK_ID } from "../../../src/startup/banner/bannerStartupTask.ts";
 
 // FIGlet font is converted to a JSON string and embedded in a simple JSON file: `{ "font": "<figlet font definition>" }`
@@ -60,7 +63,9 @@ function getUpgradeServiceKeyValues(currentVersion: string) {
 }
 
 // Wires the real configuration, key-value and upgrade providers against a config file on disk,
-// with each task run under its own scoped Context the same way runner.ts does.
+// with each task run under its own scoped Context the same way runner.ts does. The banner runs
+// before the auto-upgrade task, whose prompt is answered "No". Returns the printed output and the
+// resulting upgrade-status in the upgrade service's own key-value scope.
 async function runBannerWithPersistedUpgradeState(cliConfig: CLIConfig, cachedVersion: string) {
   const { dummyStderr, printer } = getPrinterAndStreams();
   const context = new DefaultContext(cliConfig);
@@ -74,6 +79,11 @@ async function runBannerWithPersistedUpgradeState(cliConfig: CLIConfig, cachedVe
     enterLongRunningMode: () => {},
     leaveLongRunningMode: () => {},
     isShutdownRequested: false,
+  });
+  context.addServiceInstance(PROMPTER_SERVICE_ID, {
+    promptEnabled: true,
+    prompt: () => Promise.resolve({ name: "enable-upgrade", value: false }),
+    promptAll: () => Promise.resolve([]),
   });
 
   const configurationServiceProvider = new ConfigurationServiceProvider(90, false, true);
@@ -119,9 +129,16 @@ async function runBannerWithPersistedUpgradeState(cliConfig: CLIConfig, cachedVe
   await createBannerStartupTask(50).run(
     keyValueServiceProvider.getContextForScope(context, "service", BANNER_STARTUP_TASK_ID),
   );
+  const autoUpgradeTask = createAutoUpgradeStartupTask(upgradeServiceProvider, 10);
+  await autoUpgradeTask.run(
+    keyValueServiceProvider.getContextForScope(context, "service", autoUpgradeTask.id),
+  );
+  const upgradeStatus = await keyValueServiceProvider
+    .getScopedKeyValueService("service", UPGRADE_SERVICE_ID)
+    .get("upgrade-status");
 
   await fs.rm(configFolder, { recursive: true, force: true });
-  return dummyStderr.getString();
+  return { output: dummyStderr.getString(), upgradeStatus };
 }
 
 describe("bannerStartupTask tests", () => {
@@ -171,16 +188,17 @@ describe("bannerStartupTask tests", () => {
   });
 
   test("run() shows upgrade availability persisted in the upgrade service's own key-value scope", async () => {
-    const output = await runBannerWithPersistedUpgradeState(
+    const { output, upgradeStatus } = await runBannerWithPersistedUpgradeState(
       { name: "example-cli", version: "3.0.1" },
       "3.0.1",
     );
 
     expect(output).toContain("version: 3.0.1 (3.0.2 available, run 'example-cli upgrade')");
+    expect(upgradeStatus).toEqual("declined");
   });
 
   test("run() ignores a persisted upgrade check made by a different version", async () => {
-    const output = await runBannerWithPersistedUpgradeState(
+    const { output } = await runBannerWithPersistedUpgradeState(
       { name: "example-cli", version: "3.0.2" },
       "3.0.1",
     );

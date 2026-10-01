@@ -12,6 +12,7 @@ import DefaultSecretService from "./DefaultSecretService.ts";
 import type ConfigurationServiceProvider from "./ConfigurationServiceProvider.ts";
 import type { KeyValueServiceScopeType } from "./ConfigurationServiceProvider.ts";
 import type DefaultContext from "../../runtime/DefaultContext.ts";
+import { KEY_VALUE_FLUSH_SHUTDOWN_TASK_PRIORITY } from "../../runtime/lifecycle/priorities.ts";
 
 /**
  * Registered under {@link KEY_VALUE_SERVICE_ID} in the plain, undecorated {@link Context} purely
@@ -245,9 +246,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
       const shutdownService = context.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService;
       shutdownService.registerTask({
         id: `${KEY_VALUE_SERVICE_ID}-flush`,
-        // low priority - shutdown tasks run in descending priority order, so this runs after
-        // other shutdown cleanup (which defaults to priority 0).
-        priority: -100,
+        priority: KEY_VALUE_FLUSH_SHUTDOWN_TASK_PRIORITY,
         run: () => this.#flushDirtyScopes(),
       });
     }

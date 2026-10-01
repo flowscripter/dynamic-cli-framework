@@ -11,6 +11,7 @@ import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
+import { AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "../../src/runtime/lifecycle/priorities.ts";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
 import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
@@ -25,6 +26,8 @@ import type KeyReader from "../../src/terminal/KeyReader.ts";
 import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import { PLUGIN_SERVICE_ID, SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService from "../../src/service/upgrade/DefaultUpgradeService.ts";
+import UpgradeServiceProvider from "../../src/service/upgrade/UpgradeServiceProvider.ts";
+import CompletionServiceProvider from "../../src/service/completion/CompletionServiceProvider.ts";
 
 const mockKeyReader: KeyReader = {
   enableRawMode() {},
@@ -530,7 +533,7 @@ describe("BaseCLI tests", () => {
         },
       );
 
-      // Simulates a consumer-registered BannerServiceProvider, which opportunistically calls
+      // A consumer-registered provider at the banner's priority, which opportunistically calls
       // UpgradeService.getUpgradeCheckResult() from its own initService().
       const bannerLikeProvider: ServiceProvider = {
         serviceId: "test-banner-like-service",
@@ -553,6 +556,79 @@ describe("BaseCLI tests", () => {
       expect(order).toEqual(["upgrade-dependencies-set", "banner-like-init"]);
     } finally {
       DefaultUpgradeService.prototype.setContext = originalSetContext;
+    }
+  });
+
+  test("auto-upgrade runs after a priority 50 banner-like task and before the completion prompt", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+
+    const order: string[] = [];
+    const originalSetContext = DefaultUpgradeService.prototype.setContext;
+    const originalRunAutoUpgrade = UpgradeServiceProvider.prototype.runAutoUpgrade;
+    const originalCompletionInit = CompletionServiceProvider.prototype.initService;
+    DefaultUpgradeService.prototype.setContext = function (
+      this: DefaultUpgradeService,
+      ...args: Parameters<typeof originalSetContext>
+    ) {
+      order.push("upgrade-dependencies-set");
+      return originalSetContext.apply(this, args);
+    };
+    UpgradeServiceProvider.prototype.runAutoUpgrade = () => {
+      order.push("auto-upgrade");
+      return Promise.resolve();
+    };
+    CompletionServiceProvider.prototype.initService = () => {
+      order.push("completion-prompt");
+      return Promise.resolve();
+    };
+
+    try {
+      const baseCLI = new BaseCLI(
+        config,
+        dummyStdout.writableStream,
+        dummyStderr.writableStream,
+        false,
+        false,
+        new TtyTerminal(dummyStdout.writeStream),
+        new TtyTerminal(dummyStderr.writeStream),
+        new TtyStyler(3),
+        mockKeyReader,
+        {
+          upgradeServiceEnabled: true,
+          fetchServiceEnabled: true,
+          completionServiceEnabled: true,
+          upgradeLocationsConfig: { supportedPlatforms: [] },
+        },
+      );
+
+      baseCLI.addStartupTask({
+        id: "test-banner-like-task",
+        priority: 50,
+        run: () => {
+          order.push("banner-like-task");
+          return Promise.resolve();
+        },
+      });
+
+      const command = getSubCommand("command", [], []);
+      baseCLI.addCommand(command);
+
+      const runResult = await baseCLI.run(["command"]);
+
+      expect(runResult.runState).toEqual(RunState.SUCCESS);
+      expect(AUTO_UPGRADE_STARTUP_TASK_PRIORITY).toBeLessThan(50);
+      expect(order).toEqual([
+        "upgrade-dependencies-set",
+        "banner-like-task",
+        "auto-upgrade",
+        "completion-prompt",
+      ]);
+    } finally {
+      DefaultUpgradeService.prototype.setContext = originalSetContext;
+      UpgradeServiceProvider.prototype.runAutoUpgrade = originalRunAutoUpgrade;
+      CompletionServiceProvider.prototype.initService = originalCompletionInit;
     }
   });
 });

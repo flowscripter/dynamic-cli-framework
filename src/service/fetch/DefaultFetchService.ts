@@ -6,6 +6,7 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
+import { CLEANUP_SHUTDOWN_TASK_PRIORITY } from "../../runtime/lifecycle/priorities.ts";
 
 const logger = getLogger("DefaultFetchService");
 
@@ -38,7 +39,7 @@ export default class DefaultFetchService implements FetchService {
       shutdownService.enterLongRunningMode();
       shutdownService.registerTask({
         id: `fetch:${input.toString()}`,
-        priority: 0,
+        priority: CLEANUP_SHUTDOWN_TASK_PRIORITY,
         run: async () => {
           if (settled) {
             return;
