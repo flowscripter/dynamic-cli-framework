@@ -206,8 +206,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
    * interface: `runner.ts` applies this same scoping to every `ServiceProvider`'s `initService()`
    * call (scope "service"), and `PluginServiceProvider.initService()` relies on casting its
    * received `context` to `DefaultContext` to register services discovered from plugins at
-   * runtime - a capability every `ServiceProvider` already had before this scoping was
-   * introduced, since `initService()` always received the real `DefaultContext` directly.
+   * runtime.
    */
   public getContextForScope(
     context: Context,

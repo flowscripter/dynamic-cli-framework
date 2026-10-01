@@ -201,9 +201,9 @@ describe("Progress tests", () => {
       fakeNow += 100;
       progress.update(handle, 1_000_000);
       // Then stall completely - repeated same-value updates decay the smoothed rate toward
-      // zero without ever hitting exactly 0, which used to produce a "time remaining" of
+      // zero without ever hitting exactly 0, which must not produce a "time remaining" of
       // several e+48 days (finite but nonsensical, rendered in exponential notation) or, once
-      // the division overflowed past Number.MAX_VALUE, a literal Infinity/NaN.
+      // the division overflows past Number.MAX_VALUE, a literal Infinity/NaN.
       for (let i = 0; i < 40; i++) {
         fakeNow += 100;
         progress.update(handle, 1_000_000);

@@ -5,7 +5,7 @@ import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-
 
 /**
  * Task-local, mutable state shared between {@link NoBannerCommand} and the banner
- * {@link StartupTask}'s `run()`, in place of a held `BannerServiceProvider` reference.
+ * {@link StartupTask}'s `run()`.
  */
 export interface BannerState {
   printBanner: boolean;
