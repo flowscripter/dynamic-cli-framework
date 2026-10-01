@@ -206,7 +206,7 @@ export type { PluginService } from "@flowscripter/dynamic-cli-framework-api";
 export { default as PluginServiceProvider } from "./src/service/plugin/PluginServiceProvider.ts";
 
 // Core CLI
-export { default as BaseCLI } from "./src/cli/BaseCLI.ts";
+export { default as BaseCLI, AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "./src/cli/BaseCLI.ts";
 export { default as DefaultRuntimeCLI } from "./src/cli/DefaultRuntimeCLI.ts";
 
 // Terminal API

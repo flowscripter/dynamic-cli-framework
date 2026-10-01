@@ -40,12 +40,31 @@ export function createUpgradeCheckStartupTask(
   };
 }
 
+/**
+ * Build the blocking {@link StartupTask} which offers to enable automatic upgrades and, when they
+ * are enabled, checks for and installs a newer version (see
+ * {@link UpgradeServiceProvider.runAutoUpgrade}). It is registered separately from the provider's
+ * own init task so it can run at a lower priority, after consumer startup tasks such as the banner.
+ */
+export function createAutoUpgradeStartupTask(
+  provider: UpgradeServiceProvider,
+  priority: number,
+): StartupTask {
+  return {
+    id: `${UPGRADE_SERVICE_ID}-auto-upgrade`,
+    priority,
+    mode: "blocking",
+    run: (context: Context) => provider.runAutoUpgrade(context),
+  };
+}
+
 export default class UpgradeServiceProvider implements ServiceProvider {
   readonly serviceId: string = UPGRADE_SERVICE_ID;
   readonly servicePriority: number;
   readonly #config: UpgradeLocationsConfig;
   #upgradeService: DefaultUpgradeService | undefined;
   #cliConfig: CLIConfig | undefined;
+  #keyValueService: KeyValueService | undefined;
 
   public constructor(servicePriority: number, config: UpgradeLocationsConfig) {
     this.servicePriority = servicePriority;
@@ -65,9 +84,8 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     });
   }
 
-  public async initService(context: Context): Promise<void> {
+  public initService(context: Context): Promise<void> {
     const upgradeService = this.#upgradeService!;
-    const cliConfig = this.#cliConfig!;
 
     const spawnService = context.doesServiceExist(SPAWN_SERVICE_ID)
       ? (context.getServiceById(SPAWN_SERVICE_ID) as SpawnService)
@@ -81,10 +99,26 @@ export default class UpgradeServiceProvider implements ServiceProvider {
     if (fetchService === undefined) {
       logger.debug(() => "FetchService not available, upgrade version checks will be unavailable");
     }
-    const keyValueService = context.doesServiceExist(KEY_VALUE_SERVICE_ID)
+    // the KeyValueService from this context is bound to the upgrade service's own scope, so it is
+    // kept for runAutoUpgrade(), whose task context is scoped to the task ID instead
+    this.#keyValueService = context.doesServiceExist(KEY_VALUE_SERVICE_ID)
       ? (context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
       : undefined;
     upgradeService.setContext(context);
+    return Promise.resolve();
+  }
+
+  /**
+   * Offer to enable automatic upgrades (storing the answer as `upgrade-status` in the upgrade
+   * service's scope) and, when they are enabled, check for and install a newer version. Must be
+   * called after {@link initService}.
+   *
+   * @param context the startup task's context, used to look up the Prompter and Printer services.
+   */
+  public async runAutoUpgrade(context: Context): Promise<void> {
+    const upgradeService = this.#upgradeService!;
+    const cliConfig = this.#cliConfig!;
+    const keyValueService = this.#keyValueService;
 
     if (!context.doesServiceExist(PROMPTER_SERVICE_ID)) {
       logger.debug(() => "PrompterService not available, skipping auto-upgrade");

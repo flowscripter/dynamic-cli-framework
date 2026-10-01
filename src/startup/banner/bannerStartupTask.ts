@@ -21,7 +21,9 @@ export const BANNER_STARTUP_TASK_ID = "@flowscripter/dynamic-cli-framework/banne
  * in that array - there's no default/automatic banner registration.
  *
  * @param priority the priority of the task (higher runs earlier - the same semantics
- * `BannerServiceProvider.servicePriority` had).
+ * `BannerServiceProvider.servicePriority` had). It must be above
+ * `AUTO_UPGRADE_STARTUP_TASK_PRIORITY` (10) for the banner to print before the automatic upgrade
+ * prompt and upgrade.
  * @param fontName an optional [FIGlet](http://www.figlet.org) font name to use for the banner,
  * defaults to "standard".
  */

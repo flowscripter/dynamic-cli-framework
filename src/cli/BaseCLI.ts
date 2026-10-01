@@ -57,10 +57,18 @@ import ImagePrinterServiceProvider from "../service/imagePrinter/ImagePrinterSer
 import SpawnServiceProvider from "../service/spawn/SpawnServiceProvider.ts";
 import FetchServiceProvider from "../service/fetch/FetchServiceProvider.ts";
 import UpgradeServiceProvider, {
+  createAutoUpgradeStartupTask,
   createUpgradeCheckStartupTask,
 } from "../service/upgrade/UpgradeServiceProvider.ts";
 import PluginServiceProvider from "../service/plugin/PluginServiceProvider.ts";
 const logger = getLogger("BaseCLI");
+
+/**
+ * Priority of the startup task which prompts to enable automatic upgrades and performs them. It
+ * runs below consumer startup tasks such as the banner (typically 45 or more) and above the
+ * completion prompt (5).
+ */
+export const AUTO_UPGRADE_STARTUP_TASK_PRIORITY = 10;
 
 /**
  * Base implementation of a {@link CLI}.
@@ -370,6 +378,9 @@ export default class BaseCLI implements CLI {
 
     if (upgradeServiceProvider?.upgradeService) {
       this.addStartupTask(createUpgradeCheckStartupTask(upgradeServiceProvider.upgradeService, 56));
+      this.addStartupTask(
+        createAutoUpgradeStartupTask(upgradeServiceProvider, AUTO_UPGRADE_STARTUP_TASK_PRIORITY),
+      );
     }
 
     // directly-registered StartupTasks (e.g. the banner task) aren't backed by a ServiceProvider,
