@@ -277,7 +277,7 @@ describe("SpawnInterfaceAdapter tests", () => {
     expect(clearCount).toEqual(lineCount);
   });
 
-  test("integration: with color enabled, clears exactly the spawned block's rows on success, leaving an earlier colored banner byte-for-byte intact (#150)", async () => {
+  test("integration: with color enabled, clears exactly the spawned block's rows on success, leaving an earlier colored banner byte-for-byte intact", async () => {
     // colorText()/prefixLines() wrap an entire message - including a
     // trailing "\n" - with ANSI codes appended *after* that newline (e.g. "foo\n" becomes
     // "<color>foo\n<reset>"). Line-counting logic that naively checks endsWith("\n") on already
