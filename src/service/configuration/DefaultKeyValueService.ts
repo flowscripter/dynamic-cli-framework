@@ -16,14 +16,35 @@ export default class DefaultKeyValueService implements KeyValueService {
   readonly #keyValueData: Map<string, ValueNode>;
   #dirty = false;
   readonly #secretService: DefaultSecretService | undefined;
+  readonly #flushToStorage: (() => Promise<void>) | undefined;
 
-  constructor(keyValueData: Map<string, ValueNode>, secretService?: DefaultSecretService) {
+  /**
+   * @param keyValueData the scope's data.
+   * @param secretService optional secret service for {@link Secret} values.
+   * @param flushToStorage optional callback which writes every scope's pending changes to storage
+   * and marks them clean, invoked by {@link flush}.
+   */
+  constructor(
+    keyValueData: Map<string, ValueNode>,
+    secretService?: DefaultSecretService,
+    flushToStorage?: () => Promise<void>,
+  ) {
     this.#keyValueData = keyValueData;
     this.#secretService = secretService;
+    this.#flushToStorage = flushToStorage;
   }
 
   public isDirty(): boolean {
     return this.#dirty;
+  }
+
+  public markClean(): void {
+    this.#dirty = false;
+  }
+
+  public async flush(): Promise<void> {
+    await this.#flushToStorage?.();
+    this.#dirty = false;
   }
 
   public async get<T extends ValueNode = ValueNode>(key: string): Promise<T> {

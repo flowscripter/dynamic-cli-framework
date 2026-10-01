@@ -1,8 +1,8 @@
 import process from "node:process";
-import { realpathSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { mkdtemp, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type {
   CLIConfig,
   Context,
@@ -21,6 +21,7 @@ import {
   InstallMethod,
   KEY_VALUE_SERVICE_ID,
   PRINTER_SERVICE_ID,
+  RunState,
   SPAWN_SERVICE_ID,
   SupportedArch,
   SupportedOs,
@@ -85,6 +86,46 @@ export function describeUpgradeCheckResult(result: UpgradeCheckResult): string {
     : `Upgrade check result: ${JSON.stringify(result)}`;
 }
 
+// Environment variable set on a process restarted after an automatic upgrade, holding the version
+// which restarted it (see DefaultUpgradeService.restart() and restartedFromVersion).
+const RESTARTED_FROM_VERSION_ENV_VAR = "DYNAMIC_CLI_FRAMEWORK_REEXEC_FROM";
+
+// Exit codes from 129 upwards are reported for a child terminated by a signal (128 + signal number).
+const SIGNAL_EXIT_CODE_BASE = 128;
+
+const RUN_STATE_VALUES = new Set<number>(
+  Object.values(RunState).filter((value): value is number => typeof value === "number"),
+);
+
+/**
+ * Map the result of spawning a restarted CLI to the {@link RunState} it ended with.
+ *
+ * The child is the same framework CLI, so it normally exits with a {@link RunState} value, which is
+ * returned as is (this includes 130 for SIGINT and 143 for SIGTERM). Termination by any other
+ * signal, or a timeout, maps to {@link RunState.TERMINATED}, and any other exit code to
+ * {@link RunState.RUNTIME_ERROR}.
+ *
+ * @return the {@link RunState}, or `undefined` if the child could not be started.
+ */
+export function toRunState(result: SpawnResult): RunState | undefined {
+  if (result.ok) {
+    return RunState.SUCCESS;
+  }
+  if ("timedOut" in result) {
+    return RunState.TERMINATED;
+  }
+  if (result.exitCode === undefined) {
+    return undefined;
+  }
+  if (RUN_STATE_VALUES.has(result.exitCode)) {
+    return result.exitCode as RunState;
+  }
+  if (result.exitCode > SIGNAL_EXIT_CODE_BASE) {
+    return RunState.TERMINATED;
+  }
+  return RunState.RUNTIME_ERROR;
+}
+
 const OS_LABELS: Record<SupportedOs, string> = {
   [SupportedOs.LINUX]: "Linux",
   [SupportedOs.MACOS]: "MacOS",
@@ -96,10 +137,12 @@ export default class DefaultUpgradeService implements UpgradeService {
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
   readonly #config: UpgradeLocationsConfig;
   readonly #cliConfig: CLIConfig;
+  public readonly restartedFromVersion: string | undefined;
 
   public constructor(config: UpgradeLocationsConfig, cliConfig: CLIConfig) {
     this.#config = config;
     this.#cliConfig = cliConfig;
+    this.restartedFromVersion = process.env[RESTARTED_FROM_VERSION_ENV_VAR] || undefined;
   }
 
   public setContext(context: Context): void {
@@ -212,6 +255,67 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
     const cached = await this.#safeKeyValueCall(() => keyValueService.get(UPGRADE_CHECK_CACHE_KEY));
     return cached as unknown as UpgradeCheckResult | undefined;
+  }
+
+  /**
+   * Resolve the executable to restart into after a successful upgrade via `installMethod`.
+   *
+   * @return the executable path, or `undefined` if it cannot be resolved (e.g. for winget, or a
+   * homebrew install whose `opt` link is missing).
+   */
+  public resolveUpgradedExecutable(installMethod: InstallMethod): string | undefined {
+    switch (installMethod) {
+      case InstallMethod.GITHUB_RELEASE:
+      case InstallMethod.LINUX_SCRIPT:
+        return process.execPath;
+      case InstallMethod.HOMEBREW:
+        return this.#resolveHomebrewOptExecutable();
+      case InstallMethod.WINGET:
+        return undefined;
+    }
+  }
+
+  // The running executable lives in a version-specific Cellar directory, e.g.
+  // "<prefix>/Cellar/<formula>/<version>/bin/<exe>", while "<prefix>/opt/<formula>" links to the
+  // installed version, so the upgraded executable is "<prefix>/opt/<formula>/bin/<exe>".
+  #resolveHomebrewOptExecutable(): string | undefined {
+    if (!this.#config.homebrew) {
+      return undefined;
+    }
+    const { formula } = this.#config.homebrew;
+    const realExecutable = this.#resolveRealExecutable();
+    const cellarIndex = realExecutable.indexOf(`/Cellar/${formula}/`);
+    if (cellarIndex === -1) {
+      return undefined;
+    }
+    const prefix = realExecutable.slice(0, cellarIndex);
+    const executable = join(prefix, "opt", formula, "bin", basename(realExecutable));
+    return existsSync(executable) ? executable : undefined;
+  }
+
+  /**
+   * Run `executable` with `args` in place of this process, with terminal input and output
+   * inherited, and wait for it to exit. The child process sees the current version as its
+   * {@link restartedFromVersion}.
+   *
+   * @return the {@link RunState} the child ended with (see {@link toRunState}), or `undefined` if
+   * it could not be started.
+   */
+  public async restart(
+    executable: string,
+    args: ReadonlyArray<string>,
+  ): Promise<RunState | undefined> {
+    const spawnService = this.#spawnService;
+    if (!spawnService) {
+      return undefined;
+    }
+    const result = await spawnService.spawn([executable, ...args], {
+      mode: "inherit",
+      // Ctrl-C reaches the child directly from the terminal, so this process only notes it
+      longRunning: true,
+      env: { [RESTARTED_FROM_VERSION_ENV_VAR]: this.#cliConfig.version },
+    });
+    return toRunState(result);
   }
 
   public detectOs(): SupportedOs | undefined {
@@ -430,14 +534,17 @@ export default class DefaultUpgradeService implements UpgradeService {
   // `brew`, which has a slow cold start - avoiding it keeps the background upgrade-check
   // StartupTask (see UpgradeServiceProvider) fast even though it runs to completion.
   #isRunningFromHomebrewCellar(formula: string): boolean {
-    let realExecutable = process.execPath;
+    return this.#resolveRealExecutable().includes(`/Cellar/${formula}/`);
+  }
+
+  #resolveRealExecutable(): string {
     try {
-      realExecutable = realpathSync(process.execPath);
+      return realpathSync(process.execPath);
     } catch {
       // process.execPath may not resolve on disk (e.g. a fabricated path in tests) - fall back to
       // the unresolved path rather than treating that as "not installed".
+      return process.execPath;
     }
-    return realExecutable.includes(`/Cellar/${formula}/`);
   }
 
   async #isHomebrewInstalled(): Promise<boolean> {

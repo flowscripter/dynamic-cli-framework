@@ -1,5 +1,6 @@
 import process from "node:process";
 import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "bun:test";
 import {
@@ -13,7 +14,14 @@ import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
 import { AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "../../src/runtime/lifecycle/priorities.ts";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
-import { KEY_VALUE_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  InstallMethod,
+  KEY_VALUE_SERVICE_ID,
+  SupportedArch,
+  SupportedOs,
+  UPGRADE_SERVICE_ID,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type BaseCLIFeatureOptions from "../../src/cli/BaseCLIFeatureOptions.ts";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
@@ -630,5 +638,137 @@ describe("BaseCLI tests", () => {
       UpgradeServiceProvider.prototype.runAutoUpgrade = originalRunAutoUpgrade;
       CompletionServiceProvider.prototype.initService = originalCompletionInit;
     }
+  });
+
+  test("a startup task's exitRequest becomes the run result, without running the command or printing usage", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+    );
+    baseCLI.addStartupTask({
+      id: "test-exit-task",
+      priority: 10,
+      run: () => Promise.resolve({ exitRequest: { runState: RunState.NO_COMMAND } }),
+    });
+    let commandRan = false;
+    const command = getSubCommand("command", [], []);
+    command.execute = () => {
+      commandRan = true;
+      return Promise.resolve();
+    };
+    baseCLI.addCommand(command);
+
+    const runResult = await baseCLI.run(["command"]);
+
+    expect(runResult).toEqual({ runState: RunState.NO_COMMAND });
+    expect(commandRan).toBeFalse();
+    expect(dummyStdout.getString()).toEqual("");
+    expect(dummyStderr.getString()).toEqual("");
+  });
+
+  describe("restart after an automatic upgrade", () => {
+    // Runs a CLI whose automatic upgrade is enabled and succeeds, with the DefaultUpgradeService
+    // methods which would check, install and restart replaced by fakes.
+    async function runWithSuccessfulAutoUpgrade(options: BaseCLIFeatureOptions) {
+      const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
+      const configLocation = path.join(configFolder, "config.json");
+      await fs.writeFile(
+        configLocation,
+        JSON.stringify({
+          "key-values": { services: { [UPGRADE_SERVICE_ID]: { "upgrade-status": "enabled" } } },
+        }),
+      );
+
+      const restarts: Array<{ executable: string; args: ReadonlyArray<string> }> = [];
+      const prototype = DefaultUpgradeService.prototype;
+      const originals = {
+        getUpgradeCheckResult: prototype.getUpgradeCheckResult,
+        upgrade: prototype.upgrade,
+        resolveUpgradedExecutable: prototype.resolveUpgradedExecutable,
+        restart: prototype.restart,
+      };
+      prototype.getUpgradeCheckResult = () =>
+        Promise.resolve({
+          status: "checked",
+          currentVersion: "1.0.0",
+          latestVersion: "1.0.1",
+          updateAvailable: true,
+          os: SupportedOs.LINUX,
+          arch: SupportedArch.X64,
+          installMethod: InstallMethod.GITHUB_RELEASE,
+        });
+      prototype.upgrade = () =>
+        Promise.resolve({ ok: true, oldVersion: "1.0.0", newVersion: "1.0.1" });
+      prototype.resolveUpgradedExecutable = () => "/usr/local/bin/upgraded";
+      prototype.restart = (executable, args) => {
+        restarts.push({ executable, args });
+        return Promise.resolve(RunState.EXECUTION_ERROR);
+      };
+
+      try {
+        const dummyStdout = new StreamString();
+        const dummyStderr = new StreamString();
+        const baseCLI = new BaseCLI(
+          getCLIConfig(),
+          dummyStdout.writableStream,
+          dummyStderr.writableStream,
+          false,
+          false,
+          new TtyTerminal(dummyStdout.writeStream),
+          new TtyTerminal(dummyStderr.writeStream),
+          new TtyStyler(3),
+          mockKeyReader,
+          {
+            configFileSupportEnabled: true,
+            keyValueServiceEnabled: true,
+            upgradeServiceEnabled: true,
+            upgradeLocationsConfig: { supportedPlatforms: [] },
+            ...options,
+          },
+        );
+        let commandRan = false;
+        const command = getSubCommand("command", [], []);
+        command.execute = () => {
+          commandRan = true;
+          return Promise.resolve();
+        };
+        baseCLI.addCommand(command);
+
+        const args = ["--config", configLocation, "command"];
+        const runResult = await baseCLI.run(args);
+        return { runResult, restarts, commandRan, args };
+      } finally {
+        Object.assign(prototype, originals);
+        await fs.rm(configFolder, { recursive: true, force: true });
+      }
+    }
+
+    test("restarts with the CLI args and returns the restarted process's run state when enabled", async () => {
+      const { runResult, restarts, commandRan, args } = await runWithSuccessfulAutoUpgrade({
+        restartAfterAutoUpgrade: true,
+      });
+
+      expect(restarts).toEqual([{ executable: "/usr/local/bin/upgraded", args }]);
+      expect(runResult).toEqual({ runState: RunState.EXECUTION_ERROR });
+      expect(commandRan).toBeFalse();
+    });
+
+    test("does not restart by default", async () => {
+      const { runResult, restarts, commandRan } = await runWithSuccessfulAutoUpgrade({});
+
+      expect(restarts).toEqual([]);
+      expect(runResult.runState).toEqual(RunState.SUCCESS);
+      expect(commandRan).toBeTrue();
+    });
   });
 });

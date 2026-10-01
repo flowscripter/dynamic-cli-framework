@@ -42,6 +42,7 @@ function makeKeyValueService(data: Record<string, unknown>): KeyValueService {
     has: (key: string) => Promise.resolve(key in data),
     get: (key: string) => Promise.resolve(data[key]),
     set: () => Promise.resolve(),
+    flush: () => Promise.resolve(),
   } as unknown as KeyValueService;
 }
 
@@ -135,6 +136,7 @@ describe("DefaultPluginService", () => {
         has: (key: string) => Promise.resolve(key === "remotes-config"),
         get: () => Promise.resolve(remotesConfig),
         set: () => Promise.resolve(),
+        flush: () => Promise.resolve(),
       } as unknown as KeyValueService);
       const requestedUrls: string[] = [];
       service.setFetch(

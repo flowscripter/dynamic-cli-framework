@@ -22,6 +22,7 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import WritableStreamString from "../fixtures/StreamString.ts";
 import StreamString from "../fixtures/StreamString.ts";
+import DefaultStartupService from "../../src/service/startup/DefaultStartupService.ts";
 describe("runner tests", () => {
   test("Sub-Command run", async () => {
     let hasRun = false;
@@ -1319,5 +1320,55 @@ describe("runner tests", () => {
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(modifierHasRun).toBeTrue();
     expect(globalHasRun).toBeTrue();
+  });
+
+  test("A blocking startup task returning an exitRequest ends the run with its runState", async () => {
+    const ran: Array<string> = [];
+    const command = getSubCommand("command", []);
+    command.execute = (): Promise<void> => {
+      ran.push("command");
+      return Promise.resolve();
+    };
+
+    const startupService = new DefaultStartupService();
+    startupService.registerTask({
+      id: "first",
+      priority: 20,
+      run: () => {
+        ran.push("first");
+        return Promise.resolve();
+      },
+    });
+    startupService.registerTask({
+      id: "exit",
+      priority: 10,
+      mode: "blocking",
+      run: () => {
+        ran.push("exit");
+        return Promise.resolve({ exitRequest: { runState: RunState.NO_COMMAND } });
+      },
+    });
+    startupService.registerTask({
+      id: "skipped",
+      priority: 5,
+      run: () => {
+        ran.push("skipped");
+        return Promise.resolve();
+      },
+    });
+
+    const runResult = await run(
+      ["command"],
+      new DefaultCommandRegistry([command]),
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(new WritableStreamString()),
+      undefined,
+      startupService,
+    );
+
+    expect(runResult).toEqual({ runState: RunState.NO_COMMAND, exitRequested: true });
+    expect(ran).toEqual(["first", "exit"]);
   });
 });

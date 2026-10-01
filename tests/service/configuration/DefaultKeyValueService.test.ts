@@ -37,6 +37,31 @@ describe("DefaultKeyValueService tests", () => {
     expect(secondKeyValueService.isDirty()).toBeTrue();
   });
 
+  test("flush() invokes the flush callback and marks the data clean", async () => {
+    let flushCalls = 0;
+    const keyValueService = new DefaultKeyValueService(new Map(), undefined, () => {
+      flushCalls++;
+      return Promise.resolve();
+    });
+
+    await keyValueService.set("foo", "bar");
+    await keyValueService.flush();
+
+    expect(flushCalls).toEqual(1);
+    expect(keyValueService.isDirty()).toBeFalse();
+  });
+
+  test("flush() leaves the data dirty if the flush callback fails", async () => {
+    const keyValueService = new DefaultKeyValueService(new Map(), undefined, () =>
+      Promise.reject(new Error("write failed")),
+    );
+
+    await keyValueService.set("foo", "bar");
+
+    await expect(keyValueService.flush()).rejects.toThrow("write failed");
+    expect(keyValueService.isDirty()).toBeTrue();
+  });
+
   test("set with a Secret-wrapped value throws without secret service", async () => {
     const keyValueService = new DefaultKeyValueService(new Map());
 

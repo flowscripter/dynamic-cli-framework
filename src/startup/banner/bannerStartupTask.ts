@@ -7,7 +7,7 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { AsciiBannerGeneratorService } from "@flowscripter/dynamic-cli-framework-api";
 import type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultUpgradeService from "../../service/upgrade/DefaultUpgradeService.ts";
+import type { UpgradeService } from "@flowscripter/dynamic-cli-framework-api";
 import NoBannerCommand, { type BannerState } from "./command/NoBannerCommand.ts";
 
 export const BANNER_STARTUP_TASK_ID = "@flowscripter/dynamic-cli-framework/banner-startup-task";
@@ -41,6 +41,15 @@ export default function createBannerStartupTask(
         return;
       }
 
+      const upgradeService = context.doesServiceExist(UPGRADE_SERVICE_ID)
+        ? (context.getServiceById(UPGRADE_SERVICE_ID) as UpgradeService)
+        : undefined;
+      // a process restarted after an automatic upgrade follows the banner already printed by the
+      // process which restarted it
+      if (upgradeService?.restartedFromVersion !== undefined) {
+        return;
+      }
+
       const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
       const asciiBannerGeneratorService = context.getServiceById(
@@ -64,10 +73,7 @@ export default function createBannerStartupTask(
         // result yet) shows no upgrade-available suffix. The cached result is read through the
         // upgrade service because it is stored in that service's own KeyValueService scope, and
         // it is ignored if it was recorded by a different version (e.g. before an upgrade).
-        const upgradeService = context.doesServiceExist(UPGRADE_SERVICE_ID)
-          ? context.getServiceById(UPGRADE_SERVICE_ID)
-          : undefined;
-        if (upgradeService instanceof DefaultUpgradeService) {
+        if (upgradeService) {
           const result = await upgradeService.getCachedUpgradeCheckResult();
           if (
             result?.status === "checked" &&

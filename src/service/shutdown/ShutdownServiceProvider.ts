@@ -2,7 +2,7 @@ import process from "node:process";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultShutdownService from "./DefaultShutdownService.ts";
 import type { ShutdownService } from "@flowscripter/dynamic-cli-framework-api";
-import { SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import { RunState, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
@@ -37,7 +37,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
     shutdownState.interruptCount++;
     if (!shutdownState.longRunningMode || shutdownState.interruptCount >= 3) {
       ShutdownServiceProvider.shutdown().then(() => {
-        process.exit(130);
+        process.exit(RunState.INTERRUPTED);
       });
     } else {
       shutdownState.shutdownRequested = true;
@@ -46,7 +46,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
 
   static onTerminate(): void {
     ShutdownServiceProvider.shutdown().then(() => {
-      process.exit(143);
+      process.exit(RunState.TERMINATED);
     });
   }
 

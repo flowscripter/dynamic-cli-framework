@@ -1,6 +1,6 @@
 import process from "node:process";
-import { rmSync, writeFileSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -9,6 +9,7 @@ import {
   InstallMethod,
   KEY_VALUE_SERVICE_ID,
   PRINTER_SERVICE_ID,
+  RunState,
   SPAWN_SERVICE_ID,
   SupportedArch,
   SupportedOs,
@@ -18,6 +19,7 @@ import type {
   FetchService,
   KeyValueService,
   PrinterService,
+  SpawnOptions,
   SpawnResult,
   SpawnService,
   UpgradeCheckResult,
@@ -25,6 +27,7 @@ import type {
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   describeUpgradeCheckResult,
+  toRunState,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
 import { getCLIConfig as getFixtureCLIConfig } from "../../fixtures/CLIConfig.ts";
@@ -90,6 +93,7 @@ function getKeyValueService(): KeyValueService {
       store.delete(key);
       return Promise.resolve();
     },
+    flush: () => Promise.resolve(),
   };
 }
 
@@ -357,6 +361,7 @@ describe("DefaultUpgradeService", () => {
         set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
         has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
         delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        flush: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
       };
       setUpgradeServiceDependencies(
         service,
@@ -480,6 +485,7 @@ describe("DefaultUpgradeService", () => {
       set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
       has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
       delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+      flush: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
     };
     setUpgradeServiceDependencies(
       service,
@@ -1141,6 +1147,164 @@ describe("DefaultUpgradeService", () => {
       expect(delIndex).toBeGreaterThanOrEqual(0);
       expect(moveIndex).toBeGreaterThan(delIndex);
       expect(spawnedCommands[delIndex]).toEqual(["cmd", "/c", "del", "/f", "/q", oldPath]);
+    });
+  });
+
+  describe("restart after an automatic upgrade", () => {
+    const REEXEC_ENV_VAR = "DYNAMIC_CLI_FRAMEWORK_REEXEC_FROM";
+    let originalExecPath: string;
+    let originalReexecFrom: string | undefined;
+
+    beforeEach(() => {
+      originalExecPath = process.execPath;
+      originalReexecFrom = process.env[REEXEC_ENV_VAR];
+    });
+
+    afterEach(() => {
+      process.execPath = originalExecPath;
+      if (originalReexecFrom === undefined) {
+        delete process.env[REEXEC_ENV_VAR];
+      } else {
+        process.env[REEXEC_ENV_VAR] = originalReexecFrom;
+      }
+    });
+
+    test("restartedFromVersion is read from the environment", () => {
+      delete process.env[REEXEC_ENV_VAR];
+      expect(new DefaultUpgradeService(getConfig(), getCLIConfig()).restartedFromVersion).toBe(
+        undefined,
+      );
+
+      process.env[REEXEC_ENV_VAR] = "0.9.0";
+      expect(new DefaultUpgradeService(getConfig(), getCLIConfig()).restartedFromVersion).toEqual(
+        "0.9.0",
+      );
+    });
+
+    test("resolveUpgradedExecutable returns the running executable for GitHub release and Linux script installs", () => {
+      process.execPath = "/usr/local/bin/example-cli";
+      const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
+
+      expect(service.resolveUpgradedExecutable(InstallMethod.GITHUB_RELEASE)).toEqual(
+        "/usr/local/bin/example-cli",
+      );
+      expect(service.resolveUpgradedExecutable(InstallMethod.LINUX_SCRIPT)).toEqual(
+        "/usr/local/bin/example-cli",
+      );
+    });
+
+    test("resolveUpgradedExecutable returns undefined for winget installs", () => {
+      const service = new DefaultUpgradeService(
+        getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
+        getCLIConfig(),
+      );
+
+      expect(service.resolveUpgradedExecutable(InstallMethod.WINGET)).toBeUndefined();
+    });
+
+    // Homebrew paths are POSIX paths
+    test.skipIf(process.platform === "win32")(
+      "resolveUpgradedExecutable returns the homebrew opt executable when it exists",
+      async () => {
+        const prefix = await mkdtemp(join(tmpdir(), "homebrew-"));
+        try {
+          const cellarBin = join(prefix, "Cellar", "example-cli", "1.0.0", "bin");
+          const optBin = join(prefix, "opt", "example-cli", "bin");
+          await mkdir(cellarBin, { recursive: true });
+          await writeFile(join(cellarBin, "example-cli"), "");
+          process.execPath = join(cellarBin, "example-cli");
+          const service = new DefaultUpgradeService(
+            getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+            getCLIConfig(),
+          );
+
+          expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toBeUndefined();
+
+          await mkdir(optBin, { recursive: true });
+          await writeFile(join(optBin, "example-cli"), "");
+
+          // the temporary directory may itself be behind a symlink (e.g. /var on macOS)
+          expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toEqual(
+            join(realpathSync(prefix), "opt", "example-cli", "bin", "example-cli"),
+          );
+        } finally {
+          await rm(prefix, { recursive: true, force: true });
+        }
+      },
+    );
+
+    test("resolveUpgradedExecutable returns undefined for homebrew when not running from the Cellar", () => {
+      process.execPath = "/usr/local/bin/example-cli";
+      const service = new DefaultUpgradeService(
+        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getCLIConfig(),
+      );
+
+      expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toBeUndefined();
+    });
+
+    test("restart spawns the executable with the args, inherited output, long-running mode and the restarted-from version", async () => {
+      const calls: Array<{ command: ReadonlyArray<string>; options?: SpawnOptions }> = [];
+      const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
+      setUpgradeServiceDependencies(
+        service,
+        {
+          spawn: (command, options) => {
+            calls.push({ command, options });
+            return Promise.resolve({ ok: false, exitCode: 2 });
+          },
+        },
+        undefined,
+        undefined,
+      );
+
+      const runState = await service.restart("/opt/bin/example-cli", ["foo", "--bar"]);
+
+      expect(runState).toEqual(RunState.NO_COMMAND);
+      expect(calls).toEqual([
+        {
+          command: ["/opt/bin/example-cli", "foo", "--bar"],
+          options: {
+            mode: "inherit",
+            longRunning: true,
+            env: { [REEXEC_ENV_VAR]: "1.0.0" },
+          },
+        },
+      ]);
+    });
+
+    test("restart returns undefined when the executable cannot be started", async () => {
+      const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => ({ ok: false, error: new Error("ENOENT") })),
+        undefined,
+        undefined,
+      );
+
+      expect(await service.restart("/missing", [])).toBeUndefined();
+    });
+
+    test("toRunState maps the child's result to a RunState", () => {
+      expect(toRunState({ ok: true, exitCode: 0 })).toEqual(RunState.SUCCESS);
+      for (const runState of [
+        RunState.PARSE_ERROR,
+        RunState.NO_COMMAND,
+        RunState.EXECUTION_ERROR,
+        RunState.RUNTIME_ERROR,
+        RunState.INTERRUPTED,
+        RunState.TERMINATED,
+      ]) {
+        expect(toRunState({ ok: false, exitCode: runState })).toEqual(runState);
+      }
+      // SIGINT, SIGTERM and SIGKILL are reported as 128 + the signal number
+      expect(toRunState({ ok: false, exitCode: 128 + 2 })).toEqual(RunState.INTERRUPTED);
+      expect(toRunState({ ok: false, exitCode: 128 + 15 })).toEqual(RunState.TERMINATED);
+      expect(toRunState({ ok: false, exitCode: 128 + 9 })).toEqual(RunState.TERMINATED);
+      expect(toRunState({ ok: false, timedOut: true })).toEqual(RunState.TERMINATED);
+      expect(toRunState({ ok: false, exitCode: 5 })).toEqual(RunState.RUNTIME_ERROR);
+      expect(toRunState({ ok: false, exitCode: 127 })).toEqual(RunState.RUNTIME_ERROR);
+      expect(toRunState({ ok: false, error: new Error("ENOENT") })).toBeUndefined();
     });
   });
 });
