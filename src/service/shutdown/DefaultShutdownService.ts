@@ -5,6 +5,12 @@ import { shutdownState } from "./ShutdownState.ts";
 export default class DefaultShutdownService implements ShutdownService {
   static readonly taskList = new PriorityTaskList<ShutdownTask>();
 
+  readonly #onInterrupt: () => void;
+
+  public constructor(onInterrupt: () => void = () => {}) {
+    this.#onInterrupt = onInterrupt;
+  }
+
   registerTask(task: ShutdownTask): void {
     DefaultShutdownService.taskList.add(task);
   }
@@ -15,6 +21,10 @@ export default class DefaultShutdownService implements ShutdownService {
 
   leaveLongRunningMode(): void {
     shutdownState.longRunningMode = false;
+  }
+
+  interrupt(): void {
+    this.#onInterrupt();
   }
 
   get isShutdownRequested(): boolean {

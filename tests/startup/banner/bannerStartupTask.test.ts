@@ -102,6 +102,7 @@ async function runBannerWithPersistedUpgradeState(cliConfig: CLIConfig, cachedVe
     registerTask: () => {},
     enterLongRunningMode: () => {},
     leaveLongRunningMode: () => {},
+    interrupt: () => {},
     isShutdownRequested: false,
   });
   context.addServiceInstance(PROMPTER_SERVICE_ID, {

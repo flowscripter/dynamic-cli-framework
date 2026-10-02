@@ -195,6 +195,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
@@ -246,6 +247,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
@@ -300,6 +302,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();
@@ -360,6 +363,7 @@ describe("SpawnInterfaceAdapter tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     };
     const spawnService = new DefaultSpawnService();

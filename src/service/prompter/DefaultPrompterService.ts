@@ -1,4 +1,4 @@
-import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context, PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type Prompt,
   type PromptResult,
@@ -33,7 +33,7 @@ export const DEFAULT_PROMPTER_CONFIG: PrompterServiceConfig = {
 export default class DefaultPrompterService implements PrompterService {
   promptEnabled = true;
 
-  readonly #ctx: PromptContext;
+  #ctx: PromptContext;
 
   public constructor(
     config: PrompterServiceConfig,
@@ -42,6 +42,10 @@ export default class DefaultPrompterService implements PrompterService {
     printerService: PrinterService,
   ) {
     this.#ctx = { config, terminal, keyReader, printerService };
+  }
+
+  setContext(context: Context): void {
+    this.#ctx = { ...this.#ctx, context };
   }
 
   prompt(promptDef: Prompt): Promise<PromptResult> {

@@ -1,16 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import PrompterServiceProvider from "../../../src/service/prompter/PrompterServiceProvider.ts";
 import { PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultPrompterService, {
+  DEFAULT_PROMPTER_CONFIG,
+} from "../../../src/service/prompter/DefaultPrompterService.ts";
+import type Terminal from "../../../src/terminal/Terminal.ts";
+import type KeyReader from "../../../src/terminal/KeyReader.ts";
+import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 
-function getMockPrompterService(): PrompterService {
-  return {
-    promptEnabled: true,
-    prompt: () => Promise.resolve({ name: "", value: "" }),
-    promptAll: () => Promise.resolve([]),
-  };
+function getMockPrompterService(): DefaultPrompterService {
+  return new DefaultPrompterService(
+    DEFAULT_PROMPTER_CONFIG,
+    {} as Terminal,
+    {} as KeyReader,
+    {} as PrinterService,
+  );
 }
 
 describe("PrompterServiceProvider tests", () => {
@@ -32,8 +38,25 @@ describe("PrompterServiceProvider tests", () => {
     expect(serviceInfo.commands[0]!.name).toEqual("no-prompt");
   });
 
-  test("PrompterServiceProvider initService resolves", async () => {
-    const provider = new PrompterServiceProvider(100, getMockPrompterService());
+  test("PrompterServiceProvider initService passes the context to the service", async () => {
+    const prompterService = getMockPrompterService();
+    const contexts: unknown[] = [];
+    prompterService.setContext = (context) => {
+      contexts.push(context);
+    };
+    const provider = new PrompterServiceProvider(100, prompterService);
+    const context = new DefaultContext(getCLIConfig());
+
+    await expect(provider.initService(context)).resolves.toBeUndefined();
+    expect(contexts).toEqual([context]);
+  });
+
+  test("PrompterServiceProvider initService accepts a non-default PrompterService", async () => {
+    const provider = new PrompterServiceProvider(100, {
+      promptEnabled: true,
+      prompt: () => Promise.resolve({ name: "", value: "" }),
+      promptAll: () => Promise.resolve([]),
+    });
     const context = new DefaultContext(getCLIConfig());
 
     await expect(provider.initService(context)).resolves.toBeUndefined();

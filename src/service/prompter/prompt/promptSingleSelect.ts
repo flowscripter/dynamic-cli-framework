@@ -1,7 +1,6 @@
 import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
-import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
-import { headerLineCount, renderPromptHeader } from "./PromptContext.ts";
+import { headerLineCount, renderPromptHeader, interrupt } from "./PromptContext.ts";
 import type { PromptContext } from "./PromptContext.ts";
 
 export default async function promptSingleSelect(
@@ -75,7 +74,7 @@ export default async function promptSingleSelect(
         throw new Error("Prompt cancelled");
       } else if (keyEvent.specialKey === SpecialKey.INTERRUPT) {
         await ctx.terminal.showCursor();
-        ShutdownServiceProvider.onInterrupt();
+        interrupt(ctx);
         throw new Error("Interrupted");
       }
     }

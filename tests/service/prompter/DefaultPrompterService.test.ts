@@ -5,7 +5,20 @@ import DefaultPrompterService, {
 import type KeyReader from "../../../src/terminal/KeyReader.ts";
 import { type KeyEvent, SpecialKey } from "../../../src/terminal/KeyReader.ts";
 import type Terminal from "../../../src/terminal/Terminal.ts";
-import { PromptType } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  PromptType,
+  SHUTDOWN_SERVICE_ID,
+  SPAWN_SERVICE_ID,
+} from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  ShutdownService,
+  SpawnOptions,
+  SpawnResult,
+  SpawnService,
+} from "@flowscripter/dynamic-cli-framework-api";
+import DefaultContext from "../../../src/runtime/DefaultContext.ts";
+import { defaultOpenUrl } from "../../../src/service/prompter/prompt/promptOpenUrl.ts";
+import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 
 class MockKeyReader implements KeyReader {
@@ -605,4 +618,183 @@ describe("DefaultPrompterService tests", () => {
       expect(openUrlCalled).toBe(true);
       expect(terminal.buffer).toContain("Press ENTER to open in the browser...");
     }));
+});
+
+function getMockShutdownService(): { shutdownService: ShutdownService; interrupts: number[] } {
+  const interrupts: number[] = [];
+  return {
+    shutdownService: {
+      registerTask: () => {},
+      enterLongRunningMode: () => {},
+      leaveLongRunningMode: () => {},
+      interrupt: () => {
+        interrupts.push(1);
+      },
+      isShutdownRequested: false,
+    },
+    interrupts,
+  };
+}
+
+function getMockSpawnService(result: SpawnResult): {
+  spawnService: SpawnService;
+  calls: { command: ReadonlyArray<string>; options?: SpawnOptions }[];
+} {
+  const calls: { command: ReadonlyArray<string>; options?: SpawnOptions }[] = [];
+  return {
+    spawnService: {
+      spawn: (command, options) => {
+        calls.push({ command, options });
+        return Promise.resolve(result);
+      },
+    },
+    calls,
+  };
+}
+
+function createServiceWithContext(
+  keyReader: MockKeyReader,
+  spawnService?: SpawnService,
+): {
+  service: DefaultPrompterService;
+  terminal: MockTerminal;
+  interrupts: number[];
+} {
+  const { service, terminal } = createService(keyReader);
+  const { shutdownService, interrupts } = getMockShutdownService();
+  const context = new DefaultContext(getCLIConfig());
+  context.addServiceInstance(SHUTDOWN_SERVICE_ID, shutdownService);
+  if (spawnService) {
+    context.addServiceInstance(SPAWN_SERVICE_ID, spawnService);
+  }
+  service.setContext(context);
+  return { service, terminal, interrupts };
+}
+
+const URL_PROMPT = {
+  name: "login",
+  promptText: "Login at:",
+  type: PromptType.OPEN_URL,
+  options: [{ displayValue: "Open browser", returnedValue: "https://example.com/login" }],
+};
+
+describe("DefaultPrompterService context services", () => {
+  const interruptPrompts = [
+    {
+      name: "TEXT",
+      prompt: { name: "t", promptText: "Text:", type: PromptType.TEXT, options: [] },
+    },
+    {
+      name: "SINGLE_SELECT",
+      prompt: {
+        name: "s",
+        promptText: "Pick:",
+        type: PromptType.SINGLE_SELECT,
+        options: [{ displayValue: "A", returnedValue: "a" }],
+      },
+    },
+    {
+      name: "MULTI_SELECT",
+      prompt: {
+        name: "m",
+        promptText: "Pick:",
+        type: PromptType.MULTI_SELECT,
+        options: [{ displayValue: "A", returnedValue: "a" }],
+      },
+    },
+    { name: "OPEN_URL", prompt: URL_PROMPT },
+  ];
+
+  for (const { name, prompt } of interruptPrompts) {
+    test(`${name} INTERRUPT calls ShutdownService.interrupt() from the context`, async () => {
+      const keyReader = new MockKeyReader();
+      keyReader.addKeys({ specialKey: SpecialKey.INTERRUPT });
+      const { service, interrupts } = createServiceWithContext(keyReader);
+
+      await expect(service.prompt(prompt)).rejects.toThrow("Interrupted");
+      expect(interrupts.length).toEqual(1);
+    });
+  }
+
+  test("INTERRUPT without a context still throws", async () => {
+    const keyReader = new MockKeyReader();
+    keyReader.addKeys({ specialKey: SpecialKey.INTERRUPT });
+    const { service } = createService(keyReader);
+
+    await expect(
+      service.prompt({ name: "t", promptText: "Text:", type: PromptType.TEXT, options: [] }),
+    ).rejects.toThrow("Interrupted");
+  });
+
+  test("OPEN_URL opens the URL via SpawnService from the context", () =>
+    withoutSshEnv(async () => {
+      const keyReader = new MockKeyReader();
+      keyReader.addKeys({ specialKey: SpecialKey.ENTER });
+      const { spawnService, calls } = getMockSpawnService({ ok: true, exitCode: 0 });
+      const { service, terminal } = createServiceWithContext(keyReader, spawnService);
+
+      const result = await service.prompt(URL_PROMPT);
+
+      expect(result.value).toEqual("https://example.com/login");
+      expect(calls.length).toEqual(1);
+      expect(calls[0]!.command).toContain("https://example.com/login");
+      expect(calls[0]!.options).toEqual({ mode: "ignore", longRunning: false });
+      expect(terminal.buffer).toContain("Press ENTER to open in the browser...");
+    }));
+
+  test("OPEN_URL without SpawnService or openUrl shows copy message", () =>
+    withoutSshEnv(async () => {
+      const keyReader = new MockKeyReader();
+      keyReader.addKeys({ specialKey: SpecialKey.ENTER });
+      const { service, terminal } = createServiceWithContext(keyReader);
+
+      const result = await service.prompt(URL_PROMPT);
+
+      expect(result.value).toEqual("https://example.com/login");
+      expect(terminal.buffer).toContain(
+        "Copy the URL above and open it in your local browser, then press ENTER to continue...",
+      );
+    }));
+});
+
+describe("defaultOpenUrl", () => {
+  test("spawns the platform opener with stream output ignored and no long-running mode", async () => {
+    const { spawnService, calls } = getMockSpawnService({ ok: true, exitCode: 0 });
+
+    await defaultOpenUrl(spawnService, "https://example.com");
+
+    expect(calls[0]!.command[calls[0]!.command.length - 1]).toEqual("https://example.com");
+    expect(calls[0]!.options).toEqual({ mode: "ignore", longRunning: false });
+  });
+
+  test("rejects unsupported protocols without spawning", async () => {
+    const { spawnService, calls } = getMockSpawnService({ ok: true, exitCode: 0 });
+
+    await expect(defaultOpenUrl(spawnService, "file:///etc/passwd")).rejects.toThrow(
+      "Unsupported URL protocol: file:",
+    );
+    expect(calls.length).toEqual(0);
+  });
+
+  test("throws the launch error", async () => {
+    const { spawnService } = getMockSpawnService({ ok: false, error: new Error("not found") });
+
+    await expect(defaultOpenUrl(spawnService, "https://example.com")).rejects.toThrow("not found");
+  });
+
+  test("throws on a non-zero exit code", async () => {
+    const { spawnService } = getMockSpawnService({ ok: false, exitCode: 3 });
+
+    await expect(defaultOpenUrl(spawnService, "https://example.com")).rejects.toThrow(
+      "Failed to open URL (exit code 3)",
+    );
+  });
+
+  test("throws when the opener times out", async () => {
+    const { spawnService } = getMockSpawnService({ ok: false, timedOut: true });
+
+    await expect(defaultOpenUrl(spawnService, "https://example.com")).rejects.toThrow(
+      "Failed to open URL (exit code unknown)",
+    );
+  });
 });

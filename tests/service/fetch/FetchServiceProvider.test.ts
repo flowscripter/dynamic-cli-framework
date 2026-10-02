@@ -38,6 +38,7 @@ describe("FetchServiceProvider tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     });
 

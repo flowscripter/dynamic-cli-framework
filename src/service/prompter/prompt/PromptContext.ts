@@ -1,4 +1,10 @@
-import type { Prompt } from "@flowscripter/dynamic-cli-framework-api";
+import type {
+  Context,
+  Prompt,
+  ShutdownService,
+  SpawnService,
+} from "@flowscripter/dynamic-cli-framework-api";
+import { SHUTDOWN_SERVICE_ID, SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type Terminal from "../../../terminal/Terminal.ts";
 import type KeyReader from "../../../terminal/KeyReader.ts";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
@@ -9,6 +15,18 @@ export interface PromptContext {
   readonly terminal: Terminal;
   readonly keyReader: KeyReader;
   readonly printerService: PrinterService;
+  readonly context?: Context;
+}
+
+export function interrupt(ctx: PromptContext): void {
+  (ctx.context?.getServiceById(SHUTDOWN_SERVICE_ID) as ShutdownService | undefined)?.interrupt();
+}
+
+export function getSpawnService(ctx: PromptContext): SpawnService | undefined {
+  if (!ctx.context?.doesServiceExist(SPAWN_SERVICE_ID)) {
+    return undefined;
+  }
+  return ctx.context.getServiceById(SPAWN_SERVICE_ID) as SpawnService;
 }
 
 export function physicalLineCount(terminal: Terminal, text: string): number {
