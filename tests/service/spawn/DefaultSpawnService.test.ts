@@ -69,6 +69,7 @@ function getFakeShutdownService(): {
     leaveLongRunningMode: () => {
       state.leaveLongRunningModeCalls++;
     },
+    interrupt: () => {},
     isShutdownRequested: false,
   };
   return { shutdownService, state };

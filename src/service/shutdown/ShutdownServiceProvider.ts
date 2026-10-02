@@ -16,7 +16,7 @@ export default class ShutdownServiceProvider implements ServiceProvider {
   static #shutdownInProgress = false;
 
   public constructor(readonly servicePriority: number) {
-    this.#shutdownService = new DefaultShutdownService();
+    this.#shutdownService = new DefaultShutdownService(ShutdownServiceProvider.onInterrupt);
     process.on("beforeExit", ShutdownServiceProvider.shutdown);
     process.on("SIGINT", ShutdownServiceProvider.onInterrupt);
     process.on("SIGTERM", ShutdownServiceProvider.onTerminate);

@@ -1,8 +1,7 @@
 import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
 import type { SingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
-import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
-import { renderPromptHeader } from "./PromptContext.ts";
+import { renderPromptHeader, interrupt } from "./PromptContext.ts";
 import type { PromptContext } from "./PromptContext.ts";
 
 export default async function promptText(
@@ -32,7 +31,7 @@ export default async function promptText(
           throw new Error("Prompt cancelled");
         } else if (keyEvent.specialKey === SpecialKey.INTERRUPT) {
           await ctx.terminal.write("\n");
-          ShutdownServiceProvider.onInterrupt();
+          interrupt(ctx);
           throw new Error("Interrupted");
         } else if (keyEvent.specialKey === SpecialKey.BACKSPACE) {
           if (buffer.length > 0) {

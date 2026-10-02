@@ -20,6 +20,7 @@ function getFakeShutdownService(shutdownTasks: Array<ShutdownTask> = []): Shutdo
     },
     enterLongRunningMode: () => {},
     leaveLongRunningMode: () => {},
+    interrupt: () => {},
     isShutdownRequested: false,
   };
 }

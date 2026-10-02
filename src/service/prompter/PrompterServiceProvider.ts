@@ -1,9 +1,9 @@
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
-import type { PrompterService } from "@flowscripter/dynamic-cli-framework-api";
 import { PROMPTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import NoPromptCommand from "./command/NoPromptCommand.ts";
-import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
+import type { CLIConfig, PrompterService } from "@flowscripter/dynamic-cli-framework-api";
+import DefaultPrompterService from "./DefaultPrompterService.ts";
 
 export default class PrompterServiceProvider implements ServiceProvider {
   readonly serviceId: string = PROMPTER_SERVICE_ID;
@@ -22,7 +22,10 @@ export default class PrompterServiceProvider implements ServiceProvider {
     });
   }
 
-  initService(_context: Context): Promise<void> {
+  initService(context: Context): Promise<void> {
+    if (this.prompterService instanceof DefaultPrompterService) {
+      this.prompterService.setContext(context);
+    }
     return Promise.resolve();
   }
 }

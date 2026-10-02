@@ -1,14 +1,13 @@
-import type { Prompt, PromptResult } from "@flowscripter/dynamic-cli-framework-api";
+import type { Prompt, PromptResult, SpawnService } from "@flowscripter/dynamic-cli-framework-api";
 import { SpecialKey } from "../../../terminal/KeyReader.ts";
-import ShutdownServiceProvider from "../../shutdown/ShutdownServiceProvider.ts";
-import { renderPromptHeader } from "./PromptContext.ts";
+import { getSpawnService, interrupt, renderPromptHeader } from "./PromptContext.ts";
 import type { PromptContext } from "./PromptContext.ts";
 
 function isRemoteSession(): boolean {
   return !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY);
 }
 
-async function defaultOpenUrl(url: string): Promise<void> {
+export async function defaultOpenUrl(spawnService: SpawnService, url: string): Promise<void> {
   const parsed = new URL(url);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`Unsupported URL protocol: ${parsed.protocol}`);
@@ -22,11 +21,16 @@ async function defaultOpenUrl(url: string): Promise<void> {
   } else {
     cmd = ["xdg-open", url];
   }
-  const proc = Bun.spawn(cmd, { stdout: "ignore", stderr: "ignore" });
-  const exitCode = await proc.exited;
-  if (exitCode !== 0) {
-    throw new Error(`Failed to open URL (exit code ${exitCode})`);
+  const result = await spawnService.spawn(cmd, { mode: "ignore", longRunning: false });
+  if (result.ok) {
+    return;
   }
+  if ("error" in result && result.error) {
+    throw result.error;
+  }
+  throw new Error(
+    `Failed to open URL (exit code ${"exitCode" in result ? result.exitCode : "unknown"})`,
+  );
 }
 
 export default async function promptOpenUrl(
@@ -39,8 +43,11 @@ export default async function promptOpenUrl(
 
   const url = String(promptDef.options[0]!.returnedValue);
   const displayLabel = promptDef.options[0]!.displayValue;
-  const openUrlFn = ctx.config.openUrl ?? defaultOpenUrl;
-  const canOpenBrowser = !isRemoteSession();
+  const spawnService = getSpawnService(ctx);
+  const openUrlFn =
+    ctx.config.openUrl ??
+    (spawnService ? (target: string) => defaultOpenUrl(spawnService, target) : undefined);
+  const canOpenBrowser = openUrlFn !== undefined && !isRemoteSession();
 
   ctx.keyReader.enableRawMode();
   try {
@@ -72,7 +79,7 @@ export default async function promptOpenUrl(
       } else if (keyEvent.specialKey === SpecialKey.ESCAPE) {
         throw new Error("Prompt cancelled");
       } else if (keyEvent.specialKey === SpecialKey.INTERRUPT) {
-        ShutdownServiceProvider.onInterrupt();
+        interrupt(ctx);
         throw new Error("Interrupted");
       }
     }

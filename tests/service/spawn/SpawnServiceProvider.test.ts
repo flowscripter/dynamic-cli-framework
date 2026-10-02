@@ -42,6 +42,7 @@ describe("SpawnServiceProvider tests", () => {
       registerTask: () => {},
       enterLongRunningMode: () => {},
       leaveLongRunningMode: () => {},
+      interrupt: () => {},
       isShutdownRequested: false,
     });
 

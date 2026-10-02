@@ -4,7 +4,7 @@ import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import { type Values, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import { COMPLETION_SERVICE_ID, ShellType } from "@flowscripter/dynamic-cli-framework-api";
-import type DefaultCompletionService from "../DefaultCompletionService.ts";
+import type { CompletionService } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -33,9 +33,7 @@ export class CompletionCompleteSubCommand implements SubCommand {
   ];
 
   async execute(context: Context, argumentValues: Values): Promise<void> {
-    const completionService = context.getServiceById(
-      COMPLETION_SERVICE_ID,
-    ) as DefaultCompletionService;
+    const completionService = context.getServiceById(COMPLETION_SERVICE_ID) as CompletionService;
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     const shellType = argumentValues.shell as ShellType;
