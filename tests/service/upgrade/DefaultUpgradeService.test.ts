@@ -38,6 +38,16 @@ function getCLIConfig(name?: string): CLIConfig {
   return { ...getFixtureCLIConfig(name), version: "1.0.0" };
 }
 
+async function withPlatform(platform: NodeJS.Platform, fn: () => Promise<void>): Promise<void> {
+  const original = Object.getOwnPropertyDescriptor(process, "platform")!;
+  Object.defineProperty(process, "platform", { value: platform, configurable: true });
+  try {
+    await fn();
+  } finally {
+    Object.defineProperty(process, "platform", original);
+  }
+}
+
 function setUpgradeServiceDependencies(
   service: DefaultUpgradeService,
   spawnService: SpawnService | undefined,
@@ -260,43 +270,166 @@ describe("DefaultUpgradeService", () => {
     expect(await service.detectInstallMethod(SupportedOs.LINUX)).toBeUndefined();
   });
 
-  test("detectInstallMethod detects HOMEBREW via SpawnService", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      getSpawnService(() => ({ ok: true, exitCode: 0 })),
-      undefined,
-      undefined,
-    );
-    expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
-  });
-
-  test("detectInstallMethod detects HOMEBREW from the running executable's Cellar path, without spawning", async () => {
-    const originalExecPath = process.execPath;
-    process.execPath = "/opt/homebrew/Cellar/example-cli/1.0.0/bin/example-cli";
-    try {
+  test("detectInstallMethod detects HOMEBREW via SpawnService", () =>
+    withPlatform("darwin", async () => {
       const service = new DefaultUpgradeService(
         getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
         getCLIConfig(),
       );
-      // No SpawnService set - a fall-through to `brew list` would throw when detectInstallMethod
-      // tries to call spawn() on undefined.
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => ({ ok: true, exitCode: 0 })),
+        undefined,
+        undefined,
+      );
       expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
-    } finally {
-      process.execPath = originalExecPath;
-    }
-  });
+    }));
 
-  test("detectInstallMethod caches a brew list result so a second call does not spawn again", async () => {
-    const originalExecPath = process.execPath;
-    process.execPath = "/usr/local/bin/example-cli";
-    try {
+  test("detectInstallMethod detects HOMEBREW from the running executable's Cellar path, without spawning", () =>
+    withPlatform("darwin", async () => {
+      const originalExecPath = process.execPath;
+      process.execPath = "/opt/homebrew/Cellar/example-cli/1.0.0/bin/example-cli";
+      try {
+        const service = new DefaultUpgradeService(
+          getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+          getCLIConfig(),
+        );
+        // No SpawnService set - a fall-through to `brew list` would throw when detectInstallMethod
+        // tries to call spawn() on undefined.
+        expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(
+          InstallMethod.HOMEBREW,
+        );
+      } finally {
+        process.execPath = originalExecPath;
+      }
+    }));
+
+  test("detectInstallMethod caches a brew list result so a second call does not spawn again", () =>
+    withPlatform("darwin", async () => {
+      const originalExecPath = process.execPath;
+      process.execPath = "/usr/local/bin/example-cli";
+      try {
+        let spawnCount = 0;
+        const service = new DefaultUpgradeService(
+          getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+          getCLIConfig(),
+        );
+        setUpgradeServiceDependencies(
+          service,
+          getSpawnService(() => {
+            spawnCount += 1;
+            return { ok: true, exitCode: 0 };
+          }),
+          undefined,
+          undefined,
+          getKeyValueService(),
+        );
+        expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(
+          InstallMethod.HOMEBREW,
+        );
+        expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(
+          InstallMethod.HOMEBREW,
+        );
+        expect(spawnCount).toEqual(1);
+      } finally {
+        process.execPath = originalExecPath;
+      }
+    }));
+
+  test("detectInstallMethod re-detects once a cached install-method entry has expired", () =>
+    withPlatform("darwin", async () => {
+      const originalExecPath = process.execPath;
+      process.execPath = "/usr/local/bin/example-cli";
+      try {
+        let spawnCount = 0;
+        const service = new DefaultUpgradeService(
+          getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+          getCLIConfig(),
+        );
+        const keyValueService = getKeyValueService();
+        await keyValueService.set("install-method", {
+          method: InstallMethod.HOMEBREW,
+          checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
+        });
+        setUpgradeServiceDependencies(
+          service,
+          getSpawnService(() => {
+            spawnCount += 1;
+            return { ok: true, exitCode: 0 };
+          }),
+          undefined,
+          undefined,
+          keyValueService,
+        );
+        expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(
+          InstallMethod.HOMEBREW,
+        );
+        expect(spawnCount).toEqual(1);
+      } finally {
+        process.execPath = originalExecPath;
+      }
+    }));
+
+  test("detectInstallMethod falls back to detection instead of failing when the KeyValueService throws", () =>
+    withPlatform("darwin", async () => {
+      const originalExecPath = process.execPath;
+      process.execPath = "/usr/local/bin/example-cli";
+      try {
+        const service = new DefaultUpgradeService(
+          getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+          getCLIConfig(),
+        );
+        const brokenKeyValueService: KeyValueService = {
+          get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+          set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+          has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+          delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+          flush: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
+        };
+        setUpgradeServiceDependencies(
+          service,
+          getSpawnService(() => ({ ok: true, exitCode: 0 })),
+          undefined,
+          undefined,
+          brokenKeyValueService,
+        );
+        // Simulates a KeyValueService whose scope has already been cleared by the time this
+        // detached opportunistic check runs (see UpgradeServiceProvider) - every call throws, but
+        // detectInstallMethod() must still resolve rather than propagate.
+        expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(
+          InstallMethod.HOMEBREW,
+        );
+      } finally {
+        process.execPath = originalExecPath;
+      }
+    }));
+
+  test("detectInstallMethod does not detect HOMEBREW or WINGET on another platform", () =>
+    withPlatform("linux", async () => {
+      const service = new DefaultUpgradeService(
+        getConfig({
+          homebrew: { tap: "flowscripter/tap", formula: "example-cli" },
+          winget: { packageId: "flowscripter.example-cli" },
+        }),
+        getCLIConfig(),
+      );
+      setUpgradeServiceDependencies(
+        service,
+        getSpawnService(() => {
+          throw new Error("unexpected spawn");
+        }),
+        undefined,
+        undefined,
+      );
+      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toBeUndefined();
+      expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toBeUndefined();
+    }));
+
+  test("detectInstallMethod caches a winget list result so a second call does not spawn again", () =>
+    withPlatform("win32", async () => {
       let spawnCount = 0;
       const service = new DefaultUpgradeService(
-        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
+        getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
         getCLIConfig(),
       );
       setUpgradeServiceDependencies(
@@ -309,96 +442,10 @@ describe("DefaultUpgradeService", () => {
         undefined,
         getKeyValueService(),
       );
-      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
-      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
+      expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
+      expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
       expect(spawnCount).toEqual(1);
-    } finally {
-      process.execPath = originalExecPath;
-    }
-  });
-
-  test("detectInstallMethod re-detects once a cached install-method entry has expired", async () => {
-    const originalExecPath = process.execPath;
-    process.execPath = "/usr/local/bin/example-cli";
-    try {
-      let spawnCount = 0;
-      const service = new DefaultUpgradeService(
-        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-        getCLIConfig(),
-      );
-      const keyValueService = getKeyValueService();
-      await keyValueService.set("install-method", {
-        method: InstallMethod.HOMEBREW,
-        checkedAt: Date.now() - 25 * 60 * 60 * 1000, // 25h ago - past the 24h TTL
-      });
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService(() => {
-          spawnCount += 1;
-          return { ok: true, exitCode: 0 };
-        }),
-        undefined,
-        undefined,
-        keyValueService,
-      );
-      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
-      expect(spawnCount).toEqual(1);
-    } finally {
-      process.execPath = originalExecPath;
-    }
-  });
-
-  test("detectInstallMethod falls back to detection instead of failing when the KeyValueService throws", async () => {
-    const originalExecPath = process.execPath;
-    process.execPath = "/usr/local/bin/example-cli";
-    try {
-      const service = new DefaultUpgradeService(
-        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-        getCLIConfig(),
-      );
-      const brokenKeyValueService: KeyValueService = {
-        get: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
-        set: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
-        has: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
-        delete: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
-        flush: () => Promise.reject(new Error("Attempt to access undefined key-value data")),
-      };
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService(() => ({ ok: true, exitCode: 0 })),
-        undefined,
-        undefined,
-        brokenKeyValueService,
-      );
-      // Simulates a KeyValueService whose scope has already been cleared by the time this
-      // detached opportunistic check runs (see UpgradeServiceProvider) - every call throws, but
-      // detectInstallMethod() must still resolve rather than propagate.
-      expect(await service.detectInstallMethod(SupportedOs.MACOS)).toEqual(InstallMethod.HOMEBREW);
-    } finally {
-      process.execPath = originalExecPath;
-    }
-  });
-
-  test("detectInstallMethod caches a winget list result so a second call does not spawn again", async () => {
-    let spawnCount = 0;
-    const service = new DefaultUpgradeService(
-      getConfig({ winget: { packageId: "flowscripter.example-cli" } }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      getSpawnService(() => {
-        spawnCount += 1;
-        return { ok: true, exitCode: 0 };
-      }),
-      undefined,
-      undefined,
-      getKeyValueService(),
-    );
-    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
-    expect(await service.detectInstallMethod(SupportedOs.WINDOWS)).toEqual(InstallMethod.WINGET);
-    expect(spawnCount).toEqual(1);
-  });
+    }));
 
   test("checkForUpgrade caches a latest-version lookup within the TTL, refreshing once it expires", async () => {
     let fetchCount = 0;

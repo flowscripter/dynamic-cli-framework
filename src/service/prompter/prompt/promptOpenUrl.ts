@@ -12,11 +12,10 @@ export async function defaultOpenUrl(spawnService: SpawnService, url: string): P
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`Unsupported URL protocol: ${parsed.protocol}`);
   }
-  const platform = process.platform;
   let cmd: string[];
-  if (platform === "darwin") {
+  if (process.platform === "darwin") {
     cmd = ["open", url];
-  } else if (platform === "win32") {
+  } else if (process.platform === "win32") {
     cmd = ["cmd", "/c", "start", "", url];
   } else {
     cmd = ["xdg-open", url];
