@@ -9,6 +9,12 @@ describe("DefaultPrettyPrinterService tests", () => {
     expect(await prettyPrinterService.getRegisteredSyntaxes()).toContain("json");
   });
 
+  test("Only JSON registered by default", async () => {
+    const prettyPrinterService = new DefaultPrettyPrinterService();
+
+    expect(await prettyPrinterService.getRegisteredSyntaxes()).toEqual(["json"]);
+  });
+
   test("Cannot register a syntax if already registered", () => {
     const prettyPrinterService = new DefaultPrettyPrinterService();
 

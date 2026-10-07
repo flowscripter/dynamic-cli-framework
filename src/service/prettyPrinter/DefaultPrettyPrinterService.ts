@@ -1,59 +1,42 @@
 import type { PrettyPrinterService } from "@flowscripter/dynamic-cli-framework-api";
-import * as prettier from "prettier";
-import type { Plugin } from "prettier";
+import * as prettier from "prettier/standalone";
+import type { Options, Plugin } from "prettier";
+import * as babel from "prettier/plugins/babel";
+import * as estree from "prettier/plugins/estree";
 
 /**
- * Default implementation of {@link PrettyPrinterService} which provides by default the
- * syntaxes built into prettier.
+ * Default implementation of {@link PrettyPrinterService} which provides JSON by default.
+ *
+ * Only prettier's babel and estree plugins are bundled, which provide the JSON parser and printer.
+ * Other syntaxes are added with {@link registerSyntax}.
  */
 export default class DefaultPrettyPrinterService implements PrettyPrinterService {
-  #registeredSyntaxes = new Array<string>();
-  #syntaxNameToPluginnMap = new Map<string, Plugin<unknown>>();
+  readonly #registeredSyntaxes = ["json"];
+  readonly #plugins: Array<Plugin<unknown>> = [babel, estree as Plugin<unknown>];
 
-  async #populateBuiltInSyntaxes(): Promise<void> {
-    const languages = (await prettier.getSupportInfo()).languages;
-    this.#registeredSyntaxes = languages.map((language) => language.name.toLowerCase());
-  }
-
-  async getRegisteredSyntaxes(): Promise<ReadonlyArray<string>> {
-    if (this.#registeredSyntaxes.length === 0) {
-      await this.#populateBuiltInSyntaxes();
-    }
-
-    return this.#registeredSyntaxes;
+  getRegisteredSyntaxes(): Promise<ReadonlyArray<string>> {
+    return Promise.resolve(this.#registeredSyntaxes);
   }
 
   async prettify(text: string, syntaxName: string): Promise<string> {
-    if (this.#registeredSyntaxes.length === 0) {
-      await this.#populateBuiltInSyntaxes();
-    }
-
     const name = syntaxName.toLowerCase();
     if (!this.#registeredSyntaxes.includes(name)) {
       throw new Error(`Syntax name is not registered: ${name}`);
     }
 
-    const options: prettier.Options = { parser: syntaxName };
-
-    const syntaxPlugin = this.#syntaxNameToPluginnMap.get(name);
-    if (syntaxPlugin) {
-      options.plugins = [syntaxPlugin];
-    }
+    const options: Options = { parser: syntaxName, plugins: this.#plugins };
 
     return prettier.format(text, options);
   }
 
-  async registerSyntax(syntaxName: string, syntaxPlugin: Plugin<unknown>): Promise<void> {
-    if (this.#registeredSyntaxes.length === 0) {
-      await this.#populateBuiltInSyntaxes();
-    }
-
+  registerSyntax(syntaxName: string, syntaxPlugin: Plugin<unknown>): Promise<void> {
     const name = syntaxName.toLowerCase();
     if (this.#registeredSyntaxes.includes(name)) {
-      throw new Error(`Syntax name already registered: ${name}`);
+      return Promise.reject(new Error(`Syntax name already registered: ${name}`));
     }
 
     this.#registeredSyntaxes.push(name);
-    this.#syntaxNameToPluginnMap.set(name, syntaxPlugin);
+    this.#plugins.push(syntaxPlugin);
+    return Promise.resolve();
   }
 }
