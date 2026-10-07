@@ -6,8 +6,6 @@ import {
   Icon,
   InstallMethod,
   PRINTER_SERVICE_ID,
-  SupportedArch,
-  SupportedOs,
   UPGRADE_SERVICE_ID,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
@@ -20,13 +18,6 @@ export class UpgradeSubCommand implements SubCommand {
   readonly positionals = [];
 
   readonly options: ReadonlyArray<Option> = [
-    {
-      name: "os",
-      type: ValueTypeName.STRING,
-      isOptional: true,
-      allowableValues: Object.values(SupportedOs),
-      description: "Override the detected operating system",
-    },
     {
       name: "install-method",
       type: ValueTypeName.STRING,
@@ -42,21 +33,19 @@ export class UpgradeSubCommand implements SubCommand {
     const cliName = context.cliConfig.name;
     const currentVersion = context.cliConfig.version;
 
-    const os = argumentValues.os as SupportedOs | undefined;
-    const arch = undefined as SupportedArch | undefined;
     const installMethod = argumentValues["install-method"] as InstallMethod | undefined;
 
     await printerService.showSpinner(`Looking for version newer than ${currentVersion}`);
 
     const checkResult =
-      os === undefined && installMethod === undefined
+      installMethod === undefined
         ? await upgradeService.refreshUpgradeCheckCache()
-        : await upgradeService.checkForUpgrade(os, arch, installMethod);
+        : await upgradeService.checkForUpgrade(installMethod);
 
     await printerService.hideSpinner();
     if (checkResult.status === "unsupported") {
       await printerService.error(
-        `No upgrade location is configured for the detected or requested platform.\n`,
+        `No upgrade location is configured for the detected platform.\n`,
         Icon.FAILURE,
       );
       return;
@@ -78,7 +67,7 @@ export class UpgradeSubCommand implements SubCommand {
       return;
     }
 
-    const upgradeResult = await upgradeService.upgrade(os, arch, installMethod);
+    const upgradeResult = await upgradeService.upgrade(installMethod);
     if (!upgradeResult.ok) {
       await printerService.error(
         `Failed to upgrade ${cliName}: ${upgradeResult.error?.message ?? "unknown error"}\n`,

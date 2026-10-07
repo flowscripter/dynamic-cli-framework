@@ -48,6 +48,23 @@ async function withPlatform(platform: NodeJS.Platform, fn: () => Promise<void>):
   }
 }
 
+async function withHost<T>(
+  platform: NodeJS.Platform,
+  arch: NodeJS.Architecture,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform")!;
+  const originalArch = Object.getOwnPropertyDescriptor(process, "arch")!;
+  Object.defineProperty(process, "platform", { value: platform, configurable: true });
+  Object.defineProperty(process, "arch", { value: arch, configurable: true });
+  try {
+    return await fn();
+  } finally {
+    Object.defineProperty(process, "platform", originalPlatform);
+    Object.defineProperty(process, "arch", originalArch);
+  }
+}
+
 function setUpgradeServiceDependencies(
   service: DefaultUpgradeService,
   spawnService: SpawnService | undefined,
@@ -190,7 +207,7 @@ function githubReleaseRedirect(version: string): Response {
   });
 }
 
-// upgrade() with an override first calls checkForUpgrade() (a redirect response resolving the
+// upgrade() with an install method override first calls checkForUpgrade() (a redirect response resolving the
 // latest version tag), then separately downloads the release asset itself (a 200 with a body).
 // Track a URL callback so tests can inspect which asset was requested.
 function getGithubReleaseFetchService(
@@ -466,19 +483,15 @@ describe("DefaultUpgradeService", () => {
       getKeyValueService(),
     );
 
-    const first = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const first = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (first.status !== "checked") throw new Error(`expected "checked", got ${first.status}`);
     expect(first.latestVersion).toEqual("1.1.0");
 
     // Within the TTL - reuses the cached version, no second fetch.
-    const second = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const second = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (second.status !== "checked") throw new Error(`expected "checked", got ${second.status}`);
     expect(second.latestVersion).toEqual("1.1.0");
@@ -509,10 +522,8 @@ describe("DefaultUpgradeService", () => {
       keyValueService,
     );
 
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("2.0.0");
@@ -545,10 +556,8 @@ describe("DefaultUpgradeService", () => {
       brokenKeyValueService,
     );
 
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("9.9.9");
@@ -560,13 +569,13 @@ describe("DefaultUpgradeService", () => {
       getConfig({ supportedPlatforms: [] }),
       getCLIConfig(),
     );
-    const result = await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64);
+    const result = await withHost("linux", "x64", () => service.checkForUpgrade());
     expect(result).toEqual({ status: "unsupported" });
   });
 
   test("checkForUpgrade reports unsupported when no install method resolved", async () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
-    const result = await service.checkForUpgrade(SupportedOs.LINUX, SupportedArch.X64);
+    const result = await withHost("linux", "x64", () => service.checkForUpgrade());
     expect(result).toEqual({ status: "unsupported" });
   });
 
@@ -583,10 +592,8 @@ describe("DefaultUpgradeService", () => {
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.updateAvailable).toBe(true);
@@ -607,10 +614,8 @@ describe("DefaultUpgradeService", () => {
       getFetchService(() => githubReleaseRedirect("0.0.0")),
       undefined,
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.updateAvailable).toBe(false);
@@ -633,11 +638,7 @@ describe("DefaultUpgradeService", () => {
       }),
       undefined,
     );
-    await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
-    );
+    await withHost("linux", "x64", () => service.checkForUpgrade(InstallMethod.GITHUB_RELEASE));
     expect(receivedOptions?.timeoutMs).toBeUndefined();
   });
 
@@ -654,10 +655,8 @@ describe("DefaultUpgradeService", () => {
       getFetchService(() => Promise.reject(new Error("network error"))),
       undefined,
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     expect(result.status).toEqual("failed");
     if (result.status !== "failed") throw new Error("expected failed");
@@ -677,10 +676,8 @@ describe("DefaultUpgradeService", () => {
       getFetchService(() => new Response(null, { status: 404 })),
       undefined,
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
     );
     expect(result.status).toEqual("failed");
     if (result.status !== "failed") throw new Error("expected failed");
@@ -703,10 +700,8 @@ describe("DefaultUpgradeService", () => {
       }),
       undefined,
     );
-    const result = await service.checkForUpgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
+    const result = await withHost("darwin", "arm64", () =>
+      service.checkForUpgrade(InstallMethod.HOMEBREW),
     );
     if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
     expect(result.latestVersion).toEqual("9.9.9");
@@ -714,7 +709,7 @@ describe("DefaultUpgradeService", () => {
 
   test("upgrade returns error when no location configured", async () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
-    const result = await service.upgrade(SupportedOs.LINUX, SupportedArch.X64);
+    const result = await withHost("linux", "x64", () => service.upgrade());
     expect(result.ok).toBe(false);
     expect(result.oldVersion).toEqual(getCLIConfig().version);
   });
@@ -732,10 +727,8 @@ describe("DefaultUpgradeService", () => {
       getFetchService(() => githubReleaseRedirect("9.9.9")),
       undefined,
     );
-    const result = await service.upgrade(
-      SupportedOs.LINUX,
-      SupportedArch.X64,
-      InstallMethod.GITHUB_RELEASE,
+    const result = await withHost("linux", "x64", () =>
+      service.upgrade(InstallMethod.GITHUB_RELEASE),
     );
     expect(result.ok).toBe(false);
     expect(result.error?.message).toContain("SpawnService");
@@ -757,11 +750,7 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
 
-    const result = await service.upgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
-    );
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
     expect(result.ok).toBe(true);
     expect(result.newVersion).toEqual("9.9.9");
     expect(spawnedCommands).toEqual([["brew", "upgrade", "flowscripter/tap/example-cli"]]);
@@ -779,11 +768,7 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
 
-    const result = await service.upgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
-    );
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
     expect(result.ok).toBe(false);
     expect(result.error?.message).toContain("brew upgrade failed");
   });
@@ -805,11 +790,7 @@ describe("DefaultUpgradeService", () => {
       printerService,
     );
 
-    const result = await service.upgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
-    );
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
 
     expect(result.ok).toBe(true);
     expect(receivedModes).toEqual(["wrapped"]);
@@ -845,11 +826,7 @@ describe("DefaultUpgradeService", () => {
       printerService,
     );
 
-    const result = await service.upgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
-    );
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
 
     expect(result.ok).toBe(false);
     expect(state.calls).toContain("discardMark");
@@ -940,7 +917,7 @@ describe("DefaultUpgradeService", () => {
     expect(result.latestVersion).toEqual("9.9.9");
   });
 
-  test("upgrade bypasses the cached check when an override is passed", async () => {
+  test("upgrade bypasses the cached check when an install method override is passed", async () => {
     const spawnedCommands: ReadonlyArray<string>[] = [];
     const service = new DefaultUpgradeService(
       getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
@@ -956,16 +933,11 @@ describe("DefaultUpgradeService", () => {
       undefined,
     );
 
-    // Prime the cache with default (no-override) detection, which resolves undefined since
-    // supportedPlatforms only covers LINUX/MACOS/WINDOWS x specific arches and detectOs()/
-    // detectArch() here reflect the actual test host - the override call below must not reuse it.
+    // Prime the cache with default detection, which resolves no install method since none is
+    // detected for this config - the override call below must not reuse it.
     void service.getUpgradeCheckResult();
 
-    const result = await service.upgrade(
-      SupportedOs.MACOS,
-      SupportedArch.ARM64,
-      InstallMethod.HOMEBREW,
-    );
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
     expect(result.ok).toBe(true);
     expect(result.newVersion).toEqual("9.9.9");
   });
@@ -1024,10 +996,8 @@ describe("DefaultUpgradeService", () => {
         undefined,
       );
 
-      const result = await service.upgrade(
-        SupportedOs.LINUX,
-        SupportedArch.X64,
-        InstallMethod.GITHUB_RELEASE,
+      const result = await withHost("linux", "x64", () =>
+        service.upgrade(InstallMethod.GITHUB_RELEASE),
       );
 
       expect(result.ok).toBe(true);
@@ -1071,10 +1041,8 @@ describe("DefaultUpgradeService", () => {
         undefined,
       );
 
-      const result = await service.upgrade(
-        SupportedOs.MACOS,
-        SupportedArch.ARM64,
-        InstallMethod.GITHUB_RELEASE,
+      const result = await withHost("darwin", "arm64", () =>
+        service.upgrade(InstallMethod.GITHUB_RELEASE),
       );
       expect(result.ok).toBe(true);
       expect(requestedUrl).toContain("example-cli_MacOS_aarch64.zip");
@@ -1108,10 +1076,8 @@ describe("DefaultUpgradeService", () => {
         undefined,
       );
 
-      const result = await service.upgrade(
-        SupportedOs.MACOS,
-        SupportedArch.X64,
-        InstallMethod.GITHUB_RELEASE,
+      const result = await withHost("darwin", "x64", () =>
+        service.upgrade(InstallMethod.GITHUB_RELEASE),
       );
       expect(result.ok).toBe(true);
       expect(requestedUrl).toContain("example-cli_MacOS_x64.zip");
@@ -1144,10 +1110,8 @@ describe("DefaultUpgradeService", () => {
         undefined,
       );
 
-      const result = await service.upgrade(
-        SupportedOs.LINUX,
-        SupportedArch.ARM64,
-        InstallMethod.GITHUB_RELEASE,
+      const result = await withHost("linux", "arm64", () =>
+        service.upgrade(InstallMethod.GITHUB_RELEASE),
       );
       expect(result.ok).toBe(true);
       expect(requestedUrl).toContain("example-cli_Linux_arm64.zip");
@@ -1182,10 +1146,8 @@ describe("DefaultUpgradeService", () => {
         undefined,
       );
 
-      const result = await service.upgrade(
-        SupportedOs.WINDOWS,
-        SupportedArch.X64,
-        InstallMethod.GITHUB_RELEASE,
+      const result = await withHost("win32", "x64", () =>
+        service.upgrade(InstallMethod.GITHUB_RELEASE),
       );
 
       expect(result.ok).toBe(true);
