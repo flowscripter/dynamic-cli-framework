@@ -149,7 +149,9 @@ Provides:
 
 - `PrettyPrinterService` allowing pretty printing of structured data and source
   code. JSON pretty printing is provided by default and other data or language
-  formats can be added on demand by commands.
+  formats can be added on demand by commands, by passing a prettier plugin (such
+  as `prettier/plugins/yaml`) to `registerSyntax()`. Only the prettier plugins
+  needed for JSON are bundled by default.
 
 ## `PrinterServiceProvider`
 
