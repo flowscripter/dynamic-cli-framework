@@ -319,40 +319,47 @@ export default class DefaultUpgradeService implements UpgradeService {
   }
 
   public detectOs(): SupportedOs | undefined {
-    switch (process.platform) {
-      case "linux":
-        return SupportedOs.LINUX;
-      case "darwin":
-        return SupportedOs.MACOS;
-      case "win32":
-        return SupportedOs.WINDOWS;
-      default:
-        return undefined;
+    if (process.platform === "linux") {
+      return SupportedOs.LINUX;
     }
+    if (process.platform === "darwin") {
+      return SupportedOs.MACOS;
+    }
+    if (process.platform === "win32") {
+      return SupportedOs.WINDOWS;
+    }
+    return undefined;
   }
 
   public detectArch(): SupportedArch | undefined {
-    switch (process.arch) {
-      case "x64":
-        return SupportedArch.X64;
-      case "arm64":
-        return SupportedArch.ARM64;
-      default:
-        return undefined;
+    if (process.arch === "x64") {
+      return SupportedArch.X64;
     }
+    if (process.arch === "arm64") {
+      return SupportedArch.ARM64;
+    }
+    return undefined;
   }
 
   public async detectInstallMethod(os: SupportedOs): Promise<InstallMethod | undefined> {
     // Cheap, no-spawn signals are checked first and always win over the cache below, so a fresh
     // install is picked up immediately rather than waiting on a stale cached method.
+    // Each platform-specific branch also compares process.platform directly, so a compiled
+    // executable keeps only the branches for its own platform.
     if (
+      process.platform === "darwin" &&
       os === SupportedOs.MACOS &&
       this.#config.homebrew &&
       this.#isRunningFromHomebrewCellar(this.#config.homebrew.formula)
     ) {
       return InstallMethod.HOMEBREW;
     }
-    if (os === SupportedOs.LINUX && this.#config.linuxScript && this.#isLinuxScriptInstall()) {
+    if (
+      process.platform === "linux" &&
+      os === SupportedOs.LINUX &&
+      this.#config.linuxScript &&
+      this.#isLinuxScriptInstall()
+    ) {
       return InstallMethod.LINUX_SCRIPT;
     }
 
@@ -364,9 +371,15 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
 
     let detected: InstallMethod | undefined;
-    if (os === SupportedOs.MACOS && this.#config.homebrew && (await this.#isHomebrewInstalled())) {
+    if (
+      process.platform === "darwin" &&
+      os === SupportedOs.MACOS &&
+      this.#config.homebrew &&
+      (await this.#isHomebrewInstalled())
+    ) {
       detected = InstallMethod.HOMEBREW;
     } else if (
+      process.platform === "win32" &&
       os === SupportedOs.WINDOWS &&
       this.#config.winget &&
       (await this.#isWingetInstalled())
