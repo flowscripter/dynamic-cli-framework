@@ -11,6 +11,19 @@ import {
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import type { UpgradeService } from "@flowscripter/dynamic-cli-framework-api";
 
+function installMethodsForPlatform(): InstallMethod[] {
+  if (process.platform === "darwin") {
+    return [InstallMethod.HOMEBREW, InstallMethod.GITHUB_RELEASE];
+  }
+  if (process.platform === "linux") {
+    return [InstallMethod.LINUX_SCRIPT, InstallMethod.GITHUB_RELEASE];
+  }
+  if (process.platform === "win32") {
+    return [InstallMethod.WINGET, InstallMethod.GITHUB_RELEASE];
+  }
+  return [InstallMethod.GITHUB_RELEASE];
+}
+
 export class UpgradeSubCommand implements SubCommand {
   readonly name = "upgrade";
   readonly description = "Upgrade to the latest available version";
@@ -22,7 +35,7 @@ export class UpgradeSubCommand implements SubCommand {
       name: "install-method",
       type: ValueTypeName.STRING,
       isOptional: true,
-      allowableValues: Object.values(InstallMethod),
+      allowableValues: installMethodsForPlatform(),
       description: "Override the detected install method",
     },
   ];

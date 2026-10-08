@@ -73,6 +73,25 @@ describe("UpgradeSubCommand", () => {
     expect(command.options.map((option) => option.name)).toEqual(["install-method"]);
   });
 
+  test("offers only the install methods applicable to the current platform", () => {
+    const original = Object.getOwnPropertyDescriptor(process, "platform")!;
+    const expected: Record<string, InstallMethod[]> = {
+      darwin: [InstallMethod.HOMEBREW, InstallMethod.GITHUB_RELEASE],
+      linux: [InstallMethod.LINUX_SCRIPT, InstallMethod.GITHUB_RELEASE],
+      win32: [InstallMethod.WINGET, InstallMethod.GITHUB_RELEASE],
+      freebsd: [InstallMethod.GITHUB_RELEASE],
+    };
+    try {
+      for (const [platform, methods] of Object.entries(expected)) {
+        Object.defineProperty(process, "platform", { value: platform });
+        const option = new UpgradeSubCommand().options.find((o) => o.name === "install-method");
+        expect(option?.allowableValues).toEqual(methods);
+      }
+    } finally {
+      Object.defineProperty(process, "platform", original);
+    }
+  });
+
   test("passes only the install method override to checkForUpgrade and upgrade", async () => {
     const command = new UpgradeSubCommand();
     const checkArgs: unknown[][] = [];
