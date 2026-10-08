@@ -204,7 +204,6 @@ class ParseContext {
         complexPathElement = option.name;
       } // complex option property navigation
       else {
-        // keyed by the names of every enclosing option, as nested options in different parents may share a name
         lookupPath = `${lookupPath}.${option!.name}`;
 
         // lazy creation of nested option paths to options
