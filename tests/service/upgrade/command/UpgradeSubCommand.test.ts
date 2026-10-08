@@ -67,6 +67,44 @@ function getContext(upgradeService: UpgradeService): {
 }
 
 describe("UpgradeSubCommand", () => {
+  test("offers an install method option and no operating system option", () => {
+    const command = new UpgradeSubCommand();
+
+    expect(command.options.map((option) => option.name)).toEqual(["install-method"]);
+  });
+
+  test("passes only the install method override to checkForUpgrade and upgrade", async () => {
+    const command = new UpgradeSubCommand();
+    const checkArgs: unknown[][] = [];
+    const upgradeArgs: unknown[][] = [];
+    const checkResult: UpgradeCheckResult = {
+      status: "checked",
+      currentVersion: "1.0.0",
+      latestVersion: "2.0.0",
+      updateAvailable: true,
+      os: SupportedOs.LINUX,
+      arch: SupportedArch.X64,
+      installMethod: InstallMethod.GITHUB_RELEASE,
+    };
+    const upgradeService: UpgradeService = {
+      ...getUpgradeService(checkResult, { ok: true, oldVersion: "1.0.0", newVersion: "2.0.0" }),
+      checkForUpgrade: (...args) => {
+        checkArgs.push(args);
+        return Promise.resolve(checkResult);
+      },
+      upgrade: (...args) => {
+        upgradeArgs.push(args);
+        return Promise.resolve({ ok: true, oldVersion: "1.0.0", newVersion: "2.0.0" });
+      },
+    };
+    const { context } = getContext(upgradeService);
+
+    await command.execute(context, { "install-method": InstallMethod.GITHUB_RELEASE });
+
+    expect(checkArgs).toEqual([[InstallMethod.GITHUB_RELEASE]]);
+    expect(upgradeArgs).toEqual([[InstallMethod.GITHUB_RELEASE]]);
+  });
+
   test("prints error when no upgrade location configured", async () => {
     const command = new UpgradeSubCommand();
     const { context, messages } = getContext(getUpgradeService({ status: "unsupported" }));

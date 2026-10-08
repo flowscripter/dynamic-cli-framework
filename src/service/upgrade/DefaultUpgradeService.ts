@@ -436,13 +436,9 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
   }
 
-  public async checkForUpgrade(
-    osOverride?: SupportedOs,
-    archOverride?: SupportedArch,
-    installMethodOverride?: InstallMethod,
-  ): Promise<UpgradeCheckResult> {
-    const os = osOverride ?? this.detectOs();
-    const arch = archOverride ?? this.detectArch();
+  public async checkForUpgrade(installMethodOverride?: InstallMethod): Promise<UpgradeCheckResult> {
+    const os = this.detectOs();
+    const arch = this.detectArch();
     if (!os || !arch || !this.#isPlatformSupported(os, arch)) {
       return { status: "unsupported" };
     }
@@ -480,22 +476,17 @@ export default class DefaultUpgradeService implements UpgradeService {
     };
   }
 
-  public async upgrade(
-    osOverride?: SupportedOs,
-    archOverride?: SupportedArch,
-    installMethodOverride?: InstallMethod,
-  ): Promise<UpgradeResult> {
+  public async upgrade(installMethodOverride?: InstallMethod): Promise<UpgradeResult> {
     const oldVersion = this.#cliConfig.version;
-    const hasOverride =
-      osOverride !== undefined || archOverride !== undefined || installMethodOverride !== undefined;
-    const checkResult = hasOverride
-      ? await this.checkForUpgrade(osOverride, archOverride, installMethodOverride)
-      : await this.getUpgradeCheckResult();
+    const checkResult =
+      installMethodOverride !== undefined
+        ? await this.checkForUpgrade(installMethodOverride)
+        : await this.getUpgradeCheckResult();
     if (checkResult.status === "unsupported") {
       return {
         ok: false,
         oldVersion,
-        error: new Error("No upgrade location configured for the detected or requested platform"),
+        error: new Error("No upgrade location configured for the detected platform"),
       };
     }
     if (checkResult.status === "failed") {
