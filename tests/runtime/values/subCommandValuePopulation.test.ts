@@ -2353,6 +2353,50 @@ describe("subCommandValuePopulation tests", () => {
     });
   });
 
+  test("Nested options with the same name in different parents keep their own properties", () => {
+    const command: SubCommand = {
+      name: "command",
+      options: [
+        {
+          name: "location",
+          type: ComplexValueTypeName.COMPLEX,
+          properties: [
+            {
+              name: "file",
+              type: ComplexValueTypeName.COMPLEX,
+              properties: [{ name: "path", type: ValueTypeName.STRING }],
+            },
+          ],
+        },
+        {
+          name: "properties",
+          type: ComplexValueTypeName.COMPLEX,
+          properties: [
+            {
+              name: "file",
+              type: ComplexValueTypeName.COMPLEX,
+              properties: [{ name: "mode", type: ValueTypeName.NUMBER }],
+            },
+          ],
+        },
+      ],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    };
+
+    const result = populateSubCommandValues(
+      command,
+      ["--location.file.path=/a", "--properties.file.mode=420"],
+      undefined,
+    );
+    expectExtractResult(
+      result,
+      { location: { file: { path: "/a" } }, properties: { file: { mode: "420" } } },
+      [],
+    );
+    expect(result.invalidArgument).toBeUndefined();
+  });
+
   test("Complex options with duplicated names and aliases ok if not siblings", () => {
     const command: SubCommand = {
       name: "command",

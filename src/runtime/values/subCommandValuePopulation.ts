@@ -168,6 +168,7 @@ class ParseContext {
       | PopulatedValueType
       | undefined = this.populatedArgumentValues;
 
+    let lookupPath = this.subCommand.name;
     for (let i = 0; i < complexPathElements.length; i++) {
       let arrayIndexString: string | undefined;
       let complexPathElement = complexPathElements[i]!;
@@ -178,8 +179,6 @@ class ParseContext {
           .slice(0, complexPathElement.length - 1)
           .split("[") as [string, string | undefined];
       }
-
-      let lookupPath = this.subCommand.name;
 
       // root option navigation
       if (i === 0) {
@@ -205,7 +204,7 @@ class ParseContext {
         complexPathElement = option.name;
       } // complex option property navigation
       else {
-        lookupPath = `${lookupPath}${option!.name}`;
+        lookupPath = `${lookupPath}.${option!.name}`;
 
         // lazy creation of nested option paths to options
         if (!this.optionLookupMapsByPath.has(lookupPath)) {
