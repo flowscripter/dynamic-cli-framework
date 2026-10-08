@@ -23,6 +23,29 @@ import type { TableGeneratorService } from "@flowscripter/dynamic-cli-framework-
 const SYNTAX_INDENT_WIDTH = 2;
 const MINIMUM_SYNTAX_COLUMN_WIDTH = 15;
 const HELP_SYNTAX_INDENT = " ".repeat(SYNTAX_INDENT_WIDTH);
+const USER_INPUT_START = "\uE000";
+const USER_INPUT_END = "\uE001";
+const USER_INPUT_PATTERN = new RegExp(`${USER_INPUT_START}(.*?)${USER_INPUT_END}`, "gs");
+
+function userInput(value: string): string {
+  return `${USER_INPUT_START}${value}${USER_INPUT_END}`;
+}
+
+function renderDescription(printerService: PrinterService, description: string): string {
+  let rendered = "";
+  let last = 0;
+  for (const match of description.matchAll(USER_INPUT_PATTERN)) {
+    if (match.index > last) {
+      rendered += printerService.secondary(description.slice(last, match.index));
+    }
+    rendered += printerService.primary(match[1]!);
+    last = match.index + match[0].length;
+  }
+  if (last < description.length) {
+    rendered += printerService.secondary(description.slice(last));
+  }
+  return rendered;
+}
 
 export interface HelpEntry {
   readonly syntax: string;
@@ -66,7 +89,7 @@ function flattenHelpEntry(
   }
 
   const description = helpEntry.description
-    ? printerService.secondary(helpEntry.description)
+    ? renderDescription(printerService, helpEntry.description)
     : undefined;
 
   rows.push({ syntax, description });
@@ -178,7 +201,7 @@ export function getGlobalArgumentHelpEntry(
 
   const notesItems: Array<string> = [];
   if (argument.allowableValues !== undefined && argument.allowableValues.length > 0) {
-    notesItems.push(`valid values: ${argument.allowableValues.join("|")}`);
+    notesItems.push(`valid values: ${userInput(argument.allowableValues.join("|"))}`);
   } else {
     switch (argument.type) {
       case ValueTypeName.STRING:
@@ -205,7 +228,7 @@ export function getGlobalArgumentHelpEntry(
   }
 
   if (argument.defaultValue !== undefined) {
-    notesItems.push(`default: ${argument.defaultValue}`);
+    notesItems.push(`default: ${userInput(String(argument.defaultValue))}`);
   }
 
   if (includeEnvVars) {
@@ -309,7 +332,7 @@ function getOptionHelpEntry(
     });
   } else {
     if (option.allowableValues !== undefined && option.allowableValues.length > 0) {
-      notesItems.push(`valid values: ${option.allowableValues.join("|")}`);
+      notesItems.push(`valid values: ${userInput(option.allowableValues.join("|"))}`);
     } else {
       switch (option.type) {
         case ValueTypeName.STRING:
@@ -341,11 +364,11 @@ function getOptionHelpEntry(
 
   if (option.defaultValue !== undefined) {
     notesItems.push(
-      `default: ${
+      `default: ${userInput(
         Array.isArray(option.defaultValue)
           ? `${option.defaultValue.join(", ")}`
-          : `${option.defaultValue}`
-      }`,
+          : `${option.defaultValue}`,
+      )}`,
     );
   }
 
@@ -394,7 +417,7 @@ function getPositionalHelpEntry(
 ): HelpEntry {
   const notesItems: Array<string> = [];
   if (positional.allowableValues !== undefined && positional.allowableValues.length > 0) {
-    notesItems.push(`valid values: ${positional.allowableValues.join("|")}`);
+    notesItems.push(`valid values: ${userInput(positional.allowableValues.join("|"))}`);
   } else {
     switch (positional.type) {
       case ValueTypeName.STRING:
