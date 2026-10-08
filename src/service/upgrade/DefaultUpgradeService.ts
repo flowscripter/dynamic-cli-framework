@@ -512,7 +512,7 @@ export default class DefaultUpgradeService implements UpgradeService {
           await this.#upgradeViaLinuxScript();
           break;
         case InstallMethod.HOMEBREW:
-          await this.#upgradeViaHomebrew();
+          await this.#upgradeViaHomebrew(checkResult.latestVersion);
           break;
         case InstallMethod.WINGET:
           await this.#upgradeViaWinget();
@@ -725,11 +725,32 @@ export default class DefaultUpgradeService implements UpgradeService {
     }
   }
 
-  async #upgradeViaHomebrew(): Promise<void> {
+  // The latest version is read from the tap's formula on GitHub, but `brew upgrade` only sees the
+  // local tap clone, which is stale until `brew update` runs. A stale tap makes `brew upgrade`
+  // exit 0 with "already installed", so update first and then confirm the installed version.
+  async #upgradeViaHomebrew(expectedVersion: string): Promise<void> {
     const { tap, formula } = this.#config.homebrew!;
+    const updateResult = await this.#spawnQuoted(["brew", "update"]);
+    if (!updateResult.ok) {
+      throw new Error(`brew update failed: ${describeSpawnFailure(updateResult)}`);
+    }
     const result = await this.#spawnQuoted(["brew", "upgrade", `${tap}/${formula}`]);
     if (!result.ok) {
       throw new Error(`brew upgrade failed: ${describeSpawnFailure(result)}`);
+    }
+
+    const lines: string[] = [];
+    const listResult = await this.#spawnService!.spawn(["brew", "list", "--versions", formula], {
+      mode: "wrapped",
+      longRunning: false,
+      onOutput: (line) => lines.push(line),
+    });
+    const installed = lines.join(" ").trim();
+    const installedVersions = installed.split(/\s+/).slice(1);
+    if (!listResult.ok || !installedVersions.includes(expectedVersion)) {
+      throw new Error(
+        `brew upgrade completed but version ${expectedVersion} is not installed (installed: ${installed || "unknown"})`,
+      );
     }
   }
 

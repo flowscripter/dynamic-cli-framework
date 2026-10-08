@@ -734,18 +734,34 @@ describe("DefaultUpgradeService", () => {
     expect(result.error?.message).toContain("SpawnService");
   });
 
-  test("upgrade via homebrew invokes 'brew upgrade' and returns new version", async () => {
+  const brewConfig = () =>
+    getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } });
+
+  function getBrewSpawnService(
+    spawnedCommands: ReadonlyArray<string>[],
+    handler: (command: ReadonlyArray<string>) => SpawnResult,
+    listOutput: string,
+  ): SpawnService {
+    return {
+      spawn: (command: ReadonlyArray<string>, options?: { onOutput?: unknown }) => {
+        spawnedCommands.push(command);
+        if (command[1] === "list" && typeof options?.onOutput === "function") {
+          (options.onOutput as (line: string, stream: "stdout" | "stderr") => void)(
+            listOutput,
+            "stdout",
+          );
+        }
+        return Promise.resolve(handler(command));
+      },
+    } as unknown as SpawnService;
+  }
+
+  test("upgrade via homebrew updates, upgrades and verifies the installed version", async () => {
     const spawnedCommands: ReadonlyArray<string>[] = [];
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
+    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
     setUpgradeServiceDependencies(
       service,
-      getSpawnService((command) => {
-        spawnedCommands.push(command);
-        return { ok: true, exitCode: 0 };
-      }),
+      getBrewSpawnService(spawnedCommands, () => ({ ok: true, exitCode: 0 }), "example-cli 9.9.9"),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
     );
@@ -753,17 +769,34 @@ describe("DefaultUpgradeService", () => {
     const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
     expect(result.ok).toBe(true);
     expect(result.newVersion).toEqual("9.9.9");
-    expect(spawnedCommands).toEqual([["brew", "upgrade", "flowscripter/tap/example-cli"]]);
+    expect(spawnedCommands).toEqual([
+      ["brew", "update"],
+      ["brew", "upgrade", "flowscripter/tap/example-cli"],
+      ["brew", "list", "--versions", "example-cli"],
+    ]);
+  });
+
+  test("upgrade via homebrew reports failure when brew update fails", async () => {
+    const spawnedCommands: ReadonlyArray<string>[] = [];
+    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
+    setUpgradeServiceDependencies(
+      service,
+      getBrewSpawnService(spawnedCommands, () => ({ ok: false, exitCode: 1 }), ""),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
+    );
+
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
+    expect(result.ok).toBe(false);
+    expect(result.error?.message).toContain("brew update failed");
+    expect(spawnedCommands).toEqual([["brew", "update"]]);
   });
 
   test("upgrade via homebrew reports failure when brew upgrade fails", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
+    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
     setUpgradeServiceDependencies(
       service,
-      getSpawnService(() => ({ ok: false, exitCode: 1 })),
+      getBrewSpawnService([], (command) => ({ ok: command[1] === "update", exitCode: 1 }), ""),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
     );
@@ -773,9 +806,25 @@ describe("DefaultUpgradeService", () => {
     expect(result.error?.message).toContain("brew upgrade failed");
   });
 
+  test("upgrade via homebrew reports failure when the expected version is not installed", async () => {
+    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
+    setUpgradeServiceDependencies(
+      service,
+      getBrewSpawnService([], () => ({ ok: true, exitCode: 0 }), "example-cli 3.0.8"),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
+    );
+
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
+    expect(result.ok).toBe(false);
+    expect(result.error?.message).toContain(
+      "9.9.9 is not installed (installed: example-cli 3.0.8)",
+    );
+  });
+
   test("upgrade wraps the spawned install output in quote/mark and clears it on success", async () => {
     const { spawnService, receivedModes } = getSpawnServiceWithOutput(
-      ["Updating Homebrew...", "==> Upgrading example-cli"],
+      ["==> Upgrading example-cli", "example-cli 9.9.9"],
       { ok: true, exitCode: 0 },
     );
     const { printerService, state } = getFakePrinterService();
@@ -793,19 +842,25 @@ describe("DefaultUpgradeService", () => {
     const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
 
     expect(result.ok).toBe(true);
-    expect(receivedModes).toEqual(["wrapped"]);
+    expect(receivedModes).toEqual(["wrapped", "wrapped", "wrapped"]);
     expect(state.calls).toEqual([
       "showSpinner", // "Installing version 9.9.9..."
       "hideSpinner",
       "startQuote",
       "startMark",
-      "info", // "Updating Homebrew..."
-      "info", // "==> Upgrading example-cli"
+      "info",
+      "info",
+      "endQuote",
+      "endMark",
+      "clearMarked",
+      "startQuote",
+      "startMark",
+      "info",
+      "info",
       "endQuote",
       "endMark",
       "clearMarked",
     ]);
-    expect(state.infoMessages).toContain("Updating Homebrew...\n");
     expect(state.infoMessages).toContain("==> Upgrading example-cli\n");
   });
 
@@ -925,10 +980,7 @@ describe("DefaultUpgradeService", () => {
     );
     setUpgradeServiceDependencies(
       service,
-      getSpawnService((command) => {
-        spawnedCommands.push(command);
-        return { ok: true, exitCode: 0 };
-      }),
+      getBrewSpawnService(spawnedCommands, () => ({ ok: true, exitCode: 0 }), "example-cli 9.9.9"),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
     );
