@@ -796,7 +796,12 @@ describe("DefaultUpgradeService", () => {
     const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
     setUpgradeServiceDependencies(
       service,
-      getBrewSpawnService([], (command) => ({ ok: command[1] === "update", exitCode: 1 }), ""),
+      getBrewSpawnService(
+        [],
+        (command): SpawnResult =>
+          command[1] === "update" ? { ok: true, exitCode: 0 } : { ok: false, exitCode: 1 },
+        "",
+      ),
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
     );
