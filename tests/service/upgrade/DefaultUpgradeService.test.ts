@@ -27,6 +27,7 @@ import type {
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   describeUpgradeCheckResult,
+  parseBrewInstalledVersions,
   toRunState,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
@@ -827,6 +828,20 @@ describe("DefaultUpgradeService", () => {
     );
   });
 
+  test("upgrade via homebrew accepts a v-prefixed installed version", async () => {
+    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
+    setUpgradeServiceDependencies(
+      service,
+      getBrewSpawnService([], () => ({ ok: true, exitCode: 0 }), "example-cli v9.9.9"),
+      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
+      undefined,
+    );
+
+    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
+    expect(result.ok).toBe(true);
+    expect(result.newVersion).toEqual("9.9.9");
+  });
+
   test("upgrade wraps the spawned install output in quote/mark and clears it on success", async () => {
     const { spawnService, receivedModes } = getSpawnServiceWithOutput(
       ["==> Upgrading example-cli", "example-cli 9.9.9"],
@@ -1372,5 +1387,35 @@ describe("DefaultUpgradeService", () => {
       expect(toRunState({ ok: false, exitCode: 127 })).toEqual(RunState.RUNTIME_ERROR);
       expect(toRunState({ ok: false, error: new Error("ENOENT") })).toBeUndefined();
     });
+  });
+});
+
+describe("parseBrewInstalledVersions", () => {
+  const parse = (output: string) =>
+    parseBrewInstalledVersions(output, "example-cli").map((v) => v.version);
+
+  test("parses a plain version", () => {
+    expect(parse("example-cli 3.0.11")).toEqual(["3.0.11"]);
+  });
+
+  test("parses a v-prefixed version", () => {
+    expect(parse("example-cli v3.0.11")).toEqual(["3.0.11"]);
+  });
+
+  test("parses multiple installed versions", () => {
+    expect(parse("example-cli 3.0.10 v3.0.11")).toEqual(["3.0.10", "3.0.11"]);
+  });
+
+  test("strips a revision suffix", () => {
+    expect(parse("example-cli 3.0.11_2")).toEqual(["3.0.11"]);
+  });
+
+  test("handles surrounding whitespace and newlines", () => {
+    expect(parse("  example-cli   3.0.10\n  3.0.11 \n")).toEqual(["3.0.10", "3.0.11"]);
+  });
+
+  test("returns nothing for empty output or a name only", () => {
+    expect(parse("")).toEqual([]);
+    expect(parse("example-cli")).toEqual([]);
   });
 });

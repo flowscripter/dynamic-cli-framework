@@ -27,7 +27,7 @@ import {
   SupportedOs,
   type UpgradeService,
 } from "@flowscripter/dynamic-cli-framework-api";
-import semver from "semver";
+import semver, { type SemVer } from "semver";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
 import getLogger from "../../util/logger.ts";
 
@@ -78,6 +78,23 @@ function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): stri
   return "timedOut" in result
     ? "timed out"
     : (result.error?.message ?? `exit code ${result.exitCode}`);
+}
+
+// `brew list --versions <formula>` prints the formula name followed by one or more installed
+// versions, each optionally prefixed with "v" and optionally suffixed with a "_N" revision.
+export function parseBrewInstalledVersions(output: string, formula: string): SemVer[] {
+  const tokens = output.trim().split(/\s+/).filter(Boolean);
+  if (tokens[0] === formula) {
+    tokens.shift();
+  }
+  const versions: SemVer[] = [];
+  for (const token of tokens) {
+    const version = semver.coerce(token.replace(/^v/i, "").replace(/_\d+$/, ""));
+    if (version) {
+      versions.push(version);
+    }
+  }
+  return versions;
 }
 
 export function describeUpgradeCheckResult(result: UpgradeCheckResult): string {
@@ -746,8 +763,11 @@ export default class DefaultUpgradeService implements UpgradeService {
       onOutput: (line) => lines.push(line),
     });
     const installed = lines.join(" ").trim();
-    const installedVersions = installed.split(/\s+/).slice(1);
-    if (!listResult.ok || !installedVersions.includes(expectedVersion)) {
+    const expected = semver.coerce(expectedVersion);
+    const isExpectedInstalled = parseBrewInstalledVersions(installed, formula).some(
+      (version) => expected !== null && semver.eq(version, expected),
+    );
+    if (!listResult.ok || !isExpectedInstalled) {
       throw new Error(
         `brew upgrade completed but version ${expectedVersion} is not installed (installed: ${installed || "unknown"})`,
       );
