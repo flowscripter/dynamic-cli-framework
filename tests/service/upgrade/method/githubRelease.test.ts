@@ -10,7 +10,8 @@ import {
   getLatestGithubReleaseVersion,
   upgradeViaGithubRelease,
 } from "../../../../src/service/upgrade/method/githubRelease.ts";
-import { getFetchService, getSpawnService } from "./helpers.ts";
+import { getFetchService } from "../../../fixtures/FetchService.ts";
+import { getSpawnService } from "../../../fixtures/SpawnService.ts";
 
 const location = {
   owner: "flowscripter",

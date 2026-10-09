@@ -4,7 +4,7 @@ import {
   isWingetInstalled,
   upgradeViaWinget,
 } from "../../../../src/service/upgrade/method/winget.ts";
-import { getSpawnService } from "./helpers.ts";
+import { getSpawnService } from "../../../fixtures/SpawnService.ts";
 
 const location = { packageId: "Flowscripter.ExampleCli" };
 

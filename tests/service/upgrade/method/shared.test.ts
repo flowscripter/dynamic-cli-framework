@@ -3,7 +3,8 @@ import {
   describeSpawnFailure,
   spawnQuoted,
 } from "../../../../src/service/upgrade/method/shared.ts";
-import { getFakePrinterService, getSpawnService } from "./helpers.ts";
+import { getFakePrinterService } from "../../../fixtures/PrinterService.ts";
+import { getSpawnService } from "../../../fixtures/SpawnService.ts";
 
 describe("describeSpawnFailure", () => {
   test("describes a timeout, an error and an exit code", () => {

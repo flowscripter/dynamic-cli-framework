@@ -4,7 +4,7 @@ import {
   isLinuxScriptInstall,
   upgradeViaLinuxScript,
 } from "../../../../src/service/upgrade/method/linuxScript.ts";
-import { getSpawnService } from "./helpers.ts";
+import { getSpawnService } from "../../../fixtures/SpawnService.ts";
 
 const location = { scriptUrl: "https://example.com/install.sh" };
 

@@ -12,7 +12,9 @@ import {
   resolveHomebrewOptExecutable,
   upgradeViaHomebrew,
 } from "../../../../src/service/upgrade/method/homebrew.ts";
-import { getFakePrinterService, getFetchService, getSpawnService } from "./helpers.ts";
+import { getFakePrinterService } from "../../../fixtures/PrinterService.ts";
+import { getFetchService } from "../../../fixtures/FetchService.ts";
+import { getSpawnService } from "../../../fixtures/SpawnService.ts";
 
 const location = { tap: "flowscripter/tap", formula: "example-cli" };
 
