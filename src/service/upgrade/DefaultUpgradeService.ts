@@ -1,8 +1,4 @@
 import process from "node:process";
-import { existsSync, realpathSync } from "node:fs";
-import { mkdtemp, rename, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
 import type {
   CLIConfig,
   Context,
@@ -27,8 +23,19 @@ import {
   SupportedOs,
   type UpgradeService,
 } from "@flowscripter/dynamic-cli-framework-api";
-import semver, { type SemVer } from "semver";
+import semver from "semver";
 import type { UpgradeLocationsConfig } from "./UpgradeLocationsConfig.ts";
+import { getLatestGithubReleaseVersion, upgradeViaGithubRelease } from "./method/githubRelease.ts";
+import {
+  getLatestHomebrewVersion,
+  isHomebrewInstalled,
+  isRunningFromHomebrewCellar,
+  resolveHomebrewOptExecutable,
+  upgradeViaHomebrew,
+} from "./method/homebrew.ts";
+import { isLinuxScriptInstall, upgradeViaLinuxScript } from "./method/linuxScript.ts";
+import type { VersionLookupResult } from "./method/shared.ts";
+import { getLatestWingetVersion, isWingetInstalled, upgradeViaWinget } from "./method/winget.ts";
 import getLogger from "../../util/logger.ts";
 
 const logger = getLogger("DefaultUpgradeService");
@@ -69,33 +76,6 @@ interface CachedLatestVersion {
 // scoped KeyValueService. The banner never calls checkForUpgrade()/getUpgradeCheckResult() live,
 // since checking live would stall startup on the network/spawn calls checkForUpgrade() makes.
 export const UPGRADE_CHECK_CACHE_KEY = "upgrade-check-result";
-
-type VersionLookupResult =
-  | { readonly ok: true; readonly version: string }
-  | { readonly ok: false; readonly error: Error };
-
-function describeSpawnFailure(result: Extract<SpawnResult, { ok: false }>): string {
-  return "timedOut" in result
-    ? "timed out"
-    : (result.error?.message ?? `exit code ${result.exitCode}`);
-}
-
-// `brew list --versions <formula>` prints the formula name followed by one or more installed
-// versions, each optionally prefixed with "v" and optionally suffixed with a "_N" revision.
-export function parseBrewInstalledVersions(output: string, formula: string): SemVer[] {
-  const tokens = output.trim().split(/\s+/).filter(Boolean);
-  if (tokens[0] === formula) {
-    tokens.shift();
-  }
-  const versions: SemVer[] = [];
-  for (const token of tokens) {
-    const version = semver.coerce(token.replace(/^v/i, "").replace(/_\d+$/, ""));
-    if (version) {
-      versions.push(version);
-    }
-  }
-  return versions;
-}
 
 export function describeUpgradeCheckResult(result: UpgradeCheckResult): string {
   return result.status === "failed"
@@ -143,12 +123,6 @@ export function toRunState(result: SpawnResult): RunState | undefined {
   return RunState.RUNTIME_ERROR;
 }
 
-const OS_LABELS: Record<SupportedOs, string> = {
-  [SupportedOs.LINUX]: "Linux",
-  [SupportedOs.MACOS]: "MacOS",
-  [SupportedOs.WINDOWS]: "Windows",
-};
-
 export default class DefaultUpgradeService implements UpgradeService {
   #context: Context | undefined;
   #upgradeCheckPromise: Promise<UpgradeCheckResult> | undefined;
@@ -188,40 +162,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     return this.#context?.doesServiceExist(KEY_VALUE_SERVICE_ID)
       ? (this.#context.getServiceById(KEY_VALUE_SERVICE_ID) as KeyValueService)
       : undefined;
-  }
-
-  // Mirrors SpawnInterfaceAdapter's plugin:add/plugin:remove pattern: wrap a spawned command's
-  // output in a quoted, marked block that's cleared on success (so a clean install stays quiet)
-  // but left on screen on failure (so the diagnostic output remains visible).
-  async #spawnQuoted(command: ReadonlyArray<string>): Promise<SpawnResult> {
-    const spawnService = this.#spawnService!;
-    const printerService = this.#printerService;
-    if (!printerService) {
-      return spawnService.spawn(command, { mode: "ignore" });
-    }
-
-    printerService.startQuote();
-    printerService.startMark();
-
-    // onOutput is synchronous and may be called concurrently for stdout/stderr lines, but
-    // printerService.info() is async and must not be invoked concurrently with itself - queue
-    // writes so they're applied one at a time, in call order.
-    let writeQueue: Promise<void> = Promise.resolve();
-    const onOutput = (line: string): void => {
-      writeQueue = writeQueue.then(() => printerService.info(`${line}\n`));
-    };
-
-    const result = await spawnService.spawn(command, { mode: "wrapped", onOutput });
-    await writeQueue;
-
-    printerService.endQuote();
-    printerService.endMark();
-    if (result.ok) {
-      await printerService.clearMarked();
-    } else {
-      printerService.discardMark();
-    }
-    return result;
   }
 
   public getUpgradeCheckResult(): Promise<UpgradeCheckResult> {
@@ -286,28 +226,10 @@ export default class DefaultUpgradeService implements UpgradeService {
       case InstallMethod.LINUX_SCRIPT:
         return process.execPath;
       case InstallMethod.HOMEBREW:
-        return this.#resolveHomebrewOptExecutable();
+        return resolveHomebrewOptExecutable(this.#config.homebrew);
       case InstallMethod.WINGET:
         return undefined;
     }
-  }
-
-  // The running executable lives in a version-specific Cellar directory, e.g.
-  // "<prefix>/Cellar/<formula>/<version>/bin/<exe>", while "<prefix>/opt/<formula>" links to the
-  // installed version, so the upgraded executable is "<prefix>/opt/<formula>/bin/<exe>".
-  #resolveHomebrewOptExecutable(): string | undefined {
-    if (!this.#config.homebrew) {
-      return undefined;
-    }
-    const { formula } = this.#config.homebrew;
-    const realExecutable = this.#resolveRealExecutable();
-    const cellarIndex = realExecutable.indexOf(`/Cellar/${formula}/`);
-    if (cellarIndex === -1) {
-      return undefined;
-    }
-    const prefix = realExecutable.slice(0, cellarIndex);
-    const executable = join(prefix, "opt", formula, "bin", basename(realExecutable));
-    return existsSync(executable) ? executable : undefined;
   }
 
   /**
@@ -367,7 +289,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       process.platform === "darwin" &&
       os === SupportedOs.MACOS &&
       this.#config.homebrew &&
-      this.#isRunningFromHomebrewCellar(this.#config.homebrew.formula)
+      isRunningFromHomebrewCellar(this.#config.homebrew.formula)
     ) {
       return InstallMethod.HOMEBREW;
     }
@@ -375,7 +297,7 @@ export default class DefaultUpgradeService implements UpgradeService {
       process.platform === "linux" &&
       os === SupportedOs.LINUX &&
       this.#config.linuxScript &&
-      this.#isLinuxScriptInstall()
+      isLinuxScriptInstall()
     ) {
       return InstallMethod.LINUX_SCRIPT;
     }
@@ -392,14 +314,14 @@ export default class DefaultUpgradeService implements UpgradeService {
       process.platform === "darwin" &&
       os === SupportedOs.MACOS &&
       this.#config.homebrew &&
-      (await this.#isHomebrewInstalled())
+      (await isHomebrewInstalled(this.#spawnService, this.#config.homebrew))
     ) {
       detected = InstallMethod.HOMEBREW;
     } else if (
       process.platform === "win32" &&
       os === SupportedOs.WINDOWS &&
       this.#config.winget &&
-      (await this.#isWingetInstalled())
+      (await isWingetInstalled(this.#spawnService, this.#config.winget))
     ) {
       detected = InstallMethod.WINGET;
     } else if (this.#config.githubRelease) {
@@ -524,18 +446,33 @@ export default class DefaultUpgradeService implements UpgradeService {
       if (this.#printerService) {
         await this.#printerService.hideSpinner();
       }
+      const spawnService = this.#spawnService!;
+      const printerService = this.#printerService;
       switch (checkResult.installMethod) {
         case InstallMethod.LINUX_SCRIPT:
-          await this.#upgradeViaLinuxScript();
+          await upgradeViaLinuxScript(spawnService, printerService, this.#config.linuxScript!);
           break;
         case InstallMethod.HOMEBREW:
-          await this.#upgradeViaHomebrew(checkResult.latestVersion);
+          await upgradeViaHomebrew(
+            spawnService,
+            printerService,
+            this.#config.homebrew!,
+            checkResult.latestVersion,
+          );
           break;
         case InstallMethod.WINGET:
-          await this.#upgradeViaWinget();
+          await upgradeViaWinget(spawnService, printerService, this.#config.winget!);
           break;
         case InstallMethod.GITHUB_RELEASE:
-          await this.#upgradeViaGithubRelease(checkResult.os, checkResult.arch);
+          await upgradeViaGithubRelease(
+            spawnService,
+            this.#fetchService!,
+            printerService,
+            this.#config.githubRelease!,
+            this.#cliConfig.name,
+            checkResult.os,
+            checkResult.arch,
+          );
           break;
       }
       return { ok: true, oldVersion, newVersion: checkResult.latestVersion };
@@ -548,50 +485,6 @@ export default class DefaultUpgradeService implements UpgradeService {
     return this.#config.supportedPlatforms.some(
       (platform) => platform.os === os && platform.arch === arch,
     );
-  }
-
-  // Homebrew relinks a formula's installed binary from its Cellar directory into a `bin/` symlink,
-  // so resolving the running executable's real path confirms a homebrew install without spawning
-  // `brew`, which has a slow cold start - avoiding it keeps the background upgrade-check
-  // StartupTask (see UpgradeServiceProvider) fast even though it runs to completion.
-  #isRunningFromHomebrewCellar(formula: string): boolean {
-    return this.#resolveRealExecutable().includes(`/Cellar/${formula}/`);
-  }
-
-  #resolveRealExecutable(): string {
-    try {
-      return realpathSync(process.execPath);
-    } catch {
-      // process.execPath may not resolve on disk (e.g. a fabricated path in tests) - fall back to
-      // the unresolved path rather than treating that as "not installed".
-      return process.execPath;
-    }
-  }
-
-  async #isHomebrewInstalled(): Promise<boolean> {
-    if (!this.#spawnService || !this.#config.homebrew) {
-      return false;
-    }
-    const result = await this.#spawnService.spawn(
-      ["brew", "list", "--versions", this.#config.homebrew.formula],
-      { mode: "ignore", longRunning: false },
-    );
-    return result.ok;
-  }
-
-  async #isWingetInstalled(): Promise<boolean> {
-    if (!this.#spawnService || !this.#config.winget) {
-      return false;
-    }
-    const result = await this.#spawnService.spawn(
-      ["winget", "list", "--id", this.#config.winget.packageId],
-      { mode: "ignore", longRunning: false },
-    );
-    return result.ok;
-  }
-
-  #isLinuxScriptInstall(): boolean {
-    return process.execPath.startsWith("/usr/local/bin/");
   }
 
   async #getLatestVersion(installMethod: InstallMethod): Promise<VersionLookupResult> {
@@ -622,263 +515,11 @@ export default class DefaultUpgradeService implements UpgradeService {
     switch (installMethod) {
       case InstallMethod.GITHUB_RELEASE:
       case InstallMethod.LINUX_SCRIPT:
-        return this.#getLatestGithubReleaseVersion();
+        return getLatestGithubReleaseVersion(this.#fetchService, this.#config.githubRelease);
       case InstallMethod.HOMEBREW:
-        return this.#getLatestHomebrewVersion();
+        return getLatestHomebrewVersion(this.#fetchService, this.#config.homebrew);
       case InstallMethod.WINGET:
-        return this.#getLatestWingetVersion();
-    }
-  }
-
-  async #getLatestGithubReleaseVersion(): Promise<VersionLookupResult> {
-    if (!this.#config.githubRelease) {
-      return { ok: false, error: new Error("No githubRelease location configured") };
-    }
-    if (!this.#fetchService) {
-      return { ok: false, error: new Error("FetchService is not available") };
-    }
-    const { owner, repo } = this.#config.githubRelease;
-    try {
-      // Uses the plain web redirect rather than the api.github.com REST endpoint, since the
-      // latter's unauthenticated rate limit (60 requests/hour/IP) is easily exhausted, e.g. by
-      // CI runners sharing an IP pool.
-      const response = await this.#fetchService.fetch(
-        `https://github.com/${owner}/${repo}/releases/latest`,
-        { redirect: "manual" },
-      );
-      const location = response.headers.get("location");
-      const version = location ? /\/releases\/tag\/v?([^/]+)$/.exec(location)?.[1] : undefined;
-      if (!version) {
-        return {
-          ok: false,
-          error: new Error(
-            `Unexpected response resolving latest release for ${owner}/${repo}: HTTP ${response.status}`,
-          ),
-        };
-      }
-      return { ok: true, version };
-    } catch (error) {
-      return {
-        ok: false,
-        error: new Error(`Failed to fetch latest GitHub release for ${owner}/${repo}: ${error}`),
-      };
-    }
-  }
-
-  async #getLatestHomebrewVersion(): Promise<VersionLookupResult> {
-    if (!this.#config.homebrew) {
-      return { ok: false, error: new Error("No homebrew location configured") };
-    }
-    if (!this.#fetchService) {
-      return { ok: false, error: new Error("FetchService is not available") };
-    }
-    const { tap, formula } = this.#config.homebrew;
-    const [tapOwner, tapName] = tap.split("/");
-    if (!tapOwner || !tapName) {
-      return { ok: false, error: new Error(`Invalid homebrew tap '${tap}'`) };
-    }
-    try {
-      const response = await this.#fetchService.fetch(
-        `https://raw.githubusercontent.com/${tapOwner}/homebrew-${tapName}/main/${formula}.rb`,
-      );
-      if (!response.ok) {
-        return {
-          ok: false,
-          error: new Error(
-            `Failed to fetch homebrew formula for ${tap}/${formula}: HTTP ${response.status}`,
-          ),
-        };
-      }
-      const text = await response.text();
-      const version = /version\s+"v?([^"]+)"/.exec(text)?.[1];
-      if (!version) {
-        return {
-          ok: false,
-          error: new Error(`Could not parse version from homebrew formula ${tap}/${formula}`),
-        };
-      }
-      return { ok: true, version };
-    } catch (error) {
-      return {
-        ok: false,
-        error: new Error(`Failed to fetch homebrew formula for ${tap}/${formula}: ${error}`),
-      };
-    }
-  }
-
-  async #getLatestWingetVersion(): Promise<VersionLookupResult> {
-    if (!this.#config.winget) {
-      return { ok: false, error: new Error("No winget location configured") };
-    }
-    if (!this.#spawnService) {
-      return { ok: false, error: new Error("SpawnService is not available") };
-    }
-    const lines: string[] = [];
-    const result = await this.#spawnService.spawn(
-      ["winget", "show", "--id", this.#config.winget.packageId],
-      {
-        mode: "wrapped",
-        longRunning: false,
-        onOutput: (line) => lines.push(line),
-      },
-    );
-    if (!result.ok) {
-      return { ok: false, error: new Error(`winget show failed: ${describeSpawnFailure(result)}`) };
-    }
-    for (const line of lines) {
-      const match = /Version:\s*(\S+)/.exec(line);
-      if (match?.[1]) {
-        return { ok: true, version: match[1] };
-      }
-    }
-    return { ok: false, error: new Error("Could not parse version from winget output") };
-  }
-
-  async #upgradeViaLinuxScript(): Promise<void> {
-    const { scriptUrl } = this.#config.linuxScript!;
-    const result = await this.#spawnQuoted(["sh", "-c", `curl -fsSL ${scriptUrl} | sh`]);
-    if (!result.ok) {
-      throw new Error(`Install script failed: ${describeSpawnFailure(result)}`);
-    }
-  }
-
-  // The latest version is read from the tap's formula on GitHub, but `brew upgrade` only sees the
-  // local tap clone, which is stale until `brew update` runs. A stale tap makes `brew upgrade`
-  // exit 0 with "already installed", so update first and then confirm the installed version.
-  async #upgradeViaHomebrew(expectedVersion: string): Promise<void> {
-    const { tap, formula } = this.#config.homebrew!;
-    const updateResult = await this.#spawnQuoted(["brew", "update"]);
-    if (!updateResult.ok) {
-      throw new Error(`brew update failed: ${describeSpawnFailure(updateResult)}`);
-    }
-    const result = await this.#spawnQuoted(["brew", "upgrade", `${tap}/${formula}`]);
-    if (!result.ok) {
-      throw new Error(`brew upgrade failed: ${describeSpawnFailure(result)}`);
-    }
-
-    const lines: string[] = [];
-    const listResult = await this.#spawnService!.spawn(["brew", "list", "--versions", formula], {
-      mode: "wrapped",
-      longRunning: false,
-      onOutput: (line) => lines.push(line),
-    });
-    const installed = lines.join(" ").trim();
-    const expected = semver.coerce(expectedVersion);
-    const isExpectedInstalled = parseBrewInstalledVersions(installed, formula).some(
-      (version) => expected !== null && semver.eq(version, expected),
-    );
-    if (!listResult.ok || !isExpectedInstalled) {
-      throw new Error(
-        `brew upgrade completed but version ${expectedVersion} is not installed (installed: ${installed || "unknown"})`,
-      );
-    }
-  }
-
-  async #upgradeViaWinget(): Promise<void> {
-    const { packageId } = this.#config.winget!;
-    const result = await this.#spawnQuoted([
-      "winget",
-      "upgrade",
-      "--id",
-      packageId,
-      "--silent",
-      "--accept-package-agreements",
-      "--accept-source-agreements",
-    ]);
-    if (!result.ok) {
-      throw new Error(`winget upgrade failed: ${describeSpawnFailure(result)}`);
-    }
-  }
-
-  async #upgradeViaGithubRelease(os: SupportedOs, arch: SupportedArch): Promise<void> {
-    const { owner, repo, assetPattern } = this.#config.githubRelease!;
-    // macOS release assets use "aarch64" rather than "arm64" for the arm64 build; x64 (including
-    // Intel Macs) always uses "x64" regardless of os.
-    const archLabel =
-      arch === SupportedArch.X64 ? "x64" : os === SupportedOs.MACOS ? "aarch64" : "arm64";
-    const assetName = assetPattern.replace("{os}", OS_LABELS[os]).replace("{arch}", archLabel);
-    const url = `https://github.com/${owner}/${repo}/releases/latest/download/${assetName}`;
-
-    // longRunning: true gets cooperative Ctrl-C handling during what can be the slowest step of
-    // the upgrade.
-    const response = await this.#fetchService!.fetch(url, { longRunning: true });
-    if (!response.ok) {
-      throw new Error(`Failed to download release asset '${assetName}': HTTP ${response.status}`);
-    }
-    const archiveData = await response.arrayBuffer();
-
-    const tmpDir = await mkdtemp(join(tmpdir(), "upgrade-"));
-    const archivePath = join(tmpDir, assetName);
-    await Bun.write(archivePath, archiveData);
-
-    const currentExecutable = process.execPath;
-
-    if (os === SupportedOs.WINDOWS) {
-      const extractResult = await this.#spawnQuoted([
-        "powershell",
-        "-Command",
-        `Expand-Archive -Path '${archivePath}' -DestinationPath '${tmpDir}' -Force`,
-      ]);
-      if (!extractResult.ok) {
-        throw new Error("Failed to extract release archive");
-      }
-      const extractedBinary = join(tmpDir, `${this.#cliConfig.name}.exe`);
-      const oldPath = `${currentExecutable}.old.exe`;
-
-      // Best-effort cleanup of a stale "<exe>.old.exe" left behind by a *previous* upgrade run.
-      // Windows won't let us delete the just-renamed-aside exe while this process still has it
-      // open/mapped - that can only happen once we're no longer holding it, i.e. at the start of
-      // the NEXT invocation, before we move today's running exe aside. Ignore failures: the file
-      // may not exist, or may still be locked (e.g. another instance still running). Not quoted -
-      // this is expected to fail silently, there's nothing worth showing the user.
-      await this.#spawnService!.spawn(["cmd", "/c", "del", "/f", "/q", oldPath], {
-        mode: "ignore",
-      });
-
-      const moveResult = await this.#spawnQuoted([
-        "cmd",
-        "/c",
-        "move",
-        "/y",
-        currentExecutable,
-        oldPath,
-      ]);
-      if (!moveResult.ok) {
-        throw new Error("Failed to move current executable aside");
-      }
-      const copyResult = await this.#spawnQuoted([
-        "cmd",
-        "/c",
-        "copy",
-        "/y",
-        extractedBinary,
-        currentExecutable,
-      ]);
-      if (!copyResult.ok) {
-        throw new Error("Failed to copy new executable into place");
-      }
-    } else {
-      const extractResult = await this.#spawnQuoted(["unzip", "-o", archivePath, "-d", tmpDir]);
-      if (!extractResult.ok) {
-        throw new Error("Failed to extract release archive");
-      }
-      const extractedBinary = join(tmpDir, this.#cliConfig.name);
-
-      // Extract into a staging file in the SAME directory as the running executable (not
-      // os.tmpdir(), which may be a different filesystem/mount), then atomically rename it over
-      // currentExecutable. This avoids ETXTBSY: the kernel refuses to open-for-write the inode
-      // mapped as a running process's text segment, but rename() only swaps the directory entry
-      // to point at a different inode - the running process keeps executing from its original,
-      // now-unlinked-but-still-open inode until it next execs/restarts.
-      const stagingDir = await mkdtemp(join(dirname(currentExecutable), ".upgrade-"));
-      try {
-        const stagingBinary = join(stagingDir, this.#cliConfig.name);
-        await Bun.write(stagingBinary, Bun.file(extractedBinary));
-        await this.#spawnService!.spawn(["chmod", "+x", stagingBinary], { mode: "ignore" });
-        await rename(stagingBinary, currentExecutable);
-      } finally {
-        await rm(stagingDir, { recursive: true, force: true });
-      }
+        return getLatestWingetVersion(this.#spawnService, this.#config.winget);
     }
   }
 }

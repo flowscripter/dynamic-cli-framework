@@ -1,8 +1,4 @@
 import process from "node:process";
-import { realpathSync, rmSync, writeFileSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   FETCH_SERVICE_ID,
@@ -27,7 +23,6 @@ import type {
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService, {
   describeUpgradeCheckResult,
-  parseBrewInstalledVersions,
   toRunState,
 } from "../../../src/service/upgrade/DefaultUpgradeService.ts";
 import type { UpgradeLocationsConfig } from "../../../src/service/upgrade/UpgradeLocationsConfig.ts";
@@ -125,74 +120,6 @@ function getKeyValueService(): KeyValueService {
   };
 }
 
-interface FakePrinterServiceState {
-  calls: string[];
-  infoMessages: string[];
-}
-
-function getFakePrinterService(): {
-  printerService: PrinterService;
-  state: FakePrinterServiceState;
-} {
-  const state: FakePrinterServiceState = { calls: [], infoMessages: [] };
-  const printerService = {
-    startQuote: () => {
-      state.calls.push("startQuote");
-    },
-    endQuote: () => {
-      state.calls.push("endQuote");
-    },
-    startMark: () => {
-      state.calls.push("startMark");
-    },
-    endMark: () => {
-      state.calls.push("endMark");
-    },
-    clearMarked: () => {
-      state.calls.push("clearMarked");
-      return Promise.resolve();
-    },
-    discardMark: () => {
-      state.calls.push("discardMark");
-    },
-    info: (message: string) => {
-      state.calls.push("info");
-      state.infoMessages.push(message);
-      return Promise.resolve();
-    },
-    showSpinner: () => {
-      state.calls.push("showSpinner");
-      return Promise.resolve();
-    },
-    hideSpinner: () => {
-      state.calls.push("hideSpinner");
-      return Promise.resolve();
-    },
-  } as unknown as PrinterService;
-  return { printerService, state };
-}
-
-// Unlike getSpawnService(), captures the options passed to spawn() (mode, onOutput) so quote/mark
-// wrapping can be verified, and feeds the given output lines through onOutput when present.
-function getSpawnServiceWithOutput(
-  outputLines: ReadonlyArray<string>,
-  result: SpawnResult,
-): { spawnService: SpawnService; receivedModes: Array<string | undefined> } {
-  const receivedModes: Array<string | undefined> = [];
-  const spawnService = {
-    spawn: (_command: ReadonlyArray<string>, options?: { mode?: string; onOutput?: unknown }) => {
-      receivedModes.push(options?.mode);
-      if (typeof options?.onOutput === "function") {
-        for (const line of outputLines) {
-          (options.onOutput as (line: string, stream: "stdout" | "stderr") => void)(line, "stdout");
-        }
-      }
-      return Promise.resolve(result);
-    },
-  } as unknown as SpawnService;
-  return { spawnService, receivedModes };
-}
-
 function getFetchService(
   handler: (input: string | URL, options?: FetchOptions) => Response | Promise<Response>,
 ): FetchService {
@@ -205,23 +132,6 @@ function githubReleaseRedirect(version: string): Response {
   return new Response(null, {
     status: 302,
     headers: { location: `https://github.com/flowscripter/example-cli/releases/tag/v${version}` },
-  });
-}
-
-// upgrade() with an install method override first calls checkForUpgrade() (a redirect response resolving the
-// latest version tag), then separately downloads the release asset itself (a 200 with a body).
-// Track a URL callback so tests can inspect which asset was requested.
-function getGithubReleaseFetchService(
-  version: string,
-  onAssetUrl?: (url: string) => void,
-): FetchService {
-  return getFetchService((input) => {
-    const url = input.toString();
-    if (url.endsWith("/releases/latest")) {
-      return githubReleaseRedirect(version);
-    }
-    onAssetUrl?.(url);
-    return new Response("new binary content", { status: 200 });
   });
 }
 
@@ -622,92 +532,6 @@ describe("DefaultUpgradeService", () => {
     expect(result.updateAvailable).toBe(false);
   });
 
-  test("checkForUpgrade does not pass a timeoutMs to the GitHub release lookup", async () => {
-    let receivedOptions: FetchOptions | undefined;
-    const service = new DefaultUpgradeService(
-      getConfig({
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      undefined,
-      getFetchService((_input, options) => {
-        receivedOptions = options;
-        return githubReleaseRedirect("9.9.9");
-      }),
-      undefined,
-    );
-    await withHost("linux", "x64", () => service.checkForUpgrade(InstallMethod.GITHUB_RELEASE));
-    expect(receivedOptions?.timeoutMs).toBeUndefined();
-  });
-
-  test("checkForUpgrade reports failed when fetch fails", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      undefined,
-      getFetchService(() => Promise.reject(new Error("network error"))),
-      undefined,
-    );
-    const result = await withHost("linux", "x64", () =>
-      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
-    );
-    expect(result.status).toEqual("failed");
-    if (result.status !== "failed") throw new Error("expected failed");
-    expect(result.error.message).toContain("network error");
-  });
-
-  test("checkForUpgrade reports failed when GitHub does not respond with a redirect", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({
-        githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
-      }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      undefined,
-      getFetchService(() => new Response(null, { status: 404 })),
-      undefined,
-    );
-    const result = await withHost("linux", "x64", () =>
-      service.checkForUpgrade(InstallMethod.GITHUB_RELEASE),
-    );
-    expect(result.status).toEqual("failed");
-    if (result.status !== "failed") throw new Error("expected failed");
-    expect(result.error.message).toContain("404");
-  });
-
-  test("checkForUpgrade resolves latest homebrew version from tap formula file", async () => {
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      undefined,
-      getFetchService((url) => {
-        expect(url).toEqual(
-          "https://raw.githubusercontent.com/flowscripter/homebrew-tap/main/example-cli.rb",
-        );
-        return new Response('version "v9.9.9"', { status: 200 });
-      }),
-      undefined,
-    );
-    const result = await withHost("darwin", "arm64", () =>
-      service.checkForUpgrade(InstallMethod.HOMEBREW),
-    );
-    if (result.status !== "checked") throw new Error(`expected "checked", got ${result.status}`);
-    expect(result.latestVersion).toEqual("9.9.9");
-  });
-
   test("upgrade returns error when no location configured", async () => {
     const service = new DefaultUpgradeService(getConfig(), getCLIConfig());
     const result = await withHost("linux", "x64", () => service.upgrade());
@@ -735,177 +559,67 @@ describe("DefaultUpgradeService", () => {
     expect(result.error?.message).toContain("SpawnService");
   });
 
-  const brewConfig = () =>
-    getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } });
-
-  function getBrewSpawnService(
-    spawnedCommands: ReadonlyArray<string>[],
-    handler: (command: ReadonlyArray<string>) => SpawnResult,
-    listOutput: string,
-  ): SpawnService {
-    return {
-      spawn: (command: ReadonlyArray<string>, options?: { onOutput?: unknown }) => {
-        spawnedCommands.push(command);
-        if (command[1] === "list" && typeof options?.onOutput === "function") {
-          (options.onOutput as (line: string, stream: "stdout" | "stderr") => void)(
-            listOutput,
-            "stdout",
-          );
-        }
-        return Promise.resolve(handler(command));
-      },
-    } as unknown as SpawnService;
-  }
-
-  test("upgrade via homebrew updates, upgrades and verifies the installed version", async () => {
-    const spawnedCommands: ReadonlyArray<string>[] = [];
-    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
-    setUpgradeServiceDependencies(
-      service,
-      getBrewSpawnService(spawnedCommands, () => ({ ok: true, exitCode: 0 }), "example-cli 9.9.9"),
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      undefined,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-    expect(result.ok).toBe(true);
-    expect(result.newVersion).toEqual("9.9.9");
-    expect(spawnedCommands).toEqual([
-      ["brew", "update"],
-      ["brew", "upgrade", "flowscripter/tap/example-cli"],
-      ["brew", "list", "--versions", "example-cli"],
-    ]);
-  });
-
-  test("upgrade via homebrew reports failure when brew update fails", async () => {
-    const spawnedCommands: ReadonlyArray<string>[] = [];
-    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
-    setUpgradeServiceDependencies(
-      service,
-      getBrewSpawnService(spawnedCommands, () => ({ ok: false, exitCode: 1 }), ""),
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      undefined,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-    expect(result.ok).toBe(false);
-    expect(result.error?.message).toContain("brew update failed");
-    expect(spawnedCommands).toEqual([["brew", "update"]]);
-  });
-
-  test("upgrade via homebrew reports failure when brew upgrade fails", async () => {
-    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
-    setUpgradeServiceDependencies(
-      service,
-      getBrewSpawnService(
-        [],
-        (command): SpawnResult =>
-          command[1] === "update" ? { ok: true, exitCode: 0 } : { ok: false, exitCode: 1 },
-        "",
-      ),
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      undefined,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-    expect(result.ok).toBe(false);
-    expect(result.error?.message).toContain("brew upgrade failed");
-  });
-
-  test("upgrade via homebrew reports failure when the expected version is not installed", async () => {
-    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
-    setUpgradeServiceDependencies(
-      service,
-      getBrewSpawnService([], () => ({ ok: true, exitCode: 0 }), "example-cli 3.0.8"),
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      undefined,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-    expect(result.ok).toBe(false);
-    expect(result.error?.message).toContain(
-      "9.9.9 is not installed (installed: example-cli 3.0.8)",
-    );
-  });
-
-  test("upgrade via homebrew accepts a v-prefixed installed version", async () => {
-    const service = new DefaultUpgradeService(brewConfig(), getCLIConfig());
-    setUpgradeServiceDependencies(
-      service,
-      getBrewSpawnService([], () => ({ ok: true, exitCode: 0 }), "example-cli v9.9.9"),
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      undefined,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-    expect(result.ok).toBe(true);
-    expect(result.newVersion).toEqual("9.9.9");
-  });
-
-  test("upgrade wraps the spawned install output in quote/mark and clears it on success", async () => {
-    const { spawnService, receivedModes } = getSpawnServiceWithOutput(
-      ["==> Upgrading example-cli", "example-cli 9.9.9"],
-      { ok: true, exitCode: 0 },
-    );
-    const { printerService, state } = getFakePrinterService();
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      spawnService,
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      printerService,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-
-    expect(result.ok).toBe(true);
-    expect(receivedModes).toEqual(["wrapped", "wrapped", "wrapped"]);
-    expect(state.calls).toEqual([
-      "showSpinner", // "Installing version 9.9.9..."
-      "hideSpinner",
-      "startQuote",
-      "startMark",
-      "info",
-      "info",
-      "endQuote",
-      "endMark",
-      "clearMarked",
-      "startQuote",
-      "startMark",
-      "info",
-      "info",
-      "endQuote",
-      "endMark",
-      "clearMarked",
-    ]);
-    expect(state.infoMessages).toContain("==> Upgrading example-cli\n");
-  });
-
-  test("upgrade leaves the spawned install output visible when it fails", async () => {
-    const { spawnService } = getSpawnServiceWithOutput(["Error: formula not found"], {
-      ok: false,
-      exitCode: 1,
-    });
-    const { printerService, state } = getFakePrinterService();
-    const service = new DefaultUpgradeService(
-      getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-      getCLIConfig(),
-    );
-    setUpgradeServiceDependencies(
-      service,
-      spawnService,
-      getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
-      printerService,
-    );
-
-    const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
-
-    expect(result.ok).toBe(false);
-    expect(state.calls).toContain("discardMark");
-    expect(state.calls).not.toContain("clearMarked");
+  test("upgrade dispatches to the linux script, homebrew and winget install methods", async () => {
+    const cases: Array<
+      [InstallMethod, NodeJS.Platform, Partial<UpgradeLocationsConfig>, string[]]
+    > = [
+      [
+        InstallMethod.LINUX_SCRIPT,
+        "linux",
+        {
+          linuxScript: { scriptUrl: "https://example.com/install.sh" },
+          githubRelease: { owner: "flowscripter", repo: "example-cli", assetPattern: "x" },
+        },
+        ["sh", "-c", "curl -fsSL https://example.com/install.sh | sh"],
+      ],
+      [
+        InstallMethod.HOMEBREW,
+        "darwin",
+        { homebrew: { tap: "flowscripter/tap", formula: "example-cli" } },
+        ["brew", "update"],
+      ],
+      [
+        InstallMethod.WINGET,
+        "win32",
+        { winget: { packageId: "Flowscripter.ExampleCli" } },
+        [
+          "winget",
+          "upgrade",
+          "--id",
+          "Flowscripter.ExampleCli",
+          "--silent",
+          "--accept-package-agreements",
+          "--accept-source-agreements",
+        ],
+      ],
+    ];
+    for (const [installMethod, platform, config, expectedFirstCommand] of cases) {
+      const spawnedCommands: ReadonlyArray<string>[] = [];
+      const service = new DefaultUpgradeService(getConfig(config), getCLIConfig());
+      setUpgradeServiceDependencies(
+        service,
+        {
+          spawn: (command: ReadonlyArray<string>, options?: SpawnOptions) => {
+            if (command[1] === "show" && options?.mode === "wrapped") {
+              options.onOutput?.("Version: 9.9.9", "stdout");
+            } else {
+              spawnedCommands.push(command);
+            }
+            return Promise.resolve({ ok: true, exitCode: 0 });
+          },
+        },
+        getFetchService((url) =>
+          url.toString().endsWith(".rb")
+            ? new Response('version "v9.9.9"', { status: 200 })
+            : githubReleaseRedirect("9.9.9"),
+        ),
+        undefined,
+      );
+      await withHost(platform, platform === "darwin" ? "arm64" : "x64", () =>
+        service.upgrade(installMethod),
+      );
+      expect(spawnedCommands[0]).toEqual(expectedFirstCommand);
+    }
   });
 
   test("getUpgradeCheckResult caches the same promise across calls", async () => {
@@ -1000,7 +714,15 @@ describe("DefaultUpgradeService", () => {
     );
     setUpgradeServiceDependencies(
       service,
-      getBrewSpawnService(spawnedCommands, () => ({ ok: true, exitCode: 0 }), "example-cli 9.9.9"),
+      {
+        spawn: (command: ReadonlyArray<string>, options?: SpawnOptions) => {
+          spawnedCommands.push(command);
+          if (command[1] === "list" && options?.mode === "wrapped") {
+            options.onOutput?.("example-cli 9.9.9", "stdout");
+          }
+          return Promise.resolve({ ok: true, exitCode: 0 });
+        },
+      },
       getFetchService(() => new Response('version "v9.9.9"', { status: 200 })),
       undefined,
     );
@@ -1012,223 +734,6 @@ describe("DefaultUpgradeService", () => {
     const result = await withHost("darwin", "arm64", () => service.upgrade(InstallMethod.HOMEBREW));
     expect(result.ok).toBe(true);
     expect(result.newVersion).toEqual("9.9.9");
-  });
-
-  describe("upgrade via GitHub release", () => {
-    let workDir: string;
-    let currentExecutable: string;
-    let originalExecPath: string;
-
-    beforeEach(async () => {
-      workDir = await mkdtemp(join(tmpdir(), "dcf-upgrade-test-"));
-      currentExecutable = join(workDir, "example-cli");
-      await writeFile(currentExecutable, "old binary content");
-      originalExecPath = process.execPath;
-      // #upgradeViaGithubRelease reads process.execPath directly (it must always operate on the
-      // real running executable in production); override it for the duration of the test so the
-      // upgrade's fs operations run against a disposable fixture file instead of the real test
-      // runner binary.
-      Object.defineProperty(process, "execPath", { value: currentExecutable, configurable: true });
-    });
-
-    afterEach(async () => {
-      Object.defineProperty(process, "execPath", { value: originalExecPath, configurable: true });
-      await rm(workDir, { recursive: true, force: true });
-    });
-
-    test("upgrade via GitHub release on Linux extracts to a staging file and renames it into place, avoiding ETXTBSY", async () => {
-      const spawnedCommands: ReadonlyArray<string>[] = [];
-      let stagingBinaryChmodPath: string | undefined;
-      const service = new DefaultUpgradeService(
-        getConfig({
-          githubRelease: {
-            owner: "flowscripter",
-            repo: "example-cli",
-            assetPattern: "example-cli_{os}_{arch}.zip",
-          },
-        }),
-        getCLIConfig("example-cli"),
-      );
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService((command) => {
-          spawnedCommands.push(command);
-          if (command[0] === "unzip") {
-            // Simulate the archive extraction step: `unzip -o <archive> -d <tmpDir>` produces
-            // an extracted binary at <tmpDir>/example-cli.
-            const tmpDir = command[4] as string;
-            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
-          }
-          if (command[0] === "chmod") {
-            stagingBinaryChmodPath = command[2];
-          }
-          return { ok: true, exitCode: 0 };
-        }),
-        getGithubReleaseFetchService("9.9.9"),
-        undefined,
-      );
-
-      const result = await withHost("linux", "x64", () =>
-        service.upgrade(InstallMethod.GITHUB_RELEASE),
-      );
-
-      expect(result.ok).toBe(true);
-      // The final content at currentExecutable must be the new binary - proving a real
-      // replacement happened (via rename), not a no-op.
-      expect(await readFile(currentExecutable, "utf8")).toEqual("new binary content");
-      // chmod +x must run against a staging path in the SAME directory as currentExecutable
-      // (same filesystem, required for rename() to be atomic), not os.tmpdir().
-      expect(stagingBinaryChmodPath).toBeDefined();
-      expect(join(stagingBinaryChmodPath!, "..")).not.toEqual(tmpdir());
-      expect(stagingBinaryChmodPath!.startsWith(workDir)).toBe(true);
-      // No leftover staging directory (created via mkdtemp) should remain.
-      const stagingDirEntries = spawnedCommands.filter((c) => c[0] === "chmod").map((c) => c[2]);
-      expect(stagingDirEntries.length).toEqual(1);
-    });
-
-    test("upgrade via GitHub release requests the 'aarch64' asset label for macOS arm64", async () => {
-      let requestedUrl: string | undefined;
-      const service = new DefaultUpgradeService(
-        getConfig({
-          githubRelease: {
-            owner: "flowscripter",
-            repo: "example-cli",
-            assetPattern: "example-cli_{os}_{arch}.zip",
-          },
-        }),
-        getCLIConfig("example-cli"),
-      );
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService((command) => {
-          if (command[0] === "unzip") {
-            const tmpDir = command[4] as string;
-            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
-          }
-          return { ok: true, exitCode: 0 };
-        }),
-        getGithubReleaseFetchService("9.9.9", (url) => {
-          requestedUrl = url;
-        }),
-        undefined,
-      );
-
-      const result = await withHost("darwin", "arm64", () =>
-        service.upgrade(InstallMethod.GITHUB_RELEASE),
-      );
-      expect(result.ok).toBe(true);
-      expect(requestedUrl).toContain("example-cli_MacOS_aarch64.zip");
-    });
-
-    test("upgrade via GitHub release requests the 'x64' asset label for macOS x64 (Intel)", async () => {
-      let requestedUrl: string | undefined;
-      const service = new DefaultUpgradeService(
-        getConfig({
-          supportedPlatforms: [{ os: SupportedOs.MACOS, arch: SupportedArch.X64 }],
-          githubRelease: {
-            owner: "flowscripter",
-            repo: "example-cli",
-            assetPattern: "example-cli_{os}_{arch}.zip",
-          },
-        }),
-        getCLIConfig("example-cli"),
-      );
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService((command) => {
-          if (command[0] === "unzip") {
-            const tmpDir = command[4] as string;
-            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
-          }
-          return { ok: true, exitCode: 0 };
-        }),
-        getGithubReleaseFetchService("9.9.9", (url) => {
-          requestedUrl = url;
-        }),
-        undefined,
-      );
-
-      const result = await withHost("darwin", "x64", () =>
-        service.upgrade(InstallMethod.GITHUB_RELEASE),
-      );
-      expect(result.ok).toBe(true);
-      expect(requestedUrl).toContain("example-cli_MacOS_x64.zip");
-    });
-
-    test("upgrade via GitHub release requests the 'arm64' asset label for Linux arm64", async () => {
-      let requestedUrl: string | undefined;
-      const service = new DefaultUpgradeService(
-        getConfig({
-          githubRelease: {
-            owner: "flowscripter",
-            repo: "example-cli",
-            assetPattern: "example-cli_{os}_{arch}.zip",
-          },
-        }),
-        getCLIConfig("example-cli"),
-      );
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService((command) => {
-          if (command[0] === "unzip") {
-            const tmpDir = command[4] as string;
-            writeFileSync(join(tmpDir, "example-cli"), "new binary content");
-          }
-          return { ok: true, exitCode: 0 };
-        }),
-        getGithubReleaseFetchService("9.9.9", (url) => {
-          requestedUrl = url;
-        }),
-        undefined,
-      );
-
-      const result = await withHost("linux", "arm64", () =>
-        service.upgrade(InstallMethod.GITHUB_RELEASE),
-      );
-      expect(result.ok).toBe(true);
-      expect(requestedUrl).toContain("example-cli_Linux_arm64.zip");
-    });
-
-    test("upgrade via GitHub release on Windows deletes any stale '.old.exe' before moving the current exe aside", async () => {
-      const spawnedCommands: ReadonlyArray<string>[] = [];
-      const oldPath = `${currentExecutable}.old.exe`;
-      // Simulate a stale leftover from a previous upgrade run.
-      await writeFile(oldPath, "stale leftover from a previous upgrade");
-
-      const service = new DefaultUpgradeService(
-        getConfig({
-          githubRelease: {
-            owner: "flowscripter",
-            repo: "example-cli",
-            assetPattern: "example-cli_{os}_{arch}.zip",
-          },
-        }),
-        getCLIConfig("example-cli"),
-      );
-      setUpgradeServiceDependencies(
-        service,
-        getSpawnService((command) => {
-          spawnedCommands.push(command);
-          if (command[0] === "cmd" && command[2] === "del") {
-            rmSync(oldPath, { force: true });
-          }
-          return { ok: true, exitCode: 0 };
-        }),
-        getGithubReleaseFetchService("9.9.9"),
-        undefined,
-      );
-
-      const result = await withHost("win32", "x64", () =>
-        service.upgrade(InstallMethod.GITHUB_RELEASE),
-      );
-
-      expect(result.ok).toBe(true);
-      const delIndex = spawnedCommands.findIndex((c) => c[0] === "cmd" && c[2] === "del");
-      const moveIndex = spawnedCommands.findIndex((c) => c[0] === "cmd" && c[2] === "move");
-      expect(delIndex).toBeGreaterThanOrEqual(0);
-      expect(moveIndex).toBeGreaterThan(delIndex);
-      expect(spawnedCommands[delIndex]).toEqual(["cmd", "/c", "del", "/f", "/q", oldPath]);
-    });
   });
 
   describe("restart after an automatic upgrade", () => {
@@ -1281,47 +786,6 @@ describe("DefaultUpgradeService", () => {
       );
 
       expect(service.resolveUpgradedExecutable(InstallMethod.WINGET)).toBeUndefined();
-    });
-
-    // Homebrew paths are POSIX paths
-    test.skipIf(process.platform === "win32")(
-      "resolveUpgradedExecutable returns the homebrew opt executable when it exists",
-      async () => {
-        const prefix = await mkdtemp(join(tmpdir(), "homebrew-"));
-        try {
-          const cellarBin = join(prefix, "Cellar", "example-cli", "1.0.0", "bin");
-          const optBin = join(prefix, "opt", "example-cli", "bin");
-          await mkdir(cellarBin, { recursive: true });
-          await writeFile(join(cellarBin, "example-cli"), "");
-          process.execPath = join(cellarBin, "example-cli");
-          const service = new DefaultUpgradeService(
-            getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-            getCLIConfig(),
-          );
-
-          expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toBeUndefined();
-
-          await mkdir(optBin, { recursive: true });
-          await writeFile(join(optBin, "example-cli"), "");
-
-          // the temporary directory may itself be behind a symlink (e.g. /var on macOS)
-          expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toEqual(
-            join(realpathSync(prefix), "opt", "example-cli", "bin", "example-cli"),
-          );
-        } finally {
-          await rm(prefix, { recursive: true, force: true });
-        }
-      },
-    );
-
-    test("resolveUpgradedExecutable returns undefined for homebrew when not running from the Cellar", () => {
-      process.execPath = "/usr/local/bin/example-cli";
-      const service = new DefaultUpgradeService(
-        getConfig({ homebrew: { tap: "flowscripter/tap", formula: "example-cli" } }),
-        getCLIConfig(),
-      );
-
-      expect(service.resolveUpgradedExecutable(InstallMethod.HOMEBREW)).toBeUndefined();
     });
 
     test("restart spawns the executable with the args, inherited output, long-running mode and the restarted-from version", async () => {
@@ -1387,35 +851,5 @@ describe("DefaultUpgradeService", () => {
       expect(toRunState({ ok: false, exitCode: 127 })).toEqual(RunState.RUNTIME_ERROR);
       expect(toRunState({ ok: false, error: new Error("ENOENT") })).toBeUndefined();
     });
-  });
-});
-
-describe("parseBrewInstalledVersions", () => {
-  const parse = (output: string) =>
-    parseBrewInstalledVersions(output, "example-cli").map((v) => v.version);
-
-  test("parses a plain version", () => {
-    expect(parse("example-cli 3.0.11")).toEqual(["3.0.11"]);
-  });
-
-  test("parses a v-prefixed version", () => {
-    expect(parse("example-cli v3.0.11")).toEqual(["3.0.11"]);
-  });
-
-  test("parses multiple installed versions", () => {
-    expect(parse("example-cli 3.0.10 v3.0.11")).toEqual(["3.0.10", "3.0.11"]);
-  });
-
-  test("strips a revision suffix", () => {
-    expect(parse("example-cli 3.0.11_2")).toEqual(["3.0.11"]);
-  });
-
-  test("handles surrounding whitespace and newlines", () => {
-    expect(parse("  example-cli   3.0.10\n  3.0.11 \n")).toEqual(["3.0.10", "3.0.11"]);
-  });
-
-  test("returns nothing for empty output or a name only", () => {
-    expect(parse("")).toEqual([]);
-    expect(parse("example-cli")).toEqual([]);
   });
 });
