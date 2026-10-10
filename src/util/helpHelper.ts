@@ -31,6 +31,10 @@ function userInput(value: string): string {
   return `${USER_INPUT_START}${value}${USER_INPUT_END}`;
 }
 
+function userInputList(values: ReadonlyArray<unknown>, separator: string): string {
+  return values.map((value) => userInput(`${value}`)).join(separator);
+}
+
 function renderDescription(printerService: PrinterService, description: string): string {
   let rendered = "";
   let last = 0;
@@ -201,7 +205,7 @@ export function getGlobalArgumentHelpEntry(
 
   const notesItems: Array<string> = [];
   if (argument.allowableValues !== undefined && argument.allowableValues.length > 0) {
-    notesItems.push(`valid values: ${userInput(argument.allowableValues.join("|"))}`);
+    notesItems.push(`valid values: ${userInputList(argument.allowableValues, "|")}`);
   } else {
     switch (argument.type) {
       case ValueTypeName.STRING:
@@ -332,7 +336,7 @@ function getOptionHelpEntry(
     });
   } else {
     if (option.allowableValues !== undefined && option.allowableValues.length > 0) {
-      notesItems.push(`valid values: ${userInput(option.allowableValues.join("|"))}`);
+      notesItems.push(`valid values: ${userInputList(option.allowableValues, "|")}`);
     } else {
       switch (option.type) {
         case ValueTypeName.STRING:
@@ -364,11 +368,11 @@ function getOptionHelpEntry(
 
   if (option.defaultValue !== undefined) {
     notesItems.push(
-      `default: ${userInput(
+      `default: ${
         Array.isArray(option.defaultValue)
-          ? `${option.defaultValue.join(", ")}`
-          : `${option.defaultValue}`,
-      )}`,
+          ? userInputList(option.defaultValue, ", ")
+          : userInput(`${option.defaultValue}`)
+      }`,
     );
   }
 
@@ -417,7 +421,7 @@ function getPositionalHelpEntry(
 ): HelpEntry {
   const notesItems: Array<string> = [];
   if (positional.allowableValues !== undefined && positional.allowableValues.length > 0) {
-    notesItems.push(`valid values: ${userInput(positional.allowableValues.join("|"))}`);
+    notesItems.push(`valid values: ${userInputList(positional.allowableValues, "|")}`);
   } else {
     switch (positional.type) {
       case ValueTypeName.STRING:
