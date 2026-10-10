@@ -5,7 +5,7 @@ const logger = getLogger("BackgroundTasks");
 /**
  * How long, at shutdown, to wait for in-flight "background" startup tasks before abandoning them.
  */
-export const BACKGROUND_TASK_GRACE_PERIOD_MS = 2000;
+export const BACKGROUND_TASK_GRACE_PERIOD_MS = 1000;
 
 interface InFlightTask {
   readonly id: string;

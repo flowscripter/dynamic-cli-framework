@@ -317,7 +317,7 @@ awaits it before moving to the next lower-priority task, or fires it without
 awaiting (`"background"`, with errors logged rather than propagated).
 
 At shutdown, before the key-value configuration is flushed, the CLI waits up to
-2 seconds for any background tasks still in flight so that their results can be
+1 second for any background tasks still in flight so that their results can be
 persisted. Tasks still running when that grace period expires are abandoned. Set
 `DYNAMIC_CLI_FRAMEWORK_DEBUG=1` to log each background task's start, completion,
 failure and abandonment along with its ID.

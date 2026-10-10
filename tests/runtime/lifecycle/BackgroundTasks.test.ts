@@ -44,7 +44,7 @@ async function runDebugScript(body: string): Promise<string> {
 
 describe("BackgroundTasks tests", () => {
   test("the grace period is a named constant", () => {
-    expect(BACKGROUND_TASK_GRACE_PERIOD_MS).toEqual(2000);
+    expect(BACKGROUND_TASK_GRACE_PERIOD_MS).toEqual(1000);
   });
 
   test("returns immediately, without starting a timer, when nothing is in flight", async () => {
