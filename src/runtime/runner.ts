@@ -33,6 +33,7 @@ import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 import type { ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultStartupService from "../service/startup/DefaultStartupService.ts";
 import { sortByPriority } from "./lifecycle/PriorityTaskList.ts";
+import { trackBackgroundTask } from "./lifecycle/BackgroundTasks.ts";
 
 const logger = getLogger("runner");
 
@@ -564,8 +565,8 @@ async function findAndExecuteDefaultNonModifierCommand(
  *    - Give the task a Context whose KeyValueService is bound permanently to its own scope
  *      (keyed by task.id), via KeyValueServiceProvider if provided.
  *    - Run the task: awaited before continuing if its mode is "blocking" (the default, and how
- *      every ServiceProvider's initService() behaves); fired without awaiting if "background"
- *      (errors logged, not propagated).
+ *      every ServiceProvider's initService() behaves); started without awaiting if "background"
+ *      (errors logged, not propagated; the CLI gives it a short grace period to finish at shutdown).
  *    - Return immediately if a "blocking" task returned an exitRequest, using its runState and
  *      skipping the remaining tasks and the command.
  * 2. Scan arguments for any GlobalModifierCommand clauses not provided by a StartupTask
@@ -698,9 +699,7 @@ export async function run(
         return { runState: outcome.exitRequest.runState, exitRequested: true };
       }
     } else {
-      void task.run(taskContext).catch((error: unknown) => {
-        logger.debug(() => `Background startup task '${task.id}' failed: ${error}`);
-      });
+      trackBackgroundTask(task.id, () => task.run(taskContext));
     }
   }
 

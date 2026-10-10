@@ -35,6 +35,7 @@ import { IMAGE_PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-ap
 import { PLUGIN_SERVICE_ID, SPAWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultUpgradeService from "../../src/service/upgrade/DefaultUpgradeService.ts";
 import UpgradeServiceProvider from "../../src/service/upgrade/UpgradeServiceProvider.ts";
+import { BACKGROUND_TASK_GRACE_PERIOD_MS } from "../../src/runtime/lifecycle/BackgroundTasks.ts";
 import CompletionServiceProvider from "../../src/service/completion/CompletionServiceProvider.ts";
 
 const mockKeyReader: KeyReader = {
@@ -769,6 +770,105 @@ describe("BaseCLI tests", () => {
       expect(restarts).toEqual([]);
       expect(runResult.runState).toEqual(RunState.SUCCESS);
       expect(commandRan).toBeTrue();
+    });
+  });
+  describe("background startup tasks at shutdown", () => {
+    const TASK_ID = "test/slow-background-task";
+    const fixture = path.resolve(import.meta.dir, "../fixtures/backgroundTaskCli.ts");
+
+    // Runs a CLI in its own process (shutdown flushes once per process) with a background task
+    // which writes to its key-value scope after delay (or never finishes), and returns what
+    // reached the config file.
+    async function runWithSlowBackgroundTask(
+      cliArgs: ReadonlyArray<string>,
+      delay: number | "never",
+      exitRequest: "exitRequest" | "none" = "none",
+    ) {
+      const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
+      const configLocation = path.join(configFolder, "config.json");
+      await fs.writeFile(configLocation, JSON.stringify({}));
+      try {
+        const proc = Bun.spawn(
+          [
+            process.execPath,
+            fixture,
+            configLocation,
+            TASK_ID,
+            String(delay),
+            exitRequest,
+            ...cliArgs,
+          ],
+          { stdout: "pipe", stderr: "pipe" },
+        );
+        const output = await new Response(proc.stdout).text();
+        await proc.exited;
+        const { runState, elapsed } = JSON.parse(output) as { runState: RunState; elapsed: number };
+        const config = JSON.parse(await fs.readFile(configLocation, "utf8"));
+        const written = config["key-values"]?.services?.[TASK_ID]?.written === true;
+        return { runState, written, elapsed };
+      } finally {
+        await fs.rm(configFolder, { recursive: true, force: true });
+      }
+    }
+
+    test("a task finishing inside the grace period is persisted after a normal command", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(["command"], 300);
+      expect(runState).toEqual(RunState.SUCCESS);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted after --version", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(["--version"], 300);
+      expect(runState).toEqual(RunState.SUCCESS);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted after --help", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(["--help"], 300);
+      expect(runState).toEqual(RunState.SUCCESS);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted when no command is given", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask([], 300);
+      expect(runState).toEqual(RunState.NO_COMMAND);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted after an unrecognised command", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(["bogus"], 300);
+      expect(runState).toEqual(RunState.NO_COMMAND);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted after a command error", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(["fail"], 300);
+      expect(runState).toEqual(RunState.EXECUTION_ERROR);
+      expect(written).toBeTrue();
+    });
+
+    test("a task finishing inside the grace period is persisted after a startup task exitRequest", async () => {
+      const { runState, written } = await runWithSlowBackgroundTask(
+        ["command"],
+        300,
+        "exitRequest",
+      );
+      expect(runState).toEqual(RunState.NO_COMMAND);
+      expect(written).toBeTrue();
+    });
+
+    test("a task exceeding the grace period is abandoned and shutdown still completes", async () => {
+      const { runState, written, elapsed } = await runWithSlowBackgroundTask(["command"], "never");
+      expect(runState).toEqual(RunState.SUCCESS);
+      expect(written).toBeFalse();
+      expect(elapsed).toBeGreaterThanOrEqual(BACKGROUND_TASK_GRACE_PERIOD_MS - 100);
+      expect(elapsed).toBeLessThan(BACKGROUND_TASK_GRACE_PERIOD_MS + 1500);
+    });
+
+    test("shutdown is not delayed when the background task has already finished", async () => {
+      const { written, elapsed } = await runWithSlowBackgroundTask(["command"], 0);
+      expect(written).toBeTrue();
+      expect(elapsed).toBeLessThan(BACKGROUND_TASK_GRACE_PERIOD_MS);
     });
   });
 });

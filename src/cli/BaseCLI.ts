@@ -36,6 +36,7 @@ import KeyValueServiceProvider from "../service/configuration/KeyValueServicePro
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
 import TableGeneratorServiceProvider from "../service/tableGenerator/TableGeneratorServiceProvider.ts";
 import { run } from "../runtime/runner.ts";
+import { awaitBackgroundTasks } from "../runtime/lifecycle/BackgroundTasks.ts";
 import { printRuntimeError } from "../util/runnerHelper.ts";
 
 import { WritableStream } from "node:stream/web";
@@ -510,6 +511,7 @@ export default class BaseCLI implements CLI {
         error: error as Error,
       };
     } finally {
+      await awaitBackgroundTasks();
       await ShutdownServiceProvider.shutdown();
     }
   }
