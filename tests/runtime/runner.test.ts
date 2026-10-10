@@ -23,6 +23,7 @@ import {
 import WritableStreamString from "../fixtures/StreamString.ts";
 import StreamString from "../fixtures/StreamString.ts";
 import DefaultStartupService from "../../src/service/startup/DefaultStartupService.ts";
+import { awaitBackgroundTasks } from "../../src/runtime/lifecycle/BackgroundTasks.ts";
 describe("runner tests", () => {
   test("Sub-Command run", async () => {
     let hasRun = false;
@@ -1370,5 +1371,49 @@ describe("runner tests", () => {
 
     expect(runResult).toEqual({ runState: RunState.NO_COMMAND, exitRequested: true });
     expect(ran).toEqual(["first", "exit"]);
+  });
+  test("A background startup task is started without being awaited, and can be awaited via awaitBackgroundTasks", async () => {
+    let backgroundDone = false;
+    let commandSawBackgroundDone: boolean | undefined;
+    const command = getSubCommand("command", []);
+    command.execute = (): Promise<void> => {
+      commandSawBackgroundDone = backgroundDone;
+      return Promise.resolve();
+    };
+
+    const startupService = new DefaultStartupService();
+    startupService.registerTask({
+      id: "slow-background",
+      priority: 10,
+      mode: "background",
+      run: async () => {
+        await new Promise<void>((resolve) => setTimeout(resolve, 30));
+        backgroundDone = true;
+      },
+    });
+    startupService.registerTask({
+      id: "failing-background",
+      priority: 5,
+      mode: "background",
+      run: () => Promise.reject(new Error("background failure")),
+    });
+
+    const runResult = await run(
+      ["command"],
+      new DefaultCommandRegistry([command]),
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(new WritableStreamString()),
+      undefined,
+      startupService,
+    );
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(commandSawBackgroundDone).toBeFalse();
+
+    await awaitBackgroundTasks(1000);
+
+    expect(backgroundDone).toBeTrue();
   });
 });
