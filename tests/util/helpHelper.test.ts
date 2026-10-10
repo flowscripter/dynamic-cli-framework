@@ -51,7 +51,7 @@ describe("helpHelper tests", () => {
     ]);
     const out = await render(getCommandArgsHelpSections(cliConfig, false, subCommand, false));
     expect(out).toContain(
-      "<s>(valid values: </s><p>DEBUG|INFO</p><s>, default: </s><p>INFO</p><s>)</s>",
+      "<s>(valid values: </s><p>DEBUG</p><s>|</s><p>INFO</p><s>, default: </s><p>INFO</p><s>)</s>",
     );
   });
 
@@ -60,7 +60,7 @@ describe("helpHelper tests", () => {
       { name: "tags", type: ValueTypeName.STRING, isArray: true, defaultValue: ["a", "b"] },
     ]);
     const out = await render(getCommandArgsHelpSections(cliConfig, false, subCommand, false));
-    expect(out).toContain("default: </s><p>a, b</p><s>, array)");
+    expect(out).toContain("default: </s><p>a</p><s>, </s><p>b</p><s>, array)");
   });
 
   test("valid values of a positional are rendered as user input", async () => {
@@ -70,7 +70,7 @@ describe("helpHelper tests", () => {
       [{ name: "mode", type: ValueTypeName.STRING, allowableValues: ["x", "y"] }],
     );
     const out = await render(getCommandArgsHelpSections(cliConfig, false, subCommand, false));
-    expect(out).toContain("<s>(valid values: </s><p>x|y</p><s>)</s>");
+    expect(out).toContain("<s>(valid values: </s><p>x</p><s>|</s><p>y</p><s>)</s>");
   });
 
   test("valid values and default value of a global argument are rendered as user input", async () => {
