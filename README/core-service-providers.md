@@ -168,8 +168,12 @@ Provides:
   secondary, emphasised, selected) and named colors (yellow, orange, red,
   magenta, violet, blue, cyan, green) as well as arbitrary hex colors. Printing
   hyperlinks is supported.
-- `DarkModeCommand` which allows dark or light mode to be enabled via the
-  argument `--dark-mode` or the env var `DARK_MODE`.
+- `ThemeCommand` which allows the output theme to be set to `auto`, `dark` or
+  `light` via the argument `--theme` or the env var `THEME` (default `auto`).
+  With `auto` the terminal background is detected using the `COLORFGBG` env var
+  and then an OSC 11 terminal query (only on an interactive TTY, with a short
+  timeout). Dark is used if the background cannot be determined or color is
+  disabled.
 - `NoColorCommand` which allows color output to be disabled via the argument
   `--no-color` or the env var `NO_COLOR`.
 - `NoHyperlinksCommand` which allows hyperlink output to be disabled via the
