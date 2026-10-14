@@ -9,7 +9,7 @@ import { detectDarkBackground } from "../../../terminal/BackgroundDetector.ts";
 /**
  * Command allowing the specification of the dark/light theme for the {@link PrinterService}.
  *
- * With the `auto` value the terminal background is detected and dark is used if it cannot be determined.
+ * With the `auto` value the terminal background is detected and light is used if it cannot be determined.
  */
 export default class ThemeCommand implements GlobalModifierCommand {
   readonly name = "theme";
@@ -38,8 +38,8 @@ export default class ThemeCommand implements GlobalModifierCommand {
 
     if (argumentValue === "auto") {
       printerService.darkMode = printerService.colorEnabled
-        ? ((await this.#detect()) ?? true)
-        : true;
+        ? ((await this.#detect()) ?? false)
+        : false;
     } else {
       printerService.darkMode = argumentValue === "dark";
     }

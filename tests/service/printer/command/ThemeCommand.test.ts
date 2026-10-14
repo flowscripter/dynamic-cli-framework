@@ -63,20 +63,28 @@ describe("ThemeCommand tests", () => {
     await ShutdownServiceProvider.shutdown();
   });
 
-  test("auto falls back to dark when undetected", async () => {
+  test("auto falls back to light when undetected", async () => {
     const { printerService, context } = await setup();
-    printerService.darkMode = false;
+    printerService.darkMode = true;
     await new ThemeCommand(100, () => Promise.resolve(undefined)).execute(context, "auto");
-    expect(printerService.darkMode).toEqual(true);
+    expect(printerService.darkMode).toEqual(false);
     await ShutdownServiceProvider.shutdown();
   });
 
   test("auto skips detection when color is disabled", async () => {
     const { printerService, context } = await setup(false);
-    printerService.darkMode = false;
+    printerService.darkMode = true;
     const command = new ThemeCommand(100, () => Promise.reject(new Error("unexpected")));
     await command.execute(context, "auto");
-    expect(printerService.darkMode).toEqual(true);
+    expect(printerService.darkMode).toEqual(false);
+    await ShutdownServiceProvider.shutdown();
+  });
+
+  test("auto with the default detector falls back to light without a TTY", async () => {
+    const { printerService, context } = await setup();
+    printerService.darkMode = true;
+    await new ThemeCommand(100).execute(context, "auto");
+    expect(printerService.darkMode).toEqual(false);
     await ShutdownServiceProvider.shutdown();
   });
 
