@@ -167,7 +167,7 @@ Provides:
   `light` via the argument `--theme` or the env var `THEME` (default `auto`).
   With `auto` the terminal background is detected using the `COLORFGBG` env var
   and then an OSC 11 terminal query (only on an interactive TTY, with a short
-  timeout). Dark is used if the background cannot be determined or color is
+  timeout). Light is used if the background cannot be determined or color is
   disabled.
 - `NoColorCommand` which allows color output to be disabled via the argument
   `--no-color` or the env var `NO_COLOR`.
