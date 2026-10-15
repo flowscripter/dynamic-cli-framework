@@ -17,7 +17,10 @@ import type {
   SpawnService,
 } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
-import { defaultOpenUrl } from "../../../src/service/prompter/prompt/promptOpenUrl.ts";
+import {
+  defaultOpenUrl,
+  getOpenCommand,
+} from "../../../src/service/prompter/prompt/promptOpenUrl.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -757,13 +760,31 @@ describe("DefaultPrompterService context services", () => {
     }));
 });
 
+describe("getOpenCommand", () => {
+  test("uses a native opener on Windows without cmd.exe", () => {
+    const url = "https://example.com/?a=1&b=2";
+    expect(getOpenCommand("win32", url)).toEqual(["rundll32", "url.dll,FileProtocolHandler", url]);
+  });
+
+  test("uses open on macOS and xdg-open elsewhere", () => {
+    expect(getOpenCommand("darwin", "https://example.com")).toEqual([
+      "open",
+      "https://example.com",
+    ]);
+    expect(getOpenCommand("linux", "https://example.com")).toEqual([
+      "xdg-open",
+      "https://example.com",
+    ]);
+  });
+});
+
 describe("defaultOpenUrl", () => {
   test("spawns the platform opener with stream output ignored and no long-running mode", async () => {
     const { spawnService, calls } = getMockSpawnService({ ok: true, exitCode: 0 });
 
     await defaultOpenUrl(spawnService, "https://example.com");
 
-    expect(calls[0]!.command[calls[0]!.command.length - 1]).toEqual("https://example.com");
+    expect(calls[0]!.command[calls[0]!.command.length - 1]).toEqual("https://example.com/");
     expect(calls[0]!.options).toEqual({ mode: "ignore", longRunning: false });
   });
 

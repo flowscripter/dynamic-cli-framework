@@ -7,19 +7,22 @@ function isRemoteSession(): boolean {
   return !!(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY);
 }
 
+export function getOpenCommand(platform: string, url: string): string[] {
+  if (platform === "darwin") {
+    return ["open", url];
+  }
+  if (platform === "win32") {
+    return ["rundll32", "url.dll,FileProtocolHandler", url];
+  }
+  return ["xdg-open", url];
+}
+
 export async function defaultOpenUrl(spawnService: SpawnService, url: string): Promise<void> {
   const parsed = new URL(url);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`Unsupported URL protocol: ${parsed.protocol}`);
   }
-  let cmd: string[];
-  if (process.platform === "darwin") {
-    cmd = ["open", url];
-  } else if (process.platform === "win32") {
-    cmd = ["cmd", "/c", "start", "", url];
-  } else {
-    cmd = ["xdg-open", url];
-  }
+  const cmd = getOpenCommand(process.platform, parsed.href);
   const result = await spawnService.spawn(cmd, { mode: "ignore", longRunning: false });
   if (result.ok) {
     return;
