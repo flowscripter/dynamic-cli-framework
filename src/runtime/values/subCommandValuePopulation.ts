@@ -611,9 +611,10 @@ export default function populateSubCommandValues(
     // parse the next arg
     parseContext.secretArgument = undefined;
     parseContext.parse(potentialArg);
-    if (parseContext.secretArgument) {
-      secretArgumentNames.add(parseContext.secretArgument.name);
-      loggedArgs[i] = parseContext.secretArgument.inline
+    const secretArgument = parseContext.secretArgument as ParseContext["secretArgument"];
+    if (secretArgument) {
+      secretArgumentNames.add(secretArgument.name);
+      loggedArgs[i] = secretArgument.inline
         ? `${potentialArg.slice(0, potentialArg.indexOf("=") + 1)}${REDACTED}`
         : REDACTED;
     }
