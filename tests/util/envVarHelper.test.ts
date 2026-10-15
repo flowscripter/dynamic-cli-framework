@@ -12,6 +12,7 @@ import {
   getGlobalCommandValueFromEnvVars,
   getSubCommandValuesFromEnvVars,
 } from "../../src/util/envVarHelper.ts";
+import { getGroupCommand } from "../fixtures/Command.ts";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 
 describe("envVarHelper tests", () => {
@@ -65,6 +66,32 @@ describe("envVarHelper tests", () => {
     } finally {
       delete process.env["FOO_BLAH_VALUE"];
       delete process.env["FOO_BAR"];
+    }
+  });
+
+  test("getSubCommandValuesFromEnvVars includes group name for group members", () => {
+    try {
+      const command = getSubCommandWithOption(
+        "list",
+        true,
+        false,
+        false,
+        ValueTypeName.STRING,
+        undefined,
+        true,
+      );
+      const groupA = getGroupCommand("a", [command]);
+      const groupB = getGroupCommand("b", [command]);
+
+      process.env["FOO_A_LIST_FOO"] = "from-a";
+
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command, groupA)).toEqual({
+        foo: "from-a",
+      });
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command, groupB)).toBeUndefined();
+      expect(getSubCommandValuesFromEnvVars(getCLIConfig(), command)).toBeUndefined();
+    } finally {
+      delete process.env["FOO_A_LIST_FOO"];
     }
   });
 

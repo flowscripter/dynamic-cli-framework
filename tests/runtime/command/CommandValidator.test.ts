@@ -1140,6 +1140,20 @@ describe("CommandValidator tests", () => {
     new CommandValidator(getCLIConfig()).validate(command);
   });
 
+  test("Group members with the same name in different groups do not share configuration keys", () => {
+    const validator = new CommandValidator(getCLIConfig());
+    const option = { name: "foo", type: ValueTypeName.STRING };
+    validator.validate(getGroupCommand("a", [getSubCommand("list", [option], [], true)]));
+    validator.validate(getGroupCommand("b", [getSubCommand("list", [option], [], true)]));
+
+    expect(() => validator.validate(getSubCommand("list", [option], [], true))).not.toThrow();
+    expect(() =>
+      validator.validate(getGroupCommand("a", [getSubCommand("list", [option], [], true)])),
+    ).toThrowError(
+      "Command: 'list' contains arguments with the same configuration key: 'FOO_A_LIST_FOO'",
+    );
+  });
+
   test("SubCommand validation fails due to duplicate custom configuration key", () => {
     let command = getSubCommand(
       "command",

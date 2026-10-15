@@ -312,6 +312,7 @@ function getOptionHelpEntry(
   option: Option | ComplexOption,
   subEntryIndent = 0,
   optionAncestry: Array<Option | ComplexOption> = [],
+  groupCommand?: GroupCommand,
 ): HelpEntry {
   let subEntries: Array<HelpEntry> | undefined;
   let optionCharacters = "--";
@@ -328,10 +329,15 @@ function getOptionHelpEntry(
     subEntries = [];
     option.properties.forEach((property) => {
       subEntries!.push(
-        getOptionHelpEntry(cliConfig, includeEnvVars, command, property, newSubEntryIndent, [
-          ...optionAncestry,
-          option,
-        ]),
+        getOptionHelpEntry(
+          cliConfig,
+          includeEnvVars,
+          command,
+          property,
+          newSubEntryIndent,
+          [...optionAncestry, option],
+          groupCommand,
+        ),
       );
     });
   } else {
@@ -384,10 +390,12 @@ function getOptionHelpEntry(
   }
 
   if (includeEnvVars && option.type !== ComplexValueTypeName.COMPLEX) {
-    const configurationKey = getSubCommandArgumentConfigurationKey(cliConfig, command, [
-      ...(optionAncestry as Array<SubCommandArgument>),
-      option as unknown as SubCommandArgument,
-    ]);
+    const configurationKey = getSubCommandArgumentConfigurationKey(
+      cliConfig,
+      command,
+      [...(optionAncestry as Array<SubCommandArgument>), option as unknown as SubCommandArgument],
+      groupCommand,
+    );
     if (configurationKey !== undefined) {
       notesItems.push(`env var: ${configurationKey}`);
     }
@@ -418,6 +426,7 @@ function getPositionalHelpEntry(
   includeEnvVars: boolean,
   command: Command,
   positional: Positional,
+  groupCommand?: GroupCommand,
 ): HelpEntry {
   const notesItems: Array<string> = [];
   if (positional.allowableValues !== undefined && positional.allowableValues.length > 0) {
@@ -458,9 +467,12 @@ function getPositionalHelpEntry(
   }
 
   if (includeEnvVars) {
-    const configurationKey = getSubCommandArgumentConfigurationKey(cliConfig, command, [
-      positional,
-    ]);
+    const configurationKey = getSubCommandArgumentConfigurationKey(
+      cliConfig,
+      command,
+      [positional],
+      groupCommand,
+    );
     if (configurationKey !== undefined) {
       notesItems.push(`env var: ${configurationKey}`);
     }
@@ -486,6 +498,7 @@ export function getCommandArgsHelpSections(
   includeEnvVars: boolean,
   subCommand: SubCommand,
   isSingleCommandApp: boolean,
+  groupCommand?: GroupCommand,
 ): Array<HelpSection> {
   const helpSections: Array<HelpSection> = [];
   if (subCommand.options.length > 0 || subCommand.positionals.length > 0) {
@@ -495,12 +508,20 @@ export function getCommandArgsHelpSections(
     };
     subCommand.options.forEach((option) => {
       argumentsSection.helpEntries.push(
-        getOptionHelpEntry(cliConfig, includeEnvVars, subCommand, option as Option),
+        getOptionHelpEntry(
+          cliConfig,
+          includeEnvVars,
+          subCommand,
+          option as Option,
+          0,
+          [],
+          groupCommand,
+        ),
       );
     });
     subCommand.positionals.forEach((positional) => {
       argumentsSection.helpEntries.push(
-        getPositionalHelpEntry(cliConfig, includeEnvVars, subCommand, positional),
+        getPositionalHelpEntry(cliConfig, includeEnvVars, subCommand, positional, groupCommand),
       );
     });
     helpSections.push(argumentsSection);

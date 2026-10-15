@@ -314,6 +314,7 @@ async function findAndExecuteNonModifierCommand(
       ? await configurationServiceProvider.getDefaultArgumentValues(
           context.cliConfig,
           scanResult.nonModifierCommandClause.command,
+          scanResult.nonModifierCommandClause.groupCommand,
         )
       : undefined;
 

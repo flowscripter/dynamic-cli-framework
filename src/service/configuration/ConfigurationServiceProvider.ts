@@ -13,6 +13,7 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import DumpConfigCommand from "./command/DumpConfigCommand.ts";
 import {
   CONFIGURATION_SERVICE_ID,
@@ -77,7 +78,8 @@ class ConfigurationServiceImpl implements ConfigurationService {
  *
  * A JSON file where the structure matches {@link Values} and the defaults are stored
  * under a top level `defaults` property. The second level of properties is used to refer to {@link Command.name}
- * and the contained values are treated as command {@link Values}. As an example:
+ * (or `<group name>:<member name>` for a member of a {@link GroupCommand}) and the contained values are treated as
+ * command {@link Values}. As an example:
  *
  * ```
  * {
@@ -93,6 +95,9 @@ class ConfigurationServiceImpl implements ConfigurationService {
  *         },
  *         "command2": {
  *             "arg4": true
+ *         },
+ *         "group1:member1": {
+ *             "arg5": "bar"
  *         },
  *         "globalCommand": "globalArgumentValue"
  *     },
@@ -124,13 +129,15 @@ class ConfigurationServiceImpl implements ConfigurationService {
  * Argument configuration keys are concatenated with a `_` separator.
  * Any arguments which support array values must by suffixed with `_` and an explicit array index.
  * If the root argument in the path does not use a custom {@link Argument.configurationKey} then the key path
- * is additionally suffixed with the {@link CLIConfig.name} and the {@link Command.name} with `_` separators.
+ * is additionally prefixed with the {@link CLIConfig.name}, the {@link GroupCommand.name} (if the command is a group
+ * member) and the {@link Command.name} with `_` separators.
  * This is best explained with examples...
  *
  * No custom configuration key examples:
  *
  * * executable: `MyCLI`, command: `globalCommand1`, global command argument => environment variable: `MYCLI_GLOBALCOMMAND1`
  * * executable: `MyCLI`, command: `command1`, simple root argument: `arg1` => environment variable: `MYCLI_COMMAND1_ARG1`
+ * * executable: `MyCLI`, group: `group1`, member command: `member1`, simple root argument: `arg1` => environment variable: `MYCLI_GROUP1_MEMBER1_ARG1`
  * * executable: `MyCLI`, command: `command1`, array root argument, 1st element: `arg2[0]` => environment variable: `MYCLI_COMMAND1_ARG2_0`
  * * executable: `MyCLI`, command: `command1`, argument is a digit so it is by default suffixed with `_`: `3` => environment variable: `MYCLI_COMMAND1__3`
  * * executable: `MyCLI`, command: `command1`, nested sub-argument: `arg1.arg2` => environment variable: `MYCLI_COMMAND1_ARG1_ARG2`
@@ -238,17 +245,22 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    *
    * @param cliConfig the {@link CLIConfig} to use for retrieving configuration keys.
    * @param command the {@link Command} instance to retrieve default argument values for.
+   * @param groupCommand the {@link GroupCommand} if the command is a group member. The configuration file key
+   * is then `<group name>:<command name>` and the env var names include the group name.
    */
   public async getDefaultArgumentValues(
     cliConfig: CLIConfig,
     command: Command,
+    groupCommand?: GroupCommand,
   ): Promise<PopulatedValues | PopulatedValueType | undefined> {
     if (!this.configEnabled) {
       logger.debug("configuration of default values is not enabled");
       return undefined;
     }
 
-    logger.debug("getting default argument values for command: %s", command.name);
+    const commandKey = groupCommand ? `${groupCommand.name}:${command.name}` : command.name;
+
+    logger.debug("getting default argument values for command: %s", commandKey);
 
     if (command.enableConfiguration === undefined || command.enableConfiguration !== true) {
       logger.debug("enableConfiguration for command: %s is not true", command.name);
@@ -258,16 +270,16 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     let result: PopulatedValues | PopulatedValueType | undefined;
 
     if (isGlobalModifierCommand(command) || isGlobalCommand(command)) {
-      const configuredValue = this.defaultsData.get(command.name) as SingleValueType;
+      const configuredValue = this.defaultsData.get(commandKey) as SingleValueType;
       const envVarValue = this.envVarsEnabled
         ? getGlobalCommandValueFromEnvVars(cliConfig, command)
         : undefined;
       // default to environment variable value
       result = envVarValue !== undefined ? envVarValue : configuredValue;
     } else if (isSubCommand(command)) {
-      const configuredValues = this.defaultsData.get(command.name) as Values;
+      const configuredValues = this.defaultsData.get(commandKey) as Values;
       const envVarValues = this.envVarsEnabled
-        ? getSubCommandValuesFromEnvVars(cliConfig, command)
+        ? getSubCommandValuesFromEnvVars(cliConfig, command, groupCommand)
         : undefined;
       if (envVarValues === undefined) {
         result = configuredValues;

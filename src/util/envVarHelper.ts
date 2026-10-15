@@ -14,6 +14,7 @@ import { MAXIMUM_ARGUMENT_ARRAY_SIZE } from "@flowscripter/dynamic-cli-framework
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 
@@ -29,11 +30,13 @@ function getSubCommandArgumentKeyPrefix(
   cliConfig: CLIConfig,
   command: Command,
   subCommandArgument: SubCommandArgument,
+  groupCommand?: GroupCommand,
 ) {
   if (subCommandArgument.configurationKey) {
     return subCommandArgument.configurationKey;
   }
-  return `${getKeySegment(cliConfig.name)}_${getKeySegment(command.name)}_${getKeySegment(
+  const groupSegment = groupCommand ? `${getKeySegment(groupCommand.name)}_` : "";
+  return `${getKeySegment(cliConfig.name)}_${groupSegment}${getKeySegment(command.name)}_${getKeySegment(
     subCommandArgument.name,
   )}`;
 }
@@ -214,16 +217,24 @@ function getOptionValuesFromEnvVars(
  * @param cliConfig the {@link CLIConfig} to use for determining the default configuration key.
  * @param command the {@link SubCommand} to use for determining the default configuration key and containing
  * {@link Positional} and {@link Option} instances to populate values for.
+ * @param groupCommand the {@link GroupCommand} if the command is a group member, in which case the group name
+ * is an additional env var name segment.
  */
 export function getSubCommandValuesFromEnvVars(
   cliConfig: CLIConfig,
   command: SubCommand,
+  groupCommand?: GroupCommand,
 ): PopulatedValues | undefined {
   const envVarValues = Object.create(null) as PopulatedValues;
   if (command.options) {
     for (const option of command.options) {
       const potentialEnvVarNames = Object.keys(process.env);
-      const optionPrefix = getSubCommandArgumentKeyPrefix(cliConfig, command, option as Option);
+      const optionPrefix = getSubCommandArgumentKeyPrefix(
+        cliConfig,
+        command,
+        option as Option,
+        groupCommand,
+      );
       getOptionValuesFromEnvVars(
         envVarValues,
         potentialEnvVarNames,
@@ -244,7 +255,12 @@ export function getSubCommandValuesFromEnvVars(
           `Unsafe key name in use: ${positional.name}, CodeQL Rule ID: js/prototype-polluting-assignment`,
         );
       }
-      let envVarNamePrefix = getSubCommandArgumentKeyPrefix(cliConfig, command, positional);
+      let envVarNamePrefix = getSubCommandArgumentKeyPrefix(
+        cliConfig,
+        command,
+        positional,
+        groupCommand,
+      );
 
       if (positional.isVarargMultiple) {
         envVarNamePrefix = `${envVarNamePrefix}_`;
