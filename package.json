@@ -1,6 +1,6 @@
 {
   "name": "@flowscripter/dynamic-cli-framework",
-  "version": "9.1.2",
+  "version": "9.1.3",
   "description": "A framework for developing CLI applications which supports dynamic discovery and installation of new commands",
   "keywords": [
     "bun",
@@ -49,8 +49,8 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "^5.0.1",
-    "@flowscripter/dynamic-plugin-framework": "^2.2.19",
+    "@flowscripter/dynamic-cli-framework-api": "^5.0.2",
+    "@flowscripter/dynamic-plugin-framework": "^2.2.22",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.12.0",
@@ -61,11 +61,11 @@
     "supports-terminal-graphics": "^0.1.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2",
+    "@types/bun": "^1.4.3",
     "@types/node": "^26.6.5",
     "@types/semver": "^7.8.0",
-    "oxfmt": "0.72.0",
-    "oxlint": "1.87.0"
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"
