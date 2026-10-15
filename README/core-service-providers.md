@@ -66,8 +66,9 @@ Provides:
   config file via a `Context` lookup, since that would expose it too broadly.
 - `ConfigCommand` allowing the default location of the configuration file to be
   overridden via the argument `--config` or the env var `CONFIG_LOCATION`.
-- `DumpConfigCommand` a global command which dumps the full CLI configuration to
-  stdout via `--dump-config`. It is wired directly to a
+- `ConfigGroupCommand` the `config` group command. Its member `ConfigDumpSubCommand`
+  dumps the full CLI configuration to stdout via `config:dump` (replacing the
+  former `--dump-config` global command). It is wired directly to a
   `getConfigString: () => string` constructor callback rather than a service
   lookup, for the same reason `ConfigurationService` stays narrow.
 

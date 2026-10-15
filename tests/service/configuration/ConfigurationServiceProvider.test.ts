@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "bun:test";
+import DefaultCommandRegistry from "../../../src/runtime/registry/DefaultCommandRegistry.ts";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
@@ -64,6 +65,17 @@ describe("ConfigurationServiceProvider tests", () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
     const serviceInfo = await configurationServiceProvider.getServiceInfo(getCLIConfig());
     expect(serviceInfo.commands.length).toEqual(2);
+  });
+
+  test("ConfigurationServiceProvider registers config group with dump member next to --config", async () => {
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
+    const serviceInfo = await configurationServiceProvider.getServiceInfo(getCLIConfig());
+    const registry = new DefaultCommandRegistry();
+    serviceInfo.commands.forEach((command) => registry.addCommand(command));
+    expect(registry.getGlobalCommands().map((c) => c.name)).not.toContain("dump-config");
+    expect(registry.getGlobalModifierCommands().map((c) => c.name)).toContain("config");
+    expect(registry.getGroupCommands().map((c) => c.name)).toEqual(["config"]);
+    expect(registry.getGroupAndMemberCommandsByJoinedName().has("config:dump")).toBeTrue();
   });
 
   test("ConfigurationServiceProvider initService with no config works", async () => {
