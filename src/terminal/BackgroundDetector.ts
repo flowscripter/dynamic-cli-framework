@@ -1,31 +1,14 @@
-import type { Buffer } from "node:buffer";
+import process from "node:process";
+import type KeyReader from "./KeyReader.ts";
+import type Terminal from "./Terminal.ts";
+import { BEL, ESC, QUERY_BACKGROUND_COLOR, QUERY_DEVICE_ATTRIBUTES } from "./Ansi.ts";
 
-const OSC_11_QUERY = "\x1b]11;?\x1b\\";
-const DA1_QUERY = "\x1b[c";
-const ESC = String.fromCharCode(0x1b);
-const BEL = String.fromCharCode(0x07);
 const OSC_11_REPLY = new RegExp(
   `${ESC}\\]11;rgb:([0-9a-fA-F]{1,4})/([0-9a-fA-F]{1,4})/([0-9a-fA-F]{1,4})(?:${BEL}|${ESC}\\\\)`,
 );
 const DA1_REPLY = new RegExp(`${ESC}\\[\\?[0-9;]*c`);
 
 export const DEFAULT_DETECTION_TIMEOUT_MS = 150;
-
-export interface DetectionInput {
-  isTTY?: boolean;
-  isRaw?: boolean;
-  setRawMode?(mode: boolean): unknown;
-  isPaused?(): boolean;
-  resume(): unknown;
-  pause(): unknown;
-  on(event: "data", listener: (data: Buffer | string) => void): unknown;
-  removeListener(event: "data", listener: (data: Buffer | string) => void): unknown;
-}
-
-export interface DetectionOutput {
-  isTTY?: boolean;
-  write(data: string): unknown;
-}
 
 /**
  * Parse the COLORFGBG environment variable value into a dark background flag.
@@ -64,69 +47,32 @@ export function parseOsc11Reply(data: string): boolean | undefined {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.5;
 }
 
-function queryTerminal(
-  input: DetectionInput,
-  output: DetectionOutput,
-  timeoutMs: number,
-): Promise<boolean | undefined> {
-  const wasRaw = input.isRaw === true;
-  const wasPaused = input.isPaused?.() ?? false;
-
-  return new Promise((resolve) => {
-    let received = "";
-    let timer: ReturnType<typeof setTimeout>;
-
-    const finish = (): void => {
-      clearTimeout(timer);
-      input.removeListener("data", onData);
-      if (!wasRaw) {
-        input.setRawMode?.(false);
-      }
-      if (wasPaused) {
-        input.pause();
-      }
-      resolve(parseOsc11Reply(received));
-    };
-
-    const onData = (data: Buffer | string): void => {
-      received += data.toString();
-      if (DA1_REPLY.test(received)) {
-        finish();
-      }
-    };
-
-    try {
-      input.setRawMode?.(true);
-      input.on("data", onData);
-      input.resume();
-      timer = setTimeout(finish, timeoutMs);
-      output.write(OSC_11_QUERY + DA1_QUERY);
-    } catch {
-      finish();
-    }
-  });
-}
-
 /**
  * Detect whether the terminal background is dark.
  *
  * Checks COLORFGBG first and then queries the terminal for its background colour (OSC 11).
- * The query is skipped unless both the input and output are TTYs and is bounded by a timeout.
+ * The query is skipped unless the terminal is a TTY and is bounded by a timeout.
  *
  * @returns `true` for a dark background, `false` for a light background or `undefined` if not determinable.
  */
 export async function detectDarkBackground(
-  input: DetectionInput,
-  output: DetectionOutput,
-  env: Record<string, string | undefined>,
+  keyReader: KeyReader,
+  terminal: Terminal,
+  env: Record<string, string | undefined> = process.env,
   timeoutMs: number = DEFAULT_DETECTION_TIMEOUT_MS,
 ): Promise<boolean | undefined> {
-  if (input.isTTY !== true || output.isTTY !== true || env.TERM === "dumb") {
+  if (!terminal.isTty() || env.TERM === "dumb") {
     return undefined;
   }
   const fromEnv = parseColorFgBg(env.COLORFGBG);
   if (fromEnv !== undefined) {
     return fromEnv;
   }
-  return await queryTerminal(input, output, timeoutMs);
+  try {
+    const reply = keyReader.readRaw((received) => DA1_REPLY.test(received), timeoutMs);
+    await terminal.write(QUERY_BACKGROUND_COLOR + QUERY_DEVICE_ATTRIBUTES);
+    return parseOsc11Reply(await reply);
+  } catch {
+    return undefined;
+  }
 }

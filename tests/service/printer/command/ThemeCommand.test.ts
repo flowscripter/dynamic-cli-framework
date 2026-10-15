@@ -80,7 +80,7 @@ describe("ThemeCommand tests", () => {
     await ShutdownServiceProvider.shutdown();
   });
 
-  test("auto with the default detector falls back to light without a TTY", async () => {
+  test("auto falls back to light without a detector", async () => {
     const { printerService, context } = await setup();
     printerService.darkMode = true;
     await new ThemeCommand(100).execute(context, "auto");

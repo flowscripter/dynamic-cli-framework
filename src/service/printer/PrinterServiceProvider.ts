@@ -18,16 +18,23 @@ export default class PrinterServiceProvider implements ServiceProvider {
   readonly serviceId: string = PRINTER_SERVICE_ID;
   readonly servicePriority: number;
   readonly printerService: PrinterService;
+  readonly detectDarkBackground: (() => Promise<boolean | undefined>) | undefined;
 
   /**
    * Create an instance of the service provider with the specified details.
    *
    * @param servicePriority the priority of the service.
    * @param printerService the PrinterService implementation to use.
+   * @param detectDarkBackground optional function detecting whether the terminal background is dark.
    */
-  public constructor(servicePriority: number, printerService: PrinterService) {
+  public constructor(
+    servicePriority: number,
+    printerService: PrinterService,
+    detectDarkBackground?: () => Promise<boolean | undefined>,
+  ) {
     this.servicePriority = servicePriority;
     this.printerService = printerService;
+    this.detectDarkBackground = detectDarkBackground;
   }
 
   public getServiceInfo(_cliConfig: CLIConfig): Promise<ServiceInfo> {
@@ -35,7 +42,7 @@ export default class PrinterServiceProvider implements ServiceProvider {
       service: this.printerService,
       commands: [
         new NoHyperlinksCommand(this.servicePriority + 3),
-        new ThemeCommand(this.servicePriority + 1),
+        new ThemeCommand(this.servicePriority + 1, this.detectDarkBackground),
         new NoColorCommand(this.servicePriority + 2),
         new LogLevelCommand(this.servicePriority),
       ],
