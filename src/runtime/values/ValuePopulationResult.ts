@@ -17,6 +17,11 @@ export interface ValuePopulationResult {
    * Any invalid argument discovered while populating values.
    */
   readonly invalidArgument?: InvalidArgument;
+
+  /**
+   * Names of any SECRET arguments whose values were supplied as plain command line arguments.
+   */
+  readonly secretArgumentNames?: ReadonlyArray<string>;
 }
 
 /**
