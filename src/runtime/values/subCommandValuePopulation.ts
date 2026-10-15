@@ -8,6 +8,7 @@ import {
   type PopulatedValueType,
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
+import { REDACTED, redactSubCommandValues } from "../../util/secretRedaction.ts";
 import argumentValueMerge from "./argumentValueMerge.ts";
 import type { SubCommandValuePopulationResult } from "./ValuePopulationResult.ts";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
@@ -86,6 +87,20 @@ class ParseContext {
    * which will be populated with a positional value if found.
    */
   currentPositionalIndex;
+
+  /**
+   * Set when the most recent argument supplied a value for a SECRET option or positional.
+   */
+  secretArgument?: { name: string; inline: boolean };
+
+  /**
+   * Return and clear the {@link secretArgument} recorded by the most recent {@link parse}.
+   */
+  takeSecretArgument(): { name: string; inline: boolean } | undefined {
+    const secretArgument = this.secretArgument;
+    this.secretArgument = undefined;
+    return secretArgument;
+  }
 
   /**
    * Use to store lazily created map of option paths e.g. --alpha.b.g and -a.b.gamma for {@link ComplexOption} or {@link Option} instances.
@@ -351,7 +366,10 @@ class ParseContext {
    * @return `false` if there is a problem populating the value, in which case the {@link state} will be set to
    * {@link ParseState.ERROR} and {@link invalidArgument} will be populated.
    */
-  setOptionValue(value: SingleValueType): boolean {
+  setOptionValue(value: SingleValueType, inline = false): boolean {
+    if (this.currentOption!.type === ValueTypeName.SECRET) {
+      this.secretArgument = { name: this.currentOption!.name, inline };
+    }
     let optionValue: Array<PopulatedValues> | PopulatedValues | PopulatedValueType =
       this.populatedArgumentValues;
     const optionPath = this.currentOptionPath as Array<string | number>;
@@ -438,6 +456,10 @@ class ParseContext {
   setPositionalValue(value: SingleValueType): boolean {
     const positional = this.subCommand.positionals[this.currentPositionalIndex]!;
     const currentValue = this.populatedArgumentValues[positional.name];
+
+    if (positional.type === ValueTypeName.SECRET) {
+      this.secretArgument = { name: positional.name, inline: false };
+    }
 
     // if we haven't populated the argument value before...
     if (currentValue === undefined) {
@@ -546,7 +568,7 @@ class ParseContext {
           // try to set the value if we have one
           if (potentialOptionValue !== undefined) {
             // set the value
-            this.setOptionValue(potentialOptionValue);
+            this.setOptionValue(potentialOptionValue, true);
 
             // return regardless
             return;
@@ -587,24 +609,23 @@ export default function populateSubCommandValues(
   potentialArgs: ReadonlyArray<string>,
   defaultValues: PopulatedValues | undefined,
 ): SubCommandValuePopulationResult {
-  logger.debug(() => {
-    const message = `Populating values for sub-command: '${subCommand.name}' using potential args: ${potentialArgs.join(
-      " ",
-    )}`;
-    if (defaultValues !== undefined) {
-      return `${message} and configured values: ${JSON.stringify(defaultValues)}`;
-    }
-    return message;
-  });
-
   const parseContext = new ParseContext(subCommand);
   const unusedArgs: Array<string> = [];
+  const loggedArgs = [...potentialArgs];
+  const secretArgumentNames = new Set<string>();
 
   for (let i = 0; i < potentialArgs.length; i++) {
     const potentialArg = potentialArgs[i]!;
 
     // parse the next arg
     parseContext.parse(potentialArg);
+    const secretArgument = parseContext.takeSecretArgument();
+    if (secretArgument) {
+      secretArgumentNames.add(secretArgument.name);
+      loggedArgs[i] = secretArgument.inline
+        ? `${potentialArg.slice(0, potentialArg.indexOf("=") + 1)}${REDACTED}`
+        : REDACTED;
+    }
 
     // check if we had a parsing error, record the error, flush the remaining args and stop parsing
     if (parseContext.state === ParseState.ERROR) {
@@ -619,6 +640,18 @@ export default function populateSubCommandValues(
       parseContext.state = ParseState.EMPTY;
     }
   }
+
+  logger.debug(() => {
+    const message = `Populated values for sub-command: '${subCommand.name}' using potential args: ${loggedArgs.join(
+      " ",
+    )}`;
+    if (defaultValues !== undefined) {
+      return `${message} and configured values: ${JSON.stringify(
+        redactSubCommandValues(subCommand, defaultValues),
+      )}`;
+    }
+    return message;
+  });
 
   // Check if the last arg specified an option but no value
   if (parseContext.state === ParseState.OPTION_VALUE_EXPECTED) {
@@ -639,6 +672,7 @@ export default function populateSubCommandValues(
       populatedArgumentValues: parseContext.populatedArgumentValues,
       unusedArgs: unusedArgs,
       invalidArgument: parseContext.invalidArgument,
+      ...(secretArgumentNames.size > 0 && { secretArgumentNames: [...secretArgumentNames] }),
     };
   }
 
@@ -651,5 +685,6 @@ export default function populateSubCommandValues(
   return {
     populatedArgumentValues,
     unusedArgs: unusedArgs,
+    ...(secretArgumentNames.size > 0 && { secretArgumentNames: [...secretArgumentNames] }),
   };
 }

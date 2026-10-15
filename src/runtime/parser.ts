@@ -13,6 +13,7 @@ import {
   validatePositionalValue,
 } from "./values/argumentValueValidation.ts";
 import getLogger from "../util/logger.ts";
+import { redactGlobalCommandValue, redactSubCommandValues } from "../util/secretRedaction.ts";
 import populateSubCommandValues from "./values/subCommandValuePopulation.ts";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
@@ -20,6 +21,13 @@ import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 const logger = getLogger("parser");
 
 export type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
+
+/**
+ * A {@link ParseResult} which also reports any SECRET arguments supplied as plain command line arguments.
+ */
+export type SecretAwareParseResult = ParseResult & {
+  readonly secretArgumentNames?: ReadonlyArray<string>;
+};
 
 /**
  * Parse the arguments for the specified {@link CommandClause} assuming it contains a {@link SubCommand}.
@@ -30,7 +38,7 @@ export type { ParseResult } from "@flowscripter/dynamic-cli-framework-api";
 export function parseSubCommandClause(
   commandClause: CommandClause,
   defaultValues?: PopulatedValues,
-): ParseResult {
+): SecretAwareParseResult {
   const command = commandClause.command as SubCommand;
   const potentialArgs = commandClause.potentialArgs;
   const groupCommand = commandClause.groupCommand;
@@ -48,11 +56,8 @@ export function parseSubCommandClause(
     };
   }
 
-  const { populatedArgumentValues, unusedArgs, invalidArgument } = populateSubCommandValues(
-    command,
-    potentialArgs,
-    defaultValues,
-  );
+  const { populatedArgumentValues, unusedArgs, invalidArgument, secretArgumentNames } =
+    populateSubCommandValues(command, potentialArgs, defaultValues);
 
   if (invalidArgument) {
     invalidArguments.push(invalidArgument);
@@ -73,7 +78,7 @@ export function parseSubCommandClause(
 
     logger.debug(
       "Command arguments after options validated: %O with invalid args: %O",
-      populatedArgumentValues,
+      redactSubCommandValues(command, populatedArgumentValues),
       invalidArguments,
     );
 
@@ -91,11 +96,12 @@ export function parseSubCommandClause(
       });
       logger.debug(
         "Command arguments after positionals validated: %O with invalid args: %O",
-        populatedArgumentValues,
+        redactSubCommandValues(command, populatedArgumentValues),
         invalidArguments,
       );
     }
   }
+  const secrets = secretArgumentNames ? { secretArgumentNames } : {};
   if (groupCommand) {
     return {
       command,
@@ -103,6 +109,7 @@ export function parseSubCommandClause(
       groupCommand,
       invalidArguments,
       unusedArgs,
+      ...secrets,
     };
   }
   return {
@@ -110,6 +117,7 @@ export function parseSubCommandClause(
     populatedArgumentValues,
     invalidArguments,
     unusedArgs: unusedArgs,
+    ...secrets,
   };
 }
 
@@ -122,7 +130,7 @@ export function parseSubCommandClause(
 export function parseGlobalCommandClause(
   commandClause: CommandClause,
   defaultValue?: PopulatedSingleValueType,
-): ParseResult {
+): SecretAwareParseResult {
   const command = commandClause.command as GlobalCommand;
   const potentialArgs = commandClause.potentialArgs;
   const invalidArguments: Array<InvalidArgument> = [];
@@ -137,11 +145,8 @@ export function parseGlobalCommandClause(
     };
   }
 
-  let { populatedArgumentValue, unusedArgs, invalidArgument } = populateGlobalCommandValue(
-    command,
-    potentialArgs,
-    defaultValue,
-  );
+  let { populatedArgumentValue, unusedArgs, invalidArgument, secretArgumentNames } =
+    populateGlobalCommandValue(command, potentialArgs, defaultValue);
 
   if (invalidArgument) {
     invalidArguments.push(invalidArgument);
@@ -150,7 +155,7 @@ export function parseGlobalCommandClause(
   logger.debug(
     "Command arguments for command: %s after value population: %O with invalid args: %O and unused args: %O",
     command.name,
-    populatedArgumentValue,
+    redactGlobalCommandValue(command, populatedArgumentValue),
     invalidArguments,
     unusedArgs,
   );
@@ -170,7 +175,7 @@ export function parseGlobalCommandClause(
   logger.debug(
     "Command arguments for command: %s after value validation: %O with invalid args: %O",
     command.name,
-    populatedArgumentValue,
+    redactGlobalCommandValue(command, populatedArgumentValue),
     invalidArguments,
   );
 
@@ -179,5 +184,6 @@ export function parseGlobalCommandClause(
     populatedArgumentValues: populatedArgumentValue,
     invalidArguments,
     unusedArgs,
+    ...(secretArgumentNames && { secretArgumentNames }),
   };
 }

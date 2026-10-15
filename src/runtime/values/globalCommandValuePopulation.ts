@@ -3,6 +3,7 @@ import type { GlobalCommandValuePopulationResult } from "./ValuePopulationResult
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { PopulatedSingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
+import { REDACTED } from "../../util/secretRedaction.ts";
 import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 
 const logger = getLogger("globalCommandValuePopulation");
@@ -19,16 +20,21 @@ export default function populateGlobalCommandValue(
   potentialArgs: ReadonlyArray<string>,
   defaultValue: PopulatedSingleValueType,
 ): GlobalCommandValuePopulationResult {
+  const argument = globalCommand.argument!;
+  const isSecret = argument.type === ValueTypeName.SECRET;
   logger.debug(() => {
-    const message = `Populating value for global command: '${globalCommand.name}' using potential args: ${potentialArgs.join(
-      " ",
-    )}`;
+    const message = `Populating value for global command: '${globalCommand.name}' using potential args: ${(isSecret
+      ? potentialArgs
+          .slice(0, 1)
+          .map(() => REDACTED)
+          .concat(potentialArgs.slice(1))
+      : potentialArgs
+    ).join(" ")}`;
     if (defaultValue !== undefined) {
-      return `${message} and configured value: '${defaultValue}'`;
+      return `${message} and configured value: '${isSecret ? REDACTED : defaultValue}'`;
     }
     return message;
   });
-  const argument = globalCommand.argument!;
 
   // default to defined argument default value
   let populatedArgumentValue = argument.defaultValue;
@@ -83,5 +89,6 @@ export default function populateGlobalCommandValue(
   return {
     populatedArgumentValue,
     unusedArgs,
+    ...(isSecret && potentialArgs.length > 0 && { secretArgumentNames: [globalCommand.name] }),
   };
 }
