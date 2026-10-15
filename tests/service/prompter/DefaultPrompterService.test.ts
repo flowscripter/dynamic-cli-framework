@@ -31,6 +31,10 @@ class MockKeyReader implements KeyReader {
     this.#keys.push(...keys);
   }
 
+  readRaw(): Promise<string> {
+    return Promise.resolve("");
+  }
+
   readKey(): Promise<KeyEvent> {
     const key = this.#keys.shift();
     if (!key) throw new Error("No more keys");

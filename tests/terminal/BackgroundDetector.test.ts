@@ -1,50 +1,41 @@
 import { describe, expect, test } from "bun:test";
-import { EventEmitter } from "node:events";
+import type KeyReader from "../../src/terminal/KeyReader.ts";
+import type Terminal from "../../src/terminal/Terminal.ts";
 import {
-  type DetectionInput,
   detectDarkBackground,
   parseColorFgBg,
   parseOsc11Reply,
 } from "../../src/terminal/BackgroundDetector.ts";
+import { QUERY_BACKGROUND_COLOR, QUERY_DEVICE_ATTRIBUTES } from "../../src/terminal/Ansi.ts";
 
-class FakeInput extends EventEmitter {
-  isTTY = true;
-  isRaw = false;
-  paused = true;
-  rawCalls: boolean[] = [];
-  constructor(private readonly replyOnWrite?: string[]) {
-    super();
+class FakeKeyReader implements KeyReader {
+  readRawCalls = 0;
+  constructor(private readonly reply: string | Error) {}
+  enableRawMode() {}
+  disableRawMode() {}
+  readKey() {
+    return Promise.resolve({});
   }
-  setRawMode(mode: boolean) {
-    this.isRaw = mode;
-    this.rawCalls.push(mode);
-  }
-  isPaused() {
-    return this.paused;
-  }
-  resume() {
-    this.paused = false;
-  }
-  pause() {
-    this.paused = true;
-  }
-  respond() {
-    for (const reply of this.replyOnWrite ?? []) {
-      this.emit("data", reply);
+  readRaw(isComplete: (received: string) => boolean, _timeoutMs: number) {
+    this.readRawCalls++;
+    if (this.reply instanceof Error) {
+      return Promise.reject(this.reply);
     }
+    expect(isComplete(this.reply)).toBe(this.reply.endsWith("c"));
+    return Promise.resolve(this.reply);
   }
 }
 
-function fakeOutput(input: FakeInput) {
-  const written: string[] = [];
-  return {
-    written,
-    isTTY: true,
-    write(data: string) {
-      written.push(data);
-      queueMicrotask(() => input.respond());
-    },
-  };
+class FakeTerminal {
+  written: string[] = [];
+  constructor(private readonly tty = true) {}
+  isTty() {
+    return this.tty;
+  }
+  write(text: string) {
+    this.written.push(text);
+    return Promise.resolve();
+  }
 }
 
 const DARK = "\x1b]11;rgb:0000/0000/0000\x07";
@@ -84,74 +75,64 @@ describe("parseOsc11Reply tests", () => {
 });
 
 describe("detectDarkBackground tests", () => {
-  test("skips when input is not a TTY", async () => {
-    const input = new FakeInput();
-    input.isTTY = false;
-    const output = fakeOutput(input);
-    expect(await detectDarkBackground(input as DetectionInput, output, {})).toBeUndefined();
-    expect(output.written).toEqual([]);
-  });
+  const detect = (
+    reader: FakeKeyReader,
+    terminal: FakeTerminal,
+    env: Record<string, string | undefined> = {},
+  ) => detectDarkBackground(reader, terminal as unknown as Terminal, env);
 
-  test("skips when output is not a TTY", async () => {
-    const input = new FakeInput();
-    const output = { ...fakeOutput(input), isTTY: false };
-    expect(await detectDarkBackground(input as DetectionInput, output, {})).toBeUndefined();
-    expect(output.written).toEqual([]);
+  test("skips when terminal is not a TTY", async () => {
+    const reader = new FakeKeyReader(DARK + DA1);
+    const terminal = new FakeTerminal(false);
+    expect(await detect(reader, terminal)).toBeUndefined();
+    expect(terminal.written).toEqual([]);
+    expect(reader.readRawCalls).toBe(0);
   });
 
   test("skips when TERM is dumb", async () => {
-    const input = new FakeInput();
-    const output = fakeOutput(input);
-    expect(
-      await detectDarkBackground(input as DetectionInput, output, { TERM: "dumb" }),
-    ).toBeUndefined();
-    expect(output.written).toEqual([]);
+    const reader = new FakeKeyReader(DARK + DA1);
+    const terminal = new FakeTerminal();
+    expect(await detect(reader, terminal, { TERM: "dumb" })).toBeUndefined();
+    expect(reader.readRawCalls).toBe(0);
   });
 
   test("uses COLORFGBG without querying", async () => {
-    const input = new FakeInput();
-    const output = fakeOutput(input);
-    expect(await detectDarkBackground(input as DetectionInput, output, { COLORFGBG: "0;15" })).toBe(
-      false,
-    );
-    expect(output.written).toEqual([]);
+    const reader = new FakeKeyReader(DARK + DA1);
+    const terminal = new FakeTerminal();
+    expect(await detect(reader, terminal, { COLORFGBG: "0;15" })).toBe(false);
+    expect(terminal.written).toEqual([]);
+    expect(reader.readRawCalls).toBe(0);
   });
 
-  test("reads OSC 11 reply and restores terminal state", async () => {
-    const input = new FakeInput([DARK, DA1]);
-    const output = fakeOutput(input);
-    expect(await detectDarkBackground(input as DetectionInput, output, {})).toBe(true);
-    expect(input.rawCalls).toEqual([true, false]);
-    expect(input.paused).toBe(true);
-    expect(input.listenerCount("data")).toBe(0);
+  test("queries the terminal and reads the OSC 11 reply", async () => {
+    const terminal = new FakeTerminal();
+    expect(await detect(new FakeKeyReader(DARK + DA1), terminal)).toBe(true);
+    expect(terminal.written).toEqual([QUERY_BACKGROUND_COLOR + QUERY_DEVICE_ATTRIBUTES]);
   });
 
   test("detects light background", async () => {
-    const input = new FakeInput([LIGHT, DA1]);
-    expect(await detectDarkBackground(input as DetectionInput, fakeOutput(input), {})).toBe(false);
+    expect(await detect(new FakeKeyReader(LIGHT + DA1), new FakeTerminal())).toBe(false);
   });
 
   test("DA1 only reply means unsupported", async () => {
-    const input = new FakeInput([DA1]);
-    expect(
-      await detectDarkBackground(input as DetectionInput, fakeOutput(input), {}, 5000),
-    ).toBeUndefined();
+    expect(await detect(new FakeKeyReader(DA1), new FakeTerminal())).toBeUndefined();
   });
 
-  test("no reply times out and restores terminal state", async () => {
-    const input = new FakeInput([]);
-    expect(
-      await detectDarkBackground(input as DetectionInput, fakeOutput(input), {}, 20),
-    ).toBeUndefined();
-    expect(input.rawCalls).toEqual([true, false]);
-    expect(input.paused).toBe(true);
-    expect(input.listenerCount("data")).toBe(0);
+  test("no reply yields undefined", async () => {
+    expect(await detect(new FakeKeyReader(""), new FakeTerminal())).toBeUndefined();
   });
 
   test("garbage reply yields undefined", async () => {
-    const input = new FakeInput(["garbage", DA1]);
-    expect(
-      await detectDarkBackground(input as DetectionInput, fakeOutput(input), {}),
-    ).toBeUndefined();
+    expect(await detect(new FakeKeyReader("garbage" + DA1), new FakeTerminal())).toBeUndefined();
+  });
+
+  test("read failure yields undefined", async () => {
+    expect(await detect(new FakeKeyReader(new Error("boom")), new FakeTerminal())).toBeUndefined();
+  });
+
+  test("uses process.env by default", async () => {
+    const reader = new FakeKeyReader("");
+    const terminal = new FakeTerminal(false);
+    expect(await detectDarkBackground(reader, terminal as unknown as Terminal)).toBeUndefined();
   });
 });

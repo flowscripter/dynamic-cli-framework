@@ -4,7 +4,6 @@ import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-f
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
-import { detectDarkBackground } from "../../../terminal/BackgroundDetector.ts";
 
 /**
  * Command allowing the specification of the dark/light theme for the {@link PrinterService}.
@@ -22,13 +21,13 @@ export default class ThemeCommand implements GlobalModifierCommand {
     configurationKey: "THEME",
   };
   readonly executePriority: number;
-  readonly #detect: () => Promise<boolean | undefined>;
+  readonly #detect: (() => Promise<boolean | undefined>) | undefined;
 
-  public constructor(
-    executePriority: number,
-    detect: () => Promise<boolean | undefined> = () =>
-      detectDarkBackground(process.stdin, process.stderr, process.env),
-  ) {
+  /**
+   * @param executePriority the priority of the command.
+   * @param detect optional function detecting whether the terminal background is dark.
+   */
+  public constructor(executePriority: number, detect?: () => Promise<boolean | undefined>) {
     this.executePriority = executePriority;
     this.#detect = detect;
   }
@@ -37,9 +36,10 @@ export default class ThemeCommand implements GlobalModifierCommand {
     const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
 
     if (argumentValue === "auto") {
-      printerService.darkMode = printerService.colorEnabled
-        ? ((await this.#detect()) ?? false)
-        : false;
+      printerService.darkMode =
+        printerService.colorEnabled && this.#detect !== undefined
+          ? ((await this.#detect()) ?? false)
+          : false;
     } else {
       printerService.darkMode = argumentValue === "dark";
     }
