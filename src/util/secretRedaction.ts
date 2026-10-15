@@ -14,9 +14,15 @@ export const REDACTED = "***";
 
 type NamedArgument = { readonly name: string; readonly type?: unknown };
 
+type RedactableValue =
+  | PopulatedValueType
+  | PopulatedValues
+  | Array<PopulatedValues | undefined>
+  | undefined;
+
 function redactValue(
   definition: NamedArgument | ComplexOption,
-  value: PopulatedValueType | PopulatedValues | undefined,
+  value: RedactableValue | PopulatedValues,
 ): unknown {
   if (value === undefined || value === null) {
     return value;
@@ -24,7 +30,7 @@ function redactValue(
   if (isComplexOption(definition as ComplexOption)) {
     const properties = (definition as ComplexOption).properties;
     if (Array.isArray(value)) {
-      return value.map((v) => redactValue(definition, v as PopulatedValues));
+      return value.map((v) => redactValue(definition, v));
     }
     return redactDefinedValues(properties, [], value as PopulatedValues);
   }

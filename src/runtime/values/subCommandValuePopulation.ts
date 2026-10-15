@@ -94,6 +94,15 @@ class ParseContext {
   secretArgument?: { name: string; inline: boolean };
 
   /**
+   * Return and clear the {@link secretArgument} recorded by the most recent {@link parse}.
+   */
+  takeSecretArgument(): { name: string; inline: boolean } | undefined {
+    const secretArgument = this.secretArgument;
+    this.secretArgument = undefined;
+    return secretArgument;
+  }
+
+  /**
    * Use to store lazily created map of option paths e.g. --alpha.b.g and -a.b.gamma for {@link ComplexOption} or {@link Option} instances.
    */
   optionLookupMapsByPath: Map<string, Map<string, Option | ComplexOption>>;
@@ -609,9 +618,8 @@ export default function populateSubCommandValues(
     const potentialArg = potentialArgs[i]!;
 
     // parse the next arg
-    parseContext.secretArgument = undefined;
     parseContext.parse(potentialArg);
-    const secretArgument = parseContext.secretArgument as ParseContext["secretArgument"];
+    const secretArgument = parseContext.takeSecretArgument();
     if (secretArgument) {
       secretArgumentNames.add(secretArgument.name);
       loggedArgs[i] = secretArgument.inline
