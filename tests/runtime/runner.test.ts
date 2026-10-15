@@ -806,6 +806,47 @@ describe("runner tests", () => {
     expectStringIncludes(streamString.getString(), "Unused args: --bip=b --bop=b");
   });
 
+  test("Warn when a SECRET option is passed as a plain argument", async () => {
+    const streamString = new StreamString();
+    const command = getSubCommand(
+      "command",
+      [{ name: "password", type: ValueTypeName.SECRET }],
+      [],
+    );
+
+    const runResult = await run(
+      ["command", "--password=hunter2"],
+      new DefaultCommandRegistry([command]),
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expectStringIncludes(
+      streamString.getString(),
+      "SECRET value passed as a plain argument: password",
+    );
+    expect(streamString.getString()).not.toContain("hunter2");
+  });
+
+  test("No SECRET warning when a STRING option is passed as a plain argument", async () => {
+    const streamString = new StreamString();
+    const command = getSubCommand("command", [{ name: "foo", type: ValueTypeName.STRING }], []);
+
+    await run(
+      ["command", "--foo=bar"],
+      new DefaultCommandRegistry([command]),
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(streamString.getString()).not.toContain("SECRET");
+  });
+
   test("Run default command based on some args and treating some args as unused", async () => {
     const streamString = new StreamString();
     const command = getSubCommand(
