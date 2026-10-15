@@ -8,6 +8,7 @@ import DefaultContext from "../../../src/runtime/DefaultContext.ts";
 import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import { getGroupCommand, getSubCommandWithOption } from "../../fixtures/Command.ts";
 
 function getConfig() {
   return {
@@ -146,6 +147,100 @@ describe("ConfigurationServiceProvider tests", () => {
       ).toEqual({ arg4: "true" });
     } finally {
       delete process.env["FOO_COMMAND2_ARG4"];
+    }
+  });
+
+  test("getDefaultArgumentValues keys group members on group:member", async () => {
+    const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
+    const configFolder = await fs.mkdtemp(path.join(tmpdir(), "config-"));
+    const configLocation = path.join(configFolder, "config.json");
+    configurationServiceProvider.setConfigLocation(configLocation);
+    await fs.writeFile(
+      configLocation,
+      JSON.stringify({
+        defaults: {
+          "a:list": { foo: "from-a" },
+          "b:list": { foo: "from-b" },
+          list: { foo: "plain" },
+        },
+      }),
+    );
+    await configurationServiceProvider.initService(new DefaultContext(getCLIConfig()));
+
+    const listA = getSubCommandWithOption(
+      "list",
+      true,
+      false,
+      false,
+      ValueTypeName.STRING,
+      undefined,
+      true,
+    );
+    const listB = getSubCommandWithOption(
+      "list",
+      true,
+      false,
+      false,
+      ValueTypeName.STRING,
+      undefined,
+      true,
+    );
+    const groupA = getGroupCommand("a", [listA]);
+    const groupB = getGroupCommand("b", [listB]);
+    const cliConfig = getCLIConfig();
+
+    expect(
+      await configurationServiceProvider.getDefaultArgumentValues(cliConfig, listA, groupA),
+    ).toEqual({ foo: "from-a" });
+    expect(
+      await configurationServiceProvider.getDefaultArgumentValues(cliConfig, listB, groupB),
+    ).toEqual({ foo: "from-b" });
+    expect(await configurationServiceProvider.getDefaultArgumentValues(cliConfig, listA)).toEqual({
+      foo: "plain",
+    });
+  });
+
+  test("getDefaultArgumentValues uses group name in env vars for group members", async () => {
+    try {
+      const configurationServiceProvider = new ConfigurationServiceProvider(100, true, true);
+      await configurationServiceProvider.initService(new DefaultContext(getCLIConfig()));
+
+      process.env["FOO_A_LIST_FOO"] = "from-a";
+      process.env["FOO_B_LIST_FOO"] = "from-b";
+      process.env["FOO_LIST_FOO"] = "plain";
+
+      const list = getSubCommandWithOption(
+        "list",
+        true,
+        false,
+        false,
+        ValueTypeName.STRING,
+        undefined,
+        true,
+      );
+      const cliConfig = getCLIConfig();
+
+      expect(
+        await configurationServiceProvider.getDefaultArgumentValues(
+          cliConfig,
+          list,
+          getGroupCommand("a", [list]),
+        ),
+      ).toEqual({ foo: "from-a" });
+      expect(
+        await configurationServiceProvider.getDefaultArgumentValues(
+          cliConfig,
+          list,
+          getGroupCommand("b", [list]),
+        ),
+      ).toEqual({ foo: "from-b" });
+      expect(await configurationServiceProvider.getDefaultArgumentValues(cliConfig, list)).toEqual({
+        foo: "plain",
+      });
+    } finally {
+      delete process.env["FOO_A_LIST_FOO"];
+      delete process.env["FOO_B_LIST_FOO"];
+      delete process.env["FOO_LIST_FOO"];
     }
   });
 

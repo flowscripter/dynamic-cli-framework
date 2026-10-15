@@ -288,7 +288,13 @@ abstract class MultiCommandCliAbstractHelpCommand {
     });
 
     helpSections.push(
-      ...getCommandArgsHelpSections(context.cliConfig, this.#includeEnvVars, subCommand, false),
+      ...getCommandArgsHelpSections(
+        context.cliConfig,
+        this.#includeEnvVars,
+        subCommand,
+        false,
+        groupCommand,
+      ),
     );
 
     helpSections.push(...getCommandExamplesHelpSections(printerService, context, subCommand));

@@ -1,3 +1,4 @@
+import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
@@ -26,11 +27,14 @@ function getKeySegment(segment: string, isCustom = false, isArray = false) {
  * @param command the {@link Command} to use for determining the default configuration key.
  * @param argumentAncestry a list of {@link SubCommandArgument} instances from the root command arguments to a leaf argument.
  * Apart from {@link ComplexOption} instances this will always only have a single entry.
+ * @param groupCommand the {@link GroupCommand} if the command is a member of a group, in which case the group name
+ * is an additional key segment.
  */
 export function getSubCommandArgumentConfigurationKey(
   cliConfig: CLIConfig,
   command: Command,
   argumentAncestry: Array<SubCommandArgument>,
+  groupCommand?: GroupCommand,
 ): string | undefined {
   if (command.enableConfiguration === undefined || command.enableConfiguration !== true) {
     return undefined;
@@ -43,6 +47,9 @@ export function getSubCommandArgumentConfigurationKey(
   const firstArgument = argumentAncestry[0]!;
   if (firstArgument.configurationKey === undefined) {
     keySegments.push(getKeySegment(cliConfig.name));
+    if (groupCommand) {
+      keySegments.push(getKeySegment(groupCommand.name));
+    }
     keySegments.push(getKeySegment(command.name));
   }
 
