@@ -33,6 +33,13 @@ The logging implementation will look for an object conforming to the `Logger`
 interface and use it if found. If not found, a simple logging implementation
 using the `console` object will be used.
 
+Debug logging prints the raw command line arguments (at start up and while
+scanning for commands), so it may expose secrets. Once the target command is
+known, the values of `SECRET` arguments are replaced with `***` in the logged
+parsing output, but this should not be relied upon: do not enable debug logging
+when passing sensitive values as arguments and do not share debug logs without
+reviewing them first.
+
 ### Command and Service Validation
 
 By default, commands and services that are built into the CLI or provided by

@@ -1,5 +1,6 @@
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { Icon, PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import type { SecretAwareParseResult } from "../runtime/parser.ts";
 import type { ParseResult } from "../runtime/parser.ts";
 import { isGlobalCommand, isGlobalModifierCommand } from "../runtime/command/CommandTypeGuards.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
@@ -121,4 +122,21 @@ export async function printUnusedArgsWarning(
   } else {
     await printerService.warn(`Unused args: ${overallUnusedArgs.join(" ")}\n\n`, Icon.ALERT);
   }
+}
+
+export async function printSecretArgsWarning(
+  context: Context,
+  parseResult: SecretAwareParseResult,
+) {
+  const secretArgumentNames = parseResult.secretArgumentNames;
+  if (!secretArgumentNames || secretArgumentNames.length === 0) {
+    return;
+  }
+  const printerService = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
+  await printerService.warn(
+    `SECRET value passed as a plain argument: ${secretArgumentNames.join(", ")}. ` +
+      "This is not recommended as it may be exposed via shell history and process listings. " +
+      "Use an environment variable, a prompt or a configuration file default instead.\n\n",
+    Icon.ALERT,
+  );
 }

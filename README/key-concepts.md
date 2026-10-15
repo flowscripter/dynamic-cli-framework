@@ -506,7 +506,10 @@ or `GlobalCommandArgument` are:
   recommended), provided as a response to an argument value prompt, provided as
   a default value in a configuration file (using native OS secret storage
   functionality provided in the ConfigurationService) or sourced from an
-  environment variable.
+  environment variable. A warning is printed (the value is still accepted) when
+  a `SECRET` value is specified as a plain argument as it may be exposed via
+  shell history and process listings. See also the note about debug logging in
+  the development documentation.
 
 ## Default Argument Values
 

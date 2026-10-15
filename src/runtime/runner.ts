@@ -15,6 +15,7 @@ import {
   printNoCommandRecognisedError,
   printNoCommandSpecifiedError,
   printParseResultError,
+  printSecretArgsWarning,
   printUnusedArgsWarning,
 } from "../util/runnerHelper.ts";
 import { scanForGlobalModifierCommandClauses, scanForNonModifierCommandClause } from "./scanner.ts";
@@ -198,6 +199,7 @@ async function findAndExecuteGlobalModifierCommands(
         globalModifierCommandClause,
         defaultArgumentValues as PopulatedSingleValueType,
       );
+      await printSecretArgsWarning(context, parseResult);
 
       if (parseResult.invalidArguments.length > 0) {
         await printParseResultError(context, parseResult);
@@ -329,6 +331,7 @@ async function findAndExecuteNonModifierCommand(
         defaultArgumentValues as PopulatedValues,
       );
     }
+    await printSecretArgsWarning(context, parseResult);
 
     if (parseResult.invalidArguments.length > 0) {
       const prompted = await attemptPromptForMissingArguments(parseResult, context);
@@ -464,6 +467,7 @@ async function findAndExecuteDefaultNonModifierCommand(
         defaultArgumentValues as PopulatedValues,
       );
     }
+    await printSecretArgsWarning(context, parseResult);
 
     // add any unused args back to the list of still unused args
     if (parseResult.unusedArgs.length > 0) {
