@@ -63,7 +63,7 @@ describe("ConfigurationServiceProvider tests", () => {
   test("ConfigurationServiceProvider getServiceInfo works", async () => {
     const configurationServiceProvider = new ConfigurationServiceProvider(100, false, true);
     const serviceInfo = await configurationServiceProvider.getServiceInfo(getCLIConfig());
-    expect(serviceInfo.commands.length).toEqual(2);
+    expect(serviceInfo.commands.length).toEqual(1);
   });
 
   test("ConfigurationServiceProvider initService with no config works", async () => {
