@@ -165,6 +165,7 @@ function validateSubCommandArgument(subCommandArgument: SubCommandArgument): voi
 export default class CommandValidator {
   readonly #cliConfig: CLIConfig;
   readonly #configurationKeys: Array<string> = [];
+  #currentGroupCommand: GroupCommand | undefined;
 
   public constructor(cliConfig: CLIConfig) {
     this.#cliConfig = cliConfig;
@@ -265,7 +266,12 @@ export default class CommandValidator {
         );
       }
       subCommandNames.push(subCommand.name);
-      this.#validateSubCommand(subCommand);
+      this.#currentGroupCommand = groupCommand;
+      try {
+        this.#validateSubCommand(subCommand);
+      } finally {
+        this.#currentGroupCommand = undefined;
+      }
     });
   }
 
@@ -365,6 +371,7 @@ export default class CommandValidator {
         this.#cliConfig,
         command,
         argumentAncestry,
+        this.#currentGroupCommand,
       );
 
       if (configurationKey !== undefined) {

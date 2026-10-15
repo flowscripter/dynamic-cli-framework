@@ -3,6 +3,7 @@ import {
   getGlobalCommandArgumentConfigurationKey,
   getSubCommandArgumentConfigurationKey,
 } from "../../src/util/configHelper.ts";
+import { getGroupCommand } from "../fixtures/Command.ts";
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import {
   getGlobalCommand,
@@ -189,5 +190,30 @@ describe("configHelper tests", () => {
         arg1 as unknown as SubCommandArgument,
       ]),
     ).toEqual("FOO_SUBCOMMAND_EPSILON_FOO_BAR_B[_<index>]");
+  });
+
+  test("getSubCommandArgumentConfigurationKey includes group name for group members", () => {
+    const command = getSubCommandWithOption(
+      "list",
+      true,
+      false,
+      false,
+      ValueTypeName.STRING,
+      undefined,
+      true,
+    );
+    const option = command.options![0] as Option;
+
+    expect(
+      getSubCommandArgumentConfigurationKey(
+        getCLIConfig(),
+        command,
+        [option],
+        getGroupCommand("a", [command]),
+      ),
+    ).toEqual("FOO_A_LIST_FOO");
+    expect(getSubCommandArgumentConfigurationKey(getCLIConfig(), command, [option])).toEqual(
+      "FOO_LIST_FOO",
+    );
   });
 });
