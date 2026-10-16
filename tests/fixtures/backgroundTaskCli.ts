@@ -29,7 +29,12 @@ const baseCLI = new BaseCLI(
   new TtyTerminal(stdout.writeStream),
   new TtyTerminal(stderr.writeStream),
   new TtyStyler(3),
-  { enableRawMode() {}, disableRawMode() {}, readKey: () => Promise.resolve({}) },
+  {
+    enableRawMode() {},
+    disableRawMode() {},
+    readKey: () => Promise.resolve({}),
+    readRaw: () => Promise.resolve(""),
+  },
   { configFileSupportEnabled: true, keyValueServiceEnabled: true },
 );
 

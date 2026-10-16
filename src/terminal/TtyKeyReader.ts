@@ -52,6 +52,41 @@ export default class TtyKeyReader implements KeyReader {
     });
   }
 
+  readRaw(isComplete: (received: string) => boolean, timeoutMs: number): Promise<string> {
+    const stream = this.#ttyReadStream;
+    const wasRaw = stream.isRaw === true;
+    const wasPaused = stream.isPaused();
+
+    return new Promise((resolve) => {
+      let received = "";
+      let timer: ReturnType<typeof setTimeout>;
+
+      const finish = (): void => {
+        clearTimeout(timer);
+        stream.removeListener("data", onData);
+        if (!wasRaw) {
+          stream.setRawMode(false);
+        }
+        if (wasPaused) {
+          stream.pause();
+        }
+        resolve(received);
+      };
+
+      const onData = (data: Buffer | string): void => {
+        received += data.toString();
+        if (isComplete(received)) {
+          finish();
+        }
+      };
+
+      stream.setRawMode(true);
+      stream.on("data", onData);
+      stream.resume();
+      timer = setTimeout(finish, timeoutMs);
+    });
+  }
+
   static #decodeKeyEvent(data: Buffer): KeyEvent {
     if (data.length === 0) {
       return {};

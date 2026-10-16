@@ -43,6 +43,7 @@ const mockKeyReader: KeyReader = {
   enableRawMode() {},
   disableRawMode() {},
   readKey: () => Promise.resolve({}),
+  readRaw: () => Promise.resolve(""),
 };
 
 describe("BaseCLI tests", () => {
