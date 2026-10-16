@@ -11,6 +11,7 @@ import {
 import { getCLIConfig } from "../fixtures/CLIConfig.ts";
 import { RunState } from "@flowscripter/dynamic-cli-framework-api";
 import { ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import SyntaxHighlighterServiceProvider from "../../src/service/syntaxHighlighter/SyntaxHighlighterServiceProvider.ts";
 import BaseCLI from "../../src/cli/BaseCLI.ts";
 import { AUTO_UPGRADE_STARTUP_TASK_PRIORITY } from "../../src/runtime/lifecycle/priorities.ts";
 import type { KeyValueService } from "@flowscripter/dynamic-cli-framework-api";
@@ -143,6 +144,31 @@ describe("BaseCLI tests", () => {
     expect(runResult.runState).toEqual(RunState.RUNTIME_ERROR);
     expectStringIncludes(dummyStderr.getString(), "Execution error");
     expectStringIncludes(dummyStderr.getString(), "doesn't exist or not visible");
+  });
+
+  test("BaseCLI run executes config:dump when config file support is enabled", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      getCLIConfig("foo" + Math.random()),
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+      { configFileSupportEnabled: true },
+    );
+
+    baseCLI.addServiceProvider(new SyntaxHighlighterServiceProvider(50));
+    baseCLI.addCommand(getSubCommand("command", [], []));
+
+    const runResult = await baseCLI.run(["config:dump"]);
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(dummyStdout.getString().length).toBeGreaterThan(0);
   });
 
   test("Command and service key value scope isolation works", async () => {

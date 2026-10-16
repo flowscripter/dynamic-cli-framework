@@ -14,7 +14,8 @@ import type {
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
-import DumpConfigCommand from "./command/DumpConfigCommand.ts";
+import ConfigDumpSubCommand from "./command/ConfigDumpSubCommand.ts";
+import ConfigGroupCommand from "./command/ConfigGroupCommand.ts";
 import {
   CONFIGURATION_SERVICE_ID,
   SECRET_SENTINEL_PREFIX,
@@ -63,7 +64,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
  * {@link KeyValueServiceProvider} (which holds a direct reference to this provider - see
  * {@link getKeyValueData} and {@link flushIfDirty} - rather than looking this provider up via
  * {@link Context}, since only {@link configLocation}/{@link setConfigLocation} are safe to expose
- * generally; {@link getConfigString} is wired directly to {@link DumpConfigCommand} for the same
+ * generally; {@link getConfigString} is wired directly to {@link ConfigDumpSubCommand} for the same
  * reason - a full config dump would leak every other command's/service's key-value data if it
  * were reachable through a general lookup).
  *
@@ -222,7 +223,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
     if (this.configEnabled) {
       commands.push(new ConfigCommand(this.servicePriority));
-      commands.push(new DumpConfigCommand(() => this.getConfigString()));
+      commands.push(
+        new ConfigGroupCommand([new ConfigDumpSubCommand(() => this.getConfigString())]),
+      );
     }
     if (this.secretServiceEnabled) {
       this.#defaultsSecretService = new DefaultSecretService(cliConfig.name, "defaults");
