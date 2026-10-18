@@ -758,3 +758,19 @@ The following scenarios produce validation errors:
   and the value (after passing all built-in validations) fails the custom
   validation check. The error message provided by the custom validator is
   included in the error output.
+
+Validation of a command's arguments happens in two phases. First, every
+argument is checked against the built-in rules above. Only if all arguments pass
+are the custom `validate` functions invoked, in declaration order (options, then
+positionals) and, for complex options, bottom-up and depth-first. Each custom
+validator receives the value and a `ValidationContext` with the `argument`
+being validated, its `path` (e.g. `address[1].port`), the `command` and
+`values`: all converted values of the command (or, for a global command, its
+single value), including those from configuration, environment variables and
+defaults. This allows validation of values which depend on one another,
+independent of declaration order. A validator which only needs its own value may
+declare just the first parameter.
+
+Values entered via the `ArgumentPrompterService` are checked by the same custom
+validators as they are prompted for, with `values` containing the values
+provided so far.

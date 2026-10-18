@@ -196,7 +196,11 @@ export default class BaseCLI implements CLI {
     this.#commandRegistry = new DefaultCommandRegistry([], commandValidator);
 
     // create a context
-    this.#context = new DefaultContext(this.#cliConfig);
+    this.#context = new DefaultContext(this.#cliConfig, {
+      stdin: keyReader !== undefined,
+      stdout: stdoutTerminal.isTty(),
+      stderr: stderrTerminal.isTty(),
+    });
 
     this.#startupServiceProvider = new StartupServiceProvider(STARTUP_SERVICE_PRIORITY);
 
@@ -277,7 +281,7 @@ export default class BaseCLI implements CLI {
     );
     this.addServiceProvider(new TableGeneratorServiceProvider(TABLE_GENERATOR_SERVICE_PRIORITY));
 
-    const canPrompt = this.#keyReader !== undefined && this.#stderrTerminal.isTty();
+    const canPrompt = this.#context.isTty.stdin && this.#context.isTty.stderr;
 
     if (this.#options.promptingEnabled && !canPrompt) {
       throw new Error("promptingEnabled requires a keyReader and a TTY stderr terminal");

@@ -20,6 +20,7 @@ import {
   type PopulatedValues,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { ValidationContext } from "@flowscripter/dynamic-cli-framework-api";
 
 function expectParseResult(result: ParseResult, expected: ParseResult) {
   expect(result.populatedArgumentValues).toEqual(expected.populatedArgumentValues!);
@@ -803,5 +804,133 @@ describe("parser tests", () => {
     expect(getInvalidArgumentString(parseResult.invalidArguments[0]!, false)).toEqual(
       "arr[1].field='x' (custom validation: x is not allowed)",
     );
+  });
+
+  test("Custom validators receive all provided values regardless of declaration order", () => {
+    const seen: Array<unknown> = [];
+    const conflict = (other: string) => (value: unknown, ctx: ValidationContext) => {
+      const values = ctx.values as PopulatedValues;
+      seen.push({ path: ctx.path, argument: ctx.argument.type, command: ctx.command.name });
+      return value === "x" && values[other] === "y"
+        ? `${ctx.path} conflicts with ${other}`
+        : undefined;
+    };
+    const makeCommand = (first: "a" | "b"): SubCommand => {
+      const a = {
+        name: "a",
+        type: ValueTypeName.STRING,
+        isOptional: true,
+        validate: conflict("b"),
+      };
+      const b = {
+        name: "b",
+        type: ValueTypeName.STRING,
+        isOptional: true,
+        validate: conflict("a"),
+      };
+      return {
+        name: "subCommand",
+        options: first === "a" ? [a, b] : [b, a],
+        positionals: [],
+        execute: async (): Promise<void> => {},
+      };
+    };
+
+    for (const first of ["a", "b"] as const) {
+      const parseResult = parseSubCommandClause({
+        command: makeCommand(first),
+        potentialArgs: ["--a=x", "--b=y"],
+      });
+      expect(parseResult.invalidArguments.length).toEqual(1);
+      expect(parseResult.invalidArguments[0]!.reason).toEqual(
+        InvalidArgumentReason.CUSTOM_VALIDATION,
+      );
+    }
+    expect(seen[0]).toEqual({ path: "a", argument: ValueTypeName.STRING, command: "subCommand" });
+  });
+
+  test("Custom validators only run once all built-in validation has passed", () => {
+    let called = false;
+    const subCommand: SubCommand = {
+      name: "subCommand",
+      options: [
+        {
+          name: "a",
+          type: ValueTypeName.STRING,
+          validate: () => {
+            called = true;
+            return "never";
+          },
+        },
+        { name: "n", type: ValueTypeName.INTEGER },
+      ],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    };
+    const parseResult = parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: ["--a=x", "--n=notanumber"],
+    });
+    expect(called).toBeFalse();
+    expect(parseResult.invalidArguments.map((ia) => ia.reason)).toEqual([
+      InvalidArgumentReason.INCORRECT_VALUE_TYPE,
+    ]);
+  });
+
+  test("Nested and array element validators see the root values", () => {
+    let rootValues: unknown;
+    const field = {
+      name: "field",
+      type: ValueTypeName.STRING,
+      validate: (_: unknown, ctx: ValidationContext) => {
+        rootValues = ctx.values;
+        return ctx.path === "arr[1].field" ? "bad element" : undefined;
+      },
+    };
+    const subCommand: SubCommand = {
+      name: "subCommand",
+      options: [
+        { name: "plain", type: ValueTypeName.STRING },
+        {
+          name: "arr",
+          type: ComplexValueTypeName.COMPLEX,
+          isArray: true,
+          properties: [field],
+        },
+      ],
+      positionals: [],
+      execute: async (): Promise<void> => {},
+    };
+    const parseResult = parseSubCommandClause({
+      command: subCommand,
+      potentialArgs: ["--plain=p", "--arr[0].field=a", "--arr[1].field=b"],
+    });
+    expect(parseResult.invalidArguments.map((ia) => ia.name)).toEqual(["arr[1].field"]);
+    expect(rootValues).toEqual({
+      plain: "p",
+      arr: [{ field: "a" }, { field: "b" }],
+    });
+  });
+
+  test("Global command custom validator receives the argument value as values", () => {
+    let received: unknown;
+    const command = getGlobalCommand();
+    const withValidator = {
+      ...command,
+      argument: {
+        ...command.argument!,
+        validate: (value: unknown, ctx: ValidationContext) => {
+          received = { value, values: ctx.values, path: ctx.path, command: ctx.command.name };
+          return undefined;
+        },
+      },
+    };
+    parseGlobalCommandClause({ command: withValidator, potentialArgs: ["foo"] });
+    expect(received).toEqual({
+      value: "foo",
+      values: "foo",
+      path: command.name,
+      command: command.name,
+    });
   });
 });

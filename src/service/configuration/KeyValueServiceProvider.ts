@@ -226,6 +226,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
     const scopedKeyValueService = this.getScopedKeyValueService(scopeType, scopeKey);
     return {
       cliConfig: context.cliConfig,
+      isTty: context.isTty,
       getServiceById: (id: string): unknown =>
         id === KEY_VALUE_SERVICE_ID ? scopedKeyValueService : context.getServiceById(id),
       doesServiceExist: (id: string): boolean => context.doesServiceExist(id),

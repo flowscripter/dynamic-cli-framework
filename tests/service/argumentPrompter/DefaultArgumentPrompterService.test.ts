@@ -739,4 +739,64 @@ describe("DefaultArgumentPrompterService tests", () => {
     const values = result.populatedArgumentValues as Record<string, unknown>;
     expect(values["files"]).toEqual(["a.txt"]);
   });
+
+  test("promptForArguments returns prompted values only, converted to native types", async () => {
+    const prompter = new MockPrompterService();
+    prompter.addResponse("count", "3");
+    prompter.addResponse("flag", true);
+    const service = new DefaultArgumentPrompterService(prompter);
+
+    const result = await service.promptForArguments(
+      [
+        { name: "count", type: ValueTypeName.INTEGER },
+        { name: "flag", type: ValueTypeName.BOOLEAN },
+        { name: "given", type: ValueTypeName.STRING },
+      ],
+      { given: "already" },
+    );
+    expect(result).toEqual({ count: 3, flag: true });
+  });
+
+  test("promptForArguments returns undefined when prompting is disabled", async () => {
+    const prompter = new MockPrompterService();
+    prompter.promptEnabled = false;
+    const service = new DefaultArgumentPrompterService(prompter);
+    expect(
+      await service.promptForArguments([{ name: "count", type: ValueTypeName.INTEGER }]),
+    ).toBeUndefined();
+  });
+
+  test("promptForArguments validators see existing and previously prompted values", async () => {
+    const prompts: Array<Prompt> = [];
+    const prompter = new MockPrompterService();
+    const originalPrompt = prompter.prompt.bind(prompter);
+    prompter.prompt = (p: Prompt) => {
+      prompts.push(p);
+      if (p.name === "second") {
+        expect(p.options[0]!.validate!("two")).toBeUndefined();
+      }
+      return originalPrompt(p);
+    };
+    prompter.addResponse("first", "one");
+    prompter.addResponse("second", "two");
+    const service = new DefaultArgumentPrompterService(prompter);
+
+    const contexts: Array<unknown> = [];
+    await service.promptForArguments(
+      [
+        { name: "first", type: ValueTypeName.STRING },
+        {
+          name: "second",
+          type: ValueTypeName.STRING,
+          validate: (_value, ctx) => {
+            contexts.push({ path: ctx.path, values: { ...(ctx.values as object) } });
+            return undefined;
+          },
+        },
+      ],
+      { existing: "e" },
+    );
+    expect(prompts.map((p) => p.name)).toEqual(["first", "second"]);
+    expect(contexts).toEqual([{ path: "second", values: { existing: "e", first: "one" } }]);
+  });
 });

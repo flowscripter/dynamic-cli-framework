@@ -5,7 +5,7 @@
     "": {
       "name": "@flowscripter/dynamic-cli-framework",
       "dependencies": {
-        "@flowscripter/dynamic-cli-framework-api": "^5.0.2",
+        "@flowscripter/dynamic-cli-framework-api": "^5.1.0",
         "@flowscripter/dynamic-plugin-framework": "^2.2.22",
         "emphasize": "^7.0.0",
         "fastest-levenshtein": "^1.0.16",
@@ -29,7 +29,7 @@
     },
   },
   "packages": {
-    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@5.0.2", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-e5eUP/6S9KTY6Va0mhe/UmIrt0W9k5KDnugvhiQxlGbqcGnzuwjhHvmXdeYSjHTaUSxcj8YTWvDIsj7m2P1c1w=="],
+    "@flowscripter/dynamic-cli-framework-api": ["@flowscripter/dynamic-cli-framework-api@5.1.0", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-jSOS9kqMIi5arXubMMQv7OL/YMKxJJuyohXL6vlfX7w+spnFOFpnJ1SIzAGa/pLEnIW+LbH2nYaNXycWyLBs3A=="],
 
     "@flowscripter/dynamic-plugin-framework": ["@flowscripter/dynamic-plugin-framework@2.2.22", "", { "dependencies": { "semver": "^7.8.5" }, "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-OOWux0t4ttGuiGMRS6hbc1B6NkFQLAha1DZjhSOtoF7CzHEZneUvix4FDnpzlRp8GPCy/sOaCpqMJTeQEHSpVA=="],
 

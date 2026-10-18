@@ -14,7 +14,9 @@ import {
   ComplexValueTypeName,
   type PopulatedSingleValueType,
   type PopulatedValues,
+  type Values,
 } from "@flowscripter/dynamic-cli-framework-api";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
@@ -22,6 +24,20 @@ import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "../../runtime/command/CommandTypeGuards.ts";
+
+/**
+ * The command and values visible to {@link Argument.validate} functions while prompting.
+ */
+interface PromptScope {
+  readonly command: Command;
+  readonly values: PopulatedValues | PopulatedSingleValueType;
+}
+
+/**
+ * Used as {@link ValidationContext.command} when prompting via {@link ArgumentPrompterService.promptForArguments},
+ * which is not associated with a specific command.
+ */
+const NO_COMMAND = { name: "" } as Command;
 
 export default class DefaultArgumentPrompterService implements ArgumentPrompterService {
   readonly #prompterService: PrompterService;
@@ -63,6 +79,53 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     return parseResult;
   }
 
+  async promptForArguments(
+    args: ReadonlyArray<Option | ComplexOption>,
+    existing: Values = {},
+  ): Promise<Values | undefined> {
+    if (!this.#prompterService.promptEnabled) {
+      return undefined;
+    }
+    const prompted: Record<string, Values[string]> = {};
+    const merged: Record<string, Values[string]> = { ...existing };
+    const scope: PromptScope = { command: NO_COMMAND, values: merged as PopulatedValues };
+
+    for (const arg of args) {
+      if (arg.name in existing) {
+        continue;
+      }
+      const value = (await this.#promptForArgument(arg.name, arg, scope)) as Values[string];
+      prompted[arg.name] = value;
+      merged[arg.name] = value;
+    }
+    return prompted as Values;
+  }
+
+  async #promptForArgument(
+    name: string,
+    arg: Option | Positional | ComplexOption,
+    scope: PromptScope,
+  ): Promise<PopulatedValues[string]> {
+    if ("type" in arg && (arg as ComplexOption).type === ComplexValueTypeName.COMPLEX) {
+      return await this.#promptForComplexOption(name, arg as ComplexOption, scope);
+    }
+    if (DefaultArgumentPrompterService.#isArrayArgument(arg)) {
+      return await this.#promptForArrayArgument(name, arg as Option | Positional, scope);
+    }
+    const prompt = DefaultArgumentPrompterService.#argumentToPrompt(
+      name,
+      (arg as Option | Positional).description ?? name,
+      arg as Argument,
+      name,
+      scope,
+    );
+    const result = await this.#prompterService.prompt(prompt);
+    return DefaultArgumentPrompterService.#coerceValue(
+      result.value as SingleValueType,
+      (arg as Argument).type,
+    );
+  }
+
   async #promptForGlobalCommand(parseResult: ParseResult): Promise<ParseResult> {
     const command = parseResult.command as GlobalCommand;
     if (!command.argument) {
@@ -73,6 +136,8 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
       command.name,
       command.name,
       command.argument,
+      command.name,
+      { command, values: undefined },
     );
     const result = await this.#prompterService.prompt(prompt);
     const value = DefaultArgumentPrompterService.#coerceValue(
@@ -96,6 +161,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
       ...existingValues,
     };
     const remainingInvalid: InvalidArgument[] = [];
+    const scope: PromptScope = { command, values: newValues as PopulatedValues };
 
     for (const invalid of parseResult.invalidArguments) {
       if (invalid.reason !== InvalidArgumentReason.MISSING_VALUE || !invalid.name) {
@@ -109,30 +175,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
         continue;
       }
 
-      if ("type" in arg && (arg as ComplexOption).type === ComplexValueTypeName.COMPLEX) {
-        const complexValues = await this.#promptForComplexOption(
-          invalid.name,
-          arg as ComplexOption,
-        );
-        newValues[invalid.name] = complexValues;
-      } else if (DefaultArgumentPrompterService.#isArrayArgument(arg)) {
-        const arrayValues = await this.#promptForArrayArgument(
-          invalid.name,
-          arg as Option | Positional,
-        );
-        newValues[invalid.name] = arrayValues;
-      } else {
-        const prompt = DefaultArgumentPrompterService.#argumentToPrompt(
-          invalid.name,
-          (arg as Option | Positional).description ?? invalid.name,
-          arg as Argument,
-        );
-        const result = await this.#prompterService.prompt(prompt);
-        newValues[invalid.name] = DefaultArgumentPrompterService.#coerceValue(
-          result.value as SingleValueType,
-          (arg as Argument).type,
-        );
-      }
+      newValues[invalid.name] = await this.#promptForArgument(invalid.name, arg, scope);
     }
 
     return {
@@ -147,6 +190,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
   async #promptForComplexOption(
     name: string,
     complexOption: ComplexOption,
+    scope: PromptScope,
   ): Promise<PopulatedValues> {
     const values: Record<string, PopulatedValues[string]> = {};
 
@@ -155,6 +199,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
         values[(prop as ComplexOption).name] = await this.#promptForComplexOption(
           `${name}.${(prop as ComplexOption).name}`,
           prop as ComplexOption,
+          scope,
         );
       } else {
         const option = prop as Option;
@@ -165,6 +210,8 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
           `${name}.${option.name}`,
           option.description ?? `${name}.${option.name}`,
           option,
+          `${name}.${option.name}`,
+          scope,
         );
         const result = await this.#prompterService.prompt(prompt);
         values[option.name] = DefaultArgumentPrompterService.#coerceValue(
@@ -180,6 +227,7 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
   async #promptForArrayArgument(
     name: string,
     arg: Option | Positional,
+    scope: PromptScope,
   ): Promise<Array<SingleValueType>> {
     const values: SingleValueType[] = [];
 
@@ -188,6 +236,8 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
         name,
         `${arg.description ?? name}${values.length > 0 ? ` [${values.length + 1}]` : ""}`,
         arg as Argument,
+        name,
+        scope,
       );
       const result = await this.#prompterService.prompt(prompt);
       values.push(
@@ -212,7 +262,13 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
     return values;
   }
 
-  static #argumentToPrompt(name: string, description: string, arg: Argument): Prompt {
+  static #argumentToPrompt(
+    name: string,
+    description: string,
+    arg: Argument,
+    path: string,
+    scope: PromptScope,
+  ): Prompt {
     if (arg.type === ValueTypeName.BOOLEAN) {
       return {
         name,
@@ -240,7 +296,17 @@ export default class DefaultArgumentPrompterService implements ArgumentPrompterS
       returnedValue: "",
       min: arg.minValueInclusive,
       max: arg.maxValueInclusive,
-      validate: arg.validate ? (v) => arg.validate!(v) : undefined,
+      validate: arg.validate
+        ? (v) => {
+            const value = DefaultArgumentPrompterService.#coerceValue(v, arg.type);
+            return arg.validate!(value, {
+              argument: arg,
+              path,
+              values: scope.values === undefined ? value : scope.values,
+              command: scope.command,
+            });
+          }
+        : undefined,
     };
 
     return {

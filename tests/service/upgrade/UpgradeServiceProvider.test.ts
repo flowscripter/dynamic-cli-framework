@@ -61,6 +61,7 @@ async function initAndRunAutoUpgrade(
   };
   const taskContext: Context = {
     cliConfig: context.cliConfig,
+    isTty: context.isTty,
     getServiceById: (id: string) =>
       id === KEY_VALUE_SERVICE_ID ? taskKeyValueService : context.getServiceById(id),
     doesServiceExist: (id: string) => context.doesServiceExist(id),
