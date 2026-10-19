@@ -4,7 +4,7 @@ import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommand } from "@flowscripter/dynamic-cli-framework-api";
-import type { SingleValueType } from "@flowscripter/dynamic-cli-framework-api";
+import type { PopulatedValues, SingleValueType } from "@flowscripter/dynamic-cli-framework-api";
 import { ValueTypeName, ComplexValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
@@ -13,6 +13,8 @@ import {
   getInvalidArgumentString,
   validateGlobalCommandArgumentValue,
   validateOptionValue,
+  runCustomValidation,
+  type DeferredCustomValidation,
 } from "../values/argumentValueValidation.ts";
 import getLogger from "../../util/logger.ts";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
@@ -219,7 +221,16 @@ export default class CommandValidator {
       validateArgument(argument, globalCommand.name);
       if (argument.defaultValue) {
         const invalidArguments: Array<InvalidArgument> = [];
-        validateGlobalCommandArgumentValue(globalCommand, argument.defaultValue, invalidArguments);
+        const deferred: Array<DeferredCustomValidation> = [];
+        validateGlobalCommandArgumentValue(
+          globalCommand,
+          argument.defaultValue,
+          invalidArguments,
+          deferred,
+        );
+        if (invalidArguments.length === 0) {
+          runCustomValidation(deferred, globalCommand, argument.defaultValue, invalidArguments);
+        }
         if (invalidArguments.length > 0) {
           throw new Error(
             `Illegal default value for global command: '${globalCommand.name}' => ${invalidArguments
@@ -440,12 +451,13 @@ export default class CommandValidator {
         option as unknown as SubCommandArgument,
       ]);
     } else {
-      this.#validateOption(option, currentOptionPaths, allOptionPaths);
+      this.#validateOption(subCommand, option, currentOptionPaths, allOptionPaths);
       this.#validateSubCommandArgumentConfigurationKey(subCommand, [...argumentAncestry, option]);
     }
   }
 
   #validateOption(
+    subCommand: SubCommand,
     option: Option,
     currentOptionPaths: Array<string>,
     allOptionPaths: Array<string>,
@@ -460,7 +472,16 @@ export default class CommandValidator {
     }
     if (option.defaultValue) {
       const invalidArguments: Array<InvalidArgument> = [];
-      validateOptionValue(option, option.defaultValue, invalidArguments);
+      const deferred: Array<DeferredCustomValidation> = [];
+      validateOptionValue(option, option.defaultValue, invalidArguments, deferred);
+      if (invalidArguments.length === 0) {
+        runCustomValidation(
+          deferred,
+          subCommand,
+          { [option.name]: option.defaultValue } as PopulatedValues,
+          invalidArguments,
+        );
+      }
       if (invalidArguments.length > 0) {
         throw new Error(
           `Illegal default value for option: '${option.name}' => ${invalidArguments
@@ -515,7 +536,16 @@ export default class CommandValidator {
     }
     if (complexOption.defaultValue) {
       const invalidArguments: Array<InvalidArgument> = [];
-      validateOptionValue(complexOption, complexOption.defaultValue, invalidArguments);
+      const deferred: Array<DeferredCustomValidation> = [];
+      validateOptionValue(complexOption, complexOption.defaultValue, invalidArguments, deferred);
+      if (invalidArguments.length === 0) {
+        runCustomValidation(
+          deferred,
+          subCommand,
+          { [complexOption.name]: complexOption.defaultValue } as PopulatedValues,
+          invalidArguments,
+        );
+      }
       if (invalidArguments.length > 0) {
         throw new Error(
           `Illegal default value for option: '${complexOption.name}' => ${invalidArguments

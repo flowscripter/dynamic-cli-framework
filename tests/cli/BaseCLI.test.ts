@@ -119,6 +119,36 @@ describe("BaseCLI tests", () => {
     expectStringIncludes(dummyStderr.getString(), "Unused arg: unused");
   });
 
+  test("BaseCLI context exposes isTty derived from terminals and key reader", async () => {
+    const config = getCLIConfig();
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      config,
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new NonTtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      undefined,
+      { promptingEnabled: false },
+    );
+    const subCommand = getSubCommand("command", [], []);
+    let isTty: unknown;
+    subCommand.execute = (context): Promise<void> => {
+      isTty = context.isTty;
+      return Promise.resolve();
+    };
+    baseCLI.addCommand(subCommand);
+
+    const runResult = await baseCLI.run(["command"]);
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(isTty).toEqual({ stdin: false, stdout: true, stderr: false });
+  });
+
   test("BaseCLI run reports formatted error for missing explicit config file", async () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();

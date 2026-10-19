@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   getInvalidArgumentString,
-  validateGlobalCommandArgumentValue,
-  validateOptionValue,
-  validatePositionalValue,
+  runCustomValidation,
+  validateGlobalCommandArgumentValue as baseValidateGlobalCommandArgumentValue,
+  validateOptionValue as baseValidateOptionValue,
+  validatePositionalValue as baseValidatePositionalValue,
+  type DeferredCustomValidation,
 } from "../../../src/runtime/values/argumentValueValidation.ts";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import {
   type InvalidArgument,
   InvalidArgumentReason,
@@ -19,6 +22,40 @@ import type { ComplexOption } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
+
+const stubCommand = { name: "stub" } as Command;
+
+// run the built-in validation followed by the deferred custom validation, as the parser does
+function withCustom<A, V, R>(
+  base: (
+    arg: A,
+    value: V,
+    invalid: Array<InvalidArgument>,
+    d: Array<DeferredCustomValidation>,
+  ) => R,
+  nameOf: (arg: A) => string,
+) {
+  return (arg: A, value: V, invalid: Array<InvalidArgument>): R | undefined => {
+    const deferred: Array<DeferredCustomValidation> = [];
+    const result = base(arg, value, invalid, deferred);
+    if (invalid.length === 0) {
+      runCustomValidation(
+        deferred,
+        stubCommand,
+        { [nameOf(arg)]: result } as PopulatedValues,
+        invalid,
+      );
+    }
+    return invalid.length === 0 ? result : undefined;
+  };
+}
+
+const validateOptionValue = withCustom(baseValidateOptionValue, (o) => o.name);
+const validatePositionalValue = withCustom(baseValidatePositionalValue, (p) => p.name);
+const validateGlobalCommandArgumentValue = withCustom(
+  baseValidateGlobalCommandArgumentValue,
+  (c) => c.name,
+);
 
 describe("argumentValueValidation tests", () => {
   test("Option types", () => {

@@ -16,6 +16,7 @@ import { InvalidArgumentReason } from "@flowscripter/dynamic-cli-framework-api";
 import type { SubCommandArgument } from "@flowscripter/dynamic-cli-framework-api";
 import type { Argument } from "@flowscripter/dynamic-cli-framework-api";
 import type { GlobalCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 
 interface ValidationResult {
   invalidArgument?: InvalidArgument;
@@ -41,32 +42,61 @@ function withPrefix(invalidArgument: InvalidArgument, prefix: string): InvalidAr
 }
 
 /**
- * Invokes the custom validate function (if any) of the provided {@link Argument} and returns an
- * {@link InvalidArgument} if the custom validation failed.
- *
- * @param argument the {@link Argument} providing the custom validate function.
- * @param name the name to use for the {@link InvalidArgument}.
- * @param value the validated and type-converted value.
+ * A custom validation to be invoked once all built-in validation has passed.
  */
-function doCustomValidation(
+export interface DeferredCustomValidation {
+  readonly argument: Argument | ComplexOption;
+  readonly path: string;
+  readonly value: SingleValueType | Values | Array<SingleValueType | Values>;
+}
+
+/**
+ * Records a custom validation of the provided {@link Argument} (if it has one) for later invocation by
+ * {@link runCustomValidation}. Deferred validations are recorded bottom-up and depth-first.
+ */
+function deferCustomValidation(
+  deferred: Array<DeferredCustomValidation> | undefined,
   argument: Argument | ComplexOption,
-  name: string,
+  path: string,
   value: SingleValueType | Values | Array<SingleValueType | Values>,
-): InvalidArgument | undefined {
-  if (argument.validate === undefined) {
-    return undefined;
+): void {
+  if (deferred !== undefined && argument.validate !== undefined) {
+    deferred.push({ argument, path, value });
   }
-  const message = argument.validate(value as ValueType | Values | Array<Values>);
-  if (message === undefined) {
-    return undefined;
+}
+
+/**
+ * Invokes the recorded custom validations in order, stopping at the first failure.
+ *
+ * @param deferred the validations recorded while validating the values of the command.
+ * @param command the {@link Command} the validated values belong to.
+ * @param values all validated and converted values of the command.
+ * @param invalidArguments an array of {@link InvalidArgument} which is added to if a custom validation fails.
+ */
+export function runCustomValidation(
+  deferred: ReadonlyArray<DeferredCustomValidation>,
+  command: Command,
+  values: PopulatedValues | PopulatedSingleValueType,
+  invalidArguments: Array<InvalidArgument>,
+): void {
+  for (const { argument, path, value } of deferred) {
+    const message = argument.validate!(value as ValueType | Values | Array<Values>, {
+      argument: argument as Argument,
+      path,
+      values,
+      command,
+    });
+    if (message !== undefined) {
+      invalidArguments.push({
+        argument,
+        name: path,
+        value: value as PopulatedValueType | PopulatedValues,
+        reason: InvalidArgumentReason.CUSTOM_VALIDATION,
+        message,
+      });
+      return;
+    }
   }
-  return {
-    argument,
-    name,
-    value: value as PopulatedValueType | PopulatedValues,
-    reason: InvalidArgumentReason.CUSTOM_VALIDATION,
-    message,
-  };
 }
 
 /**
@@ -193,6 +223,8 @@ function validatePrimitiveValue(
 function validateArrayValue(
   subCommandArgument: SubCommandArgument | ComplexOption,
   arrayValue: Array<PopulatedSingleValueType | PopulatedValues | undefined>,
+  path: string,
+  deferred: Array<DeferredCustomValidation> | undefined,
 ): ArrayValueValidationResult {
   const convertedArrayValue: Array<SingleValueType | Values> = [];
 
@@ -228,7 +260,12 @@ function validateArrayValue(
           },
         };
       }
-      validationResult = validateObjectValue(subCommandArgument as ComplexOption, singleValue);
+      validationResult = validateObjectValue(
+        subCommandArgument as ComplexOption,
+        singleValue,
+        `${path}[${i}]`,
+        deferred,
+      );
     } // if not array and not object, then must be primitive
     else {
       if (isComplexOption(subCommandArgument)) {
@@ -267,11 +304,14 @@ function validateArrayValue(
 function validateObjectValue(
   argument: ComplexOption,
   objectValue: PopulatedValues,
+  path: string,
+  deferred: Array<DeferredCustomValidation> | undefined,
 ): ObjectValueValidationResult {
   const convertedObjectValue: Values = {};
 
   for (let i = 0; i < argument.properties.length; i++) {
     const propertyArg = argument.properties[i]!;
+    const propertyPath = `${path}.${propertyArg.name}`;
     let propertyValue = objectValue[propertyArg.name];
 
     if (propertyValue === undefined && propertyArg.defaultValue !== undefined) {
@@ -311,6 +351,8 @@ function validateObjectValue(
       validationResult = validateArrayValue(
         propertyArg as ComplexOption | SubCommandArgument,
         propertyValue,
+        propertyPath,
+        deferred,
       );
     } else if (typeof propertyValue === "object") {
       if (propertyArg.type !== ComplexValueTypeName.COMPLEX) {
@@ -327,6 +369,8 @@ function validateObjectValue(
       validationResult = validateObjectValue(
         propertyArg as ComplexOption,
         propertyValue as PopulatedValues,
+        propertyPath,
+        deferred,
       );
     } // if not array and not object, then must be primitive
     else {
@@ -356,18 +400,8 @@ function validateObjectValue(
         invalidArgument: withPrefix(validationResult.invalidArgument, `.${propertyArg.name}`),
       };
     }
-    // custom validation runs only once the property (and any nested properties) passed validation
-    const customInvalidArgument = doCustomValidation(
-      propertyArg,
-      `.${propertyArg.name}`,
-      validationResult.validValue!,
-    );
-    if (customInvalidArgument !== undefined) {
-      return {
-        validValue: convertedObjectValue,
-        invalidArgument: customInvalidArgument,
-      };
-    }
+    // custom validation is deferred until all built-in validation has passed
+    deferCustomValidation(deferred, propertyArg, propertyPath, validationResult.validValue!);
   }
   return {
     validValue: convertedObjectValue,
@@ -380,6 +414,7 @@ function doSubCommandArgumentValidation(
   isArray: boolean,
   isOptional: boolean,
   invalidArguments: Array<InvalidArgument>,
+  deferred: Array<DeferredCustomValidation> | undefined,
 ): PopulatedValueType | PopulatedValues | Array<PopulatedValues> {
   // if there is a value, check if it is valid
   if (value !== undefined) {
@@ -395,7 +430,7 @@ function doSubCommandArgumentValidation(
         });
         return undefined;
       }
-      validationResult = validateArrayValue(argument, value);
+      validationResult = validateArrayValue(argument, value, argument.name, deferred);
     } else if (typeof value === "object") {
       if (!isComplexOption(argument)) {
         invalidArguments.push({
@@ -406,7 +441,7 @@ function doSubCommandArgumentValidation(
         });
         return undefined;
       }
-      validationResult = validateObjectValue(argument, value);
+      validationResult = validateObjectValue(argument, value, argument.name, deferred);
     } else {
       if (isComplexOption(argument)) {
         invalidArguments.push({
@@ -424,15 +459,7 @@ function doSubCommandArgumentValidation(
       invalidArguments.push(withPrefix(validationResult.invalidArgument, argument.name));
       return undefined;
     }
-    const customInvalidArgument = doCustomValidation(
-      argument,
-      argument.name,
-      validationResult.validValue!,
-    );
-    if (customInvalidArgument !== undefined) {
-      invalidArguments.push(customInvalidArgument);
-      return undefined;
-    }
+    deferCustomValidation(deferred, argument, argument.name, validationResult.validValue!);
     return validationResult.validValue as PopulatedValueType | PopulatedValues | undefined;
   }
 
@@ -453,11 +480,13 @@ function doSubCommandArgumentValidation(
  * @param option the {@link Option} to validate against.
  * @param value the value (if any) for the {@link Option}.
  * @param invalidArguments an array of {@link InvalidArgument} which may be added to if the provided value is invalid.
+ * @param deferred if provided, custom validations are recorded here for later invocation by {@link runCustomValidation}. If omitted, custom validations are not invoked.
  */
 export function validateOptionValue(
   option: Option | ComplexOption,
   value: PopulatedValueType | PopulatedValues | Array<PopulatedValues | undefined>,
   invalidArguments: Array<InvalidArgument>,
+  deferred?: Array<DeferredCustomValidation>,
 ): PopulatedValueType | PopulatedValues | Array<PopulatedValues> {
   return doSubCommandArgumentValidation(
     option,
@@ -465,6 +494,7 @@ export function validateOptionValue(
     option.isArray || false,
     option.isOptional || false,
     invalidArguments,
+    deferred,
   );
 }
 
@@ -474,11 +504,13 @@ export function validateOptionValue(
  * @param positional the {@link Positional} to validate against.
  * @param value the value (if any) for the {@link Positional}.
  * @param invalidArguments an array of {@link InvalidArgument} which may be added to if the provided value is invalid.
+ * @param deferred if provided, custom validations are recorded here for later invocation by {@link runCustomValidation}. If omitted, custom validations are not invoked.
  */
 export function validatePositionalValue(
   positional: Positional,
   value: PopulatedValueType,
   invalidArguments: Array<InvalidArgument>,
+  deferred?: Array<DeferredCustomValidation>,
 ): PopulatedValueType {
   return doSubCommandArgumentValidation(
     positional,
@@ -486,6 +518,7 @@ export function validatePositionalValue(
     positional.isVarargMultiple || false,
     positional.isVarargOptional || false,
     invalidArguments,
+    deferred,
   ) as PopulatedValueType;
 }
 
@@ -496,11 +529,13 @@ export function validatePositionalValue(
  * @param globalCommand the {@link GlobalCommand} providing the {@link GlobalCommandArgument}.
  * @param value the value (if any) for the {@link GlobalCommandArgument}.
  * @param invalidArguments an array of {@link InvalidArgument} which may be added to if the provided value is invalid.
+ * @param deferred if provided, custom validations are recorded here for later invocation by {@link runCustomValidation}. If omitted, custom validations are not invoked.
  */
 export function validateGlobalCommandArgumentValue(
   globalCommand: GlobalCommand,
   value: PopulatedSingleValueType,
   invalidArguments: Array<InvalidArgument>,
+  deferred?: Array<DeferredCustomValidation>,
 ): PopulatedSingleValueType {
   // if this function is called it is because the argument is defined
   const globalCommandArgument = globalCommand.argument!;
@@ -527,15 +562,12 @@ export function validateGlobalCommandArgumentValue(
       return undefined;
     }
 
-    const customInvalidArgument = doCustomValidation(
+    deferCustomValidation(
+      deferred,
       globalCommandArgument,
       globalCommand.name,
       validationResult.validValue!,
     );
-    if (customInvalidArgument !== undefined) {
-      invalidArguments.push(customInvalidArgument);
-      return undefined;
-    }
     return validationResult.validValue as PopulatedSingleValueType;
   }
 

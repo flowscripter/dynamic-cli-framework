@@ -11,6 +11,8 @@ import {
   validateGlobalCommandArgumentValue,
   validateOptionValue,
   validatePositionalValue,
+  runCustomValidation,
+  type DeferredCustomValidation,
 } from "./values/argumentValueValidation.ts";
 import getLogger from "../util/logger.ts";
 import { redactGlobalCommandValue, redactSubCommandValues } from "../util/secretRedaction.ts";
@@ -64,12 +66,14 @@ export function parseSubCommandClause(
   }
 
   if (invalidArguments.length === 0) {
+    const deferred: Array<DeferredCustomValidation> = [];
     // validate the option values
     command.options.forEach((option) => {
       const validatedValue = validateOptionValue(
         option,
         populatedArgumentValues[option.name] || option.defaultValue,
         invalidArguments,
+        deferred,
       );
       if (validatedValue !== undefined) {
         populatedArgumentValues[option.name] = validatedValue;
@@ -89,11 +93,16 @@ export function parseSubCommandClause(
           positional,
           populatedArgumentValues[positional.name] as ValueType,
           invalidArguments,
+          deferred,
         );
         if (validatedValue !== undefined) {
           populatedArgumentValues[positional.name] = validatedValue;
         }
       });
+      if (invalidArguments.length === 0) {
+        // custom validators run once all built-in validation has passed and see all values
+        runCustomValidation(deferred, command, populatedArgumentValues, invalidArguments);
+      }
       logger.debug(
         "Command arguments after positionals validated: %O with invalid args: %O",
         redactSubCommandValues(command, populatedArgumentValues),
@@ -162,13 +171,18 @@ export function parseGlobalCommandClause(
 
   // don't validate the value if the argument is already invalid
   if (invalidArguments.length === 0) {
+    const deferred: Array<DeferredCustomValidation> = [];
     const validatedValue = validateGlobalCommandArgumentValue(
       command,
       populatedArgumentValue,
       invalidArguments,
+      deferred,
     );
     if (validatedValue !== undefined) {
       populatedArgumentValue = validatedValue;
+    }
+    if (invalidArguments.length === 0) {
+      runCustomValidation(deferred, command, populatedArgumentValue, invalidArguments);
     }
   }
 

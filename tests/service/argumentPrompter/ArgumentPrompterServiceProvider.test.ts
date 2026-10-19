@@ -8,6 +8,7 @@ import { getCLIConfig } from "../../fixtures/CLIConfig.ts";
 function getMockArgumentPrompterService(): ArgumentPrompterService {
   return {
     promptForMissingArguments: (parseResult) => Promise.resolve(parseResult),
+    promptForArguments: () => Promise.resolve(undefined),
   };
 }
 

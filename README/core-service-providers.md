@@ -14,6 +14,10 @@ Provides:
   prompts, and other arguments become text entry prompts. Handles complex
   options by prompting for each nested property and array/vararg arguments by
   repeating prompts with an "add another?" confirmation.
+- `promptForArguments(args, existing?)` prompts for a value for each of the
+  given options, using the same prompt types, and returns the values converted
+  to their native types. It returns `undefined` if prompting is not possible
+  (e.g. disabled via `--no-prompt`).
 
 NOTE: This service is opt-in. Enable via `argumentPrompterEnabled` flag on
 `BaseCLI`, `DefaultRuntimeCLI`, or the launcher functions. Requires

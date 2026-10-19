@@ -7,7 +7,10 @@ import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 export default class DefaultContext implements Context {
   readonly #serviceInstancesById: Map<string, unknown> = new Map();
 
-  public constructor(readonly cliConfig: CLIConfig) {}
+  public constructor(
+    readonly cliConfig: CLIConfig,
+    readonly isTty: Context["isTty"] = { stdin: false, stdout: false, stderr: false },
+  ) {}
 
   public addServiceInstance(id: string, serviceInstance: unknown) {
     if (this.#serviceInstancesById.has(id)) {
