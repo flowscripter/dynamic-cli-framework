@@ -284,7 +284,8 @@ export default class BaseCLI implements CLI {
         PRINTER_SERVICE_PRIORITY,
         this.#printerService,
         canPrompt && this.#keyReader !== undefined
-          ? () => detectDarkBackground(this.#keyReader!, this.#stderrTerminal) : undefined,
+          ? () => detectDarkBackground(this.#keyReader!, this.#stderrTerminal)
+          : undefined,
       ),
     );
     this.addServiceProvider(new TableGeneratorServiceProvider(TABLE_GENERATOR_SERVICE_PRIORITY));
