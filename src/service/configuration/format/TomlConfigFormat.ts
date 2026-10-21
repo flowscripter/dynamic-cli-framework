@@ -60,7 +60,7 @@ function addNewTableHeaders(text: string, existing: ConfigData, changes: ConfigD
     node[tablePath[tablePath.length - 1]!] ??= {};
   }
   const headers = newTables.map((tablePath) => `[${tablePath.map(formatKey).join(".")}]`);
-  const withHeaders = `${text.replace(/\n*$/, "\n")}\n${headers.join("\n\n")}\n`;
+  const withHeaders = `${text.trimEnd()}\n\n${headers.join("\n\n")}\n`;
   try {
     return isDeepStrictEqual(plain(parse(withHeaders)), plain(expected)) ? withHeaders : text;
   } catch {
