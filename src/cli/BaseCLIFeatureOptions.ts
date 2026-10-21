@@ -1,3 +1,4 @@
+import type ConfigFormat from "../service/configuration/format/ConfigFormat.ts";
 import type { UpgradeLocationsConfig } from "../service/upgrade/UpgradeLocationsConfig.ts";
 import type {
   NpmjsPluginRepositoryConfig,
@@ -6,6 +7,11 @@ import type {
 
 export default interface BaseCLIFeatureOptions {
   readonly configFileSupportEnabled?: boolean;
+  /**
+   * The syntax of the configuration file. Defaults to JSON. YAML and TOML are available from the
+   * `@flowscripter/dynamic-cli-framework/yaml` and `@flowscripter/dynamic-cli-framework/toml` entry points.
+   */
+  readonly configFormat?: ConfigFormat;
   readonly envVarsSupportEnabled?: boolean;
   readonly keyValueServiceEnabled?: boolean;
   readonly secretServiceEnabled?: boolean;

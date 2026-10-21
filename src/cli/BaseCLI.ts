@@ -31,6 +31,7 @@ import ShutdownServiceProvider from "../service/shutdown/ShutdownServiceProvider
 import StartupServiceProvider from "../service/startup/StartupServiceProvider.ts";
 import type { StartupTask } from "@flowscripter/dynamic-cli-framework-api";
 import { shutdownState } from "../service/shutdown/ShutdownState.ts";
+import jsonFormat from "../service/configuration/format/JsonConfigFormat.ts";
 import ConfigurationServiceProvider from "../service/configuration/ConfigurationServiceProvider.ts";
 import KeyValueServiceProvider from "../service/configuration/KeyValueServiceProvider.ts";
 import PrinterServiceProvider from "../service/printer/PrinterServiceProvider.ts";
@@ -162,6 +163,7 @@ export default class BaseCLI implements CLI {
     }
     this.#cliConfig = cliConfig;
     this.#options = {
+      configFormat: jsonFormat,
       configFileSupportEnabled: false,
       envVarsSupportEnabled: false,
       keyValueServiceEnabled: false,
@@ -392,6 +394,7 @@ export default class BaseCLI implements CLI {
       this.#options.envVarsSupportEnabled,
       this.#options.configFileSupportEnabled,
       this.#options.secretServiceEnabled,
+      this.#options.configFormat,
     );
     this.addServiceProvider(configurationServiceProvider);
     const keyValueServiceProvider = new KeyValueServiceProvider(

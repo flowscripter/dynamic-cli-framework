@@ -22,6 +22,8 @@
     "src",
     "index.ts",
     "cli-plugin.ts",
+    "yaml.ts",
+    "toml.ts",
     "README.md",
     "LICENSE"
   ],
@@ -40,6 +42,16 @@
       "bun": "./cli-plugin.ts",
       "types": "./dist/cli-plugin.d.ts",
       "default": "./dist/cli-plugin.js"
+    },
+    "./yaml": {
+      "bun": "./yaml.ts",
+      "types": "./dist/yaml.d.ts",
+      "default": "./dist/yaml.js"
+    },
+    "./toml": {
+      "bun": "./toml.ts",
+      "types": "./dist/toml.d.ts",
+      "default": "./dist/toml.js"
     }
   },
   "publishConfig": {
@@ -61,19 +73,31 @@
     "supports-terminal-graphics": "^0.1.0"
   },
   "devDependencies": {
+    "@decimalturn/toml-patch": "^3.3.1",
     "@types/bun": "^1.4.3",
     "@types/node": "^26.6.5",
     "@types/semver": "^7.8.0",
     "oxfmt": "0.73.0",
-    "oxlint": "1.88.0"
+    "oxlint": "1.88.0",
+    "yaml": "^2.9.1"
   },
   "peerDependencies": {
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "yaml": "^2.9.1",
+    "@decimalturn/toml-patch": "^3.3.1"
   },
   "typedocOptions": {
     "readme": "none",
     "exclude": [
       "tests/**"
     ]
+  },
+  "peerDependenciesMeta": {
+    "yaml": {
+      "optional": true
+    },
+    "@decimalturn/toml-patch": {
+      "optional": true
+    }
   }
 }

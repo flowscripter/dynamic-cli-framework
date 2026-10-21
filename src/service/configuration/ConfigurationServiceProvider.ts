@@ -22,6 +22,9 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultSecretService from "./DefaultSecretService.ts";
+import type ConfigFormat from "./format/ConfigFormat.ts";
+import type { ConfigData } from "./format/ConfigFormat.ts";
+import jsonFormat from "./format/JsonConfigFormat.ts";
 import resolveSecrets from "./resolveSecrets.ts";
 import type { Command } from "@flowscripter/dynamic-cli-framework-api";
 import argumentValueMerge from "../../runtime/values/argumentValueMerge.ts";
@@ -77,7 +80,7 @@ class ConfigurationServiceImpl implements ConfigurationService {
  *
  * *Configuration File*
  *
- * A JSON file where the structure matches {@link Values} and the defaults are stored
+ * A file (JSON by default, see {@link ConfigFormat}) where the structure matches {@link Values} and the defaults are stored
  * under a top level `defaults` property. The second level of properties is used to refer to {@link Command.name}
  * (or `<group name>:<member name>` for a member of a {@link GroupCommand}) and the contained values are treated as
  * command {@link Values}. As an example:
@@ -108,7 +111,12 @@ class ConfigurationServiceImpl implements ConfigurationService {
  * }
  * ```
  *
- * The default location of the configuration file is `$HOME/.<application_name>.json`. If `$HOME` is not defined no
+ * The syntax of the file is set by the `configFormat` constructor argument: JSON (the default), or YAML or TOML
+ * from the `yaml` and `toml` entry points of this package. The format is never inferred from the file name or
+ * extension and existing files are not migrated between formats. For YAML and TOML, comments and layout in the
+ * existing file are preserved when it is written back.
+ *
+ * The default location of the configuration file is `$HOME/.<application_name>.<format extension>`. If `$HOME` is not defined no
  * default configuration will be used. The location of the configuration file can be modified via the
  * {@link ConfigCommand}.
  *
@@ -164,9 +172,13 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public readonly envVarsEnabled: boolean;
   public readonly configEnabled: boolean;
   public readonly secretServiceEnabled: boolean;
+  public readonly configFormat: ConfigFormat;
 
   // the location of the currently managed configuration data
   public configLocation: string | undefined;
+
+  // the format specific handle for the text last read or written, used to preserve comments and layout on write
+  #configHandle: unknown;
 
   // the configuration data to be used by the CLI runner implementation when setting command defaults.
   // SingleValueType is for GlobalCommandArgument values, Values is for
@@ -200,12 +212,14 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @param configEnabled optionally enable configuration file support for default argument values.
    * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets for resolving
    * secrets embedded in default argument values: `configEnabled` must be true in this case
+   * @param configFormat optionally set the syntax of the configuration file, defaults to JSON.
    */
   public constructor(
     servicePriority: number,
     envVarsEnabled = false,
     configEnabled = false,
     secretServiceEnabled = false,
+    configFormat: ConfigFormat = jsonFormat,
   ) {
     if (!configEnabled && secretServiceEnabled) {
       throw new Error("configEnabled must be true if secretServiceEnabled is true");
@@ -214,6 +228,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.envVarsEnabled = envVarsEnabled;
     this.configEnabled = configEnabled;
     this.secretServiceEnabled = secretServiceEnabled;
+    this.configFormat = configFormat;
 
     this.#configurationService = new ConfigurationServiceImpl(this);
   }
@@ -355,10 +370,13 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     let isDefault = false;
     if (this.configLocation === undefined) {
       isDefault = true;
-      // default to `$HOME/.<application_name>.json`
+      // default to `$HOME/.<application_name>.<format extension>`
       const home = process.env["HOME"];
       if (home) {
-        this.configLocation = path.join(home, `.${context.cliConfig.name.replace(/\W/g, "")}.json`);
+        this.configLocation = path.join(
+          home,
+          `.${context.cliConfig.name.replace(/\W/g, "")}.${this.configFormat.fileExtension}`,
+        );
       }
     }
     if (this.configLocation === undefined) {
@@ -396,11 +414,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       logger.debug("Reading config from: %s", location);
 
       const data = await fs.readFile(location);
-      const config = JSON.parse(data.toString());
+      const { data: config, handle } = this.configFormat.parse(data.toString());
+      this.#configHandle = handle;
 
-      if (config === undefined) {
-        return;
-      }
       this.defaultsData.clear();
       this.#commandKeyValueData.clear();
       this.#serviceKeyValueData.clear();
@@ -443,13 +459,23 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     logger.debug("Writing config to: %s", location);
 
     try {
-      await fs.writeFile(location, this.getConfigString());
+      const config = this.#getConfigData();
+      const text =
+        this.#configHandle === undefined
+          ? this.configFormat.serialize(config)
+          : this.configFormat.apply(this.#configHandle, config);
+      await fs.writeFile(location, text);
+      this.#configHandle = this.configFormat.parse(text).handle;
     } catch (err) {
       throw new Error(`Failed to write config at location: '${this.configLocation}': ${err}`);
     }
   }
 
   public getConfigString(): string {
+    return this.configFormat.serialize(this.#getConfigData());
+  }
+
+  #getConfigData(): ConfigData {
     const config: {
       defaults?: Record<string, Values | SingleValueType>;
       "key-values"?: {
@@ -480,6 +506,6 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
         }
       }
     }
-    return JSON.stringify(config, null, 2);
+    return config;
   }
 }
