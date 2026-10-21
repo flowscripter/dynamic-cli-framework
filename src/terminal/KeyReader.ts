@@ -20,4 +20,11 @@ export default interface KeyReader {
   enableRawMode(): void;
   disableRawMode(): void;
   readKey(): Promise<KeyEvent>;
+  /**
+   * Read raw input until `isComplete` returns `true` for the accumulated input or `timeoutMs` elapses.
+   * Raw mode and paused state are restored afterwards.
+   *
+   * @returns the accumulated input.
+   */
+  readRaw(isComplete: (received: string) => boolean, timeoutMs: number): Promise<string>;
 }

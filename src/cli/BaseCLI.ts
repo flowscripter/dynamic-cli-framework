@@ -44,6 +44,7 @@ import type Terminal from "../terminal/Terminal.ts";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultPrinterService from "../service/printer/DefaultPrinterService.ts";
 import type Styler from "../terminal/Styler.ts";
+import { detectDarkBackground } from "../terminal/BackgroundDetector.ts";
 import type KeyReader from "../terminal/KeyReader.ts";
 import type BaseCLIFeatureOptions from "./BaseCLIFeatureOptions.ts";
 import DefaultPrompterService, {
@@ -276,12 +277,18 @@ export default class BaseCLI implements CLI {
     // create and add core services
     this.addServiceProvider(new ShutdownServiceProvider(SHUTDOWN_SERVICE_PRIORITY));
     this.addServiceProvider(this.#startupServiceProvider);
+    const canPrompt = this.#context.isTty.stdin && this.#context.isTty.stderr;
+
     this.addServiceProvider(
-      new PrinterServiceProvider(PRINTER_SERVICE_PRIORITY, this.#printerService),
+      new PrinterServiceProvider(
+        PRINTER_SERVICE_PRIORITY,
+        this.#printerService,
+        canPrompt && this.#keyReader !== undefined
+          ? () => detectDarkBackground(this.#keyReader!, this.#stderrTerminal)
+          : undefined,
+      ),
     );
     this.addServiceProvider(new TableGeneratorServiceProvider(TABLE_GENERATOR_SERVICE_PRIORITY));
-
-    const canPrompt = this.#context.isTty.stdin && this.#context.isTty.stderr;
 
     if (this.#options.promptingEnabled && !canPrompt) {
       throw new Error("promptingEnabled requires a keyReader and a TTY stderr terminal");
