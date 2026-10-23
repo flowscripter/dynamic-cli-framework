@@ -10,7 +10,7 @@ import {
   type SubCommand,
   type Values,
 } from "@flowscripter/dynamic-cli-framework-api";
-import type ConfigurationServiceProvider from "../ConfigurationServiceProvider.ts";
+import type DefaultConfigurationService from "../DefaultConfigurationService.ts";
 import { removeAtPath, resolveOptionPath } from "../configTargets.ts";
 
 type Raw = Record<string, unknown>;
@@ -28,8 +28,9 @@ export default class ConfigUnsetSubCommand implements SubCommand {
       description: "The command (or <group>:<member>) to remove defaults from",
       isOptional: true,
       validate: (value) => {
-        const targets = this.#provider.getConfigTargets();
-        return targets.has(value as string) || this.#provider.defaultsData.has(value as string)
+        const targets = this.#configurationService.getConfigTargets();
+        return targets.has(value as string) ||
+          this.#configurationService.defaultsData.has(value as string)
           ? undefined
           : `unknown command, valid commands: ${[...targets.keys()].join(", ")}`;
       },
@@ -41,7 +42,7 @@ export default class ConfigUnsetSubCommand implements SubCommand {
         "The option (or option path) to remove. Omit to remove all defaults of the command.",
       isOptional: true,
       validate: (value, ctx) => {
-        const target = this.#provider
+        const target = this.#configurationService
           .getConfigTargets()
           .get((ctx.values as Raw)["command"] as string);
         if (target === undefined) {
@@ -62,19 +63,19 @@ export default class ConfigUnsetSubCommand implements SubCommand {
   ];
   readonly positionals: ReadonlyArray<Positional> = [];
 
-  readonly #provider: ConfigurationServiceProvider;
+  readonly #configurationService: DefaultConfigurationService;
 
-  public constructor(provider: ConfigurationServiceProvider) {
-    this.#provider = provider;
+  public constructor(configurationService: DefaultConfigurationService) {
+    this.#configurationService = configurationService;
   }
 
   async execute(context: Context, argumentValues: Values): Promise<void> {
     const printer = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-    const targets = this.#provider.getConfigTargets();
+    const targets = this.#configurationService.getConfigTargets();
 
     let commandKey = argumentValues["command"] as string | undefined;
     if (commandKey === undefined) {
-      const names = [...this.#provider.defaultsData.keys()];
+      const names = [...this.#configurationService.defaultsData.keys()];
       const prompter = context.doesServiceExist(ARGUMENT_PROMPTER_SERVICE_ID)
         ? (context.getServiceById(ARGUMENT_PROMPTER_SERVICE_ID) as ArgumentPrompterService)
         : undefined;
@@ -95,7 +96,7 @@ export default class ConfigUnsetSubCommand implements SubCommand {
       commandKey = prompted["command"] as string;
     }
 
-    const existing = this.#provider.defaultsData.get(commandKey);
+    const existing = this.#configurationService.defaultsData.get(commandKey);
     const optionPath = argumentValues["option"] as string | undefined;
     const target = targets.get(commandKey);
     if (optionPath !== undefined && target === undefined) {
@@ -119,7 +120,7 @@ export default class ConfigUnsetSubCommand implements SubCommand {
       );
       return;
     }
-    await this.#provider.commitDefault(commandKey, [], () => next);
+    await this.#configurationService.commitDefault(commandKey, [], () => next);
     await printer.info(`Removed default ${commandKey}${optionPath ? `.${optionPath}` : ""}\n`);
   }
 }

@@ -9,7 +9,7 @@ import {
   type SubCommand,
   type Values,
 } from "@flowscripter/dynamic-cli-framework-api";
-import type ConfigurationServiceProvider from "../ConfigurationServiceProvider.ts";
+import type DefaultConfigurationService from "../DefaultConfigurationService.ts";
 import { isComplexOption } from "../../../runtime/argument/ArgumentTypeGuards.ts";
 import {
   isOverriddenByEnvVar,
@@ -68,7 +68,7 @@ export default class ConfigGetSubCommand implements SubCommand {
       description: "Show only this command (or <group>:<member>)",
       isOptional: true,
       validate: (value) => {
-        const targets = this.#provider.getConfigTargets();
+        const targets = this.#configurationService.getConfigTargets();
         return targets.has(value as string)
           ? undefined
           : `unknown or non-configurable command, valid commands: ${[...targets.keys()].join(", ")}`;
@@ -77,19 +77,19 @@ export default class ConfigGetSubCommand implements SubCommand {
   ];
   readonly positionals: ReadonlyArray<Positional> = [];
 
-  readonly #provider: ConfigurationServiceProvider;
+  readonly #configurationService: DefaultConfigurationService;
 
-  public constructor(provider: ConfigurationServiceProvider) {
-    this.#provider = provider;
+  public constructor(configurationService: DefaultConfigurationService) {
+    this.#configurationService = configurationService;
   }
 
   public async execute(context: Context, argumentValues: Values): Promise<void> {
     const printer = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-    const targets = this.#provider.getConfigTargets();
+    const targets = this.#configurationService.getConfigTargets();
     const selected = argumentValues["command"] as string | undefined;
     const keys = selected === undefined ? [...targets.keys()] : [selected];
     if (selected === undefined) {
-      for (const key of this.#provider.defaultsData.keys()) {
+      for (const key of this.#configurationService.defaultsData.keys()) {
         if (!targets.has(key)) {
           keys.push(key);
         }
@@ -99,7 +99,7 @@ export default class ConfigGetSubCommand implements SubCommand {
     const lines: Array<string> = [];
     for (const key of keys) {
       const target = targets.get(key);
-      const stored = this.#provider.defaultsData.get(key);
+      const stored = this.#configurationService.defaultsData.get(key);
       if (target === undefined) {
         lines.push(`${key}  (unknown command, not configurable)`);
         lines.push(`  ${JSON.stringify(maskDefault(undefined, stored))}`);
@@ -132,12 +132,12 @@ export default class ConfigGetSubCommand implements SubCommand {
     value: unknown,
   ): string {
     if (value === undefined) {
-      return isOverriddenByEnvVar(this.#provider, context.cliConfig, target, steps)
+      return isOverriddenByEnvVar(this.#configurationService, context.cliConfig, target, steps)
         ? "(not set; overridden by an environment variable)"
         : "(not set)";
     }
     const text = JSON.stringify(maskDefault(target, value));
-    return isOverriddenByEnvVar(this.#provider, context.cliConfig, target, steps)
+    return isOverriddenByEnvVar(this.#configurationService, context.cliConfig, target, steps)
       ? `${text} (overridden by an environment variable)`
       : text;
   }
@@ -191,7 +191,7 @@ export default class ConfigGetSubCommand implements SubCommand {
     const wrapper: ConfigTarget = { ...target, argument: undefined, options: [option] };
     const masked = maskDefault(wrapper, { [option.name]: value }) as Record<string, unknown>;
     const text = JSON.stringify(masked[option.name]);
-    return isOverriddenByEnvVar(this.#provider, context.cliConfig, target, steps)
+    return isOverriddenByEnvVar(this.#configurationService, context.cliConfig, target, steps)
       ? `${text} (overridden by an environment variable)`
       : text;
   }

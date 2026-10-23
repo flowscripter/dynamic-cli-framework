@@ -16,6 +16,7 @@ import {
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
 import DefaultCommandRegistry from "../../../../src/runtime/registry/DefaultCommandRegistry.ts";
 import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
+import type DefaultConfigurationService from "../../../../src/service/configuration/DefaultConfigurationService.ts";
 import tomlFormat from "../../../../src/service/configuration/format/TomlConfigFormat.ts";
 import type { SecretsApi } from "../../../../src/service/configuration/DefaultSecretService.ts";
 import ConfigGetSubCommand from "../../../../src/service/configuration/command/ConfigGetSubCommand.ts";
@@ -115,16 +116,17 @@ async function setup(
     warn: (m: string) => (out.warn.push(m), Promise.resolve()),
     print: (m: string) => (out.print.push(m), Promise.resolve()),
   });
-  await provider.getServiceInfo(cliConfig);
+  const service = (await provider.getServiceInfo(cliConfig)).service as DefaultConfigurationService;
   await provider.initService(context);
   return {
     provider,
+    service,
     context,
     out,
     secrets,
-    get: new ConfigGetSubCommand(provider),
-    set: (stdin?: string) => new ConfigSetSubCommand(provider, () => Promise.resolve(stdin ?? "")),
-    unset: new ConfigUnsetSubCommand(provider),
+    get: new ConfigGetSubCommand(service),
+    set: (stdin?: string) => new ConfigSetSubCommand(service, () => Promise.resolve(stdin ?? "")),
+    unset: new ConfigUnsetSubCommand(service),
   };
 }
 
@@ -351,10 +353,11 @@ describe("config set with SECRET options", () => {
       info: () => Promise.resolve(),
       warn: () => Promise.resolve(),
     });
-    await provider.getServiceInfo(cliConfig);
+    const service = (await provider.getServiceInfo(cliConfig))
+      .service as DefaultConfigurationService;
     await provider.initService(context);
     await expect(
-      new ConfigSetSubCommand(provider).execute(context, {
+      new ConfigSetSubCommand(service).execute(context, {
         command: "connect",
         option: "token",
         value: "x",
@@ -390,9 +393,10 @@ describe("config set with SECRET options", () => {
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
     context.addServiceInstance(PRINTER_SERVICE_ID, {});
-    await provider.getServiceInfo(cliConfig);
+    const service = (await provider.getServiceInfo(cliConfig))
+      .service as DefaultConfigurationService;
     await expect(
-      new ConfigSetSubCommand(provider).execute(context, {
+      new ConfigSetSubCommand(service).execute(context, {
         command: "cs",
         option: "creds",
         value: '{"pw":"x"}',
@@ -472,7 +476,7 @@ describe("config get and dump masking", () => {
   test("masks plaintext in SECRET options and sentinels in the dump", async () => {
     const t = await setup();
     t.provider.defaultsData.set("connect", { token: "plain", host: "h" });
-    const dumped = JSON.parse(t.provider.getMaskedConfigString());
+    const dumped = JSON.parse(t.service.getMaskedConfigString());
     expect(dumped.defaults.connect).toEqual({ token: "********", host: "h" });
     expect(t.provider.getConfigString()).toContain("plain");
   });

@@ -13,7 +13,7 @@ import {
   type SubCommand,
   type Values,
 } from "@flowscripter/dynamic-cli-framework-api";
-import type ConfigurationServiceProvider from "../ConfigurationServiceProvider.ts";
+import type DefaultConfigurationService from "../DefaultConfigurationService.ts";
 import type { DeferredCustomValidation } from "../../../runtime/values/argumentValueValidation.ts";
 import { isComplexOption } from "../../../runtime/argument/ArgumentTypeGuards.ts";
 import {
@@ -102,19 +102,19 @@ export default class ConfigSetSubCommand implements SubCommand {
   ];
   readonly positionals: ReadonlyArray<Positional> = [];
 
-  readonly #provider: ConfigurationServiceProvider;
+  readonly #configurationService: DefaultConfigurationService;
   readonly #readStdin: () => Promise<string>;
 
   public constructor(
-    provider: ConfigurationServiceProvider,
+    configurationService: DefaultConfigurationService,
     readStdinFn: () => Promise<string> = readStdin,
   ) {
-    this.#provider = provider;
+    this.#configurationService = configurationService;
     this.#readStdin = readStdinFn;
   }
 
   #validateCommand(command: string): string | undefined {
-    const targets = this.#provider.getConfigTargets();
+    const targets = this.#configurationService.getConfigTargets();
     return targets.has(command)
       ? undefined
       : `unknown or non-configurable command, valid commands: ${[...targets.keys()].join(", ")}`;
@@ -122,7 +122,9 @@ export default class ConfigSetSubCommand implements SubCommand {
 
   #targetOf(values: unknown): ConfigTarget | undefined {
     const command = (values as Raw)["command"];
-    return typeof command === "string" ? this.#provider.getConfigTargets().get(command) : undefined;
+    return typeof command === "string"
+      ? this.#configurationService.getConfigTargets().get(command)
+      : undefined;
   }
 
   #withValidOptions(target: ConfigTarget, message: string): string {
@@ -154,7 +156,7 @@ export default class ConfigSetSubCommand implements SubCommand {
     }
     const applied = applyChanges(
       target,
-      this.#provider.defaultsData.get(target.key) as Values | undefined,
+      this.#configurationService.defaultsData.get(target.key) as Values | undefined,
       [change],
       deferred,
     );
@@ -180,7 +182,7 @@ export default class ConfigSetSubCommand implements SubCommand {
 
   async execute(context: Context, argumentValues: Values): Promise<void> {
     const printer = context.getServiceById(PRINTER_SERVICE_ID) as PrinterService;
-    const targets = this.#provider.getConfigTargets();
+    const targets = this.#configurationService.getConfigTargets();
     const commandNames = [...targets.keys()];
 
     let commandKey = argumentValues["command"] as string | undefined;
@@ -317,7 +319,7 @@ export default class ConfigSetSubCommand implements SubCommand {
       }
     }
 
-    const existing = this.#provider.defaultsData.get(target.key) as Values | undefined;
+    const existing = this.#configurationService.defaultsData.get(target.key) as Values | undefined;
     if (target.argument === undefined) {
       const applied = applyChanges(target, existing, changes, deferred);
       if (typeof applied === "string") {
@@ -333,7 +335,7 @@ export default class ConfigSetSubCommand implements SubCommand {
           : []
         : secretChanges.map((c) => ({ key: `${target.key}.${c.path}`, value: c.value as string }));
 
-    await this.#provider.commitDefault(target.key, secrets, (sentinels) => {
+    await this.#configurationService.commitDefault(target.key, secrets, (sentinels) => {
       if (target.argument !== undefined) {
         return globalIsSecret ? sentinels[0] : globalValue;
       }
@@ -347,7 +349,9 @@ export default class ConfigSetSubCommand implements SubCommand {
 
     for (const change of target.argument !== undefined ? [] : changes) {
       await printer.info(`Set default ${target.key}.${change.path}\n`);
-      if (isOverriddenByEnvVar(this.#provider, context.cliConfig, target, change.steps)) {
+      if (
+        isOverriddenByEnvVar(this.#configurationService, context.cliConfig, target, change.steps)
+      ) {
         await printer.warn(
           `An environment variable overrides the default for ${target.key}.${change.path}\n`,
           Icon.ALERT,
@@ -356,7 +360,7 @@ export default class ConfigSetSubCommand implements SubCommand {
     }
     if (target.argument !== undefined) {
       await printer.info(`Set default ${target.key}\n`);
-      if (isOverriddenByEnvVar(this.#provider, context.cliConfig, target, [])) {
+      if (isOverriddenByEnvVar(this.#configurationService, context.cliConfig, target, [])) {
         await printer.warn(
           `An environment variable overrides the default for ${target.key}\n`,
           Icon.ALERT,
