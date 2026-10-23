@@ -24,7 +24,7 @@ import {
 } from "@flowscripter/dynamic-cli-framework-api";
 import type BaseCLIFeatureOptions from "../../src/cli/BaseCLIFeatureOptions.ts";
 import type { ServiceInfo, ServiceProvider } from "@flowscripter/dynamic-cli-framework-api";
-import type { Context } from "@flowscripter/dynamic-cli-framework-api";
+import type { Context, SubCommand } from "@flowscripter/dynamic-cli-framework-api";
 import type { CLIConfig } from "@flowscripter/dynamic-cli-framework-api";
 import StreamString from "../fixtures/StreamString.ts";
 import { expectStringEquals, expectStringIncludes } from "../fixtures/util.ts";
@@ -199,6 +199,103 @@ describe("BaseCLI tests", () => {
 
     expect(runResult.runState).toEqual(RunState.SUCCESS);
     expect(dummyStdout.getString().length).toBeGreaterThan(0);
+  });
+
+  test("BaseCLI run executes config:set, config:get and config:unset end to end", async () => {
+    const home = await fs.mkdtemp(path.join(tmpdir(), "home-"));
+    const originalHome = process.env["HOME"];
+    process.env["HOME"] = home;
+    try {
+      const run = async (args: Array<string>) => {
+        const dummyStdout = new StreamString();
+        const dummyStderr = new StreamString();
+        const baseCLI = new BaseCLI(
+          getCLIConfig("e2e"),
+          dummyStdout.writableStream,
+          dummyStderr.writableStream,
+          false,
+          false,
+          new TtyTerminal(dummyStdout.writeStream),
+          new TtyTerminal(dummyStderr.writeStream),
+          new TtyStyler(3),
+          mockKeyReader,
+          { configFileSupportEnabled: true },
+        );
+        const connect: SubCommand = {
+          name: "connect",
+          enableConfiguration: true,
+          options: [
+            { name: "port", type: ValueTypeName.INTEGER, maxValueInclusive: 65535 },
+            { name: "secure", type: ValueTypeName.BOOLEAN, isOptional: true },
+          ],
+          positionals: [],
+          execute: () => Promise.resolve(),
+        };
+        baseCLI.addCommand(connect);
+        const runResult = await baseCLI.run(args);
+        return { runResult, out: dummyStdout.getString(), err: dummyStderr.getString() };
+      };
+
+      const set = await run([
+        "config:set",
+        "--command",
+        "connect",
+        "--option",
+        "port",
+        "--value",
+        "8080",
+      ]);
+      expect(set.runResult.runState).toEqual(RunState.SUCCESS);
+      expect(JSON.parse(await fs.readFile(path.join(home, ".e2e.json"), "utf8"))).toEqual({
+        defaults: { connect: { port: 8080 } },
+      });
+
+      const invalid = await run([
+        "config:set",
+        "--command",
+        "connect",
+        "--option",
+        "port",
+        "--value",
+        "99999",
+      ]);
+      expect(invalid.runResult.runState).toEqual(RunState.PARSE_ERROR);
+
+      const flag = await run([
+        "config:set",
+        "--command",
+        "connect",
+        "--option",
+        "secure",
+        "--value",
+        "true",
+      ]);
+      expect(flag.runResult.runState).toEqual(RunState.SUCCESS);
+
+      const get = await run(["config:get", "--command", "connect"]);
+      expect(get.runResult.runState).toEqual(RunState.SUCCESS);
+      expectStringIncludes(get.out, "port  INTEGER required (range: ..65535) = 8080");
+
+      const unset = await run(["config:unset", "--command", "connect", "--option", "port"]);
+      expect(unset.runResult.runState).toEqual(RunState.SUCCESS);
+      expect(JSON.parse(await fs.readFile(path.join(home, ".e2e.json"), "utf8"))).toEqual({
+        defaults: { connect: { secure: true } },
+      });
+
+      const stdinFlag = await run([
+        "config:set",
+        "--command",
+        "connect",
+        "--option",
+        "port",
+        "--value",
+        "1",
+        "--value-stdin",
+      ]);
+      expect(stdinFlag.runResult.runState).toEqual(RunState.PARSE_ERROR);
+    } finally {
+      process.env["HOME"] = originalHome;
+    }
   });
 
   test("Command and service key value scope isolation works", async () => {

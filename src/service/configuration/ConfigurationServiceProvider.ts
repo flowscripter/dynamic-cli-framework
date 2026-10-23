@@ -13,15 +13,25 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import getLogger from "../../util/logger.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
-import type { GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
+import type { SubCommand, GroupCommand } from "@flowscripter/dynamic-cli-framework-api";
 import ConfigDumpSubCommand from "./command/ConfigDumpSubCommand.ts";
 import ConfigGroupCommand from "./command/ConfigGroupCommand.ts";
+import ConfigGetSubCommand from "./command/ConfigGetSubCommand.ts";
+import ConfigSetSubCommand from "./command/ConfigSetSubCommand.ts";
+import ConfigUnsetSubCommand from "./command/ConfigUnsetSubCommand.ts";
+import {
+  collectSentinels,
+  getConfigTargets,
+  maskDefault,
+  type ConfigTarget,
+} from "./configTargets.ts";
+import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import {
   CONFIGURATION_SERVICE_ID,
   SECRET_SENTINEL_PREFIX,
 } from "@flowscripter/dynamic-cli-framework-api";
 import type { ConfigurationService } from "@flowscripter/dynamic-cli-framework-api";
-import DefaultSecretService from "./DefaultSecretService.ts";
+import DefaultSecretService, { type SecretsApi } from "./DefaultSecretService.ts";
 import type ConfigFormat from "./format/ConfigFormat.ts";
 import type { ConfigData } from "./format/ConfigFormat.ts";
 import jsonFormat from "./format/JsonConfigFormat.ts";
@@ -204,6 +214,10 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    */
   readonly #configurationService: ConfigurationService;
 
+  readonly #commandRegistry: CommandRegistry | undefined;
+
+  readonly #secretsApi: SecretsApi | undefined;
+
   /**
    * Create an instance of the service provider with the specified details.
    *
@@ -213,6 +227,9 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
    * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets for resolving
    * secrets embedded in default argument values: `configEnabled` must be true in this case
    * @param configFormat optionally set the syntax of the configuration file, defaults to JSON.
+   * @param commandRegistry optionally provide the registry of all commands, required for the `config:get`,
+   * `config:set` and `config:unset` commands to be provided.
+   * @param secretsApi optionally override the OS secret store used for storing SECRET default values.
    */
   public constructor(
     servicePriority: number,
@@ -220,6 +237,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     configEnabled = false,
     secretServiceEnabled = false,
     configFormat: ConfigFormat = jsonFormat,
+    commandRegistry?: CommandRegistry,
+    secretsApi?: SecretsApi,
   ) {
     if (!configEnabled && secretServiceEnabled) {
       throw new Error("configEnabled must be true if secretServiceEnabled is true");
@@ -229,6 +248,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     this.configEnabled = configEnabled;
     this.secretServiceEnabled = secretServiceEnabled;
     this.configFormat = configFormat;
+    this.#commandRegistry = commandRegistry;
+    this.#secretsApi = secretsApi;
 
     this.#configurationService = new ConfigurationServiceImpl(this);
   }
@@ -238,12 +259,24 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
     if (this.configEnabled) {
       commands.push(new ConfigCommand(this.servicePriority));
-      commands.push(
-        new ConfigGroupCommand([new ConfigDumpSubCommand(() => this.getConfigString())]),
-      );
+      const members: Array<SubCommand> = [
+        new ConfigDumpSubCommand(() => this.getMaskedConfigString()),
+      ];
+      if (this.#commandRegistry !== undefined) {
+        members.push(
+          new ConfigGetSubCommand(this),
+          new ConfigSetSubCommand(this),
+          new ConfigUnsetSubCommand(this),
+        );
+      }
+      commands.push(new ConfigGroupCommand(members));
     }
     if (this.secretServiceEnabled) {
-      this.#defaultsSecretService = new DefaultSecretService(cliConfig.name, "defaults");
+      this.#defaultsSecretService = new DefaultSecretService(
+        cliConfig.name,
+        "defaults",
+        this.#secretsApi,
+      );
     }
     return Promise.resolve({
       service: this.#configurationService,
@@ -473,6 +506,93 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
 
   public getConfigString(): string {
     return this.configFormat.serialize(this.#getConfigData());
+  }
+
+  /**
+   * The configuration text with secret sentinels and the values of SECRET typed arguments of
+   * known commands masked.
+   */
+  public getMaskedConfigString(): string {
+    const data = this.#getConfigData();
+    const targets = this.getConfigTargets();
+    const masked: ConfigData = maskDefault(undefined, data) as ConfigData;
+    if (data.defaults !== undefined) {
+      masked.defaults = Object.fromEntries(
+        Object.entries(data.defaults).map(([key, value]) => [
+          key,
+          maskDefault(targets.get(key), value),
+        ]),
+      );
+    }
+    return this.configFormat.serialize(masked);
+  }
+
+  /**
+   * The commands whose defaults can be managed via the `config` group commands.
+   */
+  public getConfigTargets(): Map<string, ConfigTarget> {
+    return this.#commandRegistry === undefined
+      ? new Map()
+      : getConfigTargets(this.#commandRegistry);
+  }
+
+  /**
+   * Replace (or remove, if `build` returns `undefined`) the stored defaults of a command and write the
+   * configuration file immediately. Memory, file and secret store are left unchanged if anything fails.
+   *
+   * @param commandKey the key of the command under `defaults`.
+   * @param secrets plain text secrets to store in the OS secret store, keyed to be used for naming.
+   * @param build creates the new value given the sentinels (one per secret) to reference the stored secrets.
+   */
+  public async commitDefault(
+    commandKey: string,
+    secrets: ReadonlyArray<{ key: string; value: string }>,
+    build: (sentinels: ReadonlyArray<string>) => Values | SingleValueType | undefined,
+  ): Promise<void> {
+    if (this.configLocation === undefined) {
+      throw new Error("Unable to write config: no config location is set and $HOME is not defined");
+    }
+    if (secrets.length > 0 && this.#defaultsSecretService === undefined) {
+      throw new Error("Unable to store a SECRET value: the secret service is not enabled");
+    }
+    const secretService = this.#defaultsSecretService;
+    const previous = this.defaultsData.get(commandKey);
+    const restores: Array<() => Promise<unknown>> = [];
+    const sentinels: Array<string> = [];
+    try {
+      for (const { key, value } of secrets) {
+        const name = secretService!.secretName(key);
+        const old = await secretService!.getSecret(name);
+        await secretService!.setSecret(key, value);
+        restores.push(() =>
+          old === null ? secretService!.deleteSecret(name) : secretService!.setSecret(key, old),
+        );
+        sentinels.push(`${SECRET_SENTINEL_PREFIX}${name}`);
+      }
+      const next = build(sentinels);
+      if (next === undefined) {
+        this.defaultsData.delete(commandKey);
+      } else {
+        this.defaultsData.set(commandKey, next);
+      }
+      await this.#writeConfig(this.configLocation);
+      const kept = new Set(collectSentinels(next));
+      for (const sentinel of collectSentinels(previous)) {
+        if (!kept.has(sentinel) && secretService !== undefined) {
+          await secretService.deleteSecret(sentinel.slice(SECRET_SENTINEL_PREFIX.length));
+        }
+      }
+    } catch (err) {
+      if (previous === undefined) {
+        this.defaultsData.delete(commandKey);
+      } else {
+        this.defaultsData.set(commandKey, previous);
+      }
+      for (const restore of restores.reverse()) {
+        await restore().catch(() => undefined);
+      }
+      throw err;
+    }
   }
 
   #getConfigData(): ConfigData {
