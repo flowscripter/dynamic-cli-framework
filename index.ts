@@ -68,6 +68,9 @@ export {
   default as ConfigurationServiceProvider,
   type KeyValueServiceScopeType,
 } from "./src/service/configuration/ConfigurationServiceProvider.ts";
+export type { default as ConfigFormat } from "./src/service/configuration/format/ConfigFormat.ts";
+export type { ConfigData } from "./src/service/configuration/format/ConfigFormat.ts";
+export { default as jsonFormat } from "./src/service/configuration/format/JsonConfigFormat.ts";
 export { default as KeyValueServiceProvider } from "./src/service/configuration/KeyValueServiceProvider.ts";
 
 export { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";

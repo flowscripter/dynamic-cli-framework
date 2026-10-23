@@ -76,6 +76,11 @@ Provides:
   `getConfigString: () => string` constructor callback rather than a service
   lookup, for the same reason `ConfigurationService` stays narrow.
 
+The configuration file syntax is set by the `configFormat` constructor argument
+(a `ConfigFormat`, JSON by default; `yamlFormat` and `tomlFormat` are provided
+by the `./yaml` and `./toml` entry points and preserve comments on write-back).
+It also determines the extension of the default configuration file location.
+
 Also owns the configuration file's read (on startup) and write (on shutdown),
 which back `KeyValueServiceProvider`'s per-scope key-value data.
 `KeyValueServiceProvider` is given a direct constructor reference to this

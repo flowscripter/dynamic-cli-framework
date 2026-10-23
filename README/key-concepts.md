@@ -547,9 +547,42 @@ as command argument values. As an example:
 ```
 
 The default location of the configuration file is
-`$HOME/.<application_name>.json`. If `$HOME` is not defined then no default
-configuration will be used. The location of the configuration file can be
+`$HOME/.<application_name>.<extension>` where the extension is `json`, `yaml` or
+`toml` depending on the configured format (see below). If `$HOME` is not defined
+then no default configuration will be used. The location of the configuration file can be
 modified via the `ConfigCommand` global modifier command.
+
+#### Configuration File Format
+
+The file is JSON by default. YAML and TOML are available from separate entry
+points, selected with the `configFormat` option of `BaseCLI`, `DefaultRuntimeCLI`
+or the launcher functions:
+
+```ts
+import { tomlFormat } from "@flowscripter/dynamic-cli-framework/toml";
+
+new DefaultRuntimeCLI(cliConfig, { configFileSupportEnabled: true, configFormat: tomlFormat });
+```
+
+- `@flowscripter/dynamic-cli-framework/yaml` exports `yamlFormat` and requires
+  the `yaml` package.
+- `@flowscripter/dynamic-cli-framework/toml` exports `tomlFormat` and requires
+  the `@decimalturn/toml-patch` package.
+
+Both packages are optional peer dependencies: install only the one you use. A
+host which does not import an entry point does not load or bundle its library.
+
+The format is always the configured one: it is never inferred from a file name
+or extension (including for `--config`), and existing files are not migrated
+between formats. For YAML and TOML, comments, blank lines and layout in the
+existing file are preserved when the framework writes the file back (for
+example when key-value data changes). TOML dates and times are not supported as
+configuration values.
+
+A custom format can be provided by implementing the exported `ConfigFormat`
+interface: `fileExtension`, `parse(text)` returning `{ data, handle }`,
+`apply(handle, changes)` returning the updated text (`changes` being the
+complete updated data) and `serialize(data)`.
 
 As a concrete example, the following command line:
 

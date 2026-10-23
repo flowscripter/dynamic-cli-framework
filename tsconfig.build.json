@@ -8,5 +8,5 @@
     "rootDir": ".",
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["index.ts", "cli-plugin.ts", "src/**/*.ts"]
+  "include": ["index.ts", "cli-plugin.ts", "yaml.ts", "toml.ts", "src/**/*.ts"]
 }
