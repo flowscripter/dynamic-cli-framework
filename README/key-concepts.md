@@ -584,6 +584,45 @@ interface: `fileExtension`, `parse(text)` returning `{ data, handle }`,
 `apply(handle, changes)` returning the updated text (`changes` being the
 complete updated data) and `serialize(data)`.
 
+#### Managing Defaults From The Command Line
+
+The `config` group provides commands for managing the `defaults` in the
+configuration file. They operate on every registered command with
+`enableConfiguration` set (the `config` modifier itself is excluded), including
+commands added by plugins. A group member is addressed as `<group>:<member>`.
+
+- `config:get [--command <name>]` lists the configurable commands, their options
+  (type, allowable values, range, whether required), the value stored in the file
+  and whether an environment variable overrides it. Stored entries for unknown
+  commands or options and values of the wrong type are flagged, never removed.
+- `config:set --command <name> --option <path> --value <value>` sets one option.
+  The value is converted and validated using the option declared by the target
+  command (type, allowable values, range and custom validators) but required
+  checks are not applied, so a single option of many may be set. Nested and array
+  elements use the same path syntax as command line arguments
+  (`address.port`, `interface[0]`). A whole array or complex option is set with a
+  JSON value. Omit `--option` for a global command.
+- `config:unset --command <name> [--option <path>]` removes one option (or all
+  defaults of the command) and the OS secret any removed value refers to.
+  Array elements cannot be unset individually.
+- `config:dump` prints the configuration with secrets masked.
+
+`config:set` prompts when prompting is available: for the command if
+`--command` is missing, for every mandatory option (non-optional, no default) if
+only `--command` is given, and for the value if `--option` is given without
+`--value`. Otherwise it fails listing what is missing. The file is created at the
+default location if it does not exist; an explicit `--config` path must exist.
+
+SECRET options are stored in the OS secret store and only a
+`__SECRET__:<name>` reference is written to the file. `config:set` refuses to
+store a SECRET if `secretServiceEnabled` is false. Provide secrets via the prompt
+or pipe them with `--value-stdin` (one value, a single trailing newline removed,
+only when stdin is not a TTY). Passing a SECRET with `--value` works but warns
+on an interactive terminal as the value can leak through shell history, process
+listings and debug logs. A SECRET inside a whole-value JSON for an array or
+complex option is rejected: set each secret property individually. `config:get`
+and `config:dump` mask SECRET values.
+
 As a concrete example, the following command line:
 
 `myNetworkApp --connect --address.host=127.0.0.1 --address.port=8080`

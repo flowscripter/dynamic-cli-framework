@@ -30,8 +30,22 @@ export default class DefaultSecretService implements SecretService {
     return value.replace(/[^a-zA-Z0-9_]/g, "_");
   }
 
+  /**
+   * The name under which a secret with the provided key is stored.
+   */
+  public secretName(key: string): string {
+    return this.#scope + "_" + DefaultSecretService.#sanitize(key);
+  }
+
+  /**
+   * Whether the stored secret name was created by this scope.
+   */
+  public ownsSecretName(bunSecretName: string): boolean {
+    return bunSecretName.startsWith(this.#scope + "_");
+  }
+
   public async setSecret(key: string, value: string): Promise<string> {
-    const name = this.#scope + "_" + DefaultSecretService.#sanitize(key);
+    const name = this.secretName(key);
     if (name.length > MAX_NAME_LENGTH) {
       throw new Error(`Secret name exceeds ${MAX_NAME_LENGTH} characters: '${name}'`);
     }

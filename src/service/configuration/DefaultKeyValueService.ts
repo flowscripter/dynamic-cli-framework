@@ -57,6 +57,11 @@ export default class DefaultKeyValueService implements KeyValueService {
       if (!this.#secretService) {
         throw new Error("Secret sentinel found but no secret service is available");
       }
+      if (!this.#secretService.ownsSecretName(bunSecretName)) {
+        throw new Error(
+          `Secret sentinel for key: '${key}' refers to a secret outside of this scope`,
+        );
+      }
       const secretValue = await this.#secretService.getSecret(bunSecretName);
       if (secretValue === null) {
         throw new Error(`Secret not found in OS secret store for key: '${key}'`);
@@ -129,7 +134,9 @@ export default class DefaultKeyValueService implements KeyValueService {
     if (typeof value === "string" && value.startsWith(SECRET_SENTINEL_PREFIX)) {
       if (this.#secretService) {
         const bunSecretName = value.slice(SECRET_SENTINEL_PREFIX.length);
-        await this.#secretService.deleteSecret(bunSecretName);
+        if (this.#secretService.ownsSecretName(bunSecretName)) {
+          await this.#secretService.deleteSecret(bunSecretName);
+        }
       }
       return;
     }

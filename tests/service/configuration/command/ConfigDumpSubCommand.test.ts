@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import DefaultContext from "../../../../src/runtime/DefaultContext.ts";
+import DefaultConfigurationService from "../../../../src/service/configuration/DefaultConfigurationService.ts";
+import jsonFormat from "../../../../src/service/configuration/format/JsonConfigFormat.ts";
 import ConfigDumpSubCommand from "../../../../src/service/configuration/command/ConfigDumpSubCommand.ts";
 import ConfigurationServiceProvider from "../../../../src/service/configuration/ConfigurationServiceProvider.ts";
 import { getCLIConfig } from "../../../fixtures/CLIConfig.ts";
@@ -8,7 +10,7 @@ import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framewo
 
 describe("ConfigDumpSubCommand tests", () => {
   test("has correct name and description", () => {
-    const command = new ConfigDumpSubCommand(() => "{}");
+    const command = new ConfigDumpSubCommand(new DefaultConfigurationService(false, jsonFormat));
 
     expect(command.name).toEqual("dump");
     expect(command.description).toEqual("Dump configuration values");
@@ -41,7 +43,7 @@ describe("ConfigDumpSubCommand tests", () => {
     context.addServiceInstance(SYNTAX_HIGHLIGHTER_SERVICE_ID, mockSyntaxHighlighter);
     await configProvider.getServiceInfo(cliConfig);
 
-    const command = new ConfigDumpSubCommand(() => configProvider.getConfigString());
+    const command = new ConfigDumpSubCommand(configProvider.configurationService);
     await command.execute(context);
 
     expect(highlightedLang).toEqual("json");
