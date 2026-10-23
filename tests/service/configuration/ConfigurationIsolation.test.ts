@@ -1,3 +1,4 @@
+import process from "node:process";
 import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -207,13 +208,16 @@ describe("secret leakage", () => {
 });
 
 describe("config file permissions", () => {
-  test("a newly created config file is only accessible by the owner", async () => {
-    const { configProvider, scoped } = await setup();
-    await fs.rm(configProvider.configLocation!);
-    const kv = scoped("c");
-    await kv.set("k", "v");
-    await kv.flush();
-    const mode = (await fs.stat(configProvider.configLocation!)).mode & 0o777;
-    expect(mode & 0o077).toBe(0);
-  });
+  test.skipIf(process.platform === "win32")(
+    "a newly created config file is only accessible by the owner",
+    async () => {
+      const { configProvider, scoped } = await setup();
+      await fs.rm(configProvider.configLocation!);
+      const kv = scoped("c");
+      await kv.set("k", "v");
+      await kv.flush();
+      const mode = (await fs.stat(configProvider.configLocation!)).mode & 0o777;
+      expect(mode & 0o077).toBe(0);
+    },
+  );
 });
