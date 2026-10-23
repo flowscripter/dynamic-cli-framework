@@ -27,7 +27,13 @@ export default async function resolveSecrets<T>(
     }
     const resolved: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value)) {
-      resolved[key] = await resolveSecrets(val, resolveSecret);
+      // defineProperty so a "__proto__" key is an own property rather than replacing the prototype
+      Object.defineProperty(resolved, key, {
+        value: await resolveSecrets(val, resolveSecret),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
     }
     return resolved as unknown as T;
   }

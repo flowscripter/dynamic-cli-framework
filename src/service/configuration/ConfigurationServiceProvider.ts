@@ -16,7 +16,10 @@ import ConfigGetSubCommand from "./command/ConfigGetSubCommand.ts";
 import ConfigSetSubCommand from "./command/ConfigSetSubCommand.ts";
 import ConfigUnsetSubCommand from "./command/ConfigUnsetSubCommand.ts";
 import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
-import { CONFIGURATION_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  CONFIGURATION_SERVICE_ID,
+  type ConfigurationService,
+} from "@flowscripter/dynamic-cli-framework-api";
 import DefaultConfigurationService, {
   type KeyValueServiceScopeType,
 } from "./DefaultConfigurationService.ts";
@@ -41,14 +44,36 @@ export type { KeyValueServiceScopeType };
 const logger = getLogger("ConfigurationServiceProvider");
 
 /**
+ * The only view of the configuration which is registered in the {@link Context}, and therefore reachable by
+ * every command and service. It deliberately exposes nothing but the config file location: the
+ * {@link DefaultConfigurationService} (default values, per-scope key-value data, secret resolution and
+ * persistence) is only handed to the `config` group commands and {@link KeyValueServiceProvider}.
+ */
+class ConfigurationLocationService implements ConfigurationService {
+  readonly #service: DefaultConfigurationService;
+
+  public constructor(service: DefaultConfigurationService) {
+    this.#service = service;
+  }
+
+  public get configLocation(): string | undefined {
+    return this.#service.configLocation;
+  }
+
+  public setConfigLocation(location: string): void {
+    this.#service.setConfigLocation(location);
+  }
+}
+
+/**
  * Provides configuration of default command arguments using a configuration file and/or
  * environment variables.
  *
  * The same configuration file also backs the raw, per-scope key-value data consumed by
  * {@link KeyValueServiceProvider} (which holds a direct reference to this provider - see
  * {@link getKeyValueData} and {@link flushIfDirty}). The configuration data and its persistence are
- * owned by {@link DefaultConfigurationService}, which is registered under {@link CONFIGURATION_SERVICE_ID}
- * (typed as the narrower {@link ConfigurationService}) and passed directly to the `config` group commands.
+ * owned by {@link DefaultConfigurationService}, which is passed directly to the `config` group commands. Only a
+ * view exposing the config file location is registered under {@link CONFIGURATION_SERVICE_ID}.
  *
  * **Default Command Arguments**
  *
@@ -154,9 +179,8 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
   public readonly configFormat: ConfigFormat;
 
   /**
-   * The {@link DefaultConfigurationService} which owns the configuration data. It is registered in
-   * the {@link Context} under {@link CONFIGURATION_SERVICE_ID} and handed directly to the `config`
-   * group commands.
+   * The {@link DefaultConfigurationService} which owns the configuration data. It is never registered
+   * in the {@link Context}: it is handed directly to the `config` group commands only.
    */
   readonly #configurationService: DefaultConfigurationService;
 
@@ -225,10 +249,17 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
       );
     }
     return Promise.resolve({
-      service: this.#configurationService,
+      service: new ConfigurationLocationService(this.#configurationService),
       // this may be empty if configEnabled is false
       commands,
     });
+  }
+
+  /**
+   * The {@link DefaultConfigurationService} which owns the configuration data, for trusted wiring and tests.
+   */
+  public get configurationService(): DefaultConfigurationService {
+    return this.#configurationService;
   }
 
   public get configLocation(): string | undefined {

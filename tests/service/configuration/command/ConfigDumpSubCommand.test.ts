@@ -41,9 +41,9 @@ describe("ConfigDumpSubCommand tests", () => {
 
     context.addServiceInstance(PRINTER_SERVICE_ID, mockPrinterService);
     context.addServiceInstance(SYNTAX_HIGHLIGHTER_SERVICE_ID, mockSyntaxHighlighter);
-    const { service } = await configProvider.getServiceInfo(cliConfig);
+    await configProvider.getServiceInfo(cliConfig);
 
-    const command = new ConfigDumpSubCommand(service as DefaultConfigurationService);
+    const command = new ConfigDumpSubCommand(configProvider.configurationService);
     await command.execute(context);
 
     expect(highlightedLang).toEqual("json");

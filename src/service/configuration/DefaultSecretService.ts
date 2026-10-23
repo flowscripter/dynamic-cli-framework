@@ -37,6 +37,13 @@ export default class DefaultSecretService implements SecretService {
     return this.#scope + "_" + DefaultSecretService.#sanitize(key);
   }
 
+  /**
+   * Whether the stored secret name was created by this scope.
+   */
+  public ownsSecretName(bunSecretName: string): boolean {
+    return bunSecretName.startsWith(this.#scope + "_");
+  }
+
   public async setSecret(key: string, value: string): Promise<string> {
     const name = this.secretName(key);
     if (name.length > MAX_NAME_LENGTH) {

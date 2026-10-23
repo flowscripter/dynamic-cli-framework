@@ -116,7 +116,8 @@ async function setup(
     warn: (m: string) => (out.warn.push(m), Promise.resolve()),
     print: (m: string) => (out.print.push(m), Promise.resolve()),
   });
-  const service = (await provider.getServiceInfo(cliConfig)).service as DefaultConfigurationService;
+  await provider.getServiceInfo(cliConfig);
+  const service: DefaultConfigurationService = provider.configurationService;
   await provider.initService(context);
   return {
     provider,
@@ -353,8 +354,8 @@ describe("config set with SECRET options", () => {
       info: () => Promise.resolve(),
       warn: () => Promise.resolve(),
     });
-    const service = (await provider.getServiceInfo(cliConfig))
-      .service as DefaultConfigurationService;
+    await provider.getServiceInfo(cliConfig);
+    const service: DefaultConfigurationService = provider.configurationService;
     await provider.initService(context);
     await expect(
       new ConfigSetSubCommand(service).execute(context, {
@@ -393,8 +394,8 @@ describe("config set with SECRET options", () => {
     const cliConfig = getCLIConfig();
     const context = new DefaultContext(cliConfig);
     context.addServiceInstance(PRINTER_SERVICE_ID, {});
-    const service = (await provider.getServiceInfo(cliConfig))
-      .service as DefaultConfigurationService;
+    await provider.getServiceInfo(cliConfig);
+    const service: DefaultConfigurationService = provider.configurationService;
     await expect(
       new ConfigSetSubCommand(service).execute(context, {
         command: "cs",

@@ -30,9 +30,9 @@ export type KeyValueServiceScopeType = "command" | "service";
  * Owns the configuration data read from (and written back to) the configuration file: the default
  * command argument values and the raw per-scope key-value data.
  *
- * The `config` group commands are constructed with this instance, which is also the instance
- * registered under {@link CONFIGURATION_SERVICE_ID} (typed as the narrower
- * {@link ConfigurationService}).
+ * The `config` group commands are constructed with this instance. It must never be registered in the
+ * {@link Context}: it exposes every command's defaults, the raw key-value data of every scope and secret
+ * resolution. Only a location-only view is registered under {@link CONFIGURATION_SERVICE_ID}.
  */
 export default class DefaultConfigurationService implements ConfigurationService {
   public readonly envVarsEnabled: boolean;
@@ -235,7 +235,8 @@ export default class DefaultConfigurationService implements ConfigurationService
         this.#configHandle === undefined
           ? this.configFormat.serialize(config)
           : this.configFormat.apply(this.#configHandle, config);
-      await fs.writeFile(location, text);
+      // owner-only when the file is created; an existing file keeps its mode
+      await fs.writeFile(location, text, { mode: 0o600 });
       this.#configHandle = this.configFormat.parse(text).handle;
     } catch (err) {
       throw new Error(`Failed to write config at location: '${this.configLocation}': ${err}`);

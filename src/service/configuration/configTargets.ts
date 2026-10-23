@@ -272,8 +272,19 @@ export function collectSentinels(value: Node): Array<string> {
   return [];
 }
 
-function invalidMessage(invalid: Array<InvalidArgument>): string {
-  return invalid.map((i) => getInvalidArgumentString(i, false) + (i.message ?? "")).join("; ");
+/**
+ * @param secrets plain text SECRET values which must not appear in the message.
+ */
+function invalidMessage(
+  invalid: Array<InvalidArgument>,
+  secrets: ReadonlyArray<unknown> = [],
+): string {
+  return invalid
+    .map((i) => {
+      const hidden = secrets.includes(i.value) ? { ...i, value: undefined } : i;
+      return getInvalidArgumentString(hidden, false) + (i.message ?? "");
+    })
+    .join("; ");
 }
 
 /**
@@ -329,7 +340,7 @@ export function prepareChange(
     );
   }
   if (invalid.length > 0) {
-    return `${path}: ${invalidMessage(invalid)}`;
+    return `${path}: ${invalidMessage(invalid, [raw])}`;
   }
   const isSecret = !isComplexOption(leaf) && leaf.type === ValueTypeName.SECRET;
   return { steps, path, leaf, value, isSecret };
@@ -352,7 +363,7 @@ export function prepareGlobalValue(
     deferred,
   );
   if (invalid.length > 0 || value === undefined) {
-    return invalidMessage(invalid);
+    return invalidMessage(invalid, [raw]);
   }
   return { value, isSecret: target.argument!.type === ValueTypeName.SECRET };
 }
@@ -378,7 +389,10 @@ export function applyChanges(
   const invalid: Array<InvalidArgument> = [];
   runCustomValidation(deferred, target.command, values as never, invalid);
   if (invalid.length > 0) {
-    return invalidMessage(invalid);
+    return invalidMessage(
+      invalid,
+      changes.filter((c) => c.isSecret).map((c) => c.value),
+    );
   }
   return values as Values;
 }

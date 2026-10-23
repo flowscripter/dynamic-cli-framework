@@ -160,7 +160,8 @@ async function setup(
     warn: (m: string) => (out.warn.push(m), Promise.resolve()),
     print: (m: string) => (out.print.push(m), Promise.resolve()),
   });
-  const service = (await provider.getServiceInfo(cliConfig)).service as DefaultConfigurationService;
+  await provider.getServiceInfo(cliConfig);
+  const service: DefaultConfigurationService = provider.configurationService;
   await provider.initService(context);
   return {
     provider,
