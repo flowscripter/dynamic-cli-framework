@@ -94,9 +94,8 @@ export default class DefaultKeyValueService implements KeyValueService {
       if (!this.#secretService) {
         throw new Error("Attempt to set a secret but no secret service is available");
       }
-      const secretName = [key, ...path].join("_");
       const bunSecretName = await this.#secretService.setSecret(
-        secretName,
+        [key, ...path],
         JSON.stringify(value.value),
       );
       return SECRET_SENTINEL_PREFIX + bunSecretName;

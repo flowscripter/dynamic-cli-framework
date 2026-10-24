@@ -82,13 +82,21 @@ export default class DefaultConfigurationService implements ConfigurationService
 
   /**
    * Resolve any secret sentinels within the value using the OS secret store (if enabled).
+   *
+   * @param commandKey the key of the command under `defaults` the value belongs to: a sentinel
+   * may only refer to a secret stored for this command.
    */
-  public async resolveDefaultSecrets<T>(value: T): Promise<T> {
+  public async resolveDefaultSecrets<T>(value: T, commandKey: string): Promise<T> {
     if (this.#defaultsSecretService === undefined) {
       return value;
     }
     const secretService = this.#defaultsSecretService;
     return await resolveSecrets<T>(value, async (bunSecretName) => {
+      if (!secretService.ownsSecretName(bunSecretName, commandKey)) {
+        throw new Error(
+          `Secret sentinel '${SECRET_SENTINEL_PREFIX}${bunSecretName}' does not refer to a secret stored for command: '${commandKey}'`,
+        );
+      }
       const secretValue = await secretService.getSecret(bunSecretName);
       if (secretValue === null) {
         throw new Error(
@@ -285,7 +293,7 @@ export default class DefaultConfigurationService implements ConfigurationService
    */
   public async commitDefault(
     commandKey: string,
-    secrets: ReadonlyArray<{ key: string; value: string }>,
+    secrets: ReadonlyArray<{ key: ReadonlyArray<string>; value: string }>,
     build: (sentinels: ReadonlyArray<string>) => Values | SingleValueType | undefined,
   ): Promise<void> {
     if (this.configLocation === undefined) {

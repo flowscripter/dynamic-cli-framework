@@ -331,9 +331,9 @@ export default class ConfigSetSubCommand implements SubCommand {
     const secrets =
       target.argument !== undefined
         ? globalIsSecret
-          ? [{ key: target.key, value: globalValue as string }]
+          ? [{ key: [target.key], value: globalValue as string }]
           : []
-        : secretChanges.map((c) => ({ key: `${target.key}.${c.path}`, value: c.value as string }));
+        : secretChanges.map((c) => ({ key: [target.key, c.path], value: c.value as string }));
 
     await this.#configurationService.commitDefault(target.key, secrets, (sentinels) => {
       if (target.argument !== undefined) {

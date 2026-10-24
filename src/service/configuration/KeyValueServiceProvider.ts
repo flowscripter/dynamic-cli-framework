@@ -196,7 +196,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
     const keyValueData = this.#configurationServiceProvider.getKeyValueData(scopeType, scopeKey);
 
     const secretService = this.secretServiceEnabled
-      ? new DefaultSecretService(this.#cliConfigName!, `${scopeType}_${scopeKey}`, this.#secretsApi)
+      ? new DefaultSecretService(this.#cliConfigName!, [scopeType, scopeKey], this.#secretsApi)
       : undefined;
     const scopedService = new DefaultKeyValueService(keyValueData, secretService, () =>
       this.#flushDirtyScopes(),

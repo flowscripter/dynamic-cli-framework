@@ -124,10 +124,10 @@ class ConfigurationLocationService implements ConfigurationService {
  * default configuration will be used. The location of the configuration file can be modified via the
  * {@link ConfigCommand}.
  *
- * NOTE: You may store default arguments for secrets by manually configuring secrets in your OS
- * credential store and referencing them in the config file using the sentinel format
- * `__SECRET__:<bun_secret_name>`. These values will be resolved from the OS secret store
- * before being returned as default argument values. See {@link KeyValueServiceProvider} for the
+ * NOTE: Secrets in default arguments are referenced in the config file or an environment variable using
+ * the sentinel format `__SECRET__:<bun_secret_name>` and resolved from the OS secret store before being
+ * returned as default argument values. A command's defaults may only reference secrets stored for that
+ * command via `config set` (named `defaults_Z<command>_Z<option path>`, each part escaped). See {@link KeyValueServiceProvider} for the
  * generic key-value store which uses the same secret sentinel mechanism.
  *
  * *Environment Variables*
@@ -245,7 +245,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     }
     if (this.secretServiceEnabled) {
       this.#configurationService.setDefaultsSecretService(
-        new DefaultSecretService(cliConfig.name, "defaults", this.#secretsApi),
+        new DefaultSecretService(cliConfig.name, ["defaults"], this.#secretsApi),
       );
     }
     return Promise.resolve({
@@ -335,7 +335,7 @@ export default class ConfigurationServiceProvider implements ServiceProvider {
     }
 
     if (result !== undefined) {
-      result = await this.#configurationService.resolveDefaultSecrets(result);
+      result = await this.#configurationService.resolveDefaultSecrets(result, commandKey);
     }
 
     return result;

@@ -468,16 +468,33 @@ describe("config get", () => {
 describe("DefaultConfigurationService", () => {
   test("resolveDefaultSecrets returns the value unchanged without a secret service", async () => {
     const service = new DefaultConfigurationServiceClass(false, jsonFormat);
-    expect(await service.resolveDefaultSecrets("__SECRET__:x")).toBe("__SECRET__:x");
+    expect(await service.resolveDefaultSecrets("__SECRET__:x", "connect")).toBe("__SECRET__:x");
   });
 
   test("resolveDefaultSecrets resolves stored sentinels and fails on missing secrets", async () => {
     const t = await setup();
     await exec(t.set(), t.context, { command: "connect", option: "token", value: "tok" });
     const stored = t.provider.defaultsData.get("connect") as Values;
-    expect(await t.service.resolveDefaultSecrets(stored)).toEqual({ token: "tok" });
+    expect(await t.service.resolveDefaultSecrets(stored, "connect")).toEqual({ token: "tok" });
     t.secrets.store.clear();
-    await expect(t.service.resolveDefaultSecrets(stored)).rejects.toThrow("Secret not found");
+    await expect(t.service.resolveDefaultSecrets(stored, "connect")).rejects.toThrow(
+      "Secret not found",
+    );
+  });
+
+  test("resolveDefaultSecrets only resolves secrets stored for the same command", async () => {
+    const t = await setup();
+    await exec(t.set(), t.context, { command: "connect", option: "token", value: "tok" });
+    const stored = t.provider.defaultsData.get("connect") as Values;
+    await expect(t.service.resolveDefaultSecrets(stored, "other")).rejects.toThrow(
+      "does not refer to a secret stored for command",
+    );
+    await expect(t.service.resolveDefaultSecrets(stored, "connec")).rejects.toThrow(
+      "does not refer to a secret stored for command",
+    );
+    await expect(
+      t.service.resolveDefaultSecrets({ token: "__SECRET__:command_Zconnect_Ztoken" }, "connect"),
+    ).rejects.toThrow("does not refer to a secret stored for command");
   });
 
   test("getConfigTargets is empty without a registry", () => {

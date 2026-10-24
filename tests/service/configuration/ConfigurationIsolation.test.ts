@@ -155,9 +155,9 @@ describe("key-value secret scoping", () => {
 
   test("a command cannot read a stored default secret via a forged sentinel", async () => {
     const { scoped, secrets } = await setup();
-    secrets.store.set("defaults_connect_token", "default-secret");
+    secrets.store.set("defaults_Zconnect_Ztoken", "default-secret");
     const attacker = scoped("attacker");
-    await attacker.set("stolen", "__SECRET__:defaults_connect_token");
+    await attacker.set("stolen", "__SECRET__:defaults_Zconnect_Ztoken");
     await expect(attacker.get("stolen")).rejects.toThrow();
   });
 });
@@ -195,9 +195,9 @@ describe("secret leakage", () => {
 
   test("get never prints a stored secret or its sentinel", async () => {
     const { configProvider, context, secrets, printed } = await setup({
-      defaults: { connect: { host: "h", token: "__SECRET__:defaults_connect_token" } },
+      defaults: { connect: { host: "h", token: "__SECRET__:defaults_Zconnect_Ztoken" } },
     });
-    secrets.store.set("defaults_connect_token", "hunter2-secret");
+    secrets.store.set("defaults_Zconnect_Ztoken", "hunter2-secret");
     await configProvider.initService(context);
     await new ConfigGetSubCommand(configProvider.configurationService).execute(context, {});
     const output = printed.join("");
