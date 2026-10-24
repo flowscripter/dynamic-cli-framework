@@ -72,7 +72,7 @@ describe("DefaultKeyValueService tests", () => {
 
   test("set with a Secret-wrapped value stores sentinel", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(new Map(), secretService);
 
     await keyValueService.set("token", new Secret("my-secret"));
@@ -82,16 +82,16 @@ describe("DefaultKeyValueService tests", () => {
     expect(mockApi.set).toHaveBeenCalledTimes(1);
     expect(mockApi.set).toHaveBeenCalledWith({
       service: "test_cli",
-      name: "command_test_token",
+      name: "command_Ztest_Ztoken",
       value: JSON.stringify("my-secret"),
     });
   });
 
   test("get resolves secret sentinel", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(
-      new Map([["token", "__SECRET__:command_test_token"]]),
+      new Map([["token", "__SECRET__:command_Ztest_Ztoken"]]),
       secretService,
     );
 
@@ -100,15 +100,15 @@ describe("DefaultKeyValueService tests", () => {
     expect(value).toEqual("resolved-secret");
     expect(mockApi.get).toHaveBeenCalledWith({
       service: "test_cli",
-      name: "command_test_token",
+      name: "command_Ztest_Ztoken",
     });
   });
 
   test("get throws when secret not found in OS store", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(
-      new Map([["token", "__SECRET__:command_test_token"]]),
+      new Map([["token", "__SECRET__:command_Ztest_Ztoken"]]),
       secretService,
     );
 
@@ -118,7 +118,7 @@ describe("DefaultKeyValueService tests", () => {
 
   test("get with sentinel throws without secret service", async () => {
     const keyValueService = new DefaultKeyValueService(
-      new Map([["token", "__SECRET__:command_test_token"]]),
+      new Map([["token", "__SECRET__:command_Ztest_Ztoken"]]),
     );
 
     await expect(keyValueService.get("token")).rejects.toThrow("no secret service");
@@ -126,16 +126,16 @@ describe("DefaultKeyValueService tests", () => {
 
   test("delete removes secret from OS store", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(
-      new Map([["token", "__SECRET__:command_test_token"]]),
+      new Map([["token", "__SECRET__:command_Ztest_Ztoken"]]),
       secretService,
     );
 
     await keyValueService.delete("token");
     expect(mockApi.delete).toHaveBeenCalledWith({
       service: "test_cli",
-      name: "command_test_token",
+      name: "command_Ztest_Ztoken",
     });
     expect(await keyValueService.has("token")).toBeFalse();
     expect(keyValueService.isDirty()).toBeTrue();
@@ -150,7 +150,7 @@ describe("DefaultKeyValueService tests", () => {
 
   test("set with a Secret-wrapped non-string (object) value, get recovers it", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(new Map(), secretService);
 
     const original = { user: "alice", tokens: [1, 2, 3], nested: { active: true } };
@@ -167,15 +167,15 @@ describe("DefaultKeyValueService tests", () => {
 
   test("get recursively resolves a hand-embedded nested sentinel in a plain object value", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(
       new Map([
         [
           "config",
           {
             plain: "value",
-            list: ["a", "__SECRET__:command_test_nested"],
-            nested: { token: "__SECRET__:command_test_nested" },
+            list: ["a", "__SECRET__:command_Ztest_Znested"],
+            nested: { token: "__SECRET__:command_Ztest_Znested" },
           },
         ],
       ]),
@@ -193,7 +193,7 @@ describe("DefaultKeyValueService tests", () => {
 
   test("set with a Secret wrapped two levels deep inside a larger object", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(new Map(), secretService);
 
     await keyValueService.set("config", {
@@ -209,7 +209,7 @@ describe("DefaultKeyValueService tests", () => {
     ];
     expect(setCall[0]).toEqual({
       service: "test_cli",
-      name: "command_test_config_auth_credentials",
+      name: "command_Ztest_Zconfig_Zauth_Zcredentials",
       value: JSON.stringify({ user: "alice", pass: "hunter2" }),
     });
 
@@ -224,13 +224,13 @@ describe("DefaultKeyValueService tests", () => {
     });
     expect(mockApi.get).toHaveBeenLastCalledWith({
       service: "test_cli",
-      name: "command_test_config_auth_credentials",
+      name: "command_Ztest_Zconfig_Zauth_Zcredentials",
     });
   });
 
   test("delete cleans up a secret nested two levels deep inside a larger object", async () => {
     const mockApi = createMockSecretsApi();
-    const secretService = new DefaultSecretService("test-cli", "command_test", mockApi);
+    const secretService = new DefaultSecretService("test-cli", ["command", "test"], mockApi);
     const keyValueService = new DefaultKeyValueService(new Map(), secretService);
 
     await keyValueService.set("config", {
@@ -245,7 +245,7 @@ describe("DefaultKeyValueService tests", () => {
     expect(mockApi.delete).toHaveBeenCalledTimes(1);
     expect(mockApi.delete).toHaveBeenCalledWith({
       service: "test_cli",
-      name: "command_test_config_auth_credentials",
+      name: "command_Ztest_Zconfig_Zauth_Zcredentials",
     });
     expect(await keyValueService.has("config")).toBeFalse();
   });

@@ -8,7 +8,7 @@ import type {
 } from "@flowscripter/dynamic-cli-framework-api";
 import { KEY_VALUE_SERVICE_ID, SHUTDOWN_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
 import DefaultKeyValueService from "./DefaultKeyValueService.ts";
-import DefaultSecretService from "./DefaultSecretService.ts";
+import DefaultSecretService, { type SecretsApi } from "./DefaultSecretService.ts";
 import type ConfigurationServiceProvider from "./ConfigurationServiceProvider.ts";
 import type { KeyValueServiceScopeType } from "./ConfigurationServiceProvider.ts";
 import type DefaultContext from "../../runtime/DefaultContext.ts";
@@ -118,6 +118,8 @@ export default class KeyValueServiceProvider implements ServiceProvider {
   readonly #commandScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
   readonly #serviceScopedKeyValueServices = new Map<string, DefaultKeyValueService>();
 
+  readonly #secretsApi: SecretsApi | undefined;
+
   // used to construct scoped DefaultSecretService instances on demand.
   #cliConfigName: string | undefined;
 
@@ -129,12 +131,14 @@ export default class KeyValueServiceProvider implements ServiceProvider {
    * backs this provider's data - an internal wiring reference, never exposed further.
    * @param keyValueServiceEnabled optionally provide a {@link KeyValueService} implementation: `configurationServiceProvider.configEnabled` must be true in this case
    * @param secretServiceEnabled optionally enable OS-native secret storage via Bun.secrets: `configurationServiceProvider.configEnabled` must be true in this case
+   * @param secretsApi optionally override the OS secret store.
    */
   public constructor(
     servicePriority: number,
     configurationServiceProvider: ConfigurationServiceProvider,
     keyValueServiceEnabled = false,
     secretServiceEnabled = false,
+    secretsApi?: SecretsApi,
   ) {
     if (!configurationServiceProvider.configEnabled && keyValueServiceEnabled) {
       throw new Error("configEnabled must be true if keyValueServiceEnabled is true");
@@ -145,6 +149,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
     this.servicePriority = servicePriority;
     this.#configurationServiceProvider = configurationServiceProvider;
     this.keyValueServiceEnabled = keyValueServiceEnabled;
+    this.#secretsApi = secretsApi;
     this.secretServiceEnabled = secretServiceEnabled;
   }
 
@@ -191,7 +196,7 @@ export default class KeyValueServiceProvider implements ServiceProvider {
     const keyValueData = this.#configurationServiceProvider.getKeyValueData(scopeType, scopeKey);
 
     const secretService = this.secretServiceEnabled
-      ? new DefaultSecretService(this.#cliConfigName!, `${scopeType}_${scopeKey}`)
+      ? new DefaultSecretService(this.#cliConfigName!, [scopeType, scopeKey], this.#secretsApi)
       : undefined;
     const scopedService = new DefaultKeyValueService(keyValueData, secretService, () =>
       this.#flushDirtyScopes(),

@@ -1,3 +1,4 @@
+import type DefaultConfigurationService from "../DefaultConfigurationService.ts";
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { Option } from "@flowscripter/dynamic-cli-framework-api";
 import type { Positional } from "@flowscripter/dynamic-cli-framework-api";
@@ -9,12 +10,7 @@ import { SYNTAX_HIGHLIGHTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framewo
 
 /**
  * Member of the `config` group which dumps the configuration loaded by
- * {@link ConfigurationServiceProvider}.
- *
- * Takes a direct reference to {@link ConfigurationServiceProvider.getConfigString}, wired by the
- * provider that constructs this command, rather than looking it up via {@link Context} -
- * deliberately, since a full config dump is not something every command/task should be able to
- * reach through a general lookup (see {@link ConfigurationService}'s doc comment).
+ * {@link DefaultConfigurationService}, with secrets masked.
  */
 export default class ConfigDumpSubCommand implements SubCommand {
   readonly name = "dump";
@@ -22,10 +18,10 @@ export default class ConfigDumpSubCommand implements SubCommand {
   readonly options: ReadonlyArray<Option> = [];
   readonly positionals: ReadonlyArray<Positional> = [];
 
-  readonly #getConfigString: () => string;
+  readonly #configurationService: DefaultConfigurationService;
 
-  public constructor(getConfigString: () => string) {
-    this.#getConfigString = getConfigString;
+  public constructor(configurationService: DefaultConfigurationService) {
+    this.#configurationService = configurationService;
   }
 
   public async execute(context: Context): Promise<void> {
@@ -35,7 +31,7 @@ export default class ConfigDumpSubCommand implements SubCommand {
     ) as SyntaxHighlighterService;
 
     await printerService.print(
-      `${syntaxHighlighterService.highlight(this.#getConfigString(), "json")}\n`,
+      `${syntaxHighlighterService.highlight(this.#configurationService.getMaskedConfigString(), "json")}\n`,
     );
   }
 }

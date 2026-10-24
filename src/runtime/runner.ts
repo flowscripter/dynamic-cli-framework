@@ -121,8 +121,11 @@ async function executeParsedCommand(
       parseResult!.populatedArgumentValues,
     );
 
+    const commandScopeKey = parseResult.groupCommand
+      ? `${parseResult.groupCommand.name}:${parseResult.command.name}`
+      : parseResult.command.name;
     const commandContext = keyValueServiceProvider
-      ? keyValueServiceProvider.getContextForScope(context, "command", parseResult.command.name)
+      ? keyValueServiceProvider.getContextForScope(context, "command", commandScopeKey)
       : context;
     if (isSubCommand(parseResult.command)) {
       await parseResult.command.execute(

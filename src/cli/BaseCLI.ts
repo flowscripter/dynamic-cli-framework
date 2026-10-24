@@ -395,6 +395,7 @@ export default class BaseCLI implements CLI {
       this.#options.configFileSupportEnabled,
       this.#options.secretServiceEnabled,
       this.#options.configFormat,
+      this.#commandRegistry,
     );
     this.addServiceProvider(configurationServiceProvider);
     const keyValueServiceProvider = new KeyValueServiceProvider(

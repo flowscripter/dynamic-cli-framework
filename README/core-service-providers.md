@@ -74,7 +74,10 @@ Provides:
   dumps the full CLI configuration to stdout via `config:dump` (replacing the
   former `--dump-config` global command). It is wired directly to a
   `getConfigString: () => string` constructor callback rather than a service
-  lookup, for the same reason `ConfigurationService` stays narrow.
+  lookup, for the same reason `ConfigurationService` stays narrow. When the
+  provider is given the `CommandRegistry` (as `BaseCLI` does) the group also has
+  `config:get`, `config:set` and `config:unset` members for managing `defaults`,
+  see the Configuration section of `key-concepts.md`.
 
 The configuration file syntax is set by the `configFormat` constructor argument
 (a `ConfigFormat`, JSON by default; `yamlFormat` and `tomlFormat` are provided
