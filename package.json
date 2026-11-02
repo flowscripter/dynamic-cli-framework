@@ -61,8 +61,8 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@flowscripter/dynamic-cli-framework-api": "^5.1.4",
-    "@flowscripter/dynamic-plugin-framework": "^2.3.3",
+    "@flowscripter/dynamic-cli-framework-api": "^5.1.5",
+    "@flowscripter/dynamic-plugin-framework": "^2.3.4",
     "emphasize": "^7.0.0",
     "fastest-levenshtein": "^1.0.16",
     "figlet": "^1.12.0",
@@ -73,7 +73,7 @@
     "supports-terminal-graphics": "^0.1.0"
   },
   "devDependencies": {
-    "@decimalturn/toml-patch": "^3.3.1",
+    "@decimalturn/toml-patch": "^3.3.2",
     "@types/bun": "^1.4.4",
     "@types/node": "^26.6.6",
     "@types/semver": "^7.8.0",
