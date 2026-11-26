@@ -7,6 +7,28 @@ import { isGroupCommand } from "./command/CommandTypeGuards.ts";
 
 const logger = getLogger("scanner");
 
+function describeCommandClause(clause: CommandClause) {
+  return {
+    command: clause.command.name,
+    ...(clause.groupCommand ? { groupCommand: clause.groupCommand.name } : {}),
+    potentialArgs: clause.potentialArgs,
+  };
+}
+
+/**
+ * Describe a {@link ScanResult} for logging, using command names in place of command objects.
+ */
+export function describeScanResult(scanResult: ScanResult): string {
+  return JSON.stringify({
+    ...scanResult,
+    nonModifierCommandClause: scanResult.nonModifierCommandClause
+      ? describeCommandClause(scanResult.nonModifierCommandClause)
+      : undefined,
+    globalModifierCommandClauses:
+      scanResult.globalModifierCommandClauses?.map(describeCommandClause),
+  });
+}
+
 /**
  * A result from scanning arguments for commands.
  */
@@ -335,7 +357,7 @@ export function scanForGlobalModifierCommandClauses(
     scanResult.globalModifierCommandClauses = commandClauses;
   }
 
-  logger.debug("scan result: %O", scanResult);
+  logger.debug(() => `scan result: ${describeScanResult(scanResult)}`);
 
   return scanResult;
 }
@@ -396,7 +418,7 @@ export function scanForNonModifierCommandClause(
     }
   }
 
-  logger.debug("scan result: %O", scanResult);
+  logger.debug(() => `scan result: ${describeScanResult(scanResult)}`);
 
   return scanResult;
 }

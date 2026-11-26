@@ -4,6 +4,9 @@ import { type SingleValueType, ValueTypeName } from "@flowscripter/dynamic-cli-f
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { PrinterService } from "@flowscripter/dynamic-cli-framework-api";
 import { PRINTER_SERVICE_ID } from "@flowscripter/dynamic-cli-framework-api";
+import getLogger from "../../../util/logger.ts";
+
+const logger = getLogger("ThemeCommand");
 
 /**
  * Command allowing the specification of the dark/light theme for the {@link PrinterService}.
@@ -43,5 +46,10 @@ export default class ThemeCommand implements GlobalModifierCommand {
     } else {
       printerService.darkMode = argumentValue === "dark";
     }
+    logger.debug(
+      "Theme '%s' resolved to: %s",
+      argumentValue,
+      printerService.darkMode ? "dark" : "light",
+    );
   }
 }
