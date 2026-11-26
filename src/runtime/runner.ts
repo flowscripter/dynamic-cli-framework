@@ -1,6 +1,6 @@
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
-import { RunState } from "@flowscripter/dynamic-cli-framework-api";
+import { RunState, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
 import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
 import type {
@@ -191,6 +191,20 @@ async function findAndExecuteGlobalModifierCommands(
 
   if (scanResult.globalModifierCommandClauses) {
     for (const globalModifierCommandClause of scanResult.globalModifierCommandClauses) {
+      // a modifier with a default value which requires a non-boolean value but was given none is treated
+      // as an unused arg, leaving it to be run with any configured default below
+      const argument = (globalModifierCommandClause.command as GlobalModifierCommand).argument;
+      if (
+        argument &&
+        argument.type !== ValueTypeName.BOOLEAN &&
+        !argument.isOptional &&
+        argument.defaultValue !== undefined &&
+        globalModifierCommandClause.potentialArgs.length === 0
+      ) {
+        unusedArgSequences.push([`--${globalModifierCommandClause.command.name}`]);
+        continue;
+      }
+
       // parse and fast fail on error
       const defaultArgumentValues = configurationServiceProvider
         ? await configurationServiceProvider.getDefaultArgumentValues(

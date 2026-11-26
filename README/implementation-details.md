@@ -520,6 +520,13 @@ not consumed when parsing the command arguments are also retained.
 Once a command has been identified and parsed any retained arguments are
 considered unused and a warning is output.
 
+A global modifier command whose argument has a default value, but which is
+given no value, is also retained as an unused argument and is not run from the
+command line (any configured default still applies). For example
+`executable --version --theme` outputs the version and warns
+`Unused arg: --theme`. A global modifier command whose argument has no default
+value and is given no value is a parse error (missing value).
+
 If a command is NOT identified, any retained arguments are considered potential
 arguments for a default command if it has been configured. This behaviour means
 the following are equivalent:
