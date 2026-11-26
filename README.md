@@ -75,6 +75,11 @@ The following example projects are available:
 - [Development](./README/development.md)
 - [API Documentation](https://flowscripter.github.io/dynamic-cli-framework/index.html)
 
+## Design Records
+
+- [Architecture decision records](design/adr/) for decisions specific to this repo
+- [Change specs and plans](design/changes/) from the agentic development workflow
+
 ## License
 
 MIT © Flowscripter
