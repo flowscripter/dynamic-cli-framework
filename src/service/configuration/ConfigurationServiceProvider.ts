@@ -120,8 +120,9 @@ class ConfigurationLocationService implements ConfigurationService {
  * extension and existing files are not migrated between formats. For YAML and TOML, comments and layout in the
  * existing file are preserved when it is written back.
  *
- * The default location of the configuration file is `$HOME/.<application_name>.<format extension>`. If `$HOME` is not defined no
- * default configuration will be used. The location of the configuration file can be modified via the
+ * The default location of the configuration file is `<home>/.<application_name>.<format extension>`, where `<home>` is
+ * `$HOME` if it is set, otherwise the OS user home directory (e.g. `%USERPROFILE%` on Windows). If no home directory
+ * can be found no default configuration will be used. The location of the configuration file can be modified via the
  * {@link ConfigCommand}.
  *
  * NOTE: Secrets in default arguments are referenced in the config file or an environment variable using

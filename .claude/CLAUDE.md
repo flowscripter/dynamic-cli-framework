@@ -191,6 +191,14 @@ Shared state lives in `src/service/shutdown/ShutdownState.ts`.
 Commands with `enableConfiguration: true` receive defaults from env vars /
 config files via `ConfigurationServiceProvider`.
 
+The default config file location is resolved in
+`DefaultConfigurationService.init()` as `process.env.HOME || os.homedir()`.
+`$HOME` is read first because tests point it at a temp dir and Bun caches
+`os.homedir()` (it ignores later `HOME` changes). The `os.homedir()` fallback
+is what makes Windows work, where `HOME` is normally unset (`%USERPROFILE%`).
+Without a location, key-value writes at shutdown (e.g. the auto-upgrade
+preference) fail with "Attempt to write updated config with no configLocation set".
+
 ### Secret Storage
 
 `KeyValueService` supports OS-native secret storage via Bun.secrets API.
