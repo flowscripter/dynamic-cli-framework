@@ -96,12 +96,25 @@ describe("detectDarkBackground tests", () => {
     expect(reader.readRawCalls).toBe(0);
   });
 
-  test("uses COLORFGBG without querying", async () => {
-    const reader = new FakeKeyReader(DARK + DA1);
-    const terminal = new FakeTerminal();
-    expect(await detect(reader, terminal, { COLORFGBG: "0;15" })).toBe(false);
-    expect(terminal.written).toEqual([]);
-    expect(reader.readRawCalls).toBe(0);
+  test("prefers the OSC 11 reply over COLORFGBG", async () => {
+    expect(
+      await detect(new FakeKeyReader(LIGHT + DA1), new FakeTerminal(), { COLORFGBG: "15;0" }),
+    ).toBe(false);
+    expect(
+      await detect(new FakeKeyReader(DARK + DA1), new FakeTerminal(), { COLORFGBG: "0;15" }),
+    ).toBe(true);
+  });
+
+  test("falls back to COLORFGBG when the terminal does not answer the query", async () => {
+    expect(await detect(new FakeKeyReader(DA1), new FakeTerminal(), { COLORFGBG: "0;15" })).toBe(
+      false,
+    );
+    expect(await detect(new FakeKeyReader(""), new FakeTerminal(), { COLORFGBG: "15;0" })).toBe(
+      true,
+    );
+    expect(
+      await detect(new FakeKeyReader(new Error("boom")), new FakeTerminal(), { COLORFGBG: "0;15" }),
+    ).toBe(false);
   });
 
   test("queries the terminal and reads the OSC 11 reply", async () => {

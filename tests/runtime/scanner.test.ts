@@ -7,6 +7,7 @@ import {
   getSubCommandWithOptionAndPositional,
 } from "../fixtures/Command.ts";
 import {
+  describeScanResult,
   scanForGlobalModifierCommandClauses,
   scanForNonModifierCommandClause,
   type ScanResult,
@@ -23,6 +24,37 @@ function expectScanResult(result: ScanResult, expected: ScanResult) {
   expect(result.globalModifierCommandClauses).toEqual(expected.globalModifierCommandClauses!);
 }
 describe("scanner tests", () => {
+  test("Scan result is described using command names", () => {
+    const globalModifierCommand = getGlobalModifierCommand("modifier", "m", true, true);
+    const subCommand = getSubCommandWithOptionAndPositional();
+    const groupCommand = getGroupCommand("group", [subCommand]);
+
+    expect(
+      JSON.parse(
+        describeScanResult({
+          globalModifierCommandClauses: [
+            { command: globalModifierCommand, potentialArgs: ["--theme", "auto"] },
+          ],
+          unusedArgSequences: [["foo"]],
+        }),
+      ),
+    ).toEqual({
+      globalModifierCommandClauses: [{ command: "modifier", potentialArgs: ["--theme", "auto"] }],
+      unusedArgSequences: [["foo"]],
+    });
+    expect(
+      JSON.parse(
+        describeScanResult({
+          nonModifierCommandClause: { command: subCommand, groupCommand, potentialArgs: [] },
+          unusedArgSequences: [],
+        }),
+      ),
+    ).toEqual({
+      nonModifierCommandClause: { command: "subCommand", groupCommand: "group", potentialArgs: [] },
+      unusedArgSequences: [],
+    });
+  });
+
   test("Global modifier command scanned", () => {
     const globalModifierCommand = getGlobalModifierCommand("modifier", "m", true, true);
     const globalModifierCommandsByName: ReadonlyMap<string, GlobalModifierCommand> = new Map([
