@@ -1,6 +1,10 @@
 import type { Context } from "@flowscripter/dynamic-cli-framework-api";
 import type { RunResult } from "@flowscripter/dynamic-cli-framework-api";
-import { RunState, ValueTypeName } from "@flowscripter/dynamic-cli-framework-api";
+import {
+  InvalidArgumentReason,
+  RunState,
+  ValueTypeName,
+} from "@flowscripter/dynamic-cli-framework-api";
 import type { CommandRegistry } from "@flowscripter/dynamic-cli-framework-api";
 import { isGlobalCommand, isSubCommand } from "./command/CommandTypeGuards.ts";
 import type {
@@ -191,18 +195,32 @@ async function findAndExecuteGlobalModifierCommands(
 
   if (scanResult.globalModifierCommandClauses) {
     for (const globalModifierCommandClause of scanResult.globalModifierCommandClauses) {
-      // a modifier with a default value which requires a non-boolean value but was given none is treated
-      // as an unused arg, leaving it to be run with any configured default below
+      // a modifier specified on the command line which requires a non-boolean value but was given none is a
+      // missing value error, even if a default value is defined or configured
       const argument = (globalModifierCommandClause.command as GlobalModifierCommand).argument;
       if (
         argument &&
         argument.type !== ValueTypeName.BOOLEAN &&
         !argument.isOptional &&
-        argument.defaultValue !== undefined &&
         globalModifierCommandClause.potentialArgs.length === 0
       ) {
-        unusedArgSequences.push([`--${globalModifierCommandClause.command.name}`]);
-        continue;
+        const parseResult: ParseResult = {
+          command: globalModifierCommandClause.command,
+          populatedArgumentValues: undefined,
+          invalidArguments: [
+            {
+              name: globalModifierCommandClause.command.name,
+              reason: InvalidArgumentReason.MISSING_VALUE,
+            },
+          ],
+          unusedArgs: [],
+        };
+        await printParseResultError(context, parseResult);
+        return {
+          runState: RunState.PARSE_ERROR,
+          command: parseResult.command,
+          invalidArguments: parseResult.invalidArguments,
+        };
       }
 
       // parse and fast fail on error

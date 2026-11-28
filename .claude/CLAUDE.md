@@ -505,10 +505,10 @@ session would narrow it down far more directly than further static review.
 
 `ThemeCommand` (`--theme auto|dark|light`, env `THEME`, default `auto`) replaced `DarkModeCommand`/`--dark-mode`. `auto` uses `src/terminal/BackgroundDetector.ts` (COLORFGBG, then OSC 11 + DA1 query on an interactive TTY, 150ms timeout) and falls back to dark. It runs after `NoColorCommand` (priorities +1 and +2 respectively) so detection is skipped when color is disabled.
 
-Bare `--theme` (no value) is not run: `findAndExecuteGlobalModifierCommands` returns any global modifier whose
-non-boolean, non-optional argument has a `defaultValue` and has no following args to the unused args (so
-`--version --theme` warns `Unused arg: --theme`; configured defaults still apply). Without a `defaultValue` the
-same input stays a `(missing value)` parse error (issue #273).
+Bare `--theme` (no value) is a parse error: `findAndExecuteGlobalModifierCommands` returns `PARSE_ERROR`
+`(missing value)` for any global modifier given on the command line whose non-boolean, non-optional argument has
+no following args, even when a `defaultValue` or configured value exists (Nick's decision on PR #275: naming the
+modifier means the user meant to override the default). Defaults apply only when the modifier is not given.
 
 ## Config Get/Set/Unset
 

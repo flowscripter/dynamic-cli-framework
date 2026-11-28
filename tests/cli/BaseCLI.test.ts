@@ -150,7 +150,7 @@ describe("BaseCLI tests", () => {
     expect(isTty).toEqual({ stdin: false, stdout: true, stderr: false });
   });
 
-  test("BaseCLI warns when --theme is given no value", async () => {
+  test("BaseCLI reports missing value when --theme is given no value", async () => {
     const dummyStdout = new StreamString();
     const dummyStderr = new StreamString();
     const baseCLI = new BaseCLI(
@@ -168,9 +168,9 @@ describe("BaseCLI tests", () => {
 
     const runResult = await baseCLI.run(["--version", "--theme"]);
 
-    expect(runResult.runState).toEqual(RunState.SUCCESS);
-    expectStringIncludes(dummyStdout.getString(), getCLIConfig().version);
-    expectStringIncludes(dummyStderr.getString(), "Unused arg: --theme");
+    expect(runResult.runState).toEqual(RunState.PARSE_ERROR);
+    expect(dummyStdout.getString()).not.toContain(getCLIConfig().version);
+    expectStringIncludes(dummyStderr.getString(), "(missing value)");
   });
 
   test("BaseCLI run reports formatted error for missing explicit config file", async () => {
