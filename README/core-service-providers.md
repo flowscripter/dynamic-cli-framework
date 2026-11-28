@@ -178,10 +178,13 @@ Provides:
   hyperlinks is supported.
 - `ThemeCommand` which allows the output theme to be set to `auto`, `dark` or
   `light` via the argument `--theme` or the env var `THEME` (default `auto`).
-  With `auto` the terminal background is detected using the `COLORFGBG` env var
-  and then an OSC 11 terminal query (only on an interactive TTY, with a short
-  timeout). Light is used if the background cannot be determined or color is
-  disabled.
+  With `auto` the terminal background is detected using an OSC 11 terminal
+  query (only on an interactive TTY, with a short timeout), falling back to the
+  `COLORFGBG` env var if the terminal does not answer. The query is preferred as
+  `COLORFGBG` is set when the terminal session starts and can be stale. Light is
+  used if the background cannot be determined or color is disabled. With
+  `DYNAMIC_CLI_FRAMEWORK_DEBUG` set, the query reply, `COLORFGBG` value and
+  resolved theme are logged.
 - `NoColorCommand` which allows color output to be disabled via the argument
   `--no-color` or the env var `NO_COLOR`.
 - `NoHyperlinksCommand` which allows hyperlink output to be disabled via the

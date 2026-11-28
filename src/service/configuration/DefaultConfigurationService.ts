@@ -1,5 +1,6 @@
 import process from "node:process";
 import path from "node:path";
+import { homedir } from "node:os";
 import fs from "node:fs/promises";
 import type { Stats } from "node:fs";
 import {
@@ -141,7 +142,8 @@ export default class DefaultConfigurationService implements ConfigurationService
   }
 
   /**
-   * Determine the configuration location (defaulting to `$HOME/.<application_name>.<format extension>`)
+   * Determine the configuration location (defaulting to `<home>/.<application_name>.<format extension>`,
+   * where `<home>` is `$HOME` if set, otherwise the OS user home directory, e.g. `%USERPROFILE%` on Windows)
    * and read the configuration from it if it exists.
    *
    * @param applicationName the name of the CLI.
@@ -150,7 +152,7 @@ export default class DefaultConfigurationService implements ConfigurationService
     let isDefault = false;
     if (this.configLocation === undefined) {
       isDefault = true;
-      const home = process.env["HOME"];
+      const home = process.env["HOME"] || homedir();
       if (home) {
         this.configLocation = path.join(
           home,
@@ -297,7 +299,9 @@ export default class DefaultConfigurationService implements ConfigurationService
     build: (sentinels: ReadonlyArray<string>) => Values | SingleValueType | undefined,
   ): Promise<void> {
     if (this.configLocation === undefined) {
-      throw new Error("Unable to write config: no config location is set and $HOME is not defined");
+      throw new Error(
+        "Unable to write config: no config location is set and no home directory was found",
+      );
     }
     if (secrets.length > 0 && this.#defaultsSecretService === undefined) {
       throw new Error("Unable to store a SECRET value: the secret service is not enabled");

@@ -191,6 +191,14 @@ Shared state lives in `src/service/shutdown/ShutdownState.ts`.
 Commands with `enableConfiguration: true` receive defaults from env vars /
 config files via `ConfigurationServiceProvider`.
 
+The default config file location is resolved in
+`DefaultConfigurationService.init()` as `process.env.HOME || os.homedir()`.
+`$HOME` is read first because tests point it at a temp dir and Bun caches
+`os.homedir()` (it ignores later `HOME` changes). The `os.homedir()` fallback
+is what makes Windows work, where `HOME` is normally unset (`%USERPROFILE%`).
+Without a location, key-value writes at shutdown (e.g. the auto-upgrade
+preference) fail with "Attempt to write updated config with no configLocation set".
+
 ### Secret Storage
 
 `KeyValueService` supports OS-native secret storage via Bun.secrets API.
@@ -503,7 +511,7 @@ session would narrow it down far more directly than further static review.
 
 ## Theme Option
 
-`ThemeCommand` (`--theme auto|dark|light`, env `THEME`, default `auto`) replaced `DarkModeCommand`/`--dark-mode`. `auto` uses `src/terminal/BackgroundDetector.ts` (COLORFGBG, then OSC 11 + DA1 query on an interactive TTY, 150ms timeout) and falls back to dark. It runs after `NoColorCommand` (priorities +1 and +2 respectively) so detection is skipped when color is disabled.
+`ThemeCommand` (`--theme auto|dark|light`, env `THEME`, default `auto`) replaced `DarkModeCommand`/`--dark-mode`. `auto` uses `src/terminal/BackgroundDetector.ts` (OSC 11 + DA1 query on an interactive TTY, 150ms timeout, then COLORFGBG only if the terminal did not answer, since COLORFGBG is fixed at session start and goes stale when the terminal theme changes) and falls back to light. Detection steps and the resolved theme are logged at debug level. Scanner debug logs use `describeScanResult()` (command names, not command objects) because Bun `%O` truncates nested objects to `[Object ...]`. It runs after `NoColorCommand` (priorities +1 and +2 respectively) so detection is skipped when color is disabled.
 
 Bare `--theme` (no value) is a parse error: `findAndExecuteGlobalModifierCommands` returns `PARSE_ERROR`
 `(missing value)` for any global modifier given on the command line whose non-boolean, non-optional argument has

@@ -1,6 +1,6 @@
 import process from "node:process";
 import fs from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import ConfigurationServiceProvider from "../../../src/service/configuration/ConfigurationServiceProvider.ts";
@@ -61,6 +61,13 @@ describe("ConfigurationServiceProvider with configFormat", () => {
     const provider = new ConfigurationServiceProvider(100, false, true);
     await provider.initService(new DefaultContext(getCLIConfig()));
     expect(provider.configLocation).toEqual(path.join(home, ".foo.json"));
+  });
+
+  test("default location falls back to the OS home directory when $HOME is not set", async () => {
+    delete process.env["HOME"];
+    const provider = new ConfigurationServiceProvider(100, false, true);
+    await provider.initService(new DefaultContext(getCLIConfig()));
+    expect(provider.configLocation).toEqual(path.join(homedir(), ".foo.json"));
   });
 
   test.each([

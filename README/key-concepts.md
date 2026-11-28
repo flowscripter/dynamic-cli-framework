@@ -547,9 +547,11 @@ as command argument values. As an example:
 ```
 
 The default location of the configuration file is
-`$HOME/.<application_name>.<extension>` where the extension is `json`, `yaml` or
-`toml` depending on the configured format (see below). If `$HOME` is not defined
-then no default configuration will be used. The location of the configuration file can be
+`<home>/.<application_name>.<extension>` where the extension is `json`, `yaml` or
+`toml` depending on the configured format (see below). `<home>` is `$HOME` if it
+is set, otherwise the OS user home directory (e.g. `%USERPROFILE%` on Windows,
+where `$HOME` is normally not set). If no home directory can be found then no
+default configuration will be used. The location of the configuration file can be
 modified via the `ConfigCommand` global modifier command.
 
 #### Configuration File Format
