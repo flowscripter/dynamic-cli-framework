@@ -1048,6 +1048,104 @@ describe("runner tests", () => {
     expectStringIncludes(streamString.getString(), "Unused arg: blah");
   });
 
+  test("Parse error for global modifier with default value given no value", async () => {
+    const streamString = new StreamString();
+
+    let modifierHasRun = false;
+    let globalHasRun = false;
+
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ValueTypeName.STRING,
+      defaultValue: "auto",
+    });
+    const globalCommand = getGlobalCommandWithShortAlias("global", "g");
+
+    modifierCommand.execute = (): Promise<void> => {
+      modifierHasRun = true;
+      return Promise.resolve();
+    };
+    globalCommand.execute = (): Promise<void> => {
+      globalHasRun = true;
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
+    const runResult = await run(
+      ["--global", "--modifier"],
+      commandRegistry,
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(runResult.runState).toEqual(RunState.PARSE_ERROR);
+    expect(modifierHasRun).toBeFalse();
+    expect(globalHasRun).toBeFalse();
+    expectStringIncludes(streamString.getString(), "(missing value)");
+  });
+
+  test("Parse error for global modifier with configured value given no value", async () => {
+    const streamString = new StreamString();
+
+    let modifierHasRun = false;
+
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ValueTypeName.STRING,
+    });
+    const globalCommand = getGlobalCommandWithShortAlias("global", "g");
+
+    modifierCommand.execute = (): Promise<void> => {
+      modifierHasRun = true;
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
+    const runResult = await run(
+      ["--global", "--modifier"],
+      commandRegistry,
+      getServiceProviderRegistry(),
+      getConfigurationServiceProvider(90, new Map([["modifier", "dark"]])),
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(runResult.runState).toEqual(RunState.PARSE_ERROR);
+    expect(modifierHasRun).toBeFalse();
+    expectStringIncludes(streamString.getString(), "(missing value)");
+  });
+
+  test("Global modifier with default value given a value is used", async () => {
+    const streamString = new StreamString();
+
+    let modifierValue: unknown;
+
+    const modifierCommand = getGlobalModifierCommandWithArgument("modifier", "m", 1, {
+      type: ValueTypeName.STRING,
+      defaultValue: "auto",
+    });
+    const globalCommand = getGlobalCommandWithShortAlias("global", "g");
+
+    modifierCommand.execute = (_context: unknown, argumentValue: unknown): Promise<void> => {
+      modifierValue = argumentValue;
+      return Promise.resolve();
+    };
+
+    const commandRegistry = new DefaultCommandRegistry([modifierCommand, globalCommand]);
+    const runResult = await run(
+      ["--global", "--modifier", "dark"],
+      commandRegistry,
+      getServiceProviderRegistry(),
+      undefined,
+      undefined,
+      getContext(streamString),
+    );
+
+    expect(runResult.runState).toEqual(RunState.SUCCESS);
+    expect(modifierValue).toEqual("dark");
+    expect(streamString.getString()).not.toContain("Unused arg");
+  });
+
   test("Warning for unused trailing args", async () => {
     const streamString = new StreamString();
     const option = {

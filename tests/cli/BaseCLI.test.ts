@@ -150,6 +150,29 @@ describe("BaseCLI tests", () => {
     expect(isTty).toEqual({ stdin: false, stdout: true, stderr: false });
   });
 
+  test("BaseCLI reports missing value when --theme is given no value", async () => {
+    const dummyStdout = new StreamString();
+    const dummyStderr = new StreamString();
+    const baseCLI = new BaseCLI(
+      getCLIConfig(),
+      dummyStdout.writableStream,
+      dummyStderr.writableStream,
+      false,
+      false,
+      new TtyTerminal(dummyStdout.writeStream),
+      new TtyTerminal(dummyStderr.writeStream),
+      new TtyStyler(3),
+      mockKeyReader,
+    );
+    baseCLI.addCommand(getSubCommand("command", [], []));
+
+    const runResult = await baseCLI.run(["--version", "--theme"]);
+
+    expect(runResult.runState).toEqual(RunState.PARSE_ERROR);
+    expect(dummyStdout.getString()).not.toContain(getCLIConfig().version);
+    expectStringIncludes(dummyStderr.getString(), "(missing value)");
+  });
+
   test("BaseCLI run reports formatted error for missing explicit config file", async () => {
     const config = getCLIConfig();
     const dummyStdout = new StreamString();

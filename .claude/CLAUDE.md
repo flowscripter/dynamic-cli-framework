@@ -513,6 +513,11 @@ session would narrow it down far more directly than further static review.
 
 `ThemeCommand` (`--theme auto|dark|light`, env `THEME`, default `auto`) replaced `DarkModeCommand`/`--dark-mode`. `auto` uses `src/terminal/BackgroundDetector.ts` (OSC 11 + DA1 query on an interactive TTY, 150ms timeout, then COLORFGBG only if the terminal did not answer, since COLORFGBG is fixed at session start and goes stale when the terminal theme changes) and falls back to light. Detection steps and the resolved theme are logged at debug level. Scanner debug logs use `describeScanResult()` (command names, not command objects) because Bun `%O` truncates nested objects to `[Object ...]`. It runs after `NoColorCommand` (priorities +1 and +2 respectively) so detection is skipped when color is disabled.
 
+Bare `--theme` (no value) is a parse error: `findAndExecuteGlobalModifierCommands` returns `PARSE_ERROR`
+`(missing value)` for any global modifier given on the command line whose non-boolean, non-optional argument has
+no following args, even when a `defaultValue` or configured value exists (Nick's decision on PR #275: naming the
+modifier means the user meant to override the default). Defaults apply only when the modifier is not given.
+
 ## Config Get/Set/Unset
 
 `config:get|set|unset` (members of the `config` group, with `config:dump`) are built by
