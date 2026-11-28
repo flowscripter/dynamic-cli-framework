@@ -525,8 +525,8 @@ none on the command line is a parse error (missing value), even if its argument
 has a default value or a configured value. Specifying the modifier implies an
 attempt to override the default, so for example `executable --version --theme`
 reports a `(missing value)` parse error for `theme` and does not output the
-version. Default and
-configured values apply only when the modifier is not specified.
+version. Default and configured values apply only when the modifier is not
+specified.
 
 If a command is NOT identified, any retained arguments are considered potential
 arguments for a default command if it has been configured. This behaviour means
